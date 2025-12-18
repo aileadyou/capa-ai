@@ -6,7 +6,6 @@ import {
   ScrollText,
   FileBarChart,
   Settings,
-  LogOut,
   Shield,
 } from "lucide-react";
 import {
@@ -21,7 +20,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/" },
@@ -34,11 +32,6 @@ const menuItems = [
 export function CapaSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
 
   return (
     <Sidebar className="border-r border-sidebar-border">
@@ -83,7 +76,7 @@ export function CapaSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-sidebar-border space-y-2">
+      <SidebarFooter className="p-4 border-t border-sidebar-border">
         <Button 
           variant="ghost" 
           className="w-full justify-start gap-3 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent"
@@ -91,14 +84,6 @@ export function CapaSidebar() {
         >
           <Settings className="h-5 w-5" />
           <span>Settings</span>
-        </Button>
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start gap-3 text-sidebar-foreground/80 hover:text-destructive hover:bg-destructive/10"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-5 w-5" />
-          <span>Logout</span>
         </Button>
       </SidebarFooter>
     </Sidebar>
