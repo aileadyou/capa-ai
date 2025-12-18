@@ -24,7 +24,7 @@ import leadAiLogo from "@/assets/lead-ai-graphic.png";
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/" },
-  { title: "Deviations", icon: AlertTriangle, url: "/deviations" },
+  { title: "Quality Findings", icon: AlertTriangle, url: "/deviations" },
   { title: "CAPA Actions", icon: ClipboardCheck, url: "/capa-actions" },
   { title: "Audit Trail", icon: ScrollText, url: "/audit-trail" },
   { title: "Reports", icon: FileBarChart, url: "/reports" },
