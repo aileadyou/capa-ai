@@ -14,8 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CapaSidebar } from "@/components/capa/CapaSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { Building2 } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Building2, Target } from "lucide-react";
 
 const findingsTrendData = [
   { month: "Jul", deviations: 12, audits: 5, complaints: 8 },
@@ -33,6 +33,13 @@ const departmentBreakdownData = [
   { department: "Packaging", deviations: 4, audits: 3, complaints: 9 },
   { department: "Utilities", deviations: 5, audits: 2, complaints: 2 },
   { department: "Supply Chain", deviations: 2, audits: 4, complaints: 6 },
+];
+
+const priorityDistributionData = [
+  { name: "Critical", value: 8, color: "#ef4444" },
+  { name: "High", value: 15, color: "#f97316" },
+  { name: "Medium", value: 22, color: "#6b7280" },
+  { name: "Low", value: 12, color: "#d1d5db" },
 ];
 
 const priorityTasks = [
@@ -272,69 +279,121 @@ export default function CapaDashboard() {
               </Card>
             </div>
 
-            {/* Department Breakdown Chart */}
-            <Card className="border shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold flex items-center">
-                  <Building2 className="w-5 h-5 mr-2 text-primary" />
-                  Findings by Department
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">Breakdown across all finding types</p>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[280px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={departmentBreakdownData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={true} vertical={false} />
-                      <XAxis 
-                        type="number"
-                        tick={{ fontSize: 12 }}
-                        className="text-muted-foreground"
-                      />
-                      <YAxis 
-                        type="category"
-                        dataKey="department" 
-                        tick={{ fontSize: 12 }}
-                        className="text-muted-foreground"
-                        width={100}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
-                        }}
-                      />
-                      <Legend 
-                        wrapperStyle={{ fontSize: '12px' }}
-                        iconType="rect"
-                        iconSize={12}
-                      />
-                      <Bar 
-                        dataKey="deviations" 
-                        name="Deviations"
-                        stackId="a" 
-                        fill="#f97316" 
-                        radius={[0, 0, 0, 0]}
-                      />
-                      <Bar 
-                        dataKey="audits" 
-                        name="Audit Findings"
-                        stackId="a" 
-                        fill="#3b82f6" 
-                      />
-                      <Bar 
-                        dataKey="complaints" 
-                        name="Complaints"
-                        stackId="a" 
-                        fill="#a855f7" 
-                        radius={[0, 4, 4, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Department Breakdown Chart */}
+              <Card className="lg:col-span-2 border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center">
+                    <Building2 className="w-5 h-5 mr-2 text-primary" />
+                    Findings by Department
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">Breakdown across all finding types</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={departmentBreakdownData} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={true} vertical={false} />
+                        <XAxis 
+                          type="number"
+                          tick={{ fontSize: 12 }}
+                          className="text-muted-foreground"
+                        />
+                        <YAxis 
+                          type="category"
+                          dataKey="department" 
+                          tick={{ fontSize: 12 }}
+                          className="text-muted-foreground"
+                          width={100}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                        />
+                        <Legend 
+                          wrapperStyle={{ fontSize: '12px' }}
+                          iconType="rect"
+                          iconSize={12}
+                        />
+                        <Bar 
+                          dataKey="deviations" 
+                          name="Deviations"
+                          stackId="a" 
+                          fill="#f97316" 
+                          radius={[0, 0, 0, 0]}
+                        />
+                        <Bar 
+                          dataKey="audits" 
+                          name="Audit Findings"
+                          stackId="a" 
+                          fill="#3b82f6" 
+                        />
+                        <Bar 
+                          dataKey="complaints" 
+                          name="Complaints"
+                          stackId="a" 
+                          fill="#a855f7" 
+                          radius={[0, 4, 4, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Priority Distribution Pie Chart */}
+              <Card className="border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold flex items-center">
+                    <Target className="w-5 h-5 mr-2 text-destructive" />
+                    Priority Distribution
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">Findings by severity level</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={priorityDistributionData}
+                          cx="50%"
+                          cy="45%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={3}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          labelLine={false}
+                        >
+                          {priorityDistributionData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                          formatter={(value: number) => [`${value} findings`, '']}
+                        />
+                        <Legend 
+                          wrapperStyle={{ fontSize: '12px' }}
+                          iconType="circle"
+                          iconSize={10}
+                          layout="horizontal"
+                          verticalAlign="bottom"
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </SidebarInset>
       </div>
