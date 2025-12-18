@@ -14,15 +14,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CapaSidebar } from "@/components/capa/CapaSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
-const deviationTrendData = [
-  { month: "Jul", count: 12 },
-  { month: "Aug", count: 15 },
-  { month: "Sep", count: 11 },
-  { month: "Oct", count: 9 },
-  { month: "Nov", count: 7 },
-  { month: "Dec", count: 5 },
+const findingsTrendData = [
+  { month: "Jul", deviations: 12, audits: 5, complaints: 8 },
+  { month: "Aug", deviations: 15, audits: 7, complaints: 6 },
+  { month: "Sep", deviations: 11, audits: 4, complaints: 9 },
+  { month: "Oct", deviations: 9, audits: 6, complaints: 7 },
+  { month: "Nov", deviations: 7, audits: 8, complaints: 5 },
+  { month: "Dec", deviations: 5, audits: 5, complaints: 4 },
 ];
 
 const priorityTasks = [
@@ -85,11 +85,11 @@ export default function CapaDashboard() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Open Deviations</p>
-                      <p className="text-3xl font-semibold text-foreground mt-1">12</p>
+                      <p className="text-sm font-medium text-muted-foreground">Open Findings</p>
+                      <p className="text-3xl font-semibold text-foreground mt-1">18</p>
                       <p className="text-xs text-destructive mt-1 flex items-center">
                         <AlertTriangle className="w-3 h-3 mr-1" />
-                        3 Critical
+                        5 Critical
                       </p>
                     </div>
                     <div className="h-12 w-12 rounded-lg bg-destructive/10 flex items-center justify-center">
@@ -196,19 +196,19 @@ export default function CapaDashboard() {
                 </CardContent>
               </Card>
 
-              {/* Deviation Trends Chart */}
+              {/* Findings Trends Chart */}
               <Card className="lg:col-span-2 border shadow-sm">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold flex items-center">
                     <TrendingDown className="w-5 h-5 mr-2 text-success" />
-                    Deviation Trends
+                    Quality Findings Trends
                   </CardTitle>
                   <p className="text-sm text-muted-foreground">Last 6 months</p>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[200px]">
+                  <div className="h-[220px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={deviationTrendData}>
+                      <LineChart data={findingsTrendData}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                         <XAxis 
                           dataKey="month" 
@@ -226,12 +226,34 @@ export default function CapaDashboard() {
                             borderRadius: '8px'
                           }}
                         />
+                        <Legend 
+                          wrapperStyle={{ fontSize: '12px' }}
+                          iconType="circle"
+                          iconSize={8}
+                        />
                         <Line 
                           type="monotone" 
-                          dataKey="count" 
-                          stroke="hsl(var(--primary))" 
+                          dataKey="deviations" 
+                          name="Deviations"
+                          stroke="#f97316" 
                           strokeWidth={2}
-                          dot={{ fill: 'hsl(var(--primary))' }}
+                          dot={{ fill: '#f97316', r: 3 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="audits" 
+                          name="Audit Findings"
+                          stroke="#3b82f6" 
+                          strokeWidth={2}
+                          dot={{ fill: '#3b82f6', r: 3 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="complaints" 
+                          name="Complaints"
+                          stroke="#a855f7" 
+                          strokeWidth={2}
+                          dot={{ fill: '#a855f7', r: 3 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
