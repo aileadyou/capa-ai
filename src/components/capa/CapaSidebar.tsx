@@ -7,6 +7,7 @@ import {
   FileBarChart,
   Settings,
   Shield,
+  Sparkles,
 } from "lucide-react";
 import {
   Sidebar,
@@ -38,8 +39,10 @@ export function CapaSidebar() {
     <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg gradient-ai flex items-center justify-center">
-            <Shield className="h-5 w-5 text-white" />
+          <div className="h-10 w-10 rounded-lg gradient-ai flex items-center justify-center relative overflow-hidden">
+            <Shield className="h-5 w-5 text-white/90 z-10" />
+            <Sparkles className="h-3 w-3 text-white absolute top-1 right-1 animate-pulse" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/20" />
           </div>
           <div>
             <h1 className="font-semibold text-sidebar-foreground text-lg">CAPA AI</h1>
