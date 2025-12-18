@@ -223,18 +223,20 @@ export default function CapaDashboard() {
                   <p className="text-sm text-muted-foreground">Last 6 months</p>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[220px]">
+                  <div className="h-[260px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={findingsTrendData}>
+                      <LineChart data={findingsTrendData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                         <XAxis 
                           dataKey="month" 
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 11 }}
                           className="text-muted-foreground"
+                          tickMargin={8}
                         />
                         <YAxis 
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 11 }}
                           className="text-muted-foreground"
+                          width={35}
                         />
                         <Tooltip 
                           contentStyle={{ 
@@ -244,7 +246,7 @@ export default function CapaDashboard() {
                           }}
                         />
                         <Legend 
-                          wrapperStyle={{ fontSize: '12px' }}
+                          wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
                           iconType="circle"
                           iconSize={8}
                         />
@@ -259,7 +261,7 @@ export default function CapaDashboard() {
                         <Line 
                           type="monotone" 
                           dataKey="audits" 
-                          name="Audit Findings"
+                          name="Audits"
                           stroke="#3b82f6" 
                           strokeWidth={2}
                           dot={{ fill: '#3b82f6', r: 3 }}
@@ -291,21 +293,21 @@ export default function CapaDashboard() {
                   <p className="text-sm text-muted-foreground">Breakdown across all finding types</p>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[280px]">
+                  <div className="h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={departmentBreakdownData} layout="vertical">
+                      <BarChart data={departmentBreakdownData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={true} vertical={false} />
                         <XAxis 
                           type="number"
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 11 }}
                           className="text-muted-foreground"
                         />
                         <YAxis 
                           type="category"
                           dataKey="department" 
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 11 }}
                           className="text-muted-foreground"
-                          width={100}
+                          width={90}
                         />
                         <Tooltip 
                           contentStyle={{ 
@@ -315,9 +317,9 @@ export default function CapaDashboard() {
                           }}
                         />
                         <Legend 
-                          wrapperStyle={{ fontSize: '12px' }}
+                          wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
                           iconType="rect"
-                          iconSize={12}
+                          iconSize={10}
                         />
                         <Bar 
                           dataKey="deviations" 
@@ -328,7 +330,7 @@ export default function CapaDashboard() {
                         />
                         <Bar 
                           dataKey="audits" 
-                          name="Audit Findings"
+                          name="Audits"
                           stackId="a" 
                           fill="#3b82f6" 
                         />
@@ -355,19 +357,17 @@ export default function CapaDashboard() {
                   <p className="text-sm text-muted-foreground">Findings by severity level</p>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[280px]">
+                  <div className="h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={priorityDistributionData}
                           cx="50%"
-                          cy="45%"
-                          innerRadius={50}
-                          outerRadius={80}
+                          cy="40%"
+                          innerRadius={45}
+                          outerRadius={75}
                           paddingAngle={3}
                           dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          labelLine={false}
                         >
                           {priorityDistributionData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
@@ -379,14 +379,19 @@ export default function CapaDashboard() {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '8px'
                           }}
-                          formatter={(value: number) => [`${value} findings`, '']}
+                          formatter={(value: number, name: string) => [`${value} findings`, name]}
                         />
                         <Legend 
-                          wrapperStyle={{ fontSize: '12px' }}
+                          wrapperStyle={{ fontSize: '11px' }}
                           iconType="circle"
                           iconSize={10}
-                          layout="horizontal"
+                          layout="vertical"
                           verticalAlign="bottom"
+                          align="center"
+                          formatter={(value, entry) => {
+                            const item = priorityDistributionData.find(d => d.name === value);
+                            return `${value}: ${item?.value || 0}`;
+                          }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
