@@ -5,9 +5,9 @@ import {
   ClipboardCheck,
   ScrollText,
   FileBarChart,
-  Shield,
-  Sparkles,
   Database,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   Sidebar,
@@ -15,12 +15,15 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import leadAiLogo from "@/assets/lead-ai-graphic.png";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/" },
@@ -30,48 +33,108 @@ const menuItems = [
   { title: "Reports", icon: FileBarChart, url: "/reports" },
 ];
 
+const systemItems = [
+  { title: "Data Management", icon: Database, url: "/data-management" },
+];
+
 export function CapaSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const isDataManagementActive = location.pathname === "/data-management";
+  const { state, toggleSidebar } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg gradient-ai flex items-center justify-center relative overflow-hidden shadow-[0_0_15px_rgba(139,92,246,0.5)]">
-            <Shield className="h-5 w-5 text-white/90 z-10" />
-            <Sparkles className="h-3 w-3 text-white absolute top-1 right-1 animate-pulse" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/20" />
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-border bg-slate-950 text-slate-100"
+    >
+      <SidebarHeader className="p-3 border-b border-slate-800">
+        <div className="flex items-center justify-between">
+          <div className={cn("flex items-center gap-2", isCollapsed && "justify-center w-full")}>
+            <div className="h-8 w-8 rounded bg-primary flex items-center justify-center shrink-0">
+              <span className="text-primary-foreground font-bold text-sm">CA</span>
+            </div>
+            {!isCollapsed && (
+              <div className="min-w-0">
+                <h1 className="font-semibold text-slate-100 text-sm truncate">CAPA AI</h1>
+                <p className="text-[10px] text-slate-400 truncate">Quality Management</p>
+              </div>
+            )}
           </div>
-          <div>
-            <h1 className="font-semibold text-sidebar-foreground text-lg">CAPA AI</h1>
-            <p className="text-xs text-sidebar-foreground/60">Quality Management System</p>
-          </div>
+          {!isCollapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="h-6 w-6 text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-4">
+      <SidebarContent className="px-2 py-3">
         <SidebarGroup>
+          {!isCollapsed && (
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-slate-500 px-2 mb-1">
+              Quality
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
-                const isActive = location.pathname === item.url || 
+                const isActive =
+                  location.pathname === item.url ||
                   (item.url === "/" && location.pathname === "/investigation");
-                
+
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       onClick={() => navigate(item.url)}
-                      className={`w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      tooltip={isCollapsed ? item.title : undefined}
+                      className={cn(
+                        "w-full justify-start gap-2 px-2 py-1.5 rounded text-sm transition-colors",
                         isActive
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                      }`}
+                          ? "bg-primary text-primary-foreground"
+                          : "text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+                      )}
                     >
-                      <item.icon className="h-5 w-5" />
-                      <span className="font-medium">{item.title}</span>
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!isCollapsed && <span className="truncate">{item.title}</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-4">
+          {!isCollapsed && (
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-wider text-slate-500 px-2 mb-1">
+              System
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {systemItems.map((item) => {
+                const isActive = location.pathname === item.url;
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      onClick={() => navigate(item.url)}
+                      tooltip={isCollapsed ? item.title : undefined}
+                      className={cn(
+                        "w-full justify-start gap-2 px-2 py-1.5 rounded text-sm transition-colors",
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+                      )}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!isCollapsed && <span className="truncate">{item.title}</span>}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -81,31 +144,21 @@ export function CapaSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-sidebar-border space-y-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => navigate("/data-management")}
-              className={`w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                isDataManagementActive
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              }`}
-            >
-              <Database className="h-5 w-5" />
-              <span className="font-medium">Data Management</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        
-        <div className="flex items-center gap-2 pt-2 border-t border-sidebar-border/50">
-          <img src={leadAiLogo} alt="Lead AI" className="h-8 w-auto" />
-          <div className="text-xs text-sidebar-foreground/50">
-            <span>Powered by </span>
-            <span className="font-medium text-sidebar-foreground/70">Lead AI</span>
-            <p className="text-[10px]">(for demo purposes only)</p>
+      <SidebarFooter className="p-2 border-t border-slate-800">
+        {isCollapsed ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="w-full h-8 text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        ) : (
+          <div className="px-2 py-1">
+            <p className="text-[10px] text-slate-500">v1.0.0 · Enterprise</p>
           </div>
-        </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
