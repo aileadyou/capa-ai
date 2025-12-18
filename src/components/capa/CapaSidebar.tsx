@@ -43,7 +43,7 @@ export function CapaSidebar() {
           </div>
           <div>
             <h1 className="font-semibold text-sidebar-foreground text-lg">CAPA AI</h1>
-            <p className="text-xs text-sidebar-foreground/60">Quality Management</p>
+            <p className="text-xs text-sidebar-foreground/60">Quality Management System</p>
           </div>
         </div>
       </SidebarHeader>
