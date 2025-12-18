@@ -10,6 +10,7 @@ import Deviations from "./pages/Deviations";
 import CapaActions from "./pages/CapaActions";
 import CapaDetail from "./pages/CapaDetail";
 import AuditTrail from "./pages/AuditTrail";
+import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -29,7 +30,7 @@ const App = () => (
             <Route path="/capa-actions" element={<CapaActions />} />
             <Route path="/capa-actions/:id" element={<CapaDetail />} />
             <Route path="/audit-trail" element={<AuditTrail />} />
-            <Route path="/reports" element={<CapaDashboard />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
