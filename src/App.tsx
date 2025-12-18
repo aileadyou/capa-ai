@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import CapaDashboard from "./pages/CapaDashboard";
 import Investigation from "./pages/Investigation";
 import Deviations from "./pages/Deviations";
+import CapaActions from "./pages/CapaActions";
 import AuditTrail from "./pages/AuditTrail";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -24,8 +25,8 @@ const App = () => (
             <Route path="/" element={<CapaDashboard />} />
             <Route path="/investigation" element={<Investigation />} />
             <Route path="/deviations" element={<Deviations />} />
+            <Route path="/capa-actions" element={<CapaActions />} />
             <Route path="/audit-trail" element={<AuditTrail />} />
-            <Route path="/capa-actions" element={<CapaDashboard />} />
             <Route path="/reports" element={<CapaDashboard />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
