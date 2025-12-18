@@ -88,7 +88,7 @@ export function CapaSidebar() {
         </Button>
         
         <div className="flex items-center gap-2 pt-2 border-t border-sidebar-border/50">
-          <img src={leadAiLogo} alt="Lead AI" className="h-6 w-6" />
+          <img src={leadAiLogo} alt="Lead AI" className="h-8 w-auto" />
           <div className="text-xs text-sidebar-foreground/50">
             <span>Powered by </span>
             <span className="font-medium text-sidebar-foreground/70">Lead AI</span>
