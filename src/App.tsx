@@ -11,6 +11,7 @@ import CapaActions from "./pages/CapaActions";
 import CapaDetail from "./pages/CapaDetail";
 import AuditTrail from "./pages/AuditTrail";
 import Reports from "./pages/Reports";
+import DataManagement from "./pages/DataManagement";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<CapaDashboard />} />
+            <Route path="/data-management" element={<DataManagement />} />
             <Route path="/investigation" element={<Investigation />} />
             <Route path="/deviations" element={<Deviations />} />
             <Route path="/capa-actions" element={<CapaActions />} />
