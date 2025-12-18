@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import leadAiLogo from "@/assets/lead-ai-graphic.png";
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/" },
@@ -76,7 +77,7 @@ export function CapaSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-sidebar-border">
+      <SidebarFooter className="p-4 border-t border-sidebar-border space-y-4">
         <Button 
           variant="ghost" 
           className="w-full justify-start gap-3 text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent"
@@ -85,6 +86,15 @@ export function CapaSidebar() {
           <Settings className="h-5 w-5" />
           <span>Settings</span>
         </Button>
+        
+        <div className="flex items-center gap-2 pt-2 border-t border-sidebar-border/50">
+          <img src={leadAiLogo} alt="Lead AI" className="h-6 w-6" />
+          <div className="text-xs text-sidebar-foreground/50">
+            <span>Powered by </span>
+            <span className="font-medium text-sidebar-foreground/70">Lead AI</span>
+            <p className="text-[10px]">(for demo purposes only)</p>
+          </div>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
