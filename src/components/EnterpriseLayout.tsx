@@ -59,7 +59,7 @@ export function EnterpriseLayout({
                 className="h-4 w-auto opacity-80" 
               />
               <span className="text-xs text-slate-400">
-                © Copyright Lead AI 2025
+                © Copyright Lead AI 2025 · For demo purposes only
               </span>
             </div>
           </footer>
