@@ -8,6 +8,8 @@ import {
   Database,
   ChevronLeft,
   ChevronRight,
+  ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,8 +54,9 @@ export function CapaSidebar() {
       <SidebarHeader className="p-3 border-b border-slate-800">
         <div className="flex items-center justify-between">
           <div className={cn("flex items-center gap-2", isCollapsed && "justify-center w-full")}>
-            <div className="h-8 w-8 rounded bg-primary flex items-center justify-center shrink-0">
-              <span className="text-primary-foreground font-bold text-sm">CA</span>
+            <div className="relative h-8 w-8 rounded bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shrink-0 shadow-sm">
+              <ShieldCheck className="h-4 w-4 text-primary-foreground" strokeWidth={2.5} />
+              <Sparkles className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 text-amber-400" strokeWidth={2.5} />
             </div>
             {!isCollapsed && (
               <div className="min-w-0">
