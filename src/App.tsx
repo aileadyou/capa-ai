@@ -8,6 +8,7 @@ import CapaDashboard from "./pages/CapaDashboard";
 import Investigation from "./pages/Investigation";
 import Deviations from "./pages/Deviations";
 import CapaActions from "./pages/CapaActions";
+import CapaDetail from "./pages/CapaDetail";
 import AuditTrail from "./pages/AuditTrail";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/investigation" element={<Investigation />} />
             <Route path="/deviations" element={<Deviations />} />
             <Route path="/capa-actions" element={<CapaActions />} />
+            <Route path="/capa-actions/:id" element={<CapaDetail />} />
             <Route path="/audit-trail" element={<AuditTrail />} />
             <Route path="/reports" element={<CapaDashboard />} />
             <Route path="/auth" element={<Auth />} />
