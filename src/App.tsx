@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import CapaDashboard from "./pages/CapaDashboard";
 import Investigation from "./pages/Investigation";
+import Deviations from "./pages/Deviations";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -21,7 +22,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<CapaDashboard />} />
             <Route path="/investigation" element={<Investigation />} />
-            <Route path="/deviations" element={<CapaDashboard />} />
+            <Route path="/deviations" element={<Deviations />} />
             <Route path="/capa-actions" element={<CapaDashboard />} />
             <Route path="/audit-trail" element={<CapaDashboard />} />
             <Route path="/reports" element={<CapaDashboard />} />
