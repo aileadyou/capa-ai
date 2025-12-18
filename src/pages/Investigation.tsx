@@ -1,39 +1,64 @@
 import { useState } from "react";
-import { 
-  AlertTriangle, 
-  Sparkles, 
-  Clock, 
+import {
+  AlertTriangle,
+  Clock,
   Thermometer,
   Cpu,
-  Link2,
   CheckCircle2,
   Loader2,
-  Brain
+  Brain,
+  FileText,
+  History,
+  Package,
+  Info,
+  ExternalLink,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
-import { CapaSidebar } from "@/components/capa/CapaSidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EnterpriseSidebar } from "@/components/EnterpriseSidebar";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { AIDataCard } from "@/components/AIDataCard";
+import { SimilarityChart } from "@/components/SimilarityChart";
+import { SystemLogToast } from "@/components/SystemLogToast";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const deviationData = {
   id: "DEV-2025-089",
   title: "Temperature Excursion - Warehouse B (Cold Storage)",
   batch: "#BF-VAC-2025-X",
   eventTime: "02:14 AM",
+  eventDate: "2025-01-15",
   detectedBy: "MES Sensor ID-55",
   value: "8.5°C",
   limit: "2.0°C - 8.0°C",
   duration: "15 Minutes",
+  status: "Investigation",
+  priority: "High",
 };
 
 const linkedCases = [
-  { id: "DEV-2023-004", year: "2023" },
-  { id: "DEV-2024-012", year: "2024" },
-  { id: "DEV-2024-045", year: "2024" },
+  { id: "DEV-2023-004", similarity: 94, year: "2023" },
+  { id: "DEV-2024-012", similarity: 87, year: "2024" },
+  { id: "DEV-2024-045", similarity: 72, year: "2024" },
+];
+
+const auditTrailEntries = [
+  { action: "Investigation opened", user: "J. Smith", timestamp: "2025-01-15 02:18:33", id: "99278" },
+  { action: "AI analysis initiated", user: "System", timestamp: "2025-01-15 02:18:45", id: "99279" },
+  { action: "Root cause suggested", user: "AI Engine", timestamp: "2025-01-15 02:19:02", id: "99280" },
+];
+
+const batchLogEntries = [
+  { time: "02:00", temp: "7.2°C", status: "Normal" },
+  { time: "02:05", temp: "7.5°C", status: "Normal" },
+  { time: "02:10", temp: "7.9°C", status: "Warning" },
+  { time: "02:14", temp: "8.5°C", status: "Excursion" },
+  { time: "02:20", temp: "8.2°C", status: "Excursion" },
+  { time: "02:29", temp: "7.8°C", status: "Normal" },
 ];
 
 export default function Investigation() {
@@ -41,7 +66,8 @@ export default function Investigation() {
   const [status, setStatus] = useState<"ai-ready" | "pending-approval">("ai-ready");
   const [showCapaPlan, setShowCapaPlan] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  
+  const [showSystemLog, setShowSystemLog] = useState(false);
+
   const [correction, setCorrection] = useState(
     "Immediate recalibration of Sensor ID-55 and manual temperature check of Batch #BF-VAC-2025-X."
   );
@@ -60,258 +86,380 @@ export default function Investigation() {
     }, 1500);
   };
 
+  const handleApproveRootCause = () => {
+    setShowSystemLog(true);
+    toast({
+      title: "Root cause approved",
+      description: "Audit Trail #99281 updated.",
+    });
+    setTimeout(() => setShowSystemLog(false), 3000);
+  };
+
   const handleSubmitForApproval = () => {
     setStatus("pending-approval");
+    setShowSystemLog(true);
     toast({
-      title: "CAPA Plan Submitted Successfully",
-      description: "Audit Trail #99281 updated.",
-      className: "bg-success text-success-foreground",
+      title: "CAPA Plan Submitted",
+      description: "Audit Trail #99282 updated.",
     });
+    setTimeout(() => setShowSystemLog(false), 3000);
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <CapaSidebar />
-        <SidebarInset className="flex-1">
-          <div className="p-6 lg:p-8 space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-semibold text-foreground">
-                    Deviation #{deviationData.id}: Investigation Phase
-                  </h1>
-                  {status === "ai-ready" && (
-                    <Badge className="bg-gradient-to-r from-accent to-purple-500 text-accent-foreground animate-pulse-subtle">
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      AI Analysis Ready
-                    </Badge>
-                  )}
-                  {status === "pending-approval" && (
-                    <Badge variant="outline" className="border-warning text-warning">
-                      <Clock className="w-3 h-3 mr-1" />
-                      Pending QA Manager Approval
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-muted-foreground mt-1">{deviationData.title}</p>
-              </div>
-            </div>
+    <div className="min-h-screen flex w-full bg-background">
+      <EnterpriseSidebar />
 
-            {/* Split Screen Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-              {/* Left Column - The Facts (30%) */}
-              <Card className="lg:col-span-3 border shadow-sm">
-                <CardHeader className="pb-3 border-b">
-                  <CardTitle className="text-base font-semibold flex items-center">
-                    <AlertTriangle className="w-4 h-4 mr-2 text-destructive" />
-                    The Facts
+      {/* Main content with sidebar offset */}
+      <div className="flex-1 ml-52">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-background border-b border-border px-4 py-2">
+          <div className="flex items-center justify-between">
+            <Breadcrumbs
+              items={[
+                { label: "Quality", href: "/quality" },
+                { label: "Deviations", href: "/deviations" },
+                { label: `#${deviationData.id}` },
+              ]}
+            />
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                {deviationData.status}
+              </Badge>
+              <Badge
+                variant="destructive"
+                className="text-xs"
+              >
+                {deviationData.priority}
+              </Badge>
+            </div>
+          </div>
+        </header>
+
+        {/* System Log Feedback */}
+        {showSystemLog && (
+          <div className="px-4 pt-2">
+            <SystemLogToast
+              action="Action recorded to audit trail"
+              timestamp={new Date().toLocaleTimeString()}
+              auditId="99281"
+            />
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="p-4">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+            {/* Left Column - Main Content with Tabs */}
+            <div className="xl:col-span-8">
+              <Card className="border">
+                <CardHeader className="py-3 px-4 border-b">
+                  <CardTitle className="text-base font-semibold">
+                    {deviationData.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-4">
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                      <Clock className="w-4 h-4 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Event Time</p>
-                        <p className="text-sm font-medium">{deviationData.eventTime}</p>
-                      </div>
-                    </div>
+                <CardContent className="p-0">
+                  <Tabs defaultValue="details" className="w-full">
+                    <TabsList className="w-full justify-start rounded-none border-b bg-transparent h-auto p-0">
+                      <TabsTrigger
+                        value="details"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 text-sm"
+                      >
+                        Case Details
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="evidence"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 text-sm"
+                      >
+                        Evidence
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="batch"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 text-sm"
+                      >
+                        Batch Logs
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="audit"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2 text-sm"
+                      >
+                        Audit Trail
+                      </TabsTrigger>
+                    </TabsList>
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                      <Cpu className="w-4 h-4 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Detected By</p>
-                        <p className="text-sm font-medium">{deviationData.detectedBy}</p>
+                    {/* Case Details Tab */}
+                    <TabsContent value="details" className="p-4 space-y-4 mt-0">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="data-card">
+                          <span className="text-xs text-muted-foreground">Event Date</span>
+                          <p className="text-sm font-medium mt-1">{deviationData.eventDate}</p>
+                        </div>
+                        <div className="data-card">
+                          <span className="text-xs text-muted-foreground">Event Time</span>
+                          <p className="text-sm font-medium mt-1">{deviationData.eventTime}</p>
+                        </div>
+                        <div className="data-card">
+                          <span className="text-xs text-muted-foreground">Duration</span>
+                          <p className="text-sm font-medium mt-1">{deviationData.duration}</p>
+                        </div>
+                        <div className="data-card">
+                          <span className="text-xs text-muted-foreground">Detected By</span>
+                          <p className="text-sm font-medium mt-1">{deviationData.detectedBy}</p>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                      <Thermometer className="w-4 h-4 text-destructive mt-0.5" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Recorded Value</p>
-                        <p className="text-sm font-bold text-destructive">{deviationData.value}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Limit: {deviationData.limit}
-                        </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="data-card border-destructive/30 bg-destructive/5">
+                          <div className="flex items-center gap-2">
+                            <Thermometer className="h-4 w-4 text-destructive" />
+                            <span className="text-xs text-muted-foreground">Recorded Value</span>
+                          </div>
+                          <p className="text-lg font-semibold text-destructive mt-1">{deviationData.value}</p>
+                          <p className="text-xs text-muted-foreground mt-1">Limit: {deviationData.limit}</p>
+                        </div>
+                        <div className="data-card">
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Batch Reference</span>
+                          </div>
+                          <p className="text-sm font-mono font-medium mt-1">{deviationData.batch}</p>
+                        </div>
                       </div>
-                    </div>
+                    </TabsContent>
 
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                      <Clock className="w-4 h-4 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Duration</p>
-                        <p className="text-sm font-medium">{deviationData.duration}</p>
+                    {/* Evidence Tab */}
+                    <TabsContent value="evidence" className="p-4 mt-0">
+                      <div className="text-sm text-muted-foreground text-center py-8">
+                        <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                        <p>No evidence documents attached.</p>
+                        <Button variant="outline" size="sm" className="mt-3">
+                          Upload Evidence
+                        </Button>
                       </div>
-                    </div>
+                    </TabsContent>
 
-                    <div className="pt-2 border-t">
-                      <p className="text-xs text-muted-foreground mb-2">Batch Reference</p>
-                      <Badge variant="secondary" className="font-mono">
-                        {deviationData.batch}
-                      </Badge>
-                    </div>
-                  </div>
+                    {/* Batch Logs Tab */}
+                    <TabsContent value="batch" className="p-4 mt-0">
+                      <div className="border rounded overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted">
+                            <tr>
+                              <th className="px-3 py-2 text-left font-medium">Time</th>
+                              <th className="px-3 py-2 text-left font-medium">Temperature</th>
+                              <th className="px-3 py-2 text-left font-medium">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {batchLogEntries.map((entry, idx) => (
+                              <tr key={idx} className="border-t">
+                                <td className="px-3 py-2 font-mono">{entry.time}</td>
+                                <td className="px-3 py-2">{entry.temp}</td>
+                                <td className="px-3 py-2">
+                                  <Badge
+                                    variant={
+                                      entry.status === "Excursion"
+                                        ? "destructive"
+                                        : entry.status === "Warning"
+                                        ? "outline"
+                                        : "secondary"
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {entry.status}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </TabsContent>
+
+                    {/* Audit Trail Tab */}
+                    <TabsContent value="audit" className="p-4 mt-0">
+                      <div className="space-y-2">
+                        {auditTrailEntries.map((entry, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-3 border rounded text-sm"
+                          >
+                            <div className="flex items-center gap-3">
+                              <History className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="font-medium">{entry.action}</p>
+                                <p className="text-xs text-muted-foreground">{entry.user}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-mono text-xs">{entry.timestamp}</p>
+                              <p className="text-xs text-muted-foreground">#{entry.id}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
 
-              {/* Right Column - AI Copilot (70%) */}
-              <div className="lg:col-span-7 space-y-6">
-                {/* Root Cause Prediction */}
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3 border-b">
-                    <CardTitle className="text-base font-semibold flex items-center">
-                      <Brain className="w-4 h-4 mr-2 text-accent" />
-                      AI Suggested Root Cause
+              {/* CAPA Plan Section */}
+              {showCapaPlan && (
+                <Card className="border mt-4 animate-fade-in">
+                  <CardHeader className="py-3 px-4 border-b">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                      Recommended CAPA Plan
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="p-4 rounded-lg bg-accent/5 border border-accent/20">
-                      <p className="text-foreground font-medium">
-                        HVAC Unit 4 Sensor Drift due to power fluctuation.
-                      </p>
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-muted-foreground">Confidence</span>
-                          <span className="text-sm font-semibold text-accent">92%</span>
-                        </div>
-                        <Progress value={92} className="h-2" />
-                      </div>
+                  <CardContent className="p-4 space-y-4">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                        CORRECTION (Immediate Action)
+                      </label>
+                      <Textarea
+                        value={correction}
+                        onChange={(e) => setCorrection(e.target.value)}
+                        className="min-h-[60px] resize-none text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                        PREVENTION (Long-term Action)
+                      </label>
+                      <Textarea
+                        value={prevention}
+                        onChange={(e) => setPrevention(e.target.value)}
+                        className="min-h-[60px] resize-none text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                        RISK ASSESSMENT
+                      </label>
+                      <Textarea
+                        value={riskAssessment}
+                        onChange={(e) => setRiskAssessment(e.target.value)}
+                        className="min-h-[40px] resize-none text-sm"
+                      />
+                    </div>
+
+                    <div className="pt-2 border-t flex justify-end">
+                      <Button
+                        onClick={handleSubmitForApproval}
+                        className="bg-primary hover:bg-primary-dark"
+                        disabled={status === "pending-approval"}
+                      >
+                        {status === "pending-approval" ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            Submitted
+                          </>
+                        ) : (
+                          "Submit for Approval"
+                        )}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
+              )}
+            </div>
 
-                {/* Similarity Engine */}
-                <Card className="border shadow-sm">
-                  <CardHeader className="pb-3 border-b">
-                    <CardTitle className="text-base font-semibold flex items-center">
-                      <Link2 className="w-4 h-4 mr-2 text-primary" />
-                      Similarity Engine
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Analysis based on <span className="font-semibold text-foreground">3 similar historical closed cases</span> (2023, 2024).
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {linkedCases.map((caseItem) => (
-                        <Badge
-                          key={caseItem.id}
-                          variant="outline"
-                          className="cursor-pointer hover:bg-primary/10 hover:border-primary transition-colors"
-                        >
-                          <Link2 className="w-3 h-3 mr-1" />
-                          Linked to {caseItem.id}
+            {/* Right Column - AI Sidecar Panel */}
+            <div className="xl:col-span-4">
+              <div className="sticky top-14 space-y-4">
+                {/* AI Diagnostic Panel */}
+                <Card className="border bg-panel">
+                  <CardHeader className="py-3 px-4 border-b bg-panel">
+                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-accent" />
+                      AI Diagnostic
+                      {status === "ai-ready" && (
+                        <Badge variant="secondary" className="ml-auto text-xs">
+                          Ready
                         </Badge>
-                      ))}
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-4">
+                    {/* Root Cause Analysis */}
+                    <div>
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">
+                        Root Cause Analysis
+                      </h4>
+                      <AIDataCard
+                        title="Primary Cause"
+                        value="HVAC Unit 4 Sensor Drift due to power fluctuation"
+                        confidence={92}
+                        source="Historical deviation pattern matching"
+                        sourceRef="Pattern DB v2.4"
+                      />
+                    </div>
+
+                    {/* Similarity Analysis */}
+                    <div>
+                      <h4 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider flex items-center gap-2">
+                        Similar Cases
+                        <button className="text-primary hover:underline text-xs font-normal">
+                          <ExternalLink className="h-3 w-3 inline mr-0.5" />
+                          View All
+                        </button>
+                      </h4>
+                      <SimilarityChart cases={linkedCases} />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-2 border-t space-y-2">
+                      <Button
+                        onClick={handleApproveRootCause}
+                        className="w-full bg-primary hover:bg-primary-dark text-sm"
+                        size="sm"
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Approve AI Suggestion
+                      </Button>
+
+                      {!showCapaPlan && !isGenerating && (
+                        <Button
+                          onClick={handleGenerateCapa}
+                          variant="outline"
+                          className="w-full text-sm"
+                          size="sm"
+                        >
+                          Generate CAPA Plan
+                        </Button>
+                      )}
+
+                      {isGenerating && (
+                        <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Generating CAPA...
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Generate CAPA Button */}
-                {!showCapaPlan && !isGenerating && (
-                  <Button 
-                    onClick={handleGenerateCapa}
-                    className="w-full h-12 text-base font-medium gradient-ai hover:opacity-90 transition-opacity"
-                  >
-                    <Sparkles className="w-5 h-5 mr-2" />
-                    Generate Recommended CAPA Plan
-                  </Button>
-                )}
-
-                {/* Loading State */}
-                {isGenerating && (
-                  <Card className="border shadow-sm">
-                    <CardContent className="p-8">
-                      <div className="flex flex-col items-center justify-center space-y-4">
-                        <div className="relative">
-                          <div className="h-16 w-16 rounded-full gradient-ai opacity-20 animate-ping absolute" />
-                          <div className="h-16 w-16 rounded-full gradient-ai flex items-center justify-center relative">
-                            <Loader2 className="h-8 w-8 text-white animate-spin" />
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <p className="font-medium text-foreground">AI is analyzing...</p>
-                          <p className="text-sm text-muted-foreground">Generating recommended CAPA plan</p>
-                        </div>
-                        <div className="w-full max-w-xs space-y-2">
-                          <div className="h-3 rounded skeleton-loader" />
-                          <div className="h-3 rounded skeleton-loader w-4/5" />
-                          <div className="h-3 rounded skeleton-loader w-3/5" />
-                        </div>
+                {/* Quick Stats */}
+                <Card className="border">
+                  <CardContent className="p-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="text-center">
+                        <p className="text-2xl font-semibold text-foreground">3</p>
+                        <p className="text-xs text-muted-foreground">Similar Cases</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* CAPA Plan Form */}
-                {showCapaPlan && (
-                  <Card className="border shadow-sm animate-fade-in-up">
-                    <CardHeader className="pb-3 border-b">
-                      <CardTitle className="text-base font-semibold flex items-center">
-                        <CheckCircle2 className="w-4 h-4 mr-2 text-success" />
-                        Recommended CAPA Plan
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-4">
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">
-                          Correction (Immediate Action)
-                        </label>
-                        <Textarea
-                          value={correction}
-                          onChange={(e) => setCorrection(e.target.value)}
-                          className="min-h-[80px] resize-none"
-                        />
+                      <div className="text-center">
+                        <p className="text-2xl font-semibold text-success">84%</p>
+                        <p className="text-xs text-muted-foreground">Avg Similarity</p>
                       </div>
-
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">
-                          Prevention (Long-term Action)
-                        </label>
-                        <Textarea
-                          value={prevention}
-                          onChange={(e) => setPrevention(e.target.value)}
-                          className="min-h-[80px] resize-none"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">
-                          Risk Assessment
-                        </label>
-                        <Textarea
-                          value={riskAssessment}
-                          onChange={(e) => setRiskAssessment(e.target.value)}
-                          className="min-h-[60px] resize-none"
-                        />
-                      </div>
-
-                      <div className="pt-4 border-t">
-                        <Button 
-                          onClick={handleSubmitForApproval}
-                          className="w-full h-11 bg-success hover:bg-success/90 text-success-foreground"
-                          disabled={status === "pending-approval"}
-                        >
-                          {status === "pending-approval" ? (
-                            <>
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                              Submitted for Approval
-                            </>
-                          ) : (
-                            "Submit for Approval"
-                          )}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
-        </SidebarInset>
+        </div>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
