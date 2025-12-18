@@ -154,9 +154,9 @@ export default function CapaDashboard() {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
               {/* Priority Tasks */}
-              <Card className="lg:col-span-3 border shadow-sm">
+              <Card className="xl:col-span-3 border shadow-sm">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold flex items-center">
                     <ClipboardCheck className="w-5 h-5 mr-2 text-primary" />
@@ -214,7 +214,7 @@ export default function CapaDashboard() {
               </Card>
 
               {/* Findings Trends Chart */}
-              <Card className="lg:col-span-2 border shadow-sm">
+              <Card className="xl:col-span-2 border shadow-sm">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold flex items-center">
                     <TrendingDown className="w-5 h-5 mr-2 text-success" />
@@ -282,9 +282,9 @@ export default function CapaDashboard() {
             </div>
 
             {/* Charts Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
               {/* Department Breakdown Chart */}
-              <Card className="lg:col-span-2 border shadow-sm">
+              <Card className="lg:col-span-2 xl:col-span-2 border shadow-sm">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold flex items-center">
                     <Building2 className="w-5 h-5 mr-2 text-primary" />
