@@ -1,6 +1,4 @@
-import { useState, useRef } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +43,6 @@ import {
   BarChart3,
   PieChartIcon,
   Activity,
-  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -113,8 +110,6 @@ const rootCauseData = [
 export default function Reports() {
   const [timeRange, setTimeRange] = useState("6months");
   const [activeTab, setActiveTab] = useState("overview");
-  const [isExporting, setIsExporting] = useState(false);
-  const reportRef = useRef<HTMLDivElement>(null);
 
   const kpiData = {
     totalCapas: 100,
@@ -125,84 +120,8 @@ export default function Reports() {
     effectivenessRate: 94,
   };
 
-  const handleExportPDF = async () => {
-    if (!reportRef.current) return;
-    
-    setIsExporting(true);
-    try {
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-      });
-      
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      
-      // Add header
-      pdf.setFontSize(20);
-      pdf.setTextColor(31, 41, 55);
-      pdf.text("CAPA Reports & Analytics", 14, 15);
-      pdf.setFontSize(10);
-      pdf.setTextColor(107, 114, 128);
-      pdf.text(`Generated: ${new Date().toLocaleDateString()} | Period: ${timeRange}`, 14, 22);
-      
-      // Add image below header
-      const contentHeight = imgHeight * ratio;
-      const availableHeight = pdfHeight - 30;
-      
-      if (contentHeight <= availableHeight) {
-        pdf.addImage(imgData, "PNG", imgX, 28, imgWidth * ratio, imgHeight * ratio);
-      } else {
-        // Multi-page support
-        let remainingHeight = imgHeight;
-        let position = 0;
-        let page = 0;
-        
-        while (remainingHeight > 0) {
-          if (page > 0) {
-            pdf.addPage();
-          }
-          
-          const sliceHeight = Math.min(remainingHeight, (availableHeight / ratio));
-          pdf.addImage(
-            imgData,
-            "PNG",
-            imgX,
-            page === 0 ? 28 : 10,
-            imgWidth * ratio,
-            imgHeight * ratio,
-            undefined,
-            "FAST",
-            0
-          );
-          
-          remainingHeight -= sliceHeight;
-          position += sliceHeight;
-          page++;
-        }
-      }
-      
-      pdf.save(`CAPA_Report_${new Date().toISOString().split("T")[0]}.pdf`);
-      toast.success("Report exported successfully");
-    } catch (error) {
-      console.error("Export failed:", error);
-      toast.error("Failed to export report");
-    } finally {
-      setIsExporting(false);
-    }
+  const handleExportPDF = () => {
+    toast.info("PDF export feature coming soon");
   };
 
   return (
@@ -232,20 +151,15 @@ export default function Reports() {
                     <SelectItem value="1year">Last Year</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="outline" onClick={handleExportPDF} disabled={isExporting}>
-                  {isExporting ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Download className="w-4 h-4 mr-2" />
-                  )}
-                  {isExporting ? "Exporting..." : "Export PDF"}
+                <Button variant="outline" onClick={handleExportPDF}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export PDF
                 </Button>
               </div>
             </div>
 
-            <div ref={reportRef}>
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
               <Card className="border shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 text-muted-foreground mb-1">
@@ -696,7 +610,6 @@ export default function Reports() {
                 </div>
               </TabsContent>
             </Tabs>
-            </div>
           </div>
         </SidebarInset>
       </div>
