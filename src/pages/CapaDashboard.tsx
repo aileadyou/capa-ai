@@ -14,7 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CapaSidebar } from "@/components/capa/CapaSidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Building2 } from "lucide-react";
 
 const findingsTrendData = [
   { month: "Jul", deviations: 12, audits: 5, complaints: 8 },
@@ -23,6 +24,15 @@ const findingsTrendData = [
   { month: "Oct", deviations: 9, audits: 6, complaints: 7 },
   { month: "Nov", deviations: 7, audits: 8, complaints: 5 },
   { month: "Dec", deviations: 5, audits: 5, complaints: 4 },
+];
+
+const departmentBreakdownData = [
+  { department: "QA", deviations: 8, audits: 12, complaints: 5 },
+  { department: "Manufacturing", deviations: 15, audits: 6, complaints: 3 },
+  { department: "QC", deviations: 6, audits: 8, complaints: 7 },
+  { department: "Packaging", deviations: 4, audits: 3, complaints: 9 },
+  { department: "Utilities", deviations: 5, audits: 2, complaints: 2 },
+  { department: "Supply Chain", deviations: 2, audits: 4, complaints: 6 },
 ];
 
 const priorityTasks = [
@@ -261,6 +271,70 @@ export default function CapaDashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Department Breakdown Chart */}
+            <Card className="border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <Building2 className="w-5 h-5 mr-2 text-primary" />
+                  Findings by Department
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">Breakdown across all finding types</p>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={departmentBreakdownData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={true} vertical={false} />
+                      <XAxis 
+                        type="number"
+                        tick={{ fontSize: 12 }}
+                        className="text-muted-foreground"
+                      />
+                      <YAxis 
+                        type="category"
+                        dataKey="department" 
+                        tick={{ fontSize: 12 }}
+                        className="text-muted-foreground"
+                        width={100}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--card))', 
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Legend 
+                        wrapperStyle={{ fontSize: '12px' }}
+                        iconType="rect"
+                        iconSize={12}
+                      />
+                      <Bar 
+                        dataKey="deviations" 
+                        name="Deviations"
+                        stackId="a" 
+                        fill="#f97316" 
+                        radius={[0, 0, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="audits" 
+                        name="Audit Findings"
+                        stackId="a" 
+                        fill="#3b82f6" 
+                      />
+                      <Bar 
+                        dataKey="complaints" 
+                        name="Complaints"
+                        stackId="a" 
+                        fill="#a855f7" 
+                        radius={[0, 4, 4, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </SidebarInset>
       </div>
