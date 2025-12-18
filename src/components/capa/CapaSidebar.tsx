@@ -24,7 +24,6 @@ import leadAiLogo from "@/assets/lead-ai-graphic.png";
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/" },
-  { title: "Data Management", icon: Database, url: "/data-management" },
   { title: "Deviations", icon: AlertTriangle, url: "/deviations" },
   { title: "CAPA Actions", icon: ClipboardCheck, url: "/capa-actions" },
   { title: "Audit Trail", icon: ScrollText, url: "/audit-trail" },
@@ -34,6 +33,8 @@ const menuItems = [
 export function CapaSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const isDataManagementActive = location.pathname === "/data-management";
 
   return (
     <Sidebar className="border-r border-sidebar-border">
@@ -80,8 +81,24 @@ export function CapaSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-2">
+      <SidebarFooter className="p-4 border-t border-sidebar-border space-y-4">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => navigate("/data-management")}
+              className={`w-full justify-start gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                isDataManagementActive
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              }`}
+            >
+              <Database className="h-5 w-5" />
+              <span className="font-medium">Data Management</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        
+        <div className="flex items-center gap-2 pt-2 border-t border-sidebar-border/50">
           <img src={leadAiLogo} alt="Lead AI" className="h-8 w-auto" />
           <div className="text-xs text-sidebar-foreground/50">
             <span>Powered by </span>
