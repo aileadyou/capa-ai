@@ -7,6 +7,7 @@ import {
   FileBarChart,
   Shield,
   Sparkles,
+  Database,
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,6 +24,7 @@ import leadAiLogo from "@/assets/lead-ai-graphic.png";
 
 const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, url: "/" },
+  { title: "Data Management", icon: Database, url: "/data-management" },
   { title: "Deviations", icon: AlertTriangle, url: "/deviations" },
   { title: "CAPA Actions", icon: ClipboardCheck, url: "/capa-actions" },
   { title: "Audit Trail", icon: ScrollText, url: "/audit-trail" },
