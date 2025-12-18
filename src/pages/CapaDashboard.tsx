@@ -8,7 +8,9 @@ import {
   TrendingDown,
   FileText,
   ClipboardCheck,
-  Activity
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -97,7 +99,7 @@ export default function CapaDashboard() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="border shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -147,6 +149,32 @@ export default function CapaDashboard() {
                     </div>
                     <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Clock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Monthly Comparison Card */}
+              <Card className="border shadow-sm">
+                <CardContent className="p-6">
+                  <p className="text-sm font-medium text-muted-foreground mb-3">Monthly Comparison</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">This Month</span>
+                      <span className="text-xl font-semibold text-foreground">14</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Last Month</span>
+                      <span className="text-xl font-semibold text-foreground">21</span>
+                    </div>
+                    <div className="pt-2 border-t">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center text-success">
+                          <ArrowDownRight className="w-4 h-4" />
+                          <span className="text-sm font-medium">33%</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">fewer findings</span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
