@@ -23,6 +23,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -145,20 +146,31 @@ export function CapaSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-slate-800">
-        {isCollapsed ? (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="w-full h-8 text-slate-400 hover:text-slate-100 hover:bg-slate-800"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        ) : (
-          <div className="px-2 py-1">
-            <p className="text-[10px] text-slate-500">v1.0.0 · Enterprise</p>
-          </div>
-        )}
+        <div className="flex flex-col gap-1">
+          <ThemeToggle collapsed={isCollapsed} />
+          {isCollapsed ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="w-full h-7 text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          ) : (
+            <div className="flex items-center justify-between px-2 py-1">
+              <p className="text-[10px] text-slate-500">v1.0.0 · Enterprise</p>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleSidebar}
+                className="h-5 w-5 text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+              >
+                <ChevronLeft className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
