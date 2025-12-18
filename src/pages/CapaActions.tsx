@@ -523,6 +523,7 @@ export default function CapaActions() {
                             className={`border cursor-pointer transition-all hover:shadow-md ${
                               capa.aiGenerated ? "bg-accent/5 border-accent/20" : ""
                             } ${capa.status === "overdue" ? "border-destructive/30" : ""}`}
+                            onClick={() => navigate(`/capa-actions/${capa.id}`)}
                           >
                             <CardContent className="p-4">
                               <div className="flex flex-col lg:flex-row lg:items-center gap-4">
