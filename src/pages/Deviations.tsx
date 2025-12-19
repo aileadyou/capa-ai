@@ -63,17 +63,20 @@ interface Finding {
 
 const allFindings: Finding[] = [
   { id: "DEV-2025-089", title: "Temperature Excursion - Warehouse B (Cold Storage)", batch: "#BF-VAC-2025-X", status: "ai-ready", priority: "critical", date: "2025-01-15", assignee: "Dr. Sarah Chen", department: "Quality Assurance", type: "Environmental", source: "deviation" },
-  { id: "DEV-2025-088", title: "Particulate Matter Detection - Clean Room A", batch: "#BF-INJ-2025-Y", status: "open", priority: "high", date: "2025-01-14", assignee: "James Wilson", department: "Manufacturing", type: "Environmental", source: "deviation" },
+  { id: "DEV-2025-088", title: "Particulate Matter Detection - Clean Room A", batch: "#BF-INJ-2025-Y", status: "ai-ready", priority: "high", date: "2025-01-14", assignee: "James Wilson", department: "Manufacturing", type: "Environmental", source: "deviation" },
   { id: "DEV-2025-087", title: "Documentation Gap - Batch Record Review", batch: "#BF-TAB-2025-Z", status: "in-progress", priority: "medium", date: "2025-01-13", assignee: "Maria Garcia", department: "Documentation", type: "Documentation", source: "deviation" },
-  { id: "DEV-2025-086", title: "Equipment Calibration Drift - HPLC Unit 3", batch: "#BF-API-2025-A", status: "in-progress", priority: "high", date: "2025-01-12", assignee: "Dr. Robert Kim", department: "Analytical", type: "Equipment", source: "deviation" },
+  { id: "DEV-2025-086", title: "Equipment Calibration Drift - HPLC Unit 3", batch: "#BF-API-2025-A", status: "ai-ready", priority: "high", date: "2025-01-12", assignee: "Dr. Robert Kim", department: "Analytical", type: "Equipment", source: "deviation" },
   { id: "DEV-2025-085", title: "Raw Material Specification Failure - Excipient Lot", batch: "#BF-TAB-2025-B", status: "open", priority: "critical", date: "2025-01-11", assignee: "Lisa Thompson", department: "Quality Control", type: "Material", source: "deviation" },
   { id: "DEV-2025-084", title: "Process Parameter Deviation - Granulation", batch: "#BF-TAB-2025-C", status: "closed", priority: "medium", date: "2025-01-10", assignee: "David Chen", department: "Manufacturing", type: "Process", source: "deviation" },
+  { id: "DEV-2025-083", title: "Humidity Control Failure - Stability Chamber 2", batch: "#BF-API-2025-D", status: "ai-ready", priority: "critical", date: "2025-01-09", assignee: "Dr. Sarah Chen", department: "Quality Control", type: "Environmental", source: "deviation" },
   { id: "AUD-2025-023", title: "GMP Documentation Non-Compliance - SOP Updates", batch: "N/A", status: "open", priority: "high", date: "2025-01-14", assignee: "Dr. Emily Watson", department: "Quality Assurance", type: "Compliance", source: "audit" },
-  { id: "AUD-2025-022", title: "Training Records Gap - New Equipment Operators", batch: "N/A", status: "in-progress", priority: "medium", date: "2025-01-12", assignee: "Michael Brown", department: "Training", type: "Training", source: "audit" },
+  { id: "AUD-2025-022", title: "Training Records Gap - New Equipment Operators", batch: "N/A", status: "ai-ready", priority: "medium", date: "2025-01-12", assignee: "Michael Brown", department: "Training", type: "Training", source: "audit" },
   { id: "AUD-2025-021", title: "Supplier Qualification Incomplete - API Vendor", batch: "N/A", status: "ai-ready", priority: "critical", date: "2025-01-10", assignee: "Jennifer Lee", department: "Supply Chain", type: "Supplier", source: "audit" },
-  { id: "CMP-2025-045", title: "Product Discoloration Reported - Tablet Batch", batch: "#BF-TAB-2025-G", status: "open", priority: "high", date: "2025-01-15", assignee: "Maria Garcia", department: "Quality Assurance", type: "Product Quality", source: "complaint" },
+  { id: "AUD-2025-020", title: "CAPA Effectiveness Review Overdue", batch: "N/A", status: "ai-ready", priority: "high", date: "2025-01-08", assignee: "Dr. Emily Watson", department: "Quality Assurance", type: "Compliance", source: "audit" },
+  { id: "CMP-2025-045", title: "Product Discoloration Reported - Tablet Batch", batch: "#BF-TAB-2025-G", status: "ai-ready", priority: "high", date: "2025-01-15", assignee: "Maria Garcia", department: "Quality Assurance", type: "Product Quality", source: "complaint" },
   { id: "CMP-2025-044", title: "Packaging Damage - Distribution Issue", batch: "#BF-INJ-2025-H", status: "in-progress", priority: "medium", date: "2025-01-13", assignee: "Lisa Thompson", department: "Packaging", type: "Packaging", source: "complaint" },
   { id: "CMP-2025-043", title: "Adverse Event Report - Injection Site Reaction", batch: "#BF-INJ-2025-I", status: "ai-ready", priority: "critical", date: "2025-01-11", assignee: "Dr. Sarah Chen", department: "Pharmacovigilance", type: "Safety", source: "complaint" },
+  { id: "CMP-2025-042", title: "Foreign Particle Found in Vial", batch: "#BF-INJ-2025-J", status: "ai-ready", priority: "critical", date: "2025-01-09", assignee: "James Wilson", department: "Quality Control", type: "Product Quality", source: "complaint" },
 ];
 
 const priorityOrder: Record<Priority, number> = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -115,7 +118,7 @@ export default function Deviations() {
   }, [activeTab, searchQuery, sortField, sortOrder, typeFilter, sourceFilter]);
 
   const handleRowClick = (finding: Finding) => {
-    if (finding.id === "DEV-2025-089" || finding.id === "AUD-2025-021" || finding.id === "CMP-2025-043") {
+    if (finding.status === "ai-ready") {
       navigate("/investigation");
     }
   };
