@@ -18,8 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EnterpriseSidebar } from "@/components/EnterpriseSidebar";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { EnterpriseLayout } from "@/components/EnterpriseLayout";
 import { AIDataCard } from "@/components/AIDataCard";
 import { SimilarityChart } from "@/components/SimilarityChart";
 import { SystemLogToast } from "@/components/SystemLogToast";
@@ -106,49 +105,35 @@ export default function Investigation() {
   };
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
-      <EnterpriseSidebar />
+    <EnterpriseLayout
+      breadcrumbs={[
+        { label: "Quality" },
+        { label: "Findings", href: "/deviations" },
+        { label: `#${deviationData.id}` },
+      ]}
+      title={deviationData.title}
+      subtitle={`Batch: ${deviationData.batch}`}
+      actions={
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            {deviationData.status}
+          </Badge>
+          <Badge variant="destructive" className="text-xs">
+            {deviationData.priority}
+          </Badge>
+        </div>
+      }
+    >
+      {/* System Log Feedback */}
+      {showSystemLog && (
+        <SystemLogToast
+          action="Action recorded to audit trail"
+          timestamp={new Date().toLocaleTimeString()}
+          auditId="99281"
+        />
+      )}
 
-      {/* Main content with sidebar offset */}
-      <div className="flex-1 ml-52">
-        {/* Header */}
-        <header className="sticky top-0 z-40 bg-background border-b border-border px-4 py-2">
-          <div className="flex items-center justify-between">
-            <Breadcrumbs
-              items={[
-                { label: "Quality", href: "/quality" },
-                { label: "Deviations", href: "/deviations" },
-                { label: `#${deviationData.id}` },
-              ]}
-            />
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
-                {deviationData.status}
-              </Badge>
-              <Badge
-                variant="destructive"
-                className="text-xs"
-              >
-                {deviationData.priority}
-              </Badge>
-            </div>
-          </div>
-        </header>
-
-        {/* System Log Feedback */}
-        {showSystemLog && (
-          <div className="px-4 pt-2">
-            <SystemLogToast
-              action="Action recorded to audit trail"
-              timestamp={new Date().toLocaleTimeString()}
-              auditId="99281"
-            />
-          </div>
-        )}
-
-        {/* Content */}
-        <div className="p-4">
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
             {/* Left Column - Main Content with Tabs */}
             <div className="xl:col-span-8">
               <Card className="border">
@@ -458,8 +443,6 @@ export default function Investigation() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+    </EnterpriseLayout>
   );
 }
