@@ -91,7 +91,7 @@ export default function CapaDashboard() {
       }
     >
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-tutorial="dashboard-cards">
         <Card className="border shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -173,7 +173,7 @@ export default function CapaDashboard() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
         {/* Priority Tasks */}
-        <Card className="xl:col-span-3 border shadow-sm">
+        <Card className="xl:col-span-3 border shadow-sm" data-tutorial="priority-tasks">
           <CardHeader className="pb-2 px-4 pt-4">
             <CardTitle className="text-sm font-semibold flex items-center">
               <ClipboardCheck className="w-4 h-4 mr-2 text-primary" />
@@ -181,10 +181,11 @@ export default function CapaDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 px-4 pb-4">
-            {priorityTasks.map((task) => (
+            {priorityTasks.map((task, index) => (
               <div
                 key={task.id}
                 onClick={() => handleTaskClick(task.id)}
+                data-tutorial={task.status === "ai-ready" && index === 0 ? "ai-ready-item" : undefined}
                 className={`p-3 rounded border cursor-pointer transition-all hover:shadow-sm ${
                   task.status === "ai-ready" 
                     ? "bg-accent/5 border-accent/30 hover:border-accent" 
@@ -262,7 +263,7 @@ export default function CapaDashboard() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3" data-tutorial="charts-section">
         {/* Department Breakdown Chart */}
         <Card className="lg:col-span-2 border shadow-sm">
           <CardHeader className="pb-2 px-4 pt-4">
