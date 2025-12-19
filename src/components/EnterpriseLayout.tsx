@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { CapaSidebar } from "@/components/capa/CapaSidebar";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { TutorialButton } from "@/components/TutorialButton";
 import leadAiLogo from "@/assets/lead-ai-logo-white.png";
 
 interface BreadcrumbItem {
@@ -28,7 +29,7 @@ export function EnterpriseLayout({
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <CapaSidebar />
-        <SidebarInset className="flex-1 flex flex-col">
+        <SidebarInset className="flex-1 flex flex-col" data-tutorial="sidebar">
           <div className="flex-1 p-4 lg:p-6 space-y-4">
             {/* Breadcrumbs */}
             {breadcrumbs && breadcrumbs.length > 0 && (
@@ -43,7 +44,10 @@ export function EnterpriseLayout({
                   <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
                 )}
               </div>
-              {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+              <div className="flex items-center gap-2 shrink-0">
+                <TutorialButton />
+                {actions}
+              </div>
             </div>
 
             {/* Content */}
