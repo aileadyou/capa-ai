@@ -4,6 +4,26 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-05-30, 06:04 PM — Infinite Loop Fix (Zustand Selector Stability)
+
+### Completed
+- **Root cause**: `getCAPAById` calls `attachActions` which does `{ ...capa, correctiveActions: [].filter(...) }` — returns a new object reference on every render, causing Zustand's `useSyncExternalStore` to think state changed → infinite re-render loop.
+- **Fix applied to 8 files**: replaced `useCapaStore((state) => state.getCAPAById(id))` with stable selectors (`state.capas.find(...)`, `state.correctiveActions`, `state.preventiveActions`) + `useMemo` to derive the enriched CAPA only when underlying data changes.
+- Added `useMemo` import to `D5PreventiveActionPage` and `D6VerificationPage` where it was missing.
+- TSC clean.
+
+### Files Touched
+- `src/pages/nova/CapaDetailPage.tsx`
+- `src/pages/nova/eight-d/D1ProblemPage.tsx`
+- `src/pages/nova/eight-d/D2ContainmentPage.tsx`
+- `src/pages/nova/eight-d/D3RCAPage.tsx`
+- `src/pages/nova/eight-d/D4CorrectiveActionPage.tsx`
+- `src/pages/nova/eight-d/D5PreventiveActionPage.tsx`
+- `src/pages/nova/eight-d/D6VerificationPage.tsx`
+- `src/pages/nova/eight-d/D7SignOffPage.tsx`
+
+---
+
 ## 2026-05-30, 5:45 PM — Nova Chat Quick Prompts + Intake Labels + Impact Rationale
 
 ### Completed
