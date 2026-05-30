@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CheckCircle2, Circle, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Circle, MessageSquareText, Save, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { NovaCoachTip } from "@/components/nova/NovaCoachTip";
 import { ScoreSidebar } from "@/components/score/ScoreSidebar";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore } from "@/store";
+import { useAuditTrailStore, useCapaStore, useUIStore } from "@/store";
 import type { CAPACase } from "@/types";
 import {
   computeProblemSpecificity,
@@ -51,18 +51,22 @@ function evaluateProblemStatement(statement: string, capa: CAPACase) {
   const checks = [
     {
       label: "At least 50 characters",
+      hint: "+2 pts — minimum length for a meaningful problem statement",
       passed: trimmed.length >= 50,
     },
     {
       label: "Date or audit timing",
+      hint: "+3 pts — add exact date, shift, or audit reference",
       passed: /\b(\d{1,2}\s?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)|\d{4}-\d{2}-\d{2}|June|May|shift|audit)\b/i.test(trimmed),
     },
     {
       label: "Area or location",
+      hint: "+3 pts — include room, line, zone, or customer location",
       passed: /\b(Grade|Suite|Room|Line|Area|Warehouse|Zone|Hospital|customer|location)\b/i.test(trimmed),
     },
     {
       label: capa.type === "audit" ? "System or record reference" : "Equipment or system reference",
+      hint: "+3 pts — name the specific equipment ID, system, or record type",
       passed:
         capa.type === "audit"
           ? /\b(AUD|record|SOP|verification|Q100|GMP|system)\b/i.test(trimmed)
@@ -70,10 +74,12 @@ function evaluateProblemStatement(statement: string, capa: CAPACase) {
     },
     {
       label: "Batch, lot, or scoped record count",
+      hint: "+2 pts — include affected batch ID, lot number, or record count",
       passed: /\b(batch|lot|lots|VAC|VAX|VX|MAT|record|records|vial)\b/i.test(trimmed),
     },
     {
       label: "Measurable observation or clear issue",
+      hint: "+3 pts — state the measured deviation, count, duration, or specific failure",
       passed: /\b(count|threshold|minutes|three|one|missing|verification|particulate|excursion|completed after)\b/i.test(trimmed),
     },
   ];
@@ -121,6 +127,7 @@ export function D1ProblemPage() {
   const updateProblemStatement = useCapaStore((state) => state.updateProblemStatement);
   const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
+  const openNovaChat = useUIStore((state) => state.openNovaChat);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const initialStatement = useMemo(() => {
@@ -263,12 +270,21 @@ export function D1ProblemPage() {
                     ) : (
                       <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                     )}
-                    <span className={check.passed ? "" : "text-muted-foreground"}>{check.label}</span>
+                    <div className="min-w-0">
+                      <div className={check.passed ? "" : "text-muted-foreground"}>{check.label}</div>
+                      {!check.passed && (
+                        <div className="mt-0.5 text-xs text-nova/80">{check.hint}</div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
 
               <div className="flex flex-col gap-3 md:flex-row md:justify-end">
+                <Button type="button" variant="outline" onClick={() => openNovaChat({ step: "problem", capaId: id })}>
+                  <MessageSquareText className="mr-2 h-4 w-4" />
+                  Ask Nova
+                </Button>
                 <Button type="button" variant="outline" onClick={() => saveProblem(false)}>
                   <Save className="mr-2 h-4 w-4" />
                   Save Draft

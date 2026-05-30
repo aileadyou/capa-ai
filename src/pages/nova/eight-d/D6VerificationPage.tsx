@@ -17,7 +17,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { BlockerBanner } from "@/components/shared/BlockerBanner";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { NovaChatPanel } from "@/components/nova/NovaChatPanel";
 import { NovaCoachTip } from "@/components/nova/NovaCoachTip";
 import { ScoreSidebar } from "@/components/score/ScoreSidebar";
 import NotFound from "@/pages/NotFound";
@@ -300,7 +299,7 @@ export function D6VerificationPage() {
               </div>
 
               <div className="flex flex-col gap-3 md:flex-row md:justify-end">
-                <Button type="button" variant="outline" onClick={openNovaChat}>
+                <Button type="button" variant="outline" onClick={() => openNovaChat({ step: "verification", capaId: id })}>
                   <MessageSquareText className="mr-2 h-4 w-4" />
                   Coach me on verification
                 </Button>
@@ -321,7 +320,6 @@ export function D6VerificationPage() {
         </div>
       </div>
 
-      <NovaChatPanel step="verification" />
     </div>
   );
 }

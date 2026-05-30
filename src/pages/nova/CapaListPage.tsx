@@ -14,8 +14,8 @@ import {
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { ScorePill } from "@/components/shared/ScorePill";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { useCapaStore } from "@/store";
-import type { CAPACase, CAPAStatus, CAPAType, CorrectiveAction, PreventiveAction, Severity } from "@/types";
+import { useCapaStore, usePersonaStore } from "@/store";
+import type { CAPACase, CAPAStatus, CAPAType, CorrectiveAction, PersonaID, PreventiveAction, Severity } from "@/types";
 import { formatCAPAType, formatDate, formatRelativeTime } from "@/utils/formatters";
 
 const allValue = "all";
@@ -57,6 +57,8 @@ export function CapaListPage() {
   const capas = useCapaStore((state) => state.capas);
   const correctiveActions = useCapaStore((state) => state.correctiveActions);
   const preventiveActions = useCapaStore((state) => state.preventiveActions);
+  const personas = usePersonaStore((state) => state.personas);
+  const getPersonaName = (id: PersonaID) => personas.find((p) => p.id === id)?.displayName ?? id;
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<CAPAType | typeof allValue>(allValue);
   const [statusFilter, setStatusFilter] = useState<CAPAStatus | typeof allValue>(allValue);
@@ -218,7 +220,7 @@ export function CapaListPage() {
                   <th className="px-3 py-2">Severity</th>
                   <th className="px-3 py-2">Status</th>
                   <th className="px-3 py-2">Quality</th>
-                  <th className="px-3 py-2">Department</th>
+                  <th className="px-3 py-2">PIC</th>
                   <th className="px-3 py-2">Due Date</th>
                   <th className="px-3 py-2">Action</th>
                 </tr>
@@ -231,7 +233,9 @@ export function CapaListPage() {
                         {capa.id}
                       </Link>
                       <div className="mt-1 font-medium">{capa.title}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">Source: {capa.findingId}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {capa.findingId} · {capa.department}
+                      </div>
                     </td>
                     <td className="px-3 py-3">{formatCAPAType(capa.type)}</td>
                     <td className="px-3 py-3">
@@ -243,7 +247,7 @@ export function CapaListPage() {
                     <td className="px-3 py-3">
                       <ScorePill score={capa.score.total} />
                     </td>
-                    <td className="px-3 py-3">{capa.department}</td>
+                    <td className="px-3 py-3 text-xs">{getPersonaName(capa.assignedTo as PersonaID)}</td>
                     <td className="px-3 py-3">
                       {nextDueDate ? (
                         <div>

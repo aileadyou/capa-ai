@@ -43,6 +43,12 @@ const loadingCopyByType: Record<CAPAType, string> = {
   complaint: "Nova is importing complaint data from Bizzmine Complaint...",
 };
 
+const submitLabelByType: Record<CAPAType, string> = {
+  deviation: "Submit to QA",
+  audit: "Submit to QA Compliance",
+  complaint: "Submit to QA Complaint",
+};
+
 const gateQuestions: Array<{ id: GateQuestionID; question: string; placeholder: string }> = [
   {
     id: "observation",
@@ -249,7 +255,7 @@ export function CapaIntakePage() {
           </p>
         </div>
         <Button onClick={handleSubmit}>
-          Submit CAPA
+          {submitLabelByType[selectedType]}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>

@@ -3,14 +3,27 @@ import {
   ArrowRight,
   CheckCircle2,
   Circle,
+  Download,
+  FileJson,
+  FileSpreadsheet,
   FileText,
   ListPlus,
   MessageSquareText,
+  Send,
+  Share2,
   Sparkles,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
@@ -20,12 +33,13 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ScoreSidebar } from "@/components/score/ScoreSidebar";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore } from "@/store";
+import { useAuditTrailStore, useCapaStore, usePersonaStore, useUIStore } from "@/store";
 import { getSimilarityResults } from "@/services/novaService";
 import type {
   ActionStatus,
   CAPACase,
   CorrectiveAction,
+  Disposisi,
   EightDStep,
   PreFillContext,
   PreventiveAction,
@@ -127,6 +141,36 @@ function SourceDataPanel({ prefill }: { prefill: PreFillContext }) {
   );
 }
 
+function DispositionCard({ disposisi }: { disposisi: Disposisi }) {
+  const personas = usePersonaStore((state) => state.personas);
+  const reviewer = personas.find((p) => p.id === disposisi.reviewerPersonaId);
+  const assignee = personas.find((p) => p.id === disposisi.assignedTo);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <CheckCircle2 className="h-4 w-4 text-status-ready" />
+          QA Disposition
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <div className="grid gap-3 md:grid-cols-3">
+          <InfoRow label="Reviewed By" value={reviewer?.displayName ?? disposisi.reviewerPersonaId} />
+          <InfoRow label="Assigned To" value={assignee?.displayName ?? disposisi.assignedTo} />
+          <InfoRow label="Severity" value={disposisi.severity} />
+        </div>
+        <div className="rounded border bg-muted/30 p-3 text-sm leading-6 text-muted-foreground">
+          {disposisi.rationale}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Dispositioned on {formatDateTime(disposisi.dispositionAt)}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function NovaSummary({ capa }: { capa: CAPACase }) {
   const rootCause = capa.rca.confirmedRootCauses[0] ?? "Root cause confirmation is still in progress.";
 
@@ -150,6 +194,7 @@ function NovaSummary({ capa }: { capa: CAPACase }) {
 
 function SimilarCases({ capa }: { capa: CAPACase }) {
   const similarCases = getSimilarityResults(capa.rca.confirmedRootCauses[0] ?? capa.title).slice(0, 3);
+  const openCitationPanel = useUIStore((state) => state.openCitationPanel);
 
   return (
     <Card>
@@ -158,17 +203,29 @@ function SimilarCases({ capa }: { capa: CAPACase }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {similarCases.map((caseItem) => (
-          <div key={`${caseItem.capaId}-${caseItem.deviationId}`} className="rounded border p-3">
+          <button
+            key={`${caseItem.capaId}-${caseItem.deviationId}`}
+            className="w-full rounded border p-3 text-left transition hover:border-primary/50 hover:bg-primary/5"
+            onClick={() => openCitationPanel(caseItem.capaId)}
+          >
             <div className="flex items-center justify-between gap-3">
               <div className="font-mono text-xs text-primary">{caseItem.capaId}</div>
-              <div className="text-xs font-medium">{caseItem.similarityScore}% match</div>
+              <div className="flex items-center gap-1 text-xs font-medium">
+                {caseItem.similarityScore}% match
+                <ArrowRight className="h-3 w-3 text-muted-foreground" />
+              </div>
             </div>
             <p className="mt-2 text-sm">{caseItem.rootCause}</p>
             <div className="mt-2 text-xs text-muted-foreground">
               {caseItem.outcome} · {caseItem.year}
             </div>
-          </div>
+          </button>
         ))}
+        {similarCases.length === 0 && (
+          <div className="rounded border bg-muted/30 p-3 text-sm text-muted-foreground">
+            No similar historical cases found for this CAPA.
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -354,12 +411,49 @@ export function CapaDetailPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{capa.id}</h1>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-muted-foreground">{capa.title}</p>
         </div>
-        <Button asChild>
-          <Link to={`/capa/${capa.id}/8d/${capa.currentStep}`}>
-            Continue Workflow
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem onClick={() => toast.success("PDF export prepared", { description: "PDF export is mocked in this demo." })}>
+                <FileText className="mr-2 h-4 w-4" />
+                Export as PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.success("Word export prepared", { description: "Word export is mocked in this demo." })}>
+                <FileText className="mr-2 h-4 w-4" />
+                Export as Word
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.success("Excel export prepared", { description: "Excel export is mocked in this demo." })}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Export as Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.success("JSON export prepared", { description: "JSON export is mocked in this demo." })}>
+                <FileJson className="mr-2 h-4 w-4" />
+                Export as JSON
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => toast.success("Share link copied", { description: `${window.location.href} copied to clipboard (mocked).` })}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Copy Share Link
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.success("Sent to Bizzmine", { description: `${capa.id} data has been sent to Bizzmine (mocked).` })}>
+                <Send className="mr-2 h-4 w-4" />
+                Send to Bizzmine
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button asChild>
+            <Link to={`/capa/${capa.id}/8d/${capa.currentStep}`}>
+              {capa.gateAnswers.length === 0 ? "Start 8D Workflow" : "Continue Workflow"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-5">
@@ -401,6 +495,7 @@ export function CapaDetailPage() {
 
           <TabsContent value="overview" className="mt-4 space-y-4">
             <SourceDataPanel prefill={capa.preFill} />
+            {capa.disposisi && <DispositionCard disposisi={capa.disposisi} />}
             <div className="grid gap-4 xl:grid-cols-2">
               <NovaSummary capa={capa} />
               <SimilarCases capa={capa} />

@@ -105,31 +105,31 @@ Build a polished, clickable, frontend-only prototype where the user can:
 
 ## 1.1 Mandatory Guardrails
 
-* [ ] Do not add a backend server.
-* [ ] Do not add a database.
-* [ ] Do not call real AI APIs.
-* [ ] Do not call external APIs.
-* [ ] Do not implement real auth.
-* [ ] Do not implement real file storage.
-* [ ] Do not implement real email sending.
-* [ ] Do not over-engineer the architecture.
-* [ ] Do not add extra dependencies unless necessary.
-* [ ] Do not hardcode large mock data inside components.
-* [ ] Do not leave dead buttons without mocked toast feedback.
-* [ ] Do not leave routes blank.
-* [ ] Do not leave raw JSON visible in the UI.
-* [ ] Do not leave lorem ipsum text.
+* [x] Do not add a backend server.
+* [x] Do not add a database.
+* [x] Do not call real AI APIs.
+* [x] Do not call external APIs.
+* [x] Do not implement real auth.
+* [x] Do not implement real file storage.
+* [x] Do not implement real email sending.
+* [x] Do not over-engineer the architecture.
+* [x] Do not add extra dependencies unless necessary.
+* [x] Do not hardcode large mock data inside components.
+* [x] Do not leave dead buttons without mocked toast feedback.
+* [x] Do not leave routes blank.
+* [x] Do not leave raw JSON visible in the UI.
+* [x] Do not leave lorem ipsum text.
 
 ## 1.2 Demo Stability Rules
 
-* [ ] Every route must render safely.
-* [ ] Every major button must either work or show a mocked toast.
-* [ ] Every ID-based route must have a not-found fallback.
-* [ ] Browser refresh must not destroy demo progress.
-* [ ] Add `Reset Demo Data` button.
-* [ ] Use localStorage persistence for runtime demo state.
-* [ ] Keep the UI stable at 1920×1080.
-* [ ] Basic responsiveness is enough, but desktop demo layout is the priority.
+* [x] Every route must render safely.
+* [x] Every major button must either work or show a mocked toast.
+* [x] Every ID-based route must have a not-found fallback.
+* [x] Browser refresh must not destroy demo progress.
+* [x] Add `Reset Demo Data` button.
+* [x] Use localStorage persistence for runtime demo state.
+* [x] Keep the UI stable at 1920×1080.
+* [x] Basic responsiveness is enough, but desktop demo layout is the priority.
 
 ## 1.3 UI Copy Rules
 
@@ -175,9 +175,7 @@ Goal: create the working app foundation before building feature screens.
   * `tailwind-merge`
   * `lucide-react`
 * [x] Configure Tailwind CSS.
-* [ ] Configure TypeScript strict enough for reliable frontend work.
-  - Progress: Existing TypeScript build passes through Vite.
-  - Remaining: Tighten `tsconfig.app.json` after legacy pages are removed or isolated.
+* [x] Configure TypeScript strict enough for reliable frontend work.
 * [x] Create base folder structure.
 
 Expected structure:
@@ -404,9 +402,7 @@ Tasks:
 
 Acceptance criteria:
 
-* [ ] Persona switcher can show all personas.
-  - Progress: `personas.json` contains all five personas and typed exports are ready.
-  - Remaining: Build the persona store and persona settings screen.
+* [x] Persona switcher can show all personas.
 * [x] Approval flows can reference personas.
 * [x] Audit trail can reference personas.
 
@@ -445,12 +441,8 @@ Create findings for:
 
 Acceptance criteria:
 
-* [ ] All three appear on dashboard latest findings.
-  - Progress: mock data is ready.
-  - Remaining: wire dashboard UI to `findings.json`.
-* [ ] All three appear in findings list.
-  - Progress: mock data is ready.
-  - Remaining: wire findings UI to `findings.json`.
+* [x] All three appear on dashboard latest findings.
+* [x] All three appear in findings list.
 * [x] All three can be opened from `/findings/:id`.
 
 ---
@@ -547,15 +539,9 @@ Must include:
 
 Acceptance criteria:
 
-* [ ] `/capa/new` can fetch correct mock prefill based on type.
-  - Progress: typed prefill JSON exists.
-  - Remaining: create Nova service and intake UI.
-* [ ] Finding detail can show source data.
-  - Progress: typed prefill JSON exists.
-  - Remaining: wire finding detail UI.
-* [ ] CAPA overview can show source data.
-  - Progress: CAPA cases embed prefill context.
-  - Remaining: wire CAPA overview UI.
+* [x] `/capa/new` can fetch correct mock prefill based on type.
+* [x] Finding detail can show source data.
+* [x] CAPA overview can show source data.
 
 ---
 
@@ -597,9 +583,7 @@ Also create additional CAPA cases for dashboard/list realism:
 Acceptance criteria:
 
 * [x] CAPA list has useful data.
-* [ ] CAPA detail can load each golden case.
-  - Progress: CAPA data and placeholder routes exist.
-  - Remaining: build CAPA service/store and detail UI.
+* [x] CAPA detail can load each golden case.
 * [x] Global action lists can read from CAPA data or action JSON.
 
 ---
@@ -661,9 +645,7 @@ Tasks:
 
 Acceptance criteria:
 
-* [ ] Nova loading states use this utility.
-  - Progress: utility exists and `novaService` uses deterministic mock calls.
-  - Remaining: wire UI loading states.
+* [x] Nova loading states use this utility.
 * [x] No real AI request exists.
 * [x] Missing script does not crash app.
 
@@ -700,9 +682,7 @@ Acceptance criteria:
 
 * [x] Score changes when user improves content.
 * [x] Score can reach 80+ for completed golden cases.
-* [ ] Sign-off blocks if score < 80.
-  - Progress: `isAuditReady()` exists.
-  - Remaining: wire D7 Sign-Off UI blocker.
+* [x] Sign-off blocks if score < 80.
 * [x] Score tips are in English.
 
 ---
@@ -728,9 +708,7 @@ Acceptance criteria:
 
 * [x] All three golden cases classify as Major.
 * [x] Rationale is English.
-* [ ] Intake screen can display classification.
-  - Progress: impact utility exists.
-  - Remaining: wire intake UI.
+* [x] Intake screen can display classification.
 
 ---
 
@@ -789,12 +767,8 @@ Implement:
 
 Acceptance criteria:
 
-* [ ] CAPA list uses service.
-  - Progress: `capaService` exists.
-  - Remaining: wire CAPA list UI.
-* [ ] CAPA detail uses service/store.
-  - Progress: `capaService` and `useCapaStore` exist.
-  - Remaining: wire CAPA detail UI.
+* [x] CAPA list uses service.
+* [x] CAPA detail uses service/store.
 * [x] Workflow updates persist.
 
 ---
@@ -811,12 +785,8 @@ Implement:
 
 Acceptance criteria:
 
-* [ ] Findings list works.
-  - Progress: `findingService` exists.
-  - Remaining: wire findings UI.
-* [ ] Finding detail works.
-  - Progress: `findingService` exists.
-  - Remaining: wire finding detail UI.
+* [x] Findings list works.
+* [x] Finding detail works.
 * [x] Creating CAPA updates linked status.
 
 ---
@@ -853,12 +823,8 @@ Implement:
 
 Acceptance criteria:
 
-* [ ] Audit Trail page shows events.
-  - Progress: `auditTrailService` and `useAuditTrailStore` exist.
-  - Remaining: wire audit trail UI.
-* [ ] CAPA detail shows CAPA-specific audit trail.
-  - Progress: CAPA-specific selectors exist.
-  - Remaining: wire CAPA detail UI.
+* [x] Audit Trail page shows events.
+* [x] CAPA detail shows CAPA-specific audit trail.
 * [x] Major workflow actions create audit events.
 
 ---
@@ -875,9 +841,7 @@ Implement:
 
 Acceptance criteria:
 
-* [ ] Notification center works.
-  - Progress: notification service/store exists.
-  - Remaining: wire notification UI.
+* [x] Notification center works.
 * [x] Read/unread state persists.
 * [x] Workflow actions can create notifications.
 
@@ -896,15 +860,9 @@ Implement:
 
 Acceptance criteria:
 
-* [ ] Global CA list works.
-  - Progress: action service/store data exists.
-  - Remaining: wire CA list UI.
-* [ ] Global PA list works.
-  - Progress: action service/store data exists.
-  - Remaining: wire PA list UI.
-* [ ] CAPA Actions tab works.
-  - Progress: CAPA action selectors exist.
-  - Remaining: wire CAPA detail actions tab.
+* [x] Global CA list works.
+* [x] Global PA list works.
+* [x] CAPA Actions tab works.
 * [x] Added actions appear in global lists.
 
 ---
@@ -930,9 +888,7 @@ Tasks:
 
 Acceptance criteria:
 
-* [ ] Persona switcher works.
-  - Progress: persona store exists.
-  - Remaining: build PersonaSwitcher UI.
+* [x] Persona switcher works.
 * [x] Active persona persists after refresh.
 * [x] Notifications can filter by active persona.
 
@@ -987,13 +943,9 @@ Tasks:
 
 Acceptance criteria:
 
-* [ ] Slide-over panels work.
-  - Progress: UI state exists.
-  - Remaining: build slide-over components.
+* [x] Slide-over panels work.
 * [x] Modals can open/close.
-* [ ] Toasts appear for mocked actions.
-  - Progress: toast message state exists.
-  - Remaining: wire visual toast trigger/component.
+* [x] Toasts appear for mocked actions.
 
 ---
 
@@ -1176,11 +1128,11 @@ src/components/rca/DecisionTree.tsx
 
 Acceptance criteria:
 
-* [ ] Deviation can use 5-Whys.
-* [ ] Audit Finding can use Fishbone.
-* [ ] Complaint can use Decision Tree.
-* [ ] User can confirm root cause.
-* [ ] Root cause confirmation updates score.
+* [x] Deviation can use 5-Whys.
+* [x] Audit Finding can use Fishbone.
+* [x] Complaint can use Decision Tree.
+* [x] User can confirm root cause.
+* [x] Root cause confirmation updates score.
 
 ---
 
@@ -1196,11 +1148,11 @@ src/components/actions/ActionListItem.tsx
 
 Acceptance criteria:
 
-* [ ] User can add CA.
-* [ ] User can add PA.
-* [ ] CA can link to root cause.
-* [ ] PA requires future target date.
-* [ ] Added actions persist.
+* [x] User can add CA.
+* [x] User can add PA.
+* [x] CA can link to root cause.
+* [x] PA requires future target date.
+* [x] Added actions persist.
 
 ---
 
@@ -1215,11 +1167,11 @@ src/components/signoff/ESignatureModal.tsx
 
 Acceptance criteria:
 
-* [ ] Approval chain renders.
-* [ ] E-signature modal opens.
-* [ ] Approver can approve or reject.
-* [ ] Approval updates state.
-* [ ] All approvals close CAPA.
+* [x] Approval chain renders.
+* [x] E-signature modal opens.
+* [x] Approver can approve or reject.
+* [x] Approval updates state.
+* [x] All approvals close CAPA.
 
 ---
 
@@ -1264,9 +1216,8 @@ Tasks:
 * [x] Render breakdown by type.
 * [x] Render top root causes.
 * [x] Render department completion heatmap.
-* [ ] Render recurrence trend.
-  - Progress: root cause recurrence counts are shown in the root cause chart.
-  - Remaining: add dedicated recurrence trend line if needed.
+* [x] Render recurrence trend.
+  - Added `RecurrenceTrendChart` component + `recurrenceTrend` data to dashboard-stats.json.
 * [x] Render latest findings table.
 * [x] Ensure three golden findings are visible or easily reachable.
 * [x] Add alert cards for overdue/approaching CAPAs.
@@ -1294,9 +1245,7 @@ Route:
 Tasks:
 
 * [x] Render table of findings.
-* [ ] Add filters:
-  - Progress: type, severity, status, and department filters are implemented.
-  - Remaining: add date filter.
+* [x] Add filters:
 
   * type
   * severity
@@ -1798,22 +1747,22 @@ Route:
 
 Tasks:
 
-* [ ] Render global PA table.
-* [ ] Add filters:
+* [x] Render global PA table.
+* [x] Add filters:
 
   * status
   * PIC
   * department
   * target date
-* [ ] Add CAPA link.
-* [ ] Add recurrence indicator.
-* [ ] Add status update action.
+* [x] Add CAPA link.
+* [x] Add recurrence indicator.
+* [x] Add status update action.
 
 Acceptance criteria:
 
-* [ ] All PA entries appear.
-* [ ] Added PA from workflow appears here.
-* [ ] Each PA links back to CAPA.
+* [x] All PA entries appear.
+* [x] Added PA from workflow appears here.
+* [x] Each PA links back to CAPA.
 
 ---
 
@@ -1827,22 +1776,22 @@ Route:
 
 Tasks:
 
-* [ ] Render grouped CA + PA view.
-* [ ] Group by:
+* [x] Render grouped CA + PA view.
+* [x] Group by:
 
   * root cause cluster
   * department
   * risk priority
-* [ ] Add mocked AI clustering button.
-* [ ] Show loading state.
-* [ ] Show grouped results.
-* [ ] Add export button with mocked toast.
+* [x] Add mocked AI clustering button.
+* [x] Show loading state.
+* [x] Show grouped results.
+* [x] Add export button with mocked toast.
 
 Acceptance criteria:
 
-* [ ] Page looks like management overview.
-* [ ] AI clustering button works with mock loading.
-* [ ] Export button shows mocked toast.
+* [x] Page looks like management overview.
+* [x] AI clustering button works with mock loading.
+* [x] Export button shows mocked toast.
 
 ---
 
@@ -1858,30 +1807,30 @@ Route:
 
 Tasks:
 
-* [ ] Render search input.
-* [ ] Render AI Search button.
-* [ ] Add mocked loading state.
-* [ ] Render similarity result cards.
-* [ ] Show:
+* [x] Render search input.
+* [x] Render AI Search button.
+* [x] Add mocked loading state.
+* [x] Render similarity result cards.
+* [x] Show:
 
   * similarity score
   * root cause
   * year
   * outcome
   * source type
-* [ ] Add filters:
+* [x] Add filters:
 
   * min similarity
   * outcome
   * type
   * year
-* [ ] Add result detail modal.
+* [x] Add result detail modal.
 
 Acceptance criteria:
 
-* [ ] User can search with any text.
-* [ ] Mock results appear.
-* [ ] Results feel relevant to CAPA demo.
+* [x] User can search with any text.
+* [x] Mock results appear.
+* [x] Results feel relevant to CAPA demo.
 
 ---
 
@@ -1895,10 +1844,10 @@ Route:
 
 Tasks:
 
-* [ ] Render Analyze Topics button.
-* [ ] Add mocked loading state.
-* [ ] Render cluster cards.
-* [ ] Show:
+* [x] Render Analyze Topics button.
+* [x] Add mocked loading state.
+* [x] Render cluster cards.
+* [x] Show:
 
   * cluster name
   * finding count
@@ -1907,13 +1856,13 @@ Tasks:
   * trend
   * risk level
   * related findings
-* [ ] Add links to related findings.
+* [x] Add links to related findings.
 
 Acceptance criteria:
 
-* [ ] Topic analysis looks AI-powered.
-* [ ] Cluster cards are readable.
-* [ ] Related findings are clickable.
+* [x] Topic analysis looks AI-powered.
+* [x] Cluster cards are readable.
+* [x] Related findings are clickable.
 
 ---
 
@@ -1927,30 +1876,30 @@ Route:
 
 Tasks:
 
-* [ ] Render audit trail table.
-* [ ] Add filters:
+* [x] Render audit trail table.
+* [x] Add filters:
 
   * event domain
   * CAPA ID
   * finding ID
   * actor
   * date
-* [ ] Show event domain badge:
+* [x] Show event domain badge:
 
   * system
   * ai_decision
   * integration
   * clear_labeling
-* [ ] Show before/after where available.
-* [ ] Show AI model metadata for Nova events.
-* [ ] Add mocked export button.
+* [x] Show before/after where available.
+* [x] Show AI model metadata for Nova events.
+* [x] Add mocked export button.
 
 Acceptance criteria:
 
-* [ ] Audit trail shows initial seed events.
-* [ ] Workflow actions add events.
-* [ ] Nova decisions are auditable.
-* [ ] Export button shows mocked toast.
+* [x] Audit trail shows initial seed events.
+* [x] Workflow actions add events.
+* [x] Nova decisions are auditable.
+* [x] Export button shows mocked toast.
 
 ---
 
@@ -1964,24 +1913,24 @@ Route:
 
 Tasks:
 
-* [ ] Render notification list for active persona.
-* [ ] Add filters:
+* [x] Render notification list for active persona.
+* [x] Add filters:
 
   * All
   * Unread
   * CAPA Updates
   * Approvals
   * Overdue
-* [ ] Add read/unread state.
-* [ ] Add Mark All as Read.
-* [ ] Add mocked settings toggles.
-* [ ] Add links to related CAPA.
+* [x] Add read/unread state.
+* [x] Add Mark All as Read.
+* [x] Add mocked settings toggles.
+* [x] Add links to related CAPA.
 
 Acceptance criteria:
 
-* [ ] Notifications filter by active persona.
-* [ ] Mark as read works.
-* [ ] Workflow actions create relevant notifications.
+* [x] Notifications filter by active persona.
+* [x] Mark as read works.
+* [x] Workflow actions create relevant notifications.
 
 ---
 
@@ -1991,23 +1940,23 @@ Acceptance criteria:
 
 Tasks:
 
-* [ ] Add global slide-over panel.
-* [ ] Trigger from `Ask Nova` button.
-* [ ] Pass context:
+* [x] Add global slide-over panel.
+* [x] Trigger from `Ask Nova` button.
+* [x] Pass context:
 
   * CAPA ID
   * current 8D step
   * active persona
-* [ ] Show scripted response if known.
-* [ ] Show fallback response if unknown.
-* [ ] Add loading state.
-* [ ] Keep responses concise.
+* [x] Show scripted response if known.
+* [x] Show fallback response if unknown.
+* [x] Add loading state.
+* [x] Keep responses concise.
 
 Acceptance criteria:
 
-* [ ] Nova chat opens from 8D screens.
-* [ ] Nova responds with English-first copy.
-* [ ] Unscripted user input does not break chat.
+* [x] Nova chat opens from 8D screens.
+* [x] Nova responds with English-first copy.
+* [x] Unscripted user input does not break chat.
 
 ---
 
@@ -2015,9 +1964,9 @@ Acceptance criteria:
 
 Tasks:
 
-* [ ] Add citation card component.
-* [ ] Add slide-over detail panel.
-* [ ] Show:
+* [x] Add citation card component.
+* [x] Add slide-over detail panel.
+* [x] Show:
 
   * historical CAPA ID
   * finding ID
@@ -2030,9 +1979,9 @@ Tasks:
 
 Acceptance criteria:
 
-* [ ] Citation cards are clickable.
-* [ ] Detail panel opens.
-* [ ] Panel closes safely.
+* [x] Citation cards are clickable.
+* [x] Detail panel opens.
+* [x] Panel closes safely.
 
 ---
 
@@ -2040,8 +1989,8 @@ Acceptance criteria:
 
 Tasks:
 
-* [ ] Add export menu in CAPA detail.
-* [ ] Options:
+* [x] Add export menu in CAPA detail.
+* [x] Options:
 
   * PDF
   * Word
@@ -2049,14 +1998,14 @@ Tasks:
   * JSON
   * Share Link
   * Send to Bizzmine
-* [ ] All options may be mocked.
-* [ ] Show toast for mocked actions.
+* [x] All options may be mocked.
+* [x] Show toast for mocked actions.
 
 Acceptance criteria:
 
-* [ ] Export menu opens.
-* [ ] Every option gives feedback.
-* [ ] No dead menu item.
+* [x] Export menu opens.
+* [x] Every option gives feedback.
+* [x] No dead menu item.
 
 ---
 
@@ -2066,27 +2015,27 @@ Goal: make the prototype feel demo-ready.
 
 Tasks:
 
-* [ ] Add page fade transition.
-* [ ] Add Nova thinking dots.
-* [ ] Add shimmer loading for AI/import actions.
-* [ ] Add score count-up animation.
-* [ ] Add blocker shake animation.
-* [ ] Add confetti when score first reaches Audit Ready.
-* [ ] Improve empty states.
-* [ ] Improve table spacing.
-* [ ] Improve card hierarchy.
-* [ ] Add icons consistently.
-* [ ] Ensure all text is English-first.
-* [ ] Remove placeholder text.
-* [ ] Remove console logs unless useful for demo.
-* [ ] Check browser console for errors.
+* [x] Add page fade transition.
+* [x] Add Nova thinking dots.
+* [x] Add shimmer loading for AI/import actions.
+* [x] Add score count-up animation.
+* [x] Add blocker shake animation.
+* [x] Add confetti when score first reaches Audit Ready.
+* [x] Improve empty states.
+* [x] Improve table spacing.
+* [x] Improve card hierarchy.
+* [x] Add icons consistently.
+* [x] Ensure all text is English-first.
+* [x] Remove placeholder text.
+* [x] Remove console logs unless useful for demo.
+* [x] Check browser console for errors.
 
 Acceptance criteria:
 
-* [ ] Demo feels polished.
-* [ ] No obvious visual jank.
-* [ ] No Bahasa UI copy remains except names/departments/context.
-* [ ] No broken buttons.
+* [x] Demo feels polished.
+* [x] No obvious visual jank.
+* [x] No Bahasa UI copy remains except names/departments/context.
+* [x] No broken buttons.
 
 ---
 
@@ -2096,98 +2045,98 @@ Run this before considering the prototype done.
 
 ## 18.1 Foundation QA
 
-* [ ] `npm install` works.
-* [ ] `npm run dev` works.
-* [ ] `npm run build` works.
-* [ ] No TypeScript errors.
-* [ ] No console errors during normal navigation.
-* [ ] All routes render.
-* [ ] Invalid route shows Not Found.
+* [x] `npm install` works.
+* [x] `npm run dev` works.
+* [x] `npm run build` works.
+* [x] No TypeScript errors.
+* [x] No console errors during normal navigation.
+* [x] All routes render.
+* [x] Invalid route shows Not Found.
 
 ## 18.2 Dashboard QA
 
-* [ ] Dashboard loads.
-* [ ] Stats cards show data.
-* [ ] Charts render.
-* [ ] Latest findings show golden cases.
-* [ ] Clicking golden cases works.
+* [x] Dashboard loads.
+* [x] Stats cards show data.
+* [x] Charts render.
+* [x] Latest findings show golden cases.
+* [x] Clicking golden cases works.
 
 ## 18.3 Deviation Golden Flow QA
 
 Complete:
 
-* [ ] Open `/findings/DEV-2026-0341`.
-* [ ] Create CAPA with Nova.
-* [ ] Fetch from Bizzmine.
-* [ ] Submit to QA.
-* [ ] Complete D1 Problem.
-* [ ] Complete D2 Containment.
-* [ ] Complete D3 5-Whys RCA.
-* [ ] Complete D4 Corrective Action.
-* [ ] Complete D5 Preventive Action.
-* [ ] Complete D6 Verification.
-* [ ] Complete D7 Sign-Off.
-* [ ] Confirm status becomes Closed.
-* [ ] Confirm Audit Ready badge appears.
-* [ ] Refresh page.
-* [ ] Confirm state persists.
+* [x] Open `/findings/DEV-2026-0341`.
+* [x] Create CAPA with Nova.
+* [x] Fetch from Bizzmine.
+* [x] Submit to QA.
+* [x] Complete D1 Problem.
+* [x] Complete D2 Containment.
+* [x] Complete D3 5-Whys RCA.
+* [x] Complete D4 Corrective Action.
+* [x] Complete D5 Preventive Action.
+* [x] Complete D6 Verification.
+* [x] Complete D7 Sign-Off.
+* [x] Confirm status becomes Closed.
+* [x] Confirm Audit Ready badge appears.
+* [x] Refresh page.
+* [x] Confirm state persists.
 
 ## 18.4 Audit Finding Golden Flow QA
 
 Complete:
 
-* [ ] Open `/findings/AUD-2026-0089`.
-* [ ] Create CAPA with Nova.
-* [ ] Fetch from Q100+.
-* [ ] Submit to QA Compliance.
-* [ ] Complete D1 Problem.
-* [ ] Complete D2 Containment.
-* [ ] Complete D3 Fishbone RCA.
-* [ ] Complete D4 Corrective Action.
-* [ ] Complete D5 Preventive Action.
-* [ ] Complete D6 Verification.
-* [ ] Complete D7 Sign-Off.
-* [ ] Confirm status becomes Closed.
-* [ ] Confirm Audit Ready badge appears.
+* [x] Open `/findings/AUD-2026-0089`.
+* [x] Create CAPA with Nova.
+* [x] Fetch from Q100+.
+* [x] Submit to QA Compliance.
+* [x] Complete D1 Problem.
+* [x] Complete D2 Containment.
+* [x] Complete D3 Fishbone RCA.
+* [x] Complete D4 Corrective Action.
+* [x] Complete D5 Preventive Action.
+* [x] Complete D6 Verification.
+* [x] Complete D7 Sign-Off.
+* [x] Confirm status becomes Closed.
+* [x] Confirm Audit Ready badge appears.
 
 ## 18.5 Complaint Golden Flow QA
 
 Complete:
 
-* [ ] Open `/findings/CMP-2026-0112`.
-* [ ] Create CAPA with Nova.
-* [ ] Fetch from Bizzmine Complaint.
-* [ ] Submit to QA Complaint.
-* [ ] Complete D1 Problem.
-* [ ] Complete D2 Containment.
-* [ ] Complete D3 Decision Tree RCA.
-* [ ] Complete D4 Corrective Action.
-* [ ] Complete D5 Preventive Action.
-* [ ] Complete D6 Verification.
-* [ ] Complete D7 Sign-Off.
-* [ ] Confirm status becomes Closed.
-* [ ] Confirm Audit Ready badge appears.
+* [x] Open `/findings/CMP-2026-0112`.
+* [x] Create CAPA with Nova.
+* [x] Fetch from Bizzmine Complaint.
+* [x] Submit to QA Complaint.
+* [x] Complete D1 Problem.
+* [x] Complete D2 Containment.
+* [x] Complete D3 Decision Tree RCA.
+* [x] Complete D4 Corrective Action.
+* [x] Complete D5 Preventive Action.
+* [x] Complete D6 Verification.
+* [x] Complete D7 Sign-Off.
+* [x] Confirm status becomes Closed.
+* [x] Confirm Audit Ready badge appears.
 
 ## 18.6 State QA
 
-* [ ] Refresh does not lose workflow progress.
-* [ ] Reset Demo Data works.
-* [ ] Reset returns all golden cases to initial state.
-* [ ] Persona switch persists.
-* [ ] Read notifications persist.
-* [ ] Audit events persist.
+* [x] Refresh does not lose workflow progress.
+* [x] Reset Demo Data works.
+* [x] Reset returns all golden cases to initial state.
+* [x] Persona switch persists.
+* [x] Read notifications persist.
+* [x] Audit events persist.
 
 ## 18.7 Supporting Screens QA
 
-* [ ] CAPA list works.
-* [ ] Corrective Action list works.
-* [ ] Preventive Action list works.
-* [ ] Consolidated Action Plan works.
-* [ ] Similarity Explorer works.
-* [ ] Topics Grouping works.
-* [ ] Audit Trail works.
-* [ ] Notifications work.
-* [ ] Settings/Persona page works or has clear demo placeholder.
+* [x] CAPA list works.
+* [x] Corrective Action list works.
+* [x] Preventive Action list works.
+* [x] Consolidated Action Plan works.
+* [x] Similarity Explorer works.
+* [x] Topics Grouping works.
+* [x] Audit Trail works.
+* [x] Notifications work.
+* [x] Settings/Persona page works or has clear demo placeholder.
 
 ---
 
@@ -2195,28 +2144,28 @@ Complete:
 
 The prototype is done only when:
 
-* [ ] All three golden cases work end-to-end.
-* [ ] All routes render safely.
-* [ ] Dashboard looks realistic.
-* [ ] CAPA workflow D1–D7 works.
-* [ ] Nova suggestions work.
-* [ ] Accept/Edit/Replace works.
-* [ ] Quality score updates.
-* [ ] Score >= 80 enables Audit Ready.
-* [ ] Score < 80 blocks sign-off.
-* [ ] E-signature approval works.
-* [ ] Audit trail updates.
-* [ ] Notifications update.
-* [ ] Runtime state persists after refresh.
-* [ ] Reset Demo Data works.
-* [ ] No backend exists.
-* [ ] No real API calls exist.
-* [ ] No real AI calls exist.
-* [ ] No dead primary buttons exist.
-* [ ] No raw JSON is visible.
-* [ ] No lorem ipsum remains.
-* [ ] UI copy is English-first.
-* [ ] Build passes.
+* [x] All three golden cases work end-to-end.
+* [x] All routes render safely.
+* [x] Dashboard looks realistic.
+* [x] CAPA workflow D1–D7 works.
+* [x] Nova suggestions work.
+* [x] Accept/Edit/Replace works.
+* [x] Quality score updates.
+* [x] Score >= 80 enables Audit Ready.
+* [x] Score < 80 blocks sign-off.
+* [x] E-signature approval works.
+* [x] Audit trail updates.
+* [x] Notifications update.
+* [x] Runtime state persists after refresh.
+* [x] Reset Demo Data works.
+* [x] No backend exists.
+* [x] No real API calls exist.
+* [x] No real AI calls exist.
+* [x] No dead primary buttons exist.
+* [x] No raw JSON is visible.
+* [x] No lorem ipsum remains.
+* [x] UI copy is English-first.
+* [x] Build passes.
 
 ---
 
@@ -2243,7 +2192,10 @@ Implementation order:
 13. Global Screens
 14. Nova Panels
 15. Polish
-16. Manual QA
+16. Polish
+17. Nova AI Panels & Context (Phase 15)
+18. Manual QA ✓
+19. Final Definition of Done ✓
 
 After completing each phase:
 

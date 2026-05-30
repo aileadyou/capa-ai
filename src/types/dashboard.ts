@@ -37,3 +37,9 @@ export interface SeverityBreakdownEntry {
   count: number;
 }
 
+export interface RecurrenceTrendPoint {
+  label: string;
+  recurred: number;
+  newFindings: number;
+}
+

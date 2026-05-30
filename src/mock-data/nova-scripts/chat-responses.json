@@ -2,23 +2,102 @@
   "problem": [
     {
       "prompt": "How can I improve the problem statement?",
-      "response": "Observation:\nThe current statement should name the date, area, equipment, material scope, and measured condition.\n\nRecommendation:\nMention the 12-minute excursion, HEPA-FF-L2-07, Grade A Fill Suite, and affected batches.\n\nAudit Rationale:\nA specific statement gives QA enough context to evaluate impact without re-reading the source record."
+      "response": "Observation:\nThe current statement should name the date, area, equipment, material scope, and measured condition.\n\nRecommendation:\nMention the excursion date, HEPA unit reference, Grade A area, and the affected batch. A strong D1 statement removes ambiguity about scope before investigators open source records.\n\nAudit Rationale:\nA specific problem statement gives QA enough context to evaluate impact without re-reading the source record."
+    },
+    {
+      "prompt": "What should I include in D1?",
+      "response": "Observation:\nD1 must capture the 5 specificity elements: when, where, what system or equipment, what material or batch, and what measurable observation.\n\nRecommendation:\nAdd the exact date and shift, the area classification (e.g. Grade A), the equipment or system ID, the affected lot or record, and a quantified measurement or description of the deviation.\n\nAudit Rationale:\nMissing any of these five elements reduces the problem specificity score and risks audit rejection at D1 review."
+    },
+    {
+      "prompt": "Does my problem statement qualify?",
+      "response": "Observation:\nNova checks for date/shift, area or location, equipment or system ID, batch or record reference, and a measurable observation.\n\nRecommendation:\nReview the quality score sidebar — each specificity element contributes to the Problem Specificity score. A score of 20 or above passes the D1 gate.\n\nAudit Rationale:\nA qualified D1 statement demonstrates the investigation was scoped correctly from the start."
+    }
+  ],
+  "containment": [
+    {
+      "prompt": "What makes a good containment action?",
+      "response": "Observation:\nContainment must immediately reduce risk to product, patient, or regulatory standing while the investigation proceeds.\n\nRecommendation:\nInclude a specific hold or quarantine action, a PIC assignment, and a deadline. Reference the affected batch, lot, or record set.\n\nAudit Rationale:\nContainment shows regulators the team responded promptly and controlled the risk before root cause analysis was complete."
+    },
+    {
+      "prompt": "Does my containment action cover all risks?",
+      "response": "Observation:\nA complete containment action addresses product risk, process risk, and notification risk.\n\nRecommendation:\nCheck that affected batches are under hold, the affected process or area is restricted, and QA has been notified for disposition.\n\nAudit Rationale:\nA partial containment that leaves one risk pathway open can create a major audit finding during inspection."
+    },
+    {
+      "prompt": "How urgent is containment in this case?",
+      "response": "Observation:\nContainment urgency depends on whether affected product is still in process, in the warehouse, or distributed.\n\nRecommendation:\nFor Grade A excursions and particulate complaints, treat containment as immediate — same day, same shift if possible. For documentation gaps, containment means placing records under QA review within 24 hours.\n\nAudit Rationale:\nRegulatory guidance expects containment to be proportional to risk. Delayed containment signals inadequate CAPA governance."
     }
   ],
   "rca": [
     {
       "prompt": "Is this root cause deep enough?",
-      "response": "Observation:\nThe current root cause points to the maintenance interval, but should also explain why the interval was not updated.\n\nRecommendation:\nConnect the fixed 18-month SOP interval to missing trend-based reassessment criteria.\n\nAudit Rationale:\nAuditors expect the root cause to address the system weakness, not only the failed component."
+      "response": "Observation:\nThe current root cause points to the proximate failure, but should also explain why the system control failed.\n\nRecommendation:\nFor equipment-based root causes, link the SOP revision cycle to the change control process. For documentation gaps, connect the gap to the absence of a real-time verification control.\n\nAudit Rationale:\nAuditors expect the root cause to address the system weakness, not only the failed component."
+    },
+    {
+      "prompt": "How many whys should I go?",
+      "response": "Observation:\nThe 5-Whys method requires at least 4 verified levels to pass the quality gate. The confirmed root cause must address a systemic control failure, not only a proximate cause.\n\nRecommendation:\nKeep asking 'why' until you reach a process, procedure, or governance failure that a corrective action can directly fix. Stopping at equipment failure without explaining why the failure was not prevented is insufficient.\n\nAudit Rationale:\nA root cause analysis that stops at the symptom level cannot produce effective preventive actions."
+    },
+    {
+      "prompt": "What is the confirmed root cause for this case?",
+      "response": "Observation:\nNova's suggested root cause for this case connects the documented failure mode to the responsible system-level control gap.\n\nRecommendation:\nReview the suggested root cause in the RCA panel and accept or refine it. The confirmed root cause must be linkable to at least one corrective action in D4.\n\nAudit Rationale:\nA root cause that cannot be directly addressed by a corrective action is not sufficiently actionable for audit purposes."
+    }
+  ],
+  "ca": [
+    {
+      "prompt": "What makes a good corrective action?",
+      "response": "Observation:\nA corrective action must directly address the confirmed root cause and be verifiable.\n\nRecommendation:\nInclude a clear action description, a PIC, a due date, the linked root cause, and a verification method that QA can independently review.\n\nAudit Rationale:\nRegulators look for a clear causal chain: root cause → corrective action → verification evidence. Missing any element weakens the CAPA."
+    },
+    {
+      "prompt": "How do I link the CA to the root cause?",
+      "response": "Observation:\nThe CA must explicitly reference the root cause it is addressing in the Linked Root Cause field.\n\nRecommendation:\nSelect the confirmed root cause from the dropdown in the Add Corrective Action form. The text should be identical to the confirmed root cause approved in D3.\n\nAudit Rationale:\nA corrective action that cannot be traced to a confirmed root cause is often flagged as inadequate during CAPA effectiveness review."
+    },
+    {
+      "prompt": "Does this CA address the root cause?",
+      "response": "Observation:\nA strong CA changes the system or process that failed — not just the symptom.\n\nRecommendation:\nIf the root cause is a missing SOP control, the CA must update or retrain against that SOP. If it is a maintenance interval, the CA must correct the schedule and document the change.\n\nAudit Rationale:\nAuditors test whether the CA would have prevented the original failure. If the answer is no, the CA is insufficient."
+    }
+  ],
+  "pa": [
+    {
+      "prompt": "What makes a good preventive action?",
+      "response": "Observation:\nA preventive action targets recurrence risk in similar processes, areas, or systems beyond the immediate CAPA scope.\n\nRecommendation:\nFocus on SOP changes, checklist controls, trend review triggers, training with effectiveness verification, and escalation thresholds that reduce the probability of similar events.\n\nAudit Rationale:\nPreventive actions demonstrate that the CAPA addresses systemic risk, not just the individual incident."
+    },
+    {
+      "prompt": "How is PA different from CA?",
+      "response": "Observation:\nCA addresses the confirmed root cause to correct the current failure. PA addresses potential recurrence in related processes or systems.\n\nRecommendation:\nFor a HEPA maintenance gap, CA fixes the specific unit. PA revises the broader PM schedule and adds reminders. For a documentation gap, CA corrects the records. PA updates the SOP and adds verification controls.\n\nAudit Rationale:\nRegulators evaluate both CA and PA. A CAPA with only CA and no PA suggests the team did not think about system-level risk."
+    },
+    {
+      "prompt": "Is the PA forward-looking enough?",
+      "response": "Observation:\nA PA that only repeats the corrective action is not accepted as preventive. It must address the broader recurrence risk.\n\nRecommendation:\nUse action words like revise, update, add, trend, retrain, escalate, or monitor. The PA should target a system, SOP, schedule, or control that reduces the chance of recurrence beyond this one case.\n\nAudit Rationale:\nThe quality score rewards forward-looking PA language. Backward-looking language reduces the effectiveness score."
     }
   ],
   "verification": [
     {
       "prompt": "What evidence should I attach?",
-      "response": "Observation:\nVerification should prove containment, correction, and sustained control.\n\nRecommendation:\nAttach EM re-test results, requalification summary, and QA batch exposure assessment.\n\nAudit Rationale:\nThese records show the CAPA restored process control and evaluated product impact."
+      "response": "Observation:\nVerification evidence must prove that the root cause was addressed and the corrective action was effective.\n\nRecommendation:\nAttach requalification reports, re-test data, spot check summaries, or trend monitoring records depending on the CAPA type. Include QA sign-off on the evidence.\n\nAudit Rationale:\nThese records show the CAPA restored process control and evaluated product impact. Missing evidence is the most common reason for CAPA rejection."
+    },
+    {
+      "prompt": "What verification method should I use?",
+      "response": "Observation:\nThe verification method should match the type of corrective action taken.\n\nRecommendation:\nFor equipment corrections: environmental re-test and requalification. For documentation corrections: QA spot check and document review. For process corrections: batch trend monitoring and process review.\n\nAudit Rationale:\nA verification method that does not directly test the corrective action outcome is insufficient for audit purposes."
+    },
+    {
+      "prompt": "How do I demonstrate CAPA effectiveness?",
+      "response": "Observation:\nCapa effectiveness requires evidence that the root cause no longer produces the failure.\n\nRecommendation:\nFor the three golden demo cases, Nova will accept either consecutive clean EM results, clean documentation spot checks, or absence of repeated complaints as effectiveness evidence.\n\nAudit Rationale:\nThe effectiveness check is required before CAPA closure. It should be documented with a clear pass/fail assessment against the original failure criterion."
+    }
+  ],
+  "signoff": [
+    {
+      "prompt": "What does audit ready mean?",
+      "response": "Observation:\nAudit Ready means the CAPA quality score is 80 or above across all four categories.\n\nRecommendation:\nCheck the score sidebar. If any category is below 20, identify which step needs improvement and return to that step before proceeding to sign-off.\n\nAudit Rationale:\nAudit Ready status demonstrates that the CAPA meets internal quality standards and is defensible during an external inspection."
+    },
+    {
+      "prompt": "Why is the score below 80?",
+      "response": "Observation:\nThe quality score has four components: Problem Specificity, Root Cause Depth, Action Effectiveness, and Containment Strength.\n\nRecommendation:\nReview the score breakdown in the sidebar to identify the lowest-scoring category. Return to that step and improve the content — add specifics, confirm root cause, add CA/PA, or strengthen verification.\n\nAudit Rationale:\nEach category has a 25-point maximum. A total below 80 means at least one category is below the expected standard for audit readiness."
+    },
+    {
+      "prompt": "Who needs to approve this CAPA?",
+      "response": "Observation:\nThe approval chain depends on the CAPA type and severity.\n\nRecommendation:\nFor Deviation and Audit Finding: Department Head → QA Deviation/Compliance → Head of QA. For Complaint: QA Complaint → Department Head → Head of QA. For Critical severity cases, SME co-approval is also required.\n\nAudit Rationale:\nThe approval chain documents management accountability for the CAPA outcome and is reviewed during external inspections."
     }
   ],
   "fallback": {
-    "response": "Observation:\nI do not have a scripted response for that exact question yet.\n\nRecommendation:\nUse the current CAPA step, source data, confirmed root cause, and audit readiness score to decide the next action.\n\nAudit Rationale:\nThe demo keeps Nova deterministic so every stakeholder walkthrough remains stable."
+    "response": "Observation:\nNova can help refine this step by checking whether the content is specific, evidence-based, linked to root cause, and strong enough for audit review.\n\nRecommendation:\nTry one of the suggested prompts above, or ask about the score, the root cause, the verification evidence, or the approval requirements for this step.\n\nAudit Rationale:\nThe demo keeps Nova deterministic so every stakeholder walkthrough remains stable and audit-traceable."
   }
 }
-

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CheckCircle2, Circle, GitBranch, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Circle, GitBranch, MessageSquareText, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,7 @@ import { ScoreSidebar } from "@/components/score/ScoreSidebar";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
 import { kgCitations } from "@/mock-data";
-import { useAuditTrailStore, useCapaStore } from "@/store";
+import { useAuditTrailStore, useCapaStore, useUIStore } from "@/store";
 import type {
   DecisionNode,
   FishboneCategory,
@@ -244,6 +244,7 @@ export function D3RCAPage() {
   const updateRCA = useCapaStore((state) => state.updateRCA);
   const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
+  const openNovaChat = useUIStore((state) => state.openNovaChat);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const initialMethod = useMemo<RCAMethod>(() => {
@@ -546,6 +547,10 @@ export function D3RCAPage() {
               </div>
 
               <div className="flex flex-col gap-3 md:flex-row md:justify-end">
+                <Button type="button" variant="outline" onClick={() => openNovaChat({ step: "rca", capaId: id })}>
+                  <MessageSquareText className="mr-2 h-4 w-4" />
+                  Ask Nova
+                </Button>
                 <Button type="button" variant="outline" onClick={() => saveRCA(false)}>
                   <Save className="mr-2 h-4 w-4" />
                   Save Draft

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CheckCircle2, Circle, ListChecks, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Circle, ListChecks, MessageSquareText, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,7 @@ import { NovaSuggestionCard } from "@/components/nova/NovaSuggestionCard";
 import { ScoreSidebar } from "@/components/score/ScoreSidebar";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore } from "@/store";
+import { useAuditTrailStore, useCapaStore, useUIStore } from "@/store";
 import type { NovaSuggestionStatus, PreventiveAction } from "@/types";
 import { computeActionEffectiveness, computeTotalQualityScore } from "@/utils/scoring";
 import { formatCAPAType, formatDate } from "@/utils/formatters";
@@ -125,7 +125,7 @@ function evaluatePreventiveAction(description: string, pic: string, targetDate: 
   };
 }
 
-function ActionList({ actions }: { actions: PreventiveAction[] }) {
+function ActionList({ actions, onRemove }: { actions: PreventiveAction[]; onRemove: (id: string) => void }) {
   return (
     <Card>
       <CardHeader>
@@ -140,11 +140,21 @@ function ActionList({ actions }: { actions: PreventiveAction[] }) {
         {actions.map((action) => (
           <div key={action.id} className="rounded border p-3">
             <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="font-mono text-xs text-primary">{action.id}</div>
                 <p className="mt-1 text-sm leading-6">{action.description}</p>
               </div>
-              <StatusBadge status={action.status} />
+              <div className="flex shrink-0 items-center gap-2">
+                <StatusBadge status={action.status} />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  onClick={() => onRemove(action.id)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
             <div className="mt-3 grid gap-3 text-sm md:grid-cols-3">
               <div>
@@ -172,9 +182,11 @@ export function D5PreventiveActionPage() {
   const navigate = useNavigate();
   const capa = useCapaStore((state) => (id ? state.getCAPAById(id) : undefined));
   const addPA = useCapaStore((state) => state.addPA);
+  const removePA = useCapaStore((state) => state.removePA);
   const updateScore = useCapaStore((state) => state.updateScore);
   const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
+  const openNovaChat = useUIStore((state) => state.openNovaChat);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [suggestionStatuses, setSuggestionStatuses] = useState<Record<string, NovaSuggestionStatus>>({});
   const initialDescription = capa ? paSuggestions[capa.id]?.[0] ?? "" : "";
@@ -204,6 +216,17 @@ export function D5PreventiveActionPage() {
   function handleSuggestionChange(suggestionId: string, status: NovaSuggestionStatus, content: string) {
     setSuggestionStatuses((current) => ({ ...current, [suggestionId]: status }));
     setDescription(content);
+  }
+
+  function handleRemovePA(actionId: string) {
+    removePA(actionId);
+    const remainingActions = currentActions.filter((action) => action.id !== actionId);
+    const nextScore = computeTotalQualityScore({
+      ...capa.score,
+      effectiveness: computeActionEffectiveness(capa.correctiveActions, remainingActions),
+    });
+    updateScore(capa.id, nextScore);
+    toast.info("Preventive action removed");
   }
 
   function addPreventiveAction() {
@@ -296,7 +319,7 @@ export function D5PreventiveActionPage() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-4">
-          <ActionList actions={currentActions} />
+          <ActionList actions={currentActions} onRemove={handleRemovePA} />
 
           <div className="space-y-3">
             {(paSuggestions[capa.id] ?? [initialDescription]).map((suggestion, index) => {
@@ -382,6 +405,10 @@ export function D5PreventiveActionPage() {
               </div>
 
               <div className="flex flex-col gap-3 md:flex-row md:justify-end">
+                <Button type="button" variant="outline" onClick={() => openNovaChat({ step: "pa", capaId: id })}>
+                  <MessageSquareText className="mr-2 h-4 w-4" />
+                  Ask Nova
+                </Button>
                 <Button type="button" variant="outline" onClick={addPreventiveAction}>
                   <Save className="mr-2 h-4 w-4" />
                   Add PA

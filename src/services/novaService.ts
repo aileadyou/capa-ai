@@ -85,20 +85,22 @@ export async function getVerificationCoaching(capaId: string): Promise<{
 
 export async function getChatResponse(step: string, message: string): Promise<string> {
   const scriptedResponses = (novaScripts.chatResponses as Record<string, unknown>)[step];
+  const normalizedMessage = message.toLowerCase();
 
   if (Array.isArray(scriptedResponses)) {
-    const exactMatch = scriptedResponses.find(
+    const match = scriptedResponses.find(
       (entry) =>
         typeof entry === "object" &&
         entry !== null &&
         "prompt" in entry &&
-        String(entry.prompt).toLowerCase() === message.toLowerCase(),
+        (String(entry.prompt).toLowerCase() === normalizedMessage ||
+          normalizedMessage.includes(String(entry.prompt).toLowerCase().slice(0, 20))),
     ) as { response: string } | undefined;
 
-    if (exactMatch) {
-      return mockAICall<string>(`chatResponses.${step}.0.response`, {
+    if (match) {
+      return mockAICall<string>(`chatResponses.${step}.match.response`, {
         delayMs: 1000,
-        fallback: exactMatch.response,
+        fallback: match.response,
       });
     }
   }
@@ -107,6 +109,16 @@ export async function getChatResponse(step: string, message: string): Promise<st
     delayMs: 1500,
     fallback: novaScripts.chatResponses.fallback.response,
   });
+}
+
+export function getChatPrompts(step: string): string[] {
+  const scriptedResponses = (novaScripts.chatResponses as Record<string, unknown>)[step];
+  if (!Array.isArray(scriptedResponses)) return [];
+  return scriptedResponses
+    .filter((entry): entry is { prompt: string; response: string } =>
+      typeof entry === "object" && entry !== null && "prompt" in entry,
+    )
+    .map((entry) => entry.prompt);
 }
 
 export function getSimilarityResults(query = "") {

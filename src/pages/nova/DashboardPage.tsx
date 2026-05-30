@@ -6,6 +6,7 @@ import { TrendLineChart } from "@/components/charts/TrendLineChart";
 import { TypeDonutChart } from "@/components/charts/TypeDonutChart";
 import { RootCauseBarChart } from "@/components/charts/RootCauseBarChart";
 import { DeptHeatmap } from "@/components/charts/DeptHeatmap";
+import { RecurrenceTrendChart } from "@/components/charts/RecurrenceTrendChart";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { SourceBadge } from "@/components/shared/SourceBadge";
@@ -16,6 +17,7 @@ import {
   getDepartmentHeatmap,
   getFindingTrend,
   getLatestFindings,
+  getRecurrenceTrend,
   getRootCauseTrends,
   getTypeBreakdown,
 } from "@/services/dashboardService";
@@ -114,6 +116,18 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Finding Recurrence Trend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Comparison of new findings vs. recurring findings (same root cause pattern reappearing) over the past 12 months.
+          </p>
+          <RecurrenceTrendChart data={getRecurrenceTrend()} />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <Card>

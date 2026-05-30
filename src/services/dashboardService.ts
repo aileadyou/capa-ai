@@ -20,6 +20,10 @@ export function getRootCauseTrends() {
   return structuredClone(dashboardStats.rootCauseTrends);
 }
 
+export function getRecurrenceTrend() {
+  return structuredClone(dashboardStats.recurrenceTrend);
+}
+
 export function getLatestFindings(limit = 5) {
   return structuredClone(
     [...findings]

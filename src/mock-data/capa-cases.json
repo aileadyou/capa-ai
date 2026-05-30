@@ -79,7 +79,7 @@
           "rationale": "Potential batch impact requires QA assessment."
         }
       ],
-      "rationale": "Major is appropriate because the event occurred in a critical filling area but the exposure window is bounded and assessable.",
+      "rationale": "Nova detected a Major deviation because the event occurred in a controlled filling area, involved a vaccine batch, and required immediate containment. The case is suitable for a structured 8D CAPA workflow.",
       "computedAt": "2026-05-18T09:44:00+07:00"
     },
     "rca": {
@@ -141,7 +141,14 @@
     "updatedAt": "2026-05-18T10:35:00+07:00",
     "createdBy": "initiator",
     "assignedTo": "qa_deviation",
-    "department": "Fill-Finish"
+    "department": "Fill-Finish",
+    "disposisi": {
+      "reviewerPersonaId": "qa_deviation",
+      "assignedTo": "initiator",
+      "severity": "Major",
+      "rationale": "Excursion in a critical aseptic filling area involving active vaccine batches warrants full 8D investigation. Major severity confirmed. Assigned to Fill-Finish for structured corrective action workflow.",
+      "dispositionAt": "2026-05-18T10:05:00+07:00"
+    }
   },
   {
     "id": "CAPA-2026-0089",
@@ -201,7 +208,7 @@
           "rationale": "The issue may become an external audit observation if repeated."
         }
       ],
-      "rationale": "Major is appropriate because documentation integrity is impacted, but scope is limited and recoverable.",
+      "rationale": "Nova classified this audit finding as Major because it involves GMP documentation control and potential data integrity risk across repeated material transfer records.",
       "computedAt": "2026-05-15T11:22:00+07:00"
     },
     "rca": {
@@ -225,7 +232,14 @@
     "updatedAt": "2026-05-16T09:00:00+07:00",
     "createdBy": "qa_deviation",
     "assignedTo": "head_of_dept",
-    "department": "Warehouse / QA Compliance"
+    "department": "Warehouse / QA Compliance",
+    "disposisi": {
+      "reviewerPersonaId": "qa_deviation",
+      "assignedTo": "qa_deviation",
+      "severity": "Major",
+      "rationale": "Documentation gaps spanning multiple material transfer records indicate systemic non-compliance risk. Major severity confirmed per internal audit classification criteria. 8D workflow assigned to QA Compliance.",
+      "dispositionAt": "2026-05-15T12:00:00+07:00"
+    }
   },
   {
     "id": "CAPA-2026-0112",
@@ -288,7 +302,7 @@
           "rationale": "The initial scope is limited but must be verified."
         }
       ],
-      "rationale": "Major is appropriate for a customer-facing product quality complaint with limited initial scope.",
+      "rationale": "Nova classified this complaint as Major because it involves visible particulate matter in a distributed vaccine product and requires batch record review, retained sample assessment, and complaint investigation.",
       "computedAt": "2026-05-12T14:08:00+07:00"
     },
     "rca": {
@@ -335,7 +349,14 @@
     "updatedAt": "2026-05-13T10:15:00+07:00",
     "createdBy": "qa_deviation",
     "assignedTo": "head_of_dept",
-    "department": "QA Complaint / Production"
+    "department": "QA Complaint / Production",
+    "disposisi": {
+      "reviewerPersonaId": "qa_deviation",
+      "assignedTo": "qa_deviation",
+      "severity": "Major",
+      "rationale": "Visible particulate matter in a vaccine vial constitutes a critical external complaint requiring batch traceability and root cause investigation. Major severity confirmed. Full 8D CAPA workflow required.",
+      "dispositionAt": "2026-05-12T15:30:00+07:00"
+    }
   },
   {
     "id": "CAPA-2026-0312",

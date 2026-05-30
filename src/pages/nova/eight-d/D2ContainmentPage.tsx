@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CheckCircle2, Circle, Save, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Circle, MessageSquareText, Save, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,7 @@ import { NovaSuggestionCard } from "@/components/nova/NovaSuggestionCard";
 import { ScoreSidebar } from "@/components/score/ScoreSidebar";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore, useNotificationStore } from "@/store";
+import { useAuditTrailStore, useCapaStore, useNotificationStore, useUIStore } from "@/store";
 import type { CAPACase, NovaSuggestionStatus } from "@/types";
 import {
   computeContainmentStrength,
@@ -142,6 +142,7 @@ export function D2ContainmentPage() {
   const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const openNovaChat = useUIStore((state) => state.openNovaChat);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [suggestionStatus, setSuggestionStatus] = useState<NovaSuggestionStatus>("pending");
 
@@ -331,6 +332,10 @@ export function D2ContainmentPage() {
               </div>
 
               <div className="flex flex-col gap-3 md:flex-row md:justify-end">
+                <Button type="button" variant="outline" onClick={() => openNovaChat({ step: "containment", capaId: id })}>
+                  <MessageSquareText className="mr-2 h-4 w-4" />
+                  Ask Nova
+                </Button>
                 <Button type="button" variant="outline" onClick={() => saveContainment(false)}>
                   <Save className="mr-2 h-4 w-4" />
                   Save Draft

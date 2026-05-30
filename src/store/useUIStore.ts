@@ -9,14 +9,20 @@ interface ToastMessage {
   description?: string;
 }
 
+interface NovaChatContext {
+  capaId?: string;
+  step?: string;
+}
+
 interface UIStore {
   isNovaChatOpen: boolean;
+  novaChatContext: NovaChatContext;
   activeCitationId?: string;
   isCitationPanelOpen: boolean;
   isExportMenuOpen: boolean;
   modals: Partial<Record<ModalName, boolean>>;
   toastMessages: ToastMessage[];
-  openNovaChat: () => void;
+  openNovaChat: (context?: NovaChatContext) => void;
   closeNovaChat: () => void;
   openCitationPanel: (citationId: string) => void;
   closeCitationPanel: () => void;
@@ -30,6 +36,7 @@ interface UIStore {
 
 const initialUIState = {
   isNovaChatOpen: false,
+  novaChatContext: {} as NovaChatContext,
   activeCitationId: undefined,
   isCitationPanelOpen: false,
   isExportMenuOpen: false,
@@ -41,7 +48,7 @@ export const useUIStore = create<UIStore>()(
   persist(
     (set) => ({
       ...initialUIState,
-      openNovaChat: () => set({ isNovaChatOpen: true }),
+      openNovaChat: (context = {}) => set({ isNovaChatOpen: true, novaChatContext: context }),
       closeNovaChat: () => set({ isNovaChatOpen: false }),
       openCitationPanel: (citationId) =>
         set({

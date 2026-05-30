@@ -6,37 +6,212 @@
     "effectivenessRate": 87
   },
   "findingTrend": [
-    { "label": "Jun 2025", "deviation": 6, "audit": 3, "complaint": 4 },
-    { "label": "Jul 2025", "deviation": 8, "audit": 4, "complaint": 3 },
-    { "label": "Aug 2025", "deviation": 7, "audit": 5, "complaint": 4 },
-    { "label": "Sep 2025", "deviation": 9, "audit": 4, "complaint": 5 },
-    { "label": "Oct 2025", "deviation": 6, "audit": 6, "complaint": 4 },
-    { "label": "Nov 2025", "deviation": 5, "audit": 5, "complaint": 5 },
-    { "label": "Dec 2025", "deviation": 7, "audit": 4, "complaint": 6 },
-    { "label": "Jan 2026", "deviation": 5, "audit": 4, "complaint": 3 },
-    { "label": "Feb 2026", "deviation": 6, "audit": 5, "complaint": 4 },
-    { "label": "Mar 2026", "deviation": 4, "audit": 3, "complaint": 3 },
-    { "label": "Apr 2026", "deviation": 5, "audit": 4, "complaint": 4 },
-    { "label": "May 2026", "deviation": 5, "audit": 5, "complaint": 5 }
+    {
+      "label": "Jun 2025",
+      "deviation": 6,
+      "audit": 3,
+      "complaint": 4
+    },
+    {
+      "label": "Jul 2025",
+      "deviation": 8,
+      "audit": 4,
+      "complaint": 3
+    },
+    {
+      "label": "Aug 2025",
+      "deviation": 7,
+      "audit": 5,
+      "complaint": 4
+    },
+    {
+      "label": "Sep 2025",
+      "deviation": 9,
+      "audit": 4,
+      "complaint": 5
+    },
+    {
+      "label": "Oct 2025",
+      "deviation": 6,
+      "audit": 6,
+      "complaint": 4
+    },
+    {
+      "label": "Nov 2025",
+      "deviation": 5,
+      "audit": 5,
+      "complaint": 5
+    },
+    {
+      "label": "Dec 2025",
+      "deviation": 7,
+      "audit": 4,
+      "complaint": 6
+    },
+    {
+      "label": "Jan 2026",
+      "deviation": 5,
+      "audit": 4,
+      "complaint": 3
+    },
+    {
+      "label": "Feb 2026",
+      "deviation": 6,
+      "audit": 5,
+      "complaint": 4
+    },
+    {
+      "label": "Mar 2026",
+      "deviation": 4,
+      "audit": 3,
+      "complaint": 3
+    },
+    {
+      "label": "Apr 2026",
+      "deviation": 5,
+      "audit": 4,
+      "complaint": 4
+    },
+    {
+      "label": "May 2026",
+      "deviation": 5,
+      "audit": 5,
+      "complaint": 5
+    }
   ],
   "typeBreakdown": [
-    { "type": "deviation", "count": 5 },
-    { "type": "audit", "count": 5 },
-    { "type": "complaint", "count": 5 }
+    {
+      "type": "deviation",
+      "count": 5
+    },
+    {
+      "type": "audit",
+      "count": 5
+    },
+    {
+      "type": "complaint",
+      "count": 5
+    }
   ],
   "departmentHeatmap": [
-    { "department": "Fill-Finish", "completionRate": 78, "openCapas": 1, "overdueCapas": 0 },
-    { "department": "Warehouse", "completionRate": 64, "openCapas": 2, "overdueCapas": 1 },
-    { "department": "QA Compliance", "completionRate": 86, "openCapas": 1, "overdueCapas": 0 },
-    { "department": "Production", "completionRate": 72, "openCapas": 1, "overdueCapas": 0 },
-    { "department": "Supply Chain", "completionRate": 58, "openCapas": 1, "overdueCapas": 1 }
+    {
+      "department": "Fill-Finish",
+      "completionRate": 78,
+      "openCapas": 1,
+      "overdueCapas": 0
+    },
+    {
+      "department": "Warehouse",
+      "completionRate": 64,
+      "openCapas": 2,
+      "overdueCapas": 1
+    },
+    {
+      "department": "QA Compliance",
+      "completionRate": 86,
+      "openCapas": 1,
+      "overdueCapas": 0
+    },
+    {
+      "department": "Production",
+      "completionRate": 72,
+      "openCapas": 1,
+      "overdueCapas": 0
+    },
+    {
+      "department": "Supply Chain",
+      "completionRate": 58,
+      "openCapas": 1,
+      "overdueCapas": 1
+    }
   ],
   "rootCauseTrends": [
-    { "category": "Maintenance Interval", "count": 4, "recurringCount": 2 },
-    { "category": "Documentation Ownership", "count": 5, "recurringCount": 1 },
-    { "category": "Alarm Escalation", "count": 3, "recurringCount": 2 },
-    { "category": "Inspection Review", "count": 2, "recurringCount": 1 },
-    { "category": "Training Effectiveness", "count": 3, "recurringCount": 0 }
+    {
+      "category": "Maintenance Interval",
+      "count": 4,
+      "recurringCount": 2
+    },
+    {
+      "category": "Documentation Ownership",
+      "count": 5,
+      "recurringCount": 1
+    },
+    {
+      "category": "Alarm Escalation",
+      "count": 3,
+      "recurringCount": 2
+    },
+    {
+      "category": "Inspection Review",
+      "count": 2,
+      "recurringCount": 1
+    },
+    {
+      "category": "Training Effectiveness",
+      "count": 3,
+      "recurringCount": 0
+    }
+  ],
+  "recurrenceTrend": [
+    {
+      "label": "Jun 2025",
+      "recurred": 2,
+      "newFindings": 11
+    },
+    {
+      "label": "Jul 2025",
+      "recurred": 3,
+      "newFindings": 12
+    },
+    {
+      "label": "Aug 2025",
+      "recurred": 2,
+      "newFindings": 14
+    },
+    {
+      "label": "Sep 2025",
+      "recurred": 4,
+      "newFindings": 14
+    },
+    {
+      "label": "Oct 2025",
+      "recurred": 3,
+      "newFindings": 13
+    },
+    {
+      "label": "Nov 2025",
+      "recurred": 2,
+      "newFindings": 13
+    },
+    {
+      "label": "Dec 2025",
+      "recurred": 3,
+      "newFindings": 14
+    },
+    {
+      "label": "Jan 2026",
+      "recurred": 1,
+      "newFindings": 11
+    },
+    {
+      "label": "Feb 2026",
+      "recurred": 2,
+      "newFindings": 13
+    },
+    {
+      "label": "Mar 2026",
+      "recurred": 1,
+      "newFindings": 10
+    },
+    {
+      "label": "Apr 2026",
+      "recurred": 2,
+      "newFindings": 11
+    },
+    {
+      "label": "May 2026",
+      "recurred": 3,
+      "newFindings": 12
+    }
   ]
 }
-

@@ -19,7 +19,7 @@ import fishboneAuditJson from "@/mock-data/nova-scripts/fishbone-audit-documenta
 import fiveWhysHepaJson from "@/mock-data/nova-scripts/5whys-hepa.json";
 import paSuggestionsJson from "@/mock-data/nova-scripts/pa-suggestions.json";
 import verificationCoachingJson from "@/mock-data/nova-scripts/verification-coaching.json";
-import type { AuditEvent, CAPACase, CorrectiveAction, DashboardStats, DepartmentHeatmapEntry, KGCitation, PreventiveAction, PreFillContext, RootCauseTrendEntry, TrendDataPoint } from "@/types";
+import type { AuditEvent, CAPACase, CorrectiveAction, DashboardStats, DepartmentHeatmapEntry, KGCitation, PreventiveAction, PreFillContext, RecurrenceTrendPoint, RootCauseTrendEntry, TrendDataPoint } from "@/types";
 import type { Finding, SimilarityResult, TopicCluster } from "@/types/finding";
 import type { Notification } from "@/types/notification";
 import type { Persona } from "@/types/persona";
@@ -40,6 +40,7 @@ export const dashboardStats = dashboardStatsJson as {
   typeBreakdown: Array<{ type: "deviation" | "audit" | "complaint"; count: number }>;
   departmentHeatmap: DepartmentHeatmapEntry[];
   rootCauseTrends: RootCauseTrendEntry[];
+  recurrenceTrend: RecurrenceTrendPoint[];
 };
 
 export const prefills = {

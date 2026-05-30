@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
+import { fireConfetti } from "@/utils/confetti";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Circle, PenLine, ShieldCheck, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, MessageSquareText, PenLine, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ import { ScorePill } from "@/components/shared/ScorePill";
 import { ScoreSidebar } from "@/components/score/ScoreSidebar";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore, useNotificationStore } from "@/store";
+import { useAuditTrailStore, useCapaStore, useNotificationStore, useUIStore } from "@/store";
 import type { ApprovalEvent, CAPACase } from "@/types";
 import type { PersonaID } from "@/types/persona";
 import { formatCAPAType, formatDateTime } from "@/utils/formatters";
@@ -112,6 +113,7 @@ export function D7SignOffPage() {
   const closeCAPA = useCapaStore((state) => state.closeCAPA);
   const addNotification = useNotificationStore((state) => state.addNotification);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
+  const openNovaChat = useUIStore((state) => state.openNovaChat);
   const [selectedApprover, setSelectedApprover] = useState<Approver | undefined>();
   const [notes, setNotes] = useState("");
   const [hasTriedApproval, setHasTriedApproval] = useState(false);
@@ -212,7 +214,7 @@ export function D7SignOffPage() {
         findingId: capa.findingId,
       });
       toast.success("Approval recorded", {
-        description: `Notifikasi dikirim ke ${upcomingApprover.name}.`,
+        description: `Notification sent to ${upcomingApprover.name}.`,
       });
     } else {
       closeCAPA(capa.id);
@@ -226,7 +228,10 @@ export function D7SignOffPage() {
           actionUrl: `/capa/${capa.id}`,
         });
       });
-      toast.success(`${capa.id} has been approved and marked as Audit Ready.`);
+      toast.success(`${capa.id} closed as Audit Ready`, {
+        description: "All approvers signed off. CAPA is now Audit Ready.",
+      });
+      fireConfetti();
     }
 
     setSelectedApprover(undefined);
@@ -372,7 +377,13 @@ export function D7SignOffPage() {
           </Card>
         </div>
 
-        <ScoreSidebar score={capa.score} />
+        <div className="space-y-4">
+          <ScoreSidebar score={capa.score} />
+          <Button variant="outline" className="w-full" onClick={() => openNovaChat({ step: "signoff", capaId: capa.id })}>
+            <MessageSquareText className="mr-2 h-4 w-4" />
+            Ask Nova
+          </Button>
+        </div>
       </div>
 
       <Dialog open={Boolean(selectedApprover)} onOpenChange={(open) => !open && setSelectedApprover(undefined)}>

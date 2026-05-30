@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import type { KGCitation, NovaSuggestionStatus } from "@/types";
-import { useAuditTrailStore } from "@/store";
+import { useAuditTrailStore, useUIStore } from "@/store";
 
 interface NovaSuggestionCardProps {
   id: string;
@@ -37,6 +37,7 @@ export function NovaSuggestionCard({
   const [currentStatus, setCurrentStatus] = useState<NovaSuggestionStatus>(status);
   const [draftContent, setDraftContent] = useState(content);
   const addEvent = useAuditTrailStore((state) => state.addEvent);
+  const openCitationPanel = useUIStore((state) => state.openCitationPanel);
 
   const applyStatus = (nextStatus: NovaSuggestionStatus, nextContent: string) => {
     setCurrentStatus(nextStatus);
@@ -86,11 +87,16 @@ export function NovaSuggestionCard({
 
       {citations.length > 0 && (
         <div className="mt-3 space-y-2">
+          <div className="text-xs font-medium text-muted-foreground">Historical references</div>
           {citations.map((citation) => (
-            <div key={citation.capaId} className="rounded border bg-muted/30 p-2 text-xs">
-              <span className="font-medium">{citation.capaId}</span> · {citation.similarityScore}% similar ·{" "}
-              {citation.outcome}
-            </div>
+            <button
+              key={citation.capaId}
+              className="w-full rounded border bg-muted/30 p-2 text-left text-xs transition hover:border-primary/50 hover:bg-primary/5"
+              onClick={() => openCitationPanel(citation.capaId)}
+            >
+              <span className="font-medium text-primary">{citation.capaId}</span>
+              {" · "}{citation.similarityScore}% similar · {citation.outcome}
+            </button>
           ))}
         </div>
       )}

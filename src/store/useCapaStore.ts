@@ -43,7 +43,10 @@ interface CapaStore {
   updateScore: (capaId: string, score: QualityScore) => void;
   addCA: (capaId: string, action: Omit<CorrectiveAction, "id" | "capaId"> & { id?: string }) => CorrectiveAction;
   updateCAStatus: (actionId: string, status: CorrectiveAction["status"]) => void;
+  removeCA: (actionId: string) => void;
   addPA: (capaId: string, action: Omit<PreventiveAction, "id" | "capaId"> & { id?: string }) => PreventiveAction;
+  updatePAStatus: (actionId: string, status: PreventiveAction["status"]) => void;
+  removePA: (actionId: string) => void;
   completeVerification: (capaId: string, verification: VerificationData) => void;
   approveSignOff: (capaId: string, approval: ApprovalEvent) => void;
   closeCAPA: (capaId: string) => void;
@@ -301,6 +304,11 @@ export const useCapaStore = create<CapaStore>()(
           action: `Corrective action ${actionId} status updated to ${status}.`,
         });
       },
+      removeCA: (actionId) => {
+        set((state) => ({
+          correctiveActions: state.correctiveActions.filter((action) => action.id !== actionId),
+        }));
+      },
       addPA: (capaId, action) => {
         const newAction: PreventiveAction = {
           ...action,
@@ -322,6 +330,35 @@ export const useCapaStore = create<CapaStore>()(
         });
 
         return newAction;
+      },
+      updatePAStatus: (actionId, status) => {
+        const completedAt =
+          status === "completed" || status === "verified" ? new Date().toISOString() : undefined;
+
+        set((state) => ({
+          preventiveActions: state.preventiveActions.map((action) =>
+            action.id === actionId
+              ? {
+                  ...action,
+                  status,
+                  completedAt,
+                }
+              : action,
+          ),
+        }));
+
+        useAuditTrailStore.getState().addEvent({
+          actorName: "Nova Demo User",
+          actorRole: "CAPA User",
+          domain: "system",
+          eventType: "preventive_action_added",
+          action: `Preventive action ${actionId} status updated to ${status}.`,
+        });
+      },
+      removePA: (actionId) => {
+        set((state) => ({
+          preventiveActions: state.preventiveActions.filter((action) => action.id !== actionId),
+        }));
       },
       completeVerification: (capaId, verification) => {
         set((state) => ({
