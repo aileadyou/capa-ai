@@ -1,0 +1,38 @@
+{
+  "capaId": "CAPA-2026-0341",
+  "method": "5whys",
+  "levels": [
+    {
+      "level": 1,
+      "question": "Why did particle count exceed the Grade A alert threshold?",
+      "suggestion": "Airflow performance around HEPA-FF-L2-07 degraded during the active filling window.",
+      "citationIds": ["CAPA-2025-0447"]
+    },
+    {
+      "level": 2,
+      "question": "Why did airflow performance degrade?",
+      "suggestion": "The HEPA filter was still within the old 18-month preventive maintenance interval but showed trend deterioration.",
+      "citationIds": ["CAPA-2025-0447", "CAPA-2024-0392"]
+    },
+    {
+      "level": 3,
+      "question": "Why was trend deterioration not acted on earlier?",
+      "suggestion": "Environmental trend review was not linked to automatic maintenance interval reassessment.",
+      "citationIds": ["CAPA-2024-0392"]
+    },
+    {
+      "level": 4,
+      "question": "Why was maintenance interval reassessment not triggered?",
+      "suggestion": "SOP-PM-HEPA-001 still defines a fixed interval and does not include trend-based shortening criteria.",
+      "citationIds": ["CAPA-2025-0447"]
+    },
+    {
+      "level": 5,
+      "question": "Why does the SOP not include trend-based criteria?",
+      "suggestion": "The SOP was not updated after internal quality guidance changed the recommended Grade A/B replacement interval.",
+      "citationIds": ["CAPA-2025-0447"]
+    }
+  ],
+  "confirmedRootCause": "HEPA filter replacement interval remained at 18 months despite trend evidence supporting 12 months."
+}
+

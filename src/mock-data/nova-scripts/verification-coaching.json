@@ -1,0 +1,18 @@
+{
+  "CAPA-2026-0341": {
+    "Observation": "The strongest verification evidence should connect engineering restoration with environmental performance.",
+    "Recommendation": "Use EM re-test results, airflow requalification, and batch exposure review as the verification package.",
+    "Audit Rationale": "This demonstrates both process recovery and documented product impact control."
+  },
+  "CAPA-2026-0089": {
+    "Observation": "The finding is about documentation behavior, not only missing signatures.",
+    "Recommendation": "Verify corrected records and run a 30-day spot check for real-time completion and second-person verification.",
+    "Audit Rationale": "Sustained behavior evidence is more defensible than a one-time correction."
+  },
+  "CAPA-2026-0112": {
+    "Observation": "Complaint verification should cover the returned sample, retained samples, and inspection trend.",
+    "Recommendation": "Use sample assessment, retained sample review, and visual inspection reconciliation trend as evidence.",
+    "Audit Rationale": "This links the customer-facing observation to manufacturing and inspection controls."
+  }
+}
+

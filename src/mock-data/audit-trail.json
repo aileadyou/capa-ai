@@ -1,0 +1,105 @@
+[
+  {
+    "id": "AUDIT-2026-0001",
+    "timestamp": "2026-05-18T09:43:00+07:00",
+    "actorPersonaId": "initiator",
+    "actorName": "Andi Wijaya",
+    "actorRole": "Senior Operator",
+    "domain": "integration",
+    "eventType": "source_imported",
+    "action": "Imported source data from Bizzmine for DEV-2026-0341.",
+    "capaId": "CAPA-2026-0341",
+    "findingId": "DEV-2026-0341"
+  },
+  {
+    "id": "AUDIT-2026-0002",
+    "timestamp": "2026-05-18T09:44:00+07:00",
+    "actorName": "Nova",
+    "actorRole": "AI Coach",
+    "domain": "ai_decision",
+    "eventType": "nova_classification",
+    "action": "Nova generated Major severity classification with 86% confidence.",
+    "capaId": "CAPA-2026-0341",
+    "findingId": "DEV-2026-0341",
+    "novaMetadata": {
+      "modelName": "Nova Mock Engine",
+      "modelVersion": "nova-demo-v1",
+      "confidenceScore": 86
+    }
+  },
+  {
+    "id": "AUDIT-2026-0003",
+    "timestamp": "2026-05-18T10:05:00+07:00",
+    "actorPersonaId": "initiator",
+    "actorName": "Andi Wijaya",
+    "actorRole": "Senior Operator",
+    "domain": "system",
+    "eventType": "problem_updated",
+    "action": "Problem statement updated for CAPA-2026-0341.",
+    "capaId": "CAPA-2026-0341",
+    "before": "Environmental excursion observed.",
+    "after": "Particle count exceeded Grade A alert threshold for 12 minutes on shift A in HEPA-FF-L2-07 during filling."
+  },
+  {
+    "id": "AUDIT-2026-0004",
+    "timestamp": "2026-05-18T10:30:00+07:00",
+    "actorName": "Nova",
+    "actorRole": "AI Coach",
+    "domain": "ai_decision",
+    "eventType": "nova_suggestion_accepted",
+    "action": "Nova 5-Whys level 1 suggestion was accepted.",
+    "capaId": "CAPA-2026-0341",
+    "novaMetadata": {
+      "modelName": "Nova Mock Engine",
+      "modelVersion": "nova-demo-v1",
+      "confidenceScore": 82
+    }
+  },
+  {
+    "id": "AUDIT-2026-0005",
+    "timestamp": "2026-05-15T11:22:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Deviation / QA Compliance / QA Complaint",
+    "domain": "integration",
+    "eventType": "source_imported",
+    "action": "Imported audit finding data from Q100+ for AUD-2026-0089.",
+    "capaId": "CAPA-2026-0089",
+    "findingId": "AUD-2026-0089"
+  },
+  {
+    "id": "AUDIT-2026-0006",
+    "timestamp": "2026-05-12T14:07:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Deviation / QA Compliance / QA Complaint",
+    "domain": "integration",
+    "eventType": "source_imported",
+    "action": "Imported complaint data from Bizzmine Complaint for CMP-2026-0112.",
+    "capaId": "CAPA-2026-0112",
+    "findingId": "CMP-2026-0112"
+  },
+  {
+    "id": "AUDIT-2026-0007",
+    "timestamp": "2026-05-09T16:00:00+07:00",
+    "actorPersonaId": "head_of_qa",
+    "actorName": "Dewi Anggraini",
+    "actorRole": "Head of QA",
+    "domain": "system",
+    "eventType": "capa_approved",
+    "action": "Dewi Anggraini approved CAPA-2026-0298 with electronic signature.",
+    "capaId": "CAPA-2026-0298"
+  },
+  {
+    "id": "AUDIT-2026-0008",
+    "timestamp": "2026-04-30T13:15:00+07:00",
+    "actorPersonaId": "head_of_qa",
+    "actorName": "Dewi Anggraini",
+    "actorRole": "Head of QA",
+    "domain": "system",
+    "eventType": "capa_closed",
+    "action": "CAPA-2026-0312 was marked as Audit Ready and Closed.",
+    "capaId": "CAPA-2026-0312"
+  }
+]
+

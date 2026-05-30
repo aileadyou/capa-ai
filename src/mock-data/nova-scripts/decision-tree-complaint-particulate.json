@@ -1,0 +1,41 @@
+{
+  "capaId": "CAPA-2026-0112",
+  "method": "decision_tree",
+  "rootNodeId": "dt-0112-1",
+  "nodes": [
+    {
+      "id": "dt-0112-1",
+      "question": "Was visible particulate confirmed in the returned complaint sample?",
+      "yesNodeId": "dt-0112-2",
+      "noNodeId": "dt-0112-5",
+      "isLeaf": false
+    },
+    {
+      "id": "dt-0112-2",
+      "question": "Were retained samples from the same lot family free from visible particulate?",
+      "yesNodeId": "dt-0112-3",
+      "noNodeId": "dt-0112-4",
+      "isLeaf": false
+    },
+    {
+      "id": "dt-0112-3",
+      "question": "Review visual inspection rejection and reconciliation trend.",
+      "isLeaf": true,
+      "conclusion": "Most likely cause is insufficient escalation of borderline visual inspection trend."
+    },
+    {
+      "id": "dt-0112-4",
+      "question": "Escalate for lot-level product impact assessment.",
+      "isLeaf": true,
+      "conclusion": "Potential batch-level inspection effectiveness issue."
+    },
+    {
+      "id": "dt-0112-5",
+      "question": "Review distribution and customer handling evidence.",
+      "isLeaf": true,
+      "conclusion": "External handling or reporting artifact remains possible."
+    }
+  ],
+  "confirmedRootCause": "Visual inspection rejection trend was not escalated after repeated borderline observations in the same lot family."
+}
+

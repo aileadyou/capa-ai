@@ -1,0 +1,34 @@
+{
+  "source": "Bizzmine",
+  "deviationId": "DEV-2026-0341",
+  "reportedAt": "2026-05-18T09:42:00+07:00",
+  "occurredAt": "2026-05-18T08:15:00+07:00",
+  "location": {
+    "department": "Fill-Finish",
+    "area": "Grade A Fill Suite",
+    "line": "Vaccine Filling Line 2",
+    "equipmentId": "HEPA-FF-L2-07"
+  },
+  "initiator": {
+    "name": "Andi Wijaya",
+    "role": "Senior Operator",
+    "nik": "BF-FF-1024"
+  },
+  "initialObservation": "Particle count exceeded the Grade A alert threshold for 12 minutes during routine environmental monitoring on shift A.",
+  "affectedBatches": ["VAC-26-0518-A", "VAC-26-0518-B"],
+  "attachments": [
+    {
+      "name": "em-trend-dev-2026-0341.pdf",
+      "type": "PDF",
+      "url": "/mock/attachments/em-trend-dev-2026-0341.pdf"
+    },
+    {
+      "name": "filling-line-event-log.csv",
+      "type": "CSV",
+      "url": "/mock/attachments/filling-line-event-log.csv"
+    }
+  ],
+  "sopReferences": ["SOP-EM-014", "SOP-PM-HEPA-001", "SOP-FF-009"],
+  "initialSeverity": "Major"
+}
+

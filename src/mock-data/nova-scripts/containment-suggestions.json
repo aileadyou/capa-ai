@@ -1,0 +1,25 @@
+{
+  "CAPA-2026-0341": [
+    {
+      "id": "containment-0341-01",
+      "content": "Place affected batches VAC-26-0518-A and VAC-26-0518-B on QA hold until EM trend and batch exposure assessment are complete."
+    },
+    {
+      "id": "containment-0341-02",
+      "content": "Restrict Grade A Fill Suite use until HEPA-FF-L2-07 airflow verification passes."
+    }
+  ],
+  "CAPA-2026-0089": [
+    {
+      "id": "containment-0089-01",
+      "content": "Quarantine the affected material transfer records from release decision use until QA reconciliation is complete."
+    }
+  ],
+  "CAPA-2026-0112": [
+    {
+      "id": "containment-0112-01",
+      "content": "Quarantine the returned complaint sample and place retained samples from VAC-26-0419-C under QA review."
+    }
+  ]
+}
+

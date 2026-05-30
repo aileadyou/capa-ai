@@ -1,0 +1,53 @@
+[
+  {
+    "deviationId": "DEV-2025-0447",
+    "capaId": "CAPA-2025-0447",
+    "similarityScore": 91,
+    "rootCause": "HEPA filter replacement interval did not reflect updated environmental trend limits.",
+    "correctiveAction": "Replaced HEPA filter, requalified the suite, and reviewed affected batch exposure windows.",
+    "year": 2025,
+    "outcome": "Effective",
+    "sourceType": "deviation"
+  },
+  {
+    "deviationId": "DEV-2024-0392",
+    "capaId": "CAPA-2024-0392",
+    "similarityScore": 86,
+    "rootCause": "Preventive maintenance reminder was manually tracked and missed during holiday coverage.",
+    "correctiveAction": "Added automated maintenance reminders and department-level escalation.",
+    "year": 2024,
+    "outcome": "Effective",
+    "sourceType": "deviation"
+  },
+  {
+    "deviationId": "AUD-2025-0124",
+    "capaId": "CAPA-2025-0124",
+    "similarityScore": 83,
+    "rootCause": "Second-person verification ownership was unclear during shift handover.",
+    "correctiveAction": "Revised handover checklist and retrained operators and supervisors.",
+    "year": 2025,
+    "outcome": "Effective",
+    "sourceType": "audit"
+  },
+  {
+    "deviationId": "CMP-2025-0091",
+    "capaId": "CAPA-2025-0091",
+    "similarityScore": 88,
+    "rootCause": "Visual inspection rejection trend was not escalated after borderline observations.",
+    "correctiveAction": "Reviewed retained samples and strengthened inspection reconciliation review.",
+    "year": 2025,
+    "outcome": "Ongoing",
+    "sourceType": "complaint"
+  },
+  {
+    "deviationId": "DEV-2026-0251",
+    "capaId": "CAPA-2026-0251",
+    "similarityScore": 79,
+    "rootCause": "Engineering review did not trend repeat HEPA pressure drift across adjacent areas.",
+    "correctiveAction": "Updated trend review scope and replaced affected gasket assembly.",
+    "year": 2026,
+    "outcome": "Recurred",
+    "sourceType": "deviation"
+  }
+]
+

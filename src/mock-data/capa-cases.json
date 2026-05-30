@@ -1,0 +1,659 @@
+[
+  {
+    "id": "CAPA-2026-0341",
+    "findingId": "DEV-2026-0341",
+    "type": "deviation",
+    "title": "Environmental Monitoring Excursion in Grade A Fill Suite",
+    "preFill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0341",
+      "reportedAt": "2026-05-18T09:42:00+07:00",
+      "occurredAt": "2026-05-18T08:15:00+07:00",
+      "location": {
+        "department": "Fill-Finish",
+        "area": "Grade A Fill Suite",
+        "line": "Vaccine Filling Line 2",
+        "equipmentId": "HEPA-FF-L2-07"
+      },
+      "initiator": {
+        "name": "Andi Wijaya",
+        "role": "Senior Operator",
+        "nik": "BF-FF-1024"
+      },
+      "initialObservation": "Particle count exceeded the Grade A alert threshold for 12 minutes during routine environmental monitoring on shift A.",
+      "affectedBatches": ["VAC-26-0518-A", "VAC-26-0518-B"],
+      "attachments": [
+        {
+          "name": "em-trend-dev-2026-0341.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/em-trend-dev-2026-0341.pdf"
+        }
+      ],
+      "sopReferences": ["SOP-EM-014", "SOP-PM-HEPA-001", "SOP-FF-009"],
+      "initialSeverity": "Major"
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "Particle count exceeded the Grade A alert threshold for 12 minutes during shift A on 18 May 2026.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which area, equipment, or product scope is affected?",
+        "answer": "Grade A Fill Suite, Vaccine Filling Line 2, HEPA-FF-L2-07, batches VAC-26-0518-A and VAC-26-0518-B.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 22,
+      "rootCauseDepth": 18,
+      "effectiveness": 17,
+      "containment": 20,
+      "total": 77,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 72,
+      "factors": [
+        {
+          "factor": "Area criticality",
+          "value": "Grade A filling suite",
+          "weight": 30,
+          "rationale": "The excursion occurred in a critical aseptic processing area."
+        },
+        {
+          "factor": "Exposure window",
+          "value": "12 minutes",
+          "weight": 18,
+          "rationale": "The exposure was time-bound and can be assessed against batch records."
+        },
+        {
+          "factor": "Affected material",
+          "value": "Two vaccine batches",
+          "weight": 24,
+          "rationale": "Potential batch impact requires QA assessment."
+        }
+      ],
+      "rationale": "Major is appropriate because the event occurred in a critical filling area but the exposure window is bounded and assessable.",
+      "computedAt": "2026-05-18T09:44:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "fiveWhys": [
+        {
+          "id": "5w-0341-1",
+          "level": 1,
+          "question": "Why did the particle count exceed the alert threshold?",
+          "novaSuggestion": "Airflow performance degraded around HEPA-FF-L2-07.",
+          "novaCitations": [],
+          "userAnswer": "Airflow performance degraded around HEPA-FF-L2-07.",
+          "status": "accepted"
+        },
+        {
+          "id": "5w-0341-2",
+          "level": 2,
+          "question": "Why did airflow performance degrade?",
+          "novaSuggestion": "The HEPA filter was approaching the end of its effective operating life.",
+          "novaCitations": [],
+          "userAnswer": "The HEPA filter showed deterioration earlier than the current PM interval expected.",
+          "status": "edited"
+        }
+      ],
+      "confirmedRootCauses": [
+        "HEPA filter replacement interval remained at 18 months despite trend evidence supporting 12 months."
+      ]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "approvals": [
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "pending"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA Deviation",
+        "decision": "pending"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "Head of QA",
+        "decision": "pending"
+      }
+    ],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "investigation",
+    "currentStep": "rca",
+    "createdAt": "2026-05-18T09:43:00+07:00",
+    "updatedAt": "2026-05-18T10:35:00+07:00",
+    "createdBy": "initiator",
+    "assignedTo": "qa_deviation",
+    "department": "Fill-Finish"
+  },
+  {
+    "id": "CAPA-2026-0089",
+    "findingId": "AUD-2026-0089",
+    "type": "audit",
+    "title": "GMP Documentation Gap in Material Transfer Records",
+    "preFill": {
+      "source": "Q100+",
+      "findingId": "AUD-2026-0089",
+      "auditId": "IA-2026-QA-042",
+      "auditType": "internal",
+      "reportedAt": "2026-05-15T11:20:00+07:00",
+      "auditDate": "2026-05-14T09:00:00+07:00",
+      "auditor": {
+        "name": "Siti Rahmawati",
+        "organization": "QA Compliance"
+      },
+      "auditee": {
+        "department": "Warehouse",
+        "contactPerson": "Bambang Saputra"
+      },
+      "findingCategory": "GMP Documentation",
+      "findingDescription": "Material transfer records for three lots were completed after shift handover and lacked documented second-person verification.",
+      "regulationReference": ["GMP Chapter 4", "BPOM 2023 Data Integrity Guidance"],
+      "severity": "Major",
+      "sopReferences": ["SOP-WH-021", "SOP-DOC-004"]
+    },
+    "gateAnswers": [],
+    "score": {
+      "problemSpecificity": 20,
+      "rootCauseDepth": 16,
+      "effectiveness": 16,
+      "containment": 18,
+      "total": 70,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 68,
+      "factors": [
+        {
+          "factor": "GMP documentation integrity",
+          "value": "Second-person verification missing",
+          "weight": 32,
+          "rationale": "Incomplete verification can weaken record reliability."
+        },
+        {
+          "factor": "Scope",
+          "value": "Three material transfer records",
+          "weight": 18,
+          "rationale": "The issue appears limited and can be reconciled."
+        },
+        {
+          "factor": "Audit visibility",
+          "value": "Internal audit finding",
+          "weight": 18,
+          "rationale": "The issue may become an external audit observation if repeated."
+        }
+      ],
+      "rationale": "Major is appropriate because documentation integrity is impacted, but scope is limited and recoverable.",
+      "computedAt": "2026-05-15T11:22:00+07:00"
+    },
+    "rca": {
+      "method": "fishbone",
+      "fishbone": [],
+      "confirmedRootCauses": [
+        "Cleaning and transfer documentation ownership was unclear during shift handover."
+      ]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "investigation",
+    "currentStep": "rca",
+    "createdAt": "2026-05-15T11:25:00+07:00",
+    "updatedAt": "2026-05-16T09:00:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "head_of_dept",
+    "department": "Warehouse / QA Compliance"
+  },
+  {
+    "id": "CAPA-2026-0112",
+    "findingId": "CMP-2026-0112",
+    "type": "complaint",
+    "title": "Visible Particulate Matter Complaint",
+    "preFill": {
+      "source": "Bizzmine-Complaint",
+      "complaintId": "CMP-2026-0112",
+      "reportedAt": "2026-05-12T14:05:00+07:00",
+      "customer": {
+        "name": "RS Hasan Sadikin Bandung",
+        "type": "hospital"
+      },
+      "product": {
+        "name": "Vaccine Multi-dose Vial",
+        "lotNumber": "VAC-26-0419-C",
+        "expiryDate": "2027-04-30"
+      },
+      "complaintType": "Particulate Matter",
+      "description": "Hospital pharmacist observed visible particulate matter in one returned vial before administration. The vial remained sealed and was quarantined by the customer.",
+      "initialSeverity": "Major",
+      "attachments": [
+        {
+          "name": "customer-photo-vial-cmp-2026-0112.jpg",
+          "type": "Image",
+          "url": "/mock/attachments/customer-photo-vial-cmp-2026-0112.jpg"
+        }
+      ]
+    },
+    "gateAnswers": [],
+    "score": {
+      "problemSpecificity": 21,
+      "rootCauseDepth": 15,
+      "effectiveness": 18,
+      "containment": 18,
+      "total": 72,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 74,
+      "factors": [
+        {
+          "factor": "Customer visibility",
+          "value": "Hospital complaint",
+          "weight": 28,
+          "rationale": "The issue was detected by a customer before administration."
+        },
+        {
+          "factor": "Product quality concern",
+          "value": "Visible particulate matter",
+          "weight": 30,
+          "rationale": "Particulate matter requires product quality and batch impact assessment."
+        },
+        {
+          "factor": "Containment",
+          "value": "Single returned sealed vial",
+          "weight": 16,
+          "rationale": "The initial scope is limited but must be verified."
+        }
+      ],
+      "rationale": "Major is appropriate for a customer-facing product quality complaint with limited initial scope.",
+      "computedAt": "2026-05-12T14:08:00+07:00"
+    },
+    "rca": {
+      "method": "decision_tree",
+      "decisionTree": {
+        "rootNodeId": "dt-0112-1",
+        "nodes": [
+          {
+            "id": "dt-0112-1",
+            "question": "Was particulate present in retained samples?",
+            "yesNodeId": "dt-0112-2",
+            "noNodeId": "dt-0112-3",
+            "isLeaf": false
+          },
+          {
+            "id": "dt-0112-2",
+            "question": "Review inspection reconciliation for the lot family.",
+            "isLeaf": true,
+            "conclusion": "Inspection reconciliation escalation may be insufficient."
+          },
+          {
+            "id": "dt-0112-3",
+            "question": "Assess distribution and customer handling evidence.",
+            "isLeaf": true,
+            "conclusion": "External handling remains possible but less likely."
+          }
+        ]
+      },
+      "confirmedRootCauses": [
+        "Visual inspection rejection trend was not escalated after repeated borderline observations in the same lot family."
+      ]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "investigation",
+    "currentStep": "rca",
+    "createdAt": "2026-05-12T14:10:00+07:00",
+    "updatedAt": "2026-05-13T10:15:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "head_of_dept",
+    "department": "QA Complaint / Production"
+  },
+  {
+    "id": "CAPA-2026-0312",
+    "findingId": "DEV-2026-0312",
+    "type": "deviation",
+    "title": "Autoclave Printout Completeness Improvement",
+    "preFill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0312",
+      "reportedAt": "2026-04-28T08:30:00+07:00",
+      "occurredAt": "2026-04-28T07:55:00+07:00",
+      "location": {
+        "department": "Sterile Preparation",
+        "area": "Autoclave Room",
+        "line": "Component Prep",
+        "equipmentId": "AUTO-SP-03"
+      },
+      "initiator": {
+        "name": "Andi Wijaya",
+        "role": "Senior Operator",
+        "nik": "BF-FF-1024"
+      },
+      "initialObservation": "Autoclave cycle printout was incomplete after routine sterile component preparation.",
+      "affectedBatches": ["CMP-26-0428-A"],
+      "attachments": [],
+      "sopReferences": ["SOP-SP-010"],
+      "initialSeverity": "Minor"
+    },
+    "gateAnswers": [],
+    "score": {
+      "problemSpecificity": 24,
+      "rootCauseDepth": 22,
+      "effectiveness": 23,
+      "containment": 22,
+      "total": 91,
+      "isAuditReady": true
+    },
+    "impact": {
+      "severity": "Minor",
+      "totalWeight": 34,
+      "factors": [],
+      "rationale": "Minor severity due to contained documentation gap with complete electronic backup.",
+      "computedAt": "2026-04-28T08:40:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "confirmedRootCauses": ["Printer roll replacement check was not included in pre-cycle readiness."]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "method": "process_review",
+      "result": "Four-week printout completeness check passed.",
+      "evidenceFileNames": ["autoclave-weekly-review.pdf"],
+      "verifiedAt": "2026-04-30T12:45:00+07:00",
+      "verifiedBy": "qa_deviation"
+    },
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "closed",
+    "currentStep": "signoff",
+    "createdAt": "2026-04-28T08:35:00+07:00",
+    "updatedAt": "2026-04-30T13:15:00+07:00",
+    "createdBy": "initiator",
+    "assignedTo": "qa_deviation",
+    "department": "Sterile Preparation"
+  },
+  {
+    "id": "CAPA-2026-0298",
+    "findingId": "AUD-2026-0298",
+    "type": "audit",
+    "title": "Supplier Qualification File Update",
+    "preFill": {
+      "source": "Q100+",
+      "findingId": "AUD-2026-0298",
+      "auditId": "IA-2026-SUP-017",
+      "auditType": "internal",
+      "reportedAt": "2026-04-23T13:25:00+07:00",
+      "auditDate": "2026-04-22T09:00:00+07:00",
+      "auditor": {
+        "name": "Siti Rahmawati",
+        "organization": "QA Compliance"
+      },
+      "auditee": {
+        "department": "Procurement",
+        "contactPerson": "Bambang Saputra"
+      },
+      "findingCategory": "Supplier Quality",
+      "findingDescription": "Supplier qualification file lacked current quality agreement confirmation.",
+      "regulationReference": ["GMP Chapter 5"],
+      "severity": "Major",
+      "sopReferences": ["SOP-SQ-006"]
+    },
+    "gateAnswers": [],
+    "score": {
+      "problemSpecificity": 23,
+      "rootCauseDepth": 21,
+      "effectiveness": 21,
+      "containment": 20,
+      "total": 85,
+      "isAuditReady": true
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 64,
+      "factors": [],
+      "rationale": "Major due to supplier quality documentation impact.",
+      "computedAt": "2026-04-23T13:30:00+07:00"
+    },
+    "rca": {
+      "method": "fishbone",
+      "confirmedRootCauses": ["Supplier file ownership lacked a monthly QA review trigger."]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": ["supplier-file-review.pdf"]
+    },
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "approval",
+    "currentStep": "signoff",
+    "createdAt": "2026-04-23T13:35:00+07:00",
+    "updatedAt": "2026-05-09T11:00:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "head_of_qa",
+    "department": "Procurement / QA Compliance"
+  },
+  {
+    "id": "CAPA-2026-0275",
+    "findingId": "CMP-2026-0275",
+    "type": "complaint",
+    "title": "Carton Label Abrasion Complaint",
+    "preFill": {
+      "source": "Bizzmine-Complaint",
+      "complaintId": "CMP-2026-0275",
+      "reportedAt": "2026-04-17T12:15:00+07:00",
+      "customer": {
+        "name": "National Distributor West Java",
+        "type": "distributor"
+      },
+      "product": {
+        "name": "Vaccine Carton",
+        "lotNumber": "VAC-26-0402-D",
+        "expiryDate": "2027-04-30"
+      },
+      "complaintType": "Label Abrasion",
+      "description": "Outer carton label abrasion observed at distributor receipt.",
+      "initialSeverity": "Minor",
+      "attachments": []
+    },
+    "gateAnswers": [],
+    "score": {
+      "problemSpecificity": 16,
+      "rootCauseDepth": 10,
+      "effectiveness": 8,
+      "containment": 14,
+      "total": 48,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Minor",
+      "totalWeight": 38,
+      "factors": [],
+      "rationale": "Minor due to secondary packaging cosmetic damage without product impact signal.",
+      "computedAt": "2026-04-17T12:25:00+07:00"
+    },
+    "rca": {
+      "method": "decision_tree",
+      "confirmedRootCauses": []
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "disposisi",
+    "currentStep": "problem",
+    "createdAt": "2026-04-17T12:20:00+07:00",
+    "updatedAt": "2026-04-17T12:40:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "qa_deviation",
+    "department": "QA Complaint / Packaging"
+  },
+  {
+    "id": "CAPA-2026-0251",
+    "findingId": "DEV-2026-0251",
+    "type": "deviation",
+    "title": "HEPA Differential Pressure Drift Trend",
+    "preFill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0251",
+      "reportedAt": "2026-03-19T10:10:00+07:00",
+      "occurredAt": "2026-03-19T09:45:00+07:00",
+      "location": {
+        "department": "Engineering",
+        "area": "Grade B Corridor",
+        "line": "HVAC Zone 4",
+        "equipmentId": "HVAC-GB-04"
+      },
+      "initiator": {
+        "name": "Andi Wijaya",
+        "role": "Senior Operator",
+        "nik": "BF-FF-1024"
+      },
+      "initialObservation": "Repeated HEPA differential pressure drift observed in Grade B corridor.",
+      "affectedBatches": [],
+      "attachments": [],
+      "sopReferences": ["SOP-HVAC-002"],
+      "initialSeverity": "Major"
+    },
+    "gateAnswers": [],
+    "score": {
+      "problemSpecificity": 23,
+      "rootCauseDepth": 21,
+      "effectiveness": 20,
+      "containment": 20,
+      "total": 84,
+      "isAuditReady": true
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 62,
+      "factors": [],
+      "rationale": "Major due to repeat trend in classified area.",
+      "computedAt": "2026-03-19T10:15:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "confirmedRootCauses": ["Engineering review did not trend repeat HEPA pressure drift across adjacent areas."]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "method": "em_re_test",
+      "result": "Initial verification passed, but related drift recurred in adjacent zone.",
+      "evidenceFileNames": ["hepa-drift-verification.pdf"],
+      "verifiedAt": "2026-04-02T10:00:00+07:00",
+      "verifiedBy": "qa_deviation"
+    },
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "closed",
+    "currentStep": "signoff",
+    "createdAt": "2026-03-19T10:20:00+07:00",
+    "updatedAt": "2026-04-02T10:30:00+07:00",
+    "createdBy": "initiator",
+    "assignedTo": "qa_deviation",
+    "department": "Engineering"
+  },
+  {
+    "id": "CAPA-2026-0188",
+    "findingId": "DEV-2026-0188",
+    "type": "deviation",
+    "title": "Cold Room Temperature Alarm Escalation",
+    "preFill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0188",
+      "reportedAt": "2026-02-06T06:45:00+07:00",
+      "occurredAt": "2026-02-06T04:20:00+07:00",
+      "location": {
+        "department": "Warehouse",
+        "area": "Cold Room 2",
+        "line": "Vaccine Storage",
+        "equipmentId": "CR-WH-02"
+      },
+      "initiator": {
+        "name": "Andi Wijaya",
+        "role": "Senior Operator",
+        "nik": "BF-FF-1024"
+      },
+      "initialObservation": "Cold room temperature exceeded alert limit during weekend monitoring.",
+      "affectedBatches": ["VAC-26-0206-A"],
+      "attachments": [],
+      "sopReferences": ["SOP-WH-008"],
+      "initialSeverity": "Critical"
+    },
+    "gateAnswers": [],
+    "score": {
+      "problemSpecificity": 19,
+      "rootCauseDepth": 15,
+      "effectiveness": 12,
+      "containment": 14,
+      "total": 60,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Critical",
+      "totalWeight": 88,
+      "factors": [],
+      "rationale": "Critical due to temperature excursion affecting stored vaccine batch.",
+      "computedAt": "2026-02-06T07:00:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "confirmedRootCauses": ["Alarm relay failure delayed escalation to weekend duty personnel."]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "investigation",
+    "currentStep": "ca",
+    "createdAt": "2026-02-06T07:05:00+07:00",
+    "updatedAt": "2026-02-13T08:00:00+07:00",
+    "createdBy": "initiator",
+    "assignedTo": "head_of_dept",
+    "department": "Warehouse"
+  }
+]
+

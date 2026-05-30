@@ -1,0 +1,18 @@
+{
+  "CAPA-2026-0341": [
+    "Revise SOP-PM-HEPA-001 to include trend-based interval shortening for Grade A/B HEPA filters.",
+    "Add automated maintenance planner reminders for HEPA filter replacement and QA escalation.",
+    "Add quarterly QA-engineering review of classified area airflow deterioration signals."
+  ],
+  "CAPA-2026-0089": [
+    "Revise material transfer documentation SOP to define shift handover ownership.",
+    "Add an end-of-shift verification checklist for supervisors.",
+    "Run weekly QA spot checks for three months and trend late documentation events."
+  ],
+  "CAPA-2026-0112": [
+    "Strengthen visual inspection reconciliation escalation criteria.",
+    "Add reviewer retraining for repeated borderline observations.",
+    "Trend complaint and visual inspection signals by lot family during monthly quality review."
+  ]
+}
+

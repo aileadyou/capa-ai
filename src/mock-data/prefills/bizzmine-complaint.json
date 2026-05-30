@@ -1,0 +1,30 @@
+{
+  "source": "Bizzmine-Complaint",
+  "complaintId": "CMP-2026-0112",
+  "reportedAt": "2026-05-12T14:05:00+07:00",
+  "customer": {
+    "name": "RS Hasan Sadikin Bandung",
+    "type": "hospital"
+  },
+  "product": {
+    "name": "Vaccine Multi-dose Vial",
+    "lotNumber": "VAC-26-0419-C",
+    "expiryDate": "2027-04-30"
+  },
+  "complaintType": "Particulate Matter",
+  "description": "Hospital pharmacist observed visible particulate matter in one returned vial before administration. The vial remained sealed and was quarantined by the customer.",
+  "initialSeverity": "Major",
+  "attachments": [
+    {
+      "name": "customer-photo-vial-cmp-2026-0112.jpg",
+      "type": "Image",
+      "url": "/mock/attachments/customer-photo-vial-cmp-2026-0112.jpg"
+    },
+    {
+      "name": "complaint-intake-form.pdf",
+      "type": "PDF",
+      "url": "/mock/attachments/complaint-intake-form.pdf"
+    }
+  ]
+}
+

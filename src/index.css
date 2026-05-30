@@ -41,6 +41,26 @@
     --accent-foreground: 0 0% 100%;
     --accent-light: 245 58% 65%;
 
+    /* Nova accent */
+    --nova: 263 70% 52%;
+    --nova-foreground: 0 0% 100%;
+    --nova-soft: 263 70% 96%;
+
+    /* Shared severity colors */
+    --severity-minor: 199 89% 48%;
+    --severity-major: 38 92% 45%;
+    --severity-critical: 0 72% 51%;
+
+    /* Shared status colors */
+    --status-draft: 215 16% 47%;
+    --status-investigation: 221 83% 53%;
+    --status-approval: 38 92% 45%;
+    --status-closed: 142 71% 35%;
+    --status-ready: 142 71% 35%;
+
+    --surface: 0 0% 100%;
+    --surface-subtle: 210 20% 98%;
+
     /* Status colors - muted for enterprise */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -109,6 +129,23 @@
     --accent: 245 58% 55%;
     --accent-foreground: 0 0% 100%;
     --accent-light: 245 58% 45%;
+
+    --nova: 263 70% 62%;
+    --nova-foreground: 0 0% 100%;
+    --nova-soft: 263 42% 16%;
+
+    --severity-minor: 199 89% 58%;
+    --severity-major: 38 92% 55%;
+    --severity-critical: 0 72% 61%;
+
+    --status-draft: 215 20% 65%;
+    --status-investigation: 221 83% 63%;
+    --status-approval: 38 92% 55%;
+    --status-closed: 142 71% 45%;
+    --status-ready: 142 71% 45%;
+
+    --surface: 222 47% 9%;
+    --surface-subtle: 222 47% 12%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;

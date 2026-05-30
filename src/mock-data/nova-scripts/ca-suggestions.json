@@ -1,0 +1,18 @@
+{
+  "CAPA-2026-0341": [
+    "Replace HEPA-FF-L2-07 and complete room requalification before routine operation resumes.",
+    "Review batch exposure windows and document QA product impact assessment for affected batches.",
+    "Perform engineering inspection of adjacent airflow components for early deterioration signals."
+  ],
+  "CAPA-2026-0089": [
+    "Review and correct affected material transfer records with QA data integrity assessment.",
+    "Retrain warehouse operators and supervisors on real-time documentation expectations.",
+    "Perform retrospective spot check of the previous 30 days of material transfer records."
+  ],
+  "CAPA-2026-0112": [
+    "Assess returned complaint vial and retained samples for visible particulate matter.",
+    "Review visual inspection records and rejection reconciliation for the related lot family.",
+    "Document batch impact assessment and complaint response decision."
+  ]
+}
+

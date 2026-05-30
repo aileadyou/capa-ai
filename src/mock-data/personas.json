@@ -1,0 +1,43 @@
+[
+  {
+    "id": "initiator",
+    "displayName": "Andi Wijaya",
+    "role": "Senior Operator",
+    "department": "Fill-Finish",
+    "nik": "BF-FF-1024",
+    "avatarInitials": "AW"
+  },
+  {
+    "id": "qa_deviation",
+    "displayName": "Siti Rahmawati",
+    "role": "QA Deviation / QA Compliance / QA Complaint",
+    "department": "Quality Assurance",
+    "nik": "BF-QA-2048",
+    "avatarInitials": "SR"
+  },
+  {
+    "id": "head_of_dept",
+    "displayName": "Bambang Saputra",
+    "role": "Department Head",
+    "department": "Fill-Finish / Warehouse / Production",
+    "nik": "BF-MGT-3012",
+    "avatarInitials": "BS"
+  },
+  {
+    "id": "head_of_qa",
+    "displayName": "Dewi Anggraini",
+    "role": "Head of QA",
+    "department": "QA Division",
+    "nik": "BF-QA-4001",
+    "avatarInitials": "DA"
+  },
+  {
+    "id": "sme",
+    "displayName": "Dr. Ahmad Pratomo",
+    "role": "SME Microbiology",
+    "department": "QA Microbiology",
+    "nik": "BF-SME-5020",
+    "avatarInitials": "AP"
+  }
+]
+

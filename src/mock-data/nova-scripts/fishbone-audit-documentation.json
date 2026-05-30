@@ -1,0 +1,34 @@
+{
+  "capaId": "CAPA-2026-0089",
+  "method": "fishbone",
+  "categories": [
+    {
+      "category": "Man",
+      "entries": [
+        "Operators interpreted second-person verification as an end-of-shift activity.",
+        "Supervisors did not consistently challenge late record completion."
+      ]
+    },
+    {
+      "category": "Method",
+      "entries": [
+        "SOP-WH-021 does not assign ownership during shift handover.",
+        "The checklist does not require real-time verification initials."
+      ]
+    },
+    {
+      "category": "Measurement",
+      "entries": [
+        "Documentation timeliness is not trended as a warehouse quality metric."
+      ]
+    },
+    {
+      "category": "Environment",
+      "entries": [
+        "Peak transfer activity overlaps with shift closure and handover."
+      ]
+    }
+  ],
+  "confirmedRootCause": "Material transfer documentation ownership was unclear during shift handover."
+}
+

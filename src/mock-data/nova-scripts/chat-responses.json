@@ -1,0 +1,24 @@
+{
+  "problem": [
+    {
+      "prompt": "How can I improve the problem statement?",
+      "response": "Observation:\nThe current statement should name the date, area, equipment, material scope, and measured condition.\n\nRecommendation:\nMention the 12-minute excursion, HEPA-FF-L2-07, Grade A Fill Suite, and affected batches.\n\nAudit Rationale:\nA specific statement gives QA enough context to evaluate impact without re-reading the source record."
+    }
+  ],
+  "rca": [
+    {
+      "prompt": "Is this root cause deep enough?",
+      "response": "Observation:\nThe current root cause points to the maintenance interval, but should also explain why the interval was not updated.\n\nRecommendation:\nConnect the fixed 18-month SOP interval to missing trend-based reassessment criteria.\n\nAudit Rationale:\nAuditors expect the root cause to address the system weakness, not only the failed component."
+    }
+  ],
+  "verification": [
+    {
+      "prompt": "What evidence should I attach?",
+      "response": "Observation:\nVerification should prove containment, correction, and sustained control.\n\nRecommendation:\nAttach EM re-test results, requalification summary, and QA batch exposure assessment.\n\nAudit Rationale:\nThese records show the CAPA restored process control and evaluated product impact."
+    }
+  ],
+  "fallback": {
+    "response": "Observation:\nI do not have a scripted response for that exact question yet.\n\nRecommendation:\nUse the current CAPA step, source data, confirmed root cause, and audit readiness score to decide the next action.\n\nAudit Rationale:\nThe demo keeps Nova deterministic so every stakeholder walkthrough remains stable."
+  }
+}
+

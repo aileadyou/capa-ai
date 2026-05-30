@@ -1,0 +1,161 @@
+[
+  {
+    "id": "DEV-2026-0341",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Environmental monitoring excursion in Grade A filling suite during vaccine filling operation.",
+    "severity": "Major",
+    "department": "Fill-Finish",
+    "reportedAt": "2026-05-18T09:42:00+07:00",
+    "status": "capa_in_progress",
+    "linkedCapaId": "CAPA-2026-0341"
+  },
+  {
+    "id": "AUD-2026-0089",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "GMP documentation gap found during internal audit of material transfer records.",
+    "severity": "Major",
+    "department": "Warehouse / QA Compliance",
+    "reportedAt": "2026-05-15T11:20:00+07:00",
+    "status": "capa_in_progress",
+    "linkedCapaId": "CAPA-2026-0089"
+  },
+  {
+    "id": "CMP-2026-0112",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "shortDescription": "Hospital customer reported visible particulate matter in one returned vaccine vial.",
+    "severity": "Major",
+    "department": "QA Complaint / Production",
+    "reportedAt": "2026-05-12T14:05:00+07:00",
+    "status": "capa_in_progress",
+    "linkedCapaId": "CAPA-2026-0112"
+  },
+  {
+    "id": "DEV-2026-0312",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Autoclave cycle printout was incomplete during routine sterile component preparation.",
+    "severity": "Minor",
+    "department": "Sterile Preparation",
+    "reportedAt": "2026-04-28T08:30:00+07:00",
+    "status": "capa_closed",
+    "linkedCapaId": "CAPA-2026-0312"
+  },
+  {
+    "id": "DEV-2026-0251",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Repeated HEPA differential pressure drift observed in Grade B corridor.",
+    "severity": "Major",
+    "department": "Engineering",
+    "reportedAt": "2026-03-19T10:10:00+07:00",
+    "status": "capa_closed",
+    "linkedCapaId": "CAPA-2026-0251"
+  },
+  {
+    "id": "DEV-2026-0188",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Cold room temperature exceeded alert limit during weekend monitoring.",
+    "severity": "Critical",
+    "department": "Warehouse",
+    "reportedAt": "2026-02-06T06:45:00+07:00",
+    "status": "overdue",
+    "linkedCapaId": "CAPA-2026-0188"
+  },
+  {
+    "id": "DEV-2026-0144",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Line clearance checklist missed one secondary packaging material code.",
+    "severity": "Minor",
+    "department": "Packaging",
+    "reportedAt": "2026-01-25T15:30:00+07:00",
+    "status": "pending_capa"
+  },
+  {
+    "id": "AUD-2026-0298",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "Supplier qualification file lacked current quality agreement confirmation.",
+    "severity": "Major",
+    "department": "Procurement / QA Compliance",
+    "reportedAt": "2026-04-23T13:25:00+07:00",
+    "status": "capa_in_progress",
+    "linkedCapaId": "CAPA-2026-0298"
+  },
+  {
+    "id": "AUD-2026-0204",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "Training record reconciliation was not completed before SOP effective date.",
+    "severity": "Minor",
+    "department": "Training",
+    "reportedAt": "2026-03-03T09:10:00+07:00",
+    "status": "capa_closed"
+  },
+  {
+    "id": "AUD-2026-0175",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "Warehouse humidity mapping requalification was past internal due date.",
+    "severity": "Critical",
+    "department": "Warehouse",
+    "reportedAt": "2026-02-22T16:05:00+07:00",
+    "status": "overdue"
+  },
+  {
+    "id": "AUD-2026-0127",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "Internal audit checklist did not capture manual cleaning verification evidence.",
+    "severity": "Major",
+    "department": "Production",
+    "reportedAt": "2026-01-30T10:40:00+07:00",
+    "status": "pending_capa"
+  },
+  {
+    "id": "CMP-2026-0275",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "shortDescription": "Distributor reported carton label abrasion on outer packaging.",
+    "severity": "Minor",
+    "department": "QA Complaint / Packaging",
+    "reportedAt": "2026-04-17T12:15:00+07:00",
+    "status": "capa_in_progress",
+    "linkedCapaId": "CAPA-2026-0275"
+  },
+  {
+    "id": "CMP-2026-0219",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "shortDescription": "Hospital reported delayed delivery temperature logger retrieval.",
+    "severity": "Major",
+    "department": "Supply Chain",
+    "reportedAt": "2026-03-11T08:55:00+07:00",
+    "status": "capa_closed"
+  },
+  {
+    "id": "CMP-2026-0182",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "shortDescription": "Regulator inquiry about repeated cold-chain alarm acknowledgement delay.",
+    "severity": "Critical",
+    "department": "Supply Chain / QA",
+    "reportedAt": "2026-02-18T17:20:00+07:00",
+    "status": "overdue"
+  },
+  {
+    "id": "CMP-2026-0098",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "shortDescription": "End user reported missing package insert in one secondary carton.",
+    "severity": "Minor",
+    "department": "Packaging",
+    "reportedAt": "2026-01-19T10:05:00+07:00",
+    "status": "pending_capa"
+  }
+]
+

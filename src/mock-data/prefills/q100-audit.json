@@ -1,0 +1,22 @@
+{
+  "source": "Q100+",
+  "findingId": "AUD-2026-0089",
+  "auditId": "IA-2026-QA-042",
+  "auditType": "internal",
+  "reportedAt": "2026-05-15T11:20:00+07:00",
+  "auditDate": "2026-05-14T09:00:00+07:00",
+  "auditor": {
+    "name": "Siti Rahmawati",
+    "organization": "QA Compliance"
+  },
+  "auditee": {
+    "department": "Warehouse",
+    "contactPerson": "Bambang Saputra"
+  },
+  "findingCategory": "GMP Documentation",
+  "findingDescription": "Material transfer records for three lots were completed after shift handover and lacked documented second-person verification.",
+  "regulationReference": ["GMP Chapter 4", "BPOM 2023 Data Integrity Guidance"],
+  "severity": "Major",
+  "sopReferences": ["SOP-WH-021", "SOP-DOC-004"]
+}
+

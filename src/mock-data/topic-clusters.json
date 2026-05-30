@@ -1,0 +1,55 @@
+[
+  {
+    "id": "topic-hepa-maintenance",
+    "name": "HEPA Filter Maintenance",
+    "findingIds": ["DEV-2026-0341", "DEV-2026-0251"],
+    "trend": "up",
+    "riskLevel": "High",
+    "severityDistribution": {
+      "Minor": 0,
+      "Major": 2,
+      "Critical": 0
+    },
+    "summary": "Repeat classified-area airflow findings indicate preventive maintenance intervals need tighter trending."
+  },
+  {
+    "id": "topic-documentation",
+    "name": "GMP Documentation",
+    "findingIds": ["AUD-2026-0089", "AUD-2026-0204", "AUD-2026-0127"],
+    "trend": "stable",
+    "riskLevel": "Medium",
+    "severityDistribution": {
+      "Minor": 1,
+      "Major": 2,
+      "Critical": 0
+    },
+    "summary": "Documentation execution and verification remain recurring audit themes."
+  },
+  {
+    "id": "topic-cold-chain",
+    "name": "Cold Chain Escalation",
+    "findingIds": ["DEV-2026-0188", "CMP-2026-0182", "CMP-2026-0219"],
+    "trend": "up",
+    "riskLevel": "High",
+    "severityDistribution": {
+      "Minor": 0,
+      "Major": 1,
+      "Critical": 2
+    },
+    "summary": "Temperature alarm response and escalation timing need consolidated management review."
+  },
+  {
+    "id": "topic-visual-inspection",
+    "name": "Visual Inspection Reconciliation",
+    "findingIds": ["CMP-2026-0112"],
+    "trend": "stable",
+    "riskLevel": "Medium",
+    "severityDistribution": {
+      "Minor": 0,
+      "Major": 1,
+      "Critical": 0
+    },
+    "summary": "Complaint trend suggests inspection reconciliation thresholds should be more explicit."
+  }
+]
+
