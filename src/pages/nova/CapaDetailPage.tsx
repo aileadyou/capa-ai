@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -385,11 +386,33 @@ function ActionList({
 
 export function CapaDetailPage() {
   const { id } = useParams();
-  const capa = useCapaStore((state) => (id ? state.getCAPAById(id) : undefined));
-  const finding = useCapaStore((state) =>
-    capa ? state.findings.find((record) => record.id === capa.findingId) : undefined,
+
+  // Stable store reads — return direct store references, not derived objects
+  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
+  const allCAs = useCapaStore((state) => state.correctiveActions);
+  const allPAs = useCapaStore((state) => state.preventiveActions);
+  const allFindings = useCapaStore((state) => state.findings);
+  const allAuditEvents = useAuditTrailStore((state) => state.events);
+
+  // Derived values — computed once per dependency change, not on every render
+  const capa = useMemo(() => {
+    if (!rawCapa) return undefined;
+    return {
+      ...rawCapa,
+      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
+      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
+    };
+  }, [rawCapa, allCAs, allPAs]);
+
+  const finding = useMemo(
+    () => (capa ? allFindings.find((f) => f.id === capa.findingId) : undefined),
+    [capa, allFindings],
   );
-  const auditEvents = useAuditTrailStore((state) => (id ? state.getEventsByCAPA(id) : []));
+
+  const auditEvents = useMemo(
+    () => (id ? allAuditEvents.filter((e) => e.capaId === id) : []),
+    [allAuditEvents, id],
+  );
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;

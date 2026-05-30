@@ -108,7 +108,13 @@ function getApprovalFor(approvals: ApprovalEvent[], personaId: PersonaID) {
 
 export function D7SignOffPage() {
   const { id } = useParams();
-  const capa = useCapaStore((state) => (id ? state.getCAPAById(id) : undefined));
+  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
+  const allCAs = useCapaStore((state) => state.correctiveActions);
+  const allPAs = useCapaStore((state) => state.preventiveActions);
+  const capa = useMemo(() => {
+    if (!rawCapa) return undefined;
+    return { ...rawCapa, correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id), preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id) };
+  }, [rawCapa, allCAs, allPAs]);
   const approveSignOff = useCapaStore((state) => state.approveSignOff);
   const closeCAPA = useCapaStore((state) => state.closeCAPA);
   const addNotification = useNotificationStore((state) => state.addNotification);

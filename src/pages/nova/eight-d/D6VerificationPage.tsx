@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CheckCircle2, Circle, MessageSquareText, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -118,7 +118,13 @@ function evaluateVerification(method: string, result: string, evidenceFileName: 
 export function D6VerificationPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const capa = useCapaStore((state) => (id ? state.getCAPAById(id) : undefined));
+  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
+  const allCAs = useCapaStore((state) => state.correctiveActions);
+  const allPAs = useCapaStore((state) => state.preventiveActions);
+  const capa = useMemo(() => {
+    if (!rawCapa) return undefined;
+    return { ...rawCapa, correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id), preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id) };
+  }, [rawCapa, allCAs, allPAs]);
   const completeVerification = useCapaStore((state) => state.completeVerification);
   const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
   const updateScore = useCapaStore((state) => state.updateScore);

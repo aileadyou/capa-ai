@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CheckCircle2, Circle, ListChecks, MessageSquareText, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -180,7 +180,13 @@ function ActionList({ actions, onRemove }: { actions: PreventiveAction[]; onRemo
 export function D5PreventiveActionPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const capa = useCapaStore((state) => (id ? state.getCAPAById(id) : undefined));
+  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
+  const allCAs = useCapaStore((state) => state.correctiveActions);
+  const allPAs = useCapaStore((state) => state.preventiveActions);
+  const capa = useMemo(() => {
+    if (!rawCapa) return undefined;
+    return { ...rawCapa, correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id), preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id) };
+  }, [rawCapa, allCAs, allPAs]);
   const addPA = useCapaStore((state) => state.addPA);
   const removePA = useCapaStore((state) => state.removePA);
   const updateScore = useCapaStore((state) => state.updateScore);
