@@ -4,6 +4,30 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-01, 03:05 AM — Login page + auth guard + persona picker + logout
+
+### Prompt
+"Tolong tambahin halaman login sederhana. Di halaman login tersebut, tetep munculin inputan email/password, tapi di bawahnya tambahin card helper gitu yang isinya 5 personas kita. Karena ini buat demo, user tinggal milih aja mau login as persona yg mana. Make sure juga si persona ini ke-save di localstorage, dan punya functionality untuk logout ya."
+
+### Completed
+- Created `useAuthStore` (Zustand + persist, localStorage key `capa-ai-auth`) with `isLoggedIn`, `login(personaId)`, and `logout()`. `login` switches persona via `usePersonaStore`, `logout` resets persona to default.
+- Created `LoginPage.tsx`: full-screen branded page with email/password form (submit defaults to qa_deviation for demo) and 5 interactive persona cards (avatar, name, role, arrow, accent hover highlight per persona color). Footer notes it's a demo environment. Design-system inline styles throughout.
+- Added `AuthGuard` component inside `App.tsx` wrapping `BrowserRouter` — renders `<LoginPage />` when not logged in, full app otherwise. `PageWrapper`/`NovaChatPanel`/`CitationDetailPanel` only mount when authenticated.
+- Added `LogOut` icon button to sidebar user block (bottom-right of persona row). Hover turns danger-red; click calls `logout()` which clears auth state and shows login page.
+
+### Validation
+- `npx tsc --noEmit` ✅ passes.
+- `npm run build` ✅ passes (764 kB bundle, existing chunk size warning only).
+
+### Files Touched
+- `src/store/useAuthStore.ts` (new)
+- `src/pages/LoginPage.tsx` (new)
+- `src/store/index.ts`
+- `src/App.tsx`
+- `src/components/layout/Sidebar.tsx`
+
+---
+
 ## 2026-06-01, 03:10 AM — Findings Detail page rewrite
 
 ### Prompt

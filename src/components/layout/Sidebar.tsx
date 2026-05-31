@@ -7,13 +7,14 @@ import {
   FolderOpen,
   HelpCircle,
   LayoutGrid,
+  LogOut,
   Moon,
   ScrollText,
   Search,
   Settings,
   Sun,
 } from "lucide-react";
-import { useNotificationStore, usePersonaStore } from "@/store";
+import { useAuthStore, useNotificationStore, usePersonaStore } from "@/store";
 import { PersonaSwitcher } from "@/components/shared/PersonaSwitcher";
 import { applyTheme, getInitialTheme, type ThemeMode } from "@/lib/theme";
 import logoReal from "@/assets/logo-real.png";
@@ -105,6 +106,7 @@ function NavItem({
 export function Sidebar() {
   const persona = usePersonaStore((state) => state.activePersona());
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+  const logout = useAuthStore((state) => state.logout);
   const [theme, setTheme] = useState<ThemeMode>(() => getInitialTheme());
   const unreadCount = useNotificationStore((state) =>
     state.notifications.filter(
@@ -296,7 +298,7 @@ export function Sidebar() {
           </div>
 
           {/* Name + role */}
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <p
               style={{
                 fontSize: "13px",
@@ -323,6 +325,40 @@ export function Sidebar() {
               {persona.role} · {persona.department}
             </p>
           </div>
+
+          {/* Logout button */}
+          <button
+            type="button"
+            onClick={logout}
+            title="Sign out"
+            aria-label="Sign out"
+            style={{
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "28px",
+              height: "28px",
+              borderRadius: "var(--r-sm)",
+              background: "transparent",
+              border: "1px solid transparent",
+              color: "var(--fg-4)",
+              cursor: "pointer",
+              transition: "color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--danger)";
+              e.currentTarget.style.background = "var(--danger-soft)";
+              e.currentTarget.style.borderColor = "transparent";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--fg-4)";
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.borderColor = "transparent";
+            }}
+          >
+            <LogOut size={14} strokeWidth={1.75} />
+          </button>
         </div>
       </div>
     </aside>
