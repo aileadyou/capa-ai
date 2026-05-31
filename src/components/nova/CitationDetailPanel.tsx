@@ -35,10 +35,10 @@ export function CitationDetailPanel() {
   return (
     <>
       <div
-        className="fixed inset-0 z-30 bg-black/20"
+        className="motion-backdrop lead-overlay fixed inset-0 z-30"
         onClick={closeCitationPanel}
       />
-      <aside className="fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg">
+      <aside className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg">
         <div className="flex items-center justify-between border-b p-4">
           <div className="text-sm font-semibold">Historical CAPA Reference</div>
           <Button variant="ghost" size="icon" onClick={closeCitationPanel}>

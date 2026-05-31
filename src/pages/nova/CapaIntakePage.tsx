@@ -17,7 +17,10 @@ const SOURCE_CARDS = [
     sourceId: "DEV-2026-0341",
     badge: "Deviation",
     description: "Environmental monitoring, process deviation, batch issue",
-    color: "#A94DCC",
+    color: "var(--accent)",
+    softBg: "var(--accent-soft)",
+    softBorder: "var(--accent-line)",
+    selectedBg: "var(--accent-soft)",
   },
   {
     type: "audit" as CAPAType,
@@ -25,7 +28,10 @@ const SOURCE_CARDS = [
     sourceId: "AUD-2026-0089",
     badge: "Audit finding",
     description: "Internal audit, regulatory inspection, compliance gap",
-    color: "#3FB984",
+    color: "var(--success)",
+    softBg: "var(--success-soft)",
+    softBorder: "color-mix(in srgb, var(--success) 38%, transparent)",
+    selectedBg: "var(--success-soft)",
   },
   {
     type: "complaint" as CAPAType,
@@ -33,7 +39,10 @@ const SOURCE_CARDS = [
     sourceId: "CMP-2026-0112",
     badge: "Complaint",
     description: "Customer complaint, adverse event, field quality report",
-    color: "#E0A33E",
+    color: "var(--warning)",
+    softBg: "var(--warning-soft)",
+    softBorder: "color-mix(in srgb, var(--warning) 38%, transparent)",
+    selectedBg: "var(--warning-soft)",
   },
 ] as const;
 
@@ -86,27 +95,35 @@ const SEVERITY_OPTIONS: Array<{
   label: string;
   description: string;
   color: string;
+  softBg: string;
+  softBorder: string;
   weight: string;
 }> = [
   {
     value: "Minor",
     label: "Minor",
     description: "Limited product impact. No direct patient risk. Correctable at site level without regulatory notification.",
-    color: "#E0A33E",
+    color: "var(--warning)",
+    softBg: "var(--warning-soft)",
+    softBorder: "color-mix(in srgb, var(--warning) 38%, transparent)",
     weight: "Low",
   },
   {
     value: "Major",
     label: "Major",
     description: "Significant process deviation or compliance gap. Potential product impact. Requires full CAPA investigation.",
-    color: "#E5575C",
+    color: "var(--danger)",
+    softBg: "var(--danger-soft)",
+    softBorder: "color-mix(in srgb, var(--danger) 38%, transparent)",
     weight: "Medium",
   },
   {
     value: "Critical",
     label: "Critical",
     description: "Direct patient safety or regulatory risk. Immediate containment and escalation required. May trigger recall assessment.",
-    color: "#E5575C",
+    color: "var(--danger)",
+    softBg: "var(--danger-soft)",
+    softBorder: "color-mix(in srgb, var(--danger) 38%, transparent)",
     weight: "High",
   },
 ];
@@ -219,7 +236,7 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
     >
       {children}
       {required && (
-        <span style={{ color: "#E5575C", marginLeft: "3px" }}>*</span>
+        <span style={{ color: "var(--danger)", marginLeft: "3px" }}>*</span>
       )}
     </label>
   );
@@ -255,7 +272,7 @@ function StyledTextarea({
         resize: "vertical",
         outline: "none",
         boxSizing: "border-box",
-        transition: "border-color 0.15s, box-shadow 0.15s",
+        transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
       }}
       onFocus={(e) => {
         e.currentTarget.style.borderColor = "var(--accent)";
@@ -278,7 +295,7 @@ function ReviewField({ label, value }: { label: string; value?: string | null })
           fontSize: "10px",
           fontFamily: "var(--font-mono)",
           fontWeight: 600,
-          letterSpacing: "0.1em",
+          letterSpacing: "0.18em",
           textTransform: "uppercase",
           color: "var(--fg-4)",
           margin: "0 0 4px",
@@ -388,7 +405,7 @@ function NavButtons({
           fontFamily: "var(--font-sans)",
           letterSpacing: "0.01em",
           opacity: nextDisabled ? 0.6 : 1,
-          transition: "opacity 0.15s",
+          transition: "opacity var(--dur-fast) var(--ease-out)",
         }}
       >
         {isLoading ? (
@@ -582,7 +599,7 @@ export function CapaIntakePage() {
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               fontWeight: 600,
-              letterSpacing: "0.1em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               margin: "0 0 4px",
@@ -612,13 +629,13 @@ export function CapaIntakePage() {
                 key={card.type}
                 style={{
                   background: "var(--bg-3)",
-                  border: `1px solid ${selectedType === card.type && prefill ? card.color + "55" : "var(--line-2)"}`,
+                  border: `1px solid ${selectedType === card.type && prefill ? card.softBorder : "var(--line-2)"}`,
                   borderRadius: "var(--r-md)",
                   padding: "16px",
                   display: "flex",
                   flexDirection: "column",
                   gap: "10px",
-                  transition: "border-color 0.15s",
+                  transition: "border-color var(--dur-fast) var(--ease-out)",
                 }}
               >
                 {/* System header */}
@@ -642,10 +659,10 @@ export function CapaIntakePage() {
                         fontFamily: "var(--font-mono)",
                         fontWeight: 600,
                         color: card.color,
-                        background: card.color + "18",
+                        background: card.softBg,
                         padding: "1px 6px",
                         borderRadius: "var(--r-full)",
-                        letterSpacing: "0.04em",
+                        letterSpacing: "0.18em",
                       }}
                     >
                       {card.badge}
@@ -656,8 +673,8 @@ export function CapaIntakePage() {
                     style={{
                       fontSize: "10px",
                       fontFamily: "var(--font-mono)",
-                      color: "#3FB984",
-                      background: "rgba(63,185,132,0.10)",
+                      color: "var(--success)",
+                      background: "var(--success-soft)",
                       padding: "2px 7px",
                       borderRadius: "var(--r-full)",
                       fontWeight: 600,
@@ -697,9 +714,9 @@ export function CapaIntakePage() {
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "5px",
-                    background: selectedType === card.type && prefill ? card.color + "22" : "var(--bg-4)",
+                    background: selectedType === card.type && prefill ? card.selectedBg : "var(--bg-4)",
                     color: selectedType === card.type && prefill ? card.color : "var(--fg-2)",
-                    border: `1px solid ${selectedType === card.type && prefill ? card.color + "55" : "var(--line-2)"}`,
+                    border: `1px solid ${selectedType === card.type && prefill ? card.softBorder : "var(--line-2)"}`,
                     borderRadius: "var(--r-sm)",
                     padding: "7px 0",
                     fontSize: "12px",
@@ -708,7 +725,7 @@ export function CapaIntakePage() {
                     fontFamily: "var(--font-sans)",
                     marginTop: "auto",
                     width: "100%",
-                    transition: "all 0.15s",
+                    transition: "all var(--dur-fast) var(--ease-out)",
                   }}
                 >
                   {isLoading && selectedType === card.type ? (
@@ -783,7 +800,7 @@ export function CapaIntakePage() {
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               fontWeight: 600,
-              letterSpacing: "0.1em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               margin: "0 0 4px",
@@ -855,7 +872,7 @@ export function CapaIntakePage() {
                   fontSize: "11px",
                   fontFamily: "var(--font-mono)",
                   fontWeight: 600,
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
                   color: "var(--fg-4)",
                   margin: "0 0 16px",
@@ -904,7 +921,7 @@ export function CapaIntakePage() {
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               fontWeight: 600,
-              letterSpacing: "0.1em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               margin: "0 0 4px",
@@ -940,7 +957,7 @@ export function CapaIntakePage() {
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
                 <Sparkles size={13} style={{ color: "var(--accent)" }} />
-                <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--accent)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--accent)", letterSpacing: "0.18em", textTransform: "uppercase" }}>
                   Nova assessment
                 </span>
                 <span
@@ -948,8 +965,8 @@ export function CapaIntakePage() {
                     fontSize: "11px",
                     fontFamily: "var(--font-mono)",
                     fontWeight: 700,
-                    color: impactClassification.severity === "Minor" ? "#E0A33E" : "#E5575C",
-                    background: impactClassification.severity === "Minor" ? "rgba(224,163,62,0.12)" : "rgba(229,87,92,0.12)",
+                    color: impactClassification.severity === "Minor" ? "var(--warning)" : "var(--danger)",
+                    background: impactClassification.severity === "Minor" ? "var(--warning-soft)" : "var(--danger-soft)",
                     padding: "1px 8px",
                     borderRadius: "var(--r-full)",
                     marginLeft: "4px",
@@ -975,7 +992,7 @@ export function CapaIntakePage() {
                       border: "1px solid var(--line-1)",
                     }}
                   >
-                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-4)", margin: "0 0 3px", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", margin: "0 0 3px", letterSpacing: "0.18em", textTransform: "uppercase" }}>
                       {factor.factor}
                     </p>
                     <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: "0 0 4px", fontFamily: "var(--font-sans)" }}>
@@ -1017,7 +1034,7 @@ export function CapaIntakePage() {
               fontFamily: "var(--font-sans)",
             }}
           >
-            Severity classification <span style={{ color: "#E5575C" }}>*</span>
+            Severity classification <span style={{ color: "var(--danger)" }}>*</span>
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "24px" }}>
             {SEVERITY_OPTIONS.map((opt) => {
@@ -1029,12 +1046,12 @@ export function CapaIntakePage() {
                   onClick={() => setSelectedSeverity(opt.value)}
                   style={{
                     textAlign: "left",
-                    background: isSelected ? opt.color + "15" : "var(--bg-3)",
-                    border: `1px solid ${isSelected ? opt.color + "60" : "var(--line-2)"}`,
+                    background: isSelected ? opt.softBg : "var(--bg-3)",
+                    border: `1px solid ${isSelected ? opt.softBorder : "var(--line-2)"}`,
                     borderRadius: "var(--r-md)",
                     padding: "14px",
                     cursor: "pointer",
-                    transition: "all 0.15s",
+                    transition: "all var(--dur-fast) var(--ease-out)",
                     position: "relative",
                   }}
                 >
@@ -1052,7 +1069,7 @@ export function CapaIntakePage() {
                         background: "var(--accent-soft)",
                         padding: "1px 5px",
                         borderRadius: "var(--r-full)",
-                        letterSpacing: "0.06em",
+                        letterSpacing: "0.18em",
                       }}
                     >
                       Nova
@@ -1115,7 +1132,7 @@ export function CapaIntakePage() {
                 fontFamily: "var(--font-sans)",
                 outline: "none",
                 boxSizing: "border-box",
-                transition: "border-color 0.15s, box-shadow 0.15s",
+                transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "var(--accent)";
@@ -1153,7 +1170,7 @@ export function CapaIntakePage() {
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               fontWeight: 600,
-              letterSpacing: "0.1em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               margin: "0 0 4px",
@@ -1193,7 +1210,7 @@ export function CapaIntakePage() {
                   fontSize: "11px",
                   fontFamily: "var(--font-mono)",
                   fontWeight: 600,
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
                   color: "var(--fg-4)",
                   margin: "0 0 12px",
@@ -1229,7 +1246,7 @@ export function CapaIntakePage() {
                     fontSize: "11px",
                     fontFamily: "var(--font-mono)",
                     fontWeight: 600,
-                    letterSpacing: "0.1em",
+                    letterSpacing: "0.18em",
                     textTransform: "uppercase",
                     color: "var(--fg-4)",
                     margin: "0 0 12px",
@@ -1259,7 +1276,7 @@ export function CapaIntakePage() {
                   fontSize: "11px",
                   fontFamily: "var(--font-mono)",
                   fontWeight: 600,
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
                   color: "var(--fg-4)",
                   margin: "0 0 12px",
@@ -1293,7 +1310,7 @@ export function CapaIntakePage() {
                   fontSize: "11px",
                   fontFamily: "var(--font-mono)",
                   fontWeight: 600,
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
                   color: "var(--fg-4)",
                   margin: "0 0 12px",
@@ -1312,7 +1329,7 @@ export function CapaIntakePage() {
                   <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <CheckCircle2
                       size={14}
-                      style={{ flexShrink: 0, color: item.passed ? "#3FB984" : "var(--fg-4)" }}
+                      style={{ flexShrink: 0, color: item.passed ? "var(--success)" : "var(--fg-4)" }}
                     />
                     <span
                       style={{

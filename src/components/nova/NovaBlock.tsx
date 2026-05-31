@@ -3,14 +3,14 @@
  *
  * Used across all 8D step screens and the CAPA intake wizard.
  * Wraps one Nova-generated suggestion with confidence indicator,
- * collapsible reasoning, and a 4-state accept / edit / skip flow.
+ * collapsible reasoning, and accept / discuss flow.
  *
- * States: idle → editing → accepted | skipped
+ * States: idle → editing → accepted
  */
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
-import { useAuditTrailStore } from "@/store";
+import { ChevronDown, ChevronUp, MessageSquareText, Sparkles } from "lucide-react";
+import { useAuditTrailStore, useUIStore } from "@/store";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -25,10 +25,6 @@ export interface NovaBlockProps {
   confidence?: number;
   /** Called when user accepts (as-is or after editing). Receives final text. */
   onAccept?: (content: string) => void;
-  /** Called when user clicks "Edit first". Receives the current draft text. */
-  onEdit?: (content: string) => void;
-  /** Called when user dismisses the suggestion */
-  onSkip?: () => void;
   /** When true, renders an animated skeleton while Nova is generating */
   loading?: boolean;
   /** Short qualifier appended to the header — e.g. "for Why 1" */
@@ -39,7 +35,7 @@ export interface NovaBlockProps {
   suggestionId?: string;
 }
 
-type BlockState = "idle" | "editing" | "accepted" | "skipped";
+type BlockState = "idle" | "editing" | "accepted";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -116,8 +112,6 @@ export function NovaBlock({
   reasoning,
   confidence,
   onAccept,
-  onEdit,
-  onSkip,
   loading = false,
   context,
   capaId,
@@ -129,6 +123,7 @@ export function NovaBlock({
   const [isFlashing, setIsFlashing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const addEvent = useAuditTrailStore((s) => s.addEvent);
+  const openNovaChat = useUIStore((s) => s.openNovaChat);
 
   // Keep draft in sync if suggestion prop changes (e.g. Nova re-generates)
   useEffect(() => {
@@ -165,13 +160,6 @@ export function NovaBlock({
     }, 380);
   }
 
-  function handleEditFirst() {
-    setState("editing");
-    onEdit?.(draft);
-    // Focus the textarea on next tick
-    setTimeout(() => textareaRef.current?.focus(), 0);
-  }
-
   function handleApplyEdit() {
     setState("accepted");
     onAccept?.(draft);
@@ -183,10 +171,18 @@ export function NovaBlock({
     setDraft(suggestion);
   }
 
-  function handleSkip() {
-    setState("skipped");
-    onSkip?.();
-    logAudit("nova_suggestion_replaced", `Nova suggestion "${suggestionId}" skipped.`);
+  function handleDiscussWithNova() {
+    const label = context ?? "Nova suggestion";
+    openNovaChat({
+      capaId,
+      step: suggestionId,
+      source: "nova-suggestion",
+      suggestionId,
+      suggestionContext: label,
+      suggestionText: draft,
+      initialDraft: `Help me review this ${label}. What should I ask or improve before using it?`,
+    });
+    logAudit("nova_suggestion_replaced", `Nova suggestion "${suggestionId}" opened in Ask Nova for discussion.`);
   }
 
   function handleRestore() {
@@ -203,104 +199,61 @@ export function NovaBlock({
       <div
         style={{
           display: "flex",
-          alignItems: "center",
+          flexDirection: "column",
+          alignItems: "flex-start",
           gap: "8px",
           padding: "9px 14px",
           background: "var(--accent-soft)",
           border: "1px solid var(--accent-line)",
           borderRadius: "var(--r-md)",
-          animation: "fadeInUp 240ms var(--ease-out) both",
+          animation: "leadReveal var(--dur-tab) var(--ease-out) both",
         }}
       >
-        <Sparkles
-          size={13}
-          strokeWidth={1.75}
-          style={{ color: "var(--accent)", flexShrink: 0 }}
-        />
-        <span
-          style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "var(--accent)",
-            fontFamily: "var(--font-sans)",
-          }}
-        >
-          Nova suggestion applied
-        </span>
-        <span
-          style={{
-            fontSize: "12px",
-            color: "var(--fg-3)",
-            fontFamily: "var(--font-sans)",
-          }}
-        >
-          — edit the field below to refine
-        </span>
-        <button
-          onClick={handleRestore}
-          style={{
-            marginLeft: "auto",
-            fontSize: "12px",
-            color: "var(--fg-3)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "2px 6px",
-            fontFamily: "var(--font-sans)",
-            lineHeight: 1,
-          }}
-        >
-          Undo
-        </button>
-      </div>
-    );
-  }
-
-  // ── Skipped ────────────────────────────────────────────────────────────
-  if (state === "skipped") {
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "9px 14px",
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-1)",
-          borderRadius: "var(--r-md)",
-          animation: "fadeIn 200ms ease both",
-        }}
-      >
-        <Sparkles
-          size={13}
-          strokeWidth={1.75}
-          style={{ color: "var(--fg-4, var(--fg-3))", flexShrink: 0 }}
-        />
-        <span
-          style={{
-            fontSize: "12px",
-            color: "var(--fg-3)",
-            fontFamily: "var(--font-sans)",
-          }}
-        >
-          Nova suggestion skipped
-        </span>
-        <button
-          onClick={handleRestore}
-          style={{
-            marginLeft: "auto",
-            fontSize: "12px",
-            color: "var(--accent)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "2px 6px",
-            fontFamily: "var(--font-sans)",
-            lineHeight: 1,
-          }}
-        >
-          Restore
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%" }}>
+          <Sparkles
+            size={13}
+            strokeWidth={1.75}
+            style={{ color: "var(--accent)", flexShrink: 0 }}
+          />
+          <span
+            style={{
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "var(--accent)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Nova suggestion applied
+          </span>
+          <span
+            style={{
+              fontSize: "12px",
+              color: "var(--fg-3)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            — edit the field below to refine
+          </span>
+          <button
+            onClick={handleRestore}
+            style={{
+              marginLeft: "auto",
+              fontSize: "12px",
+              color: "var(--fg-3)",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "2px 6px",
+              fontFamily: "var(--font-sans)",
+              lineHeight: 1,
+            }}
+          >
+            Undo
+          </button>
+        </div>
+        <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6, fontFamily: "var(--font-sans)" }}>
+          {draft}
+        </p>
       </div>
     );
   }
@@ -317,7 +270,7 @@ export function NovaBlock({
         borderRadius: "var(--r-md)",
         overflow: "hidden",
         // Stagger-reveal when first mounted
-        animation: "fadeInUp 360ms var(--ease-out) both",
+        animation: "leadReveal var(--dur-reveal) var(--ease-out) both",
       }}
     >
       {/* ── Header ──────────────────────────────────────────────────────── */}
@@ -447,7 +400,7 @@ export function NovaBlock({
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               color: "var(--fg-3)",
-              letterSpacing: "0.04em",
+              letterSpacing: "0.18em",
               lineHeight: 1,
             }}
           >
@@ -469,7 +422,7 @@ export function NovaBlock({
               overflow: "hidden",
               maxHeight: showReasoning ? "240px" : "0",
               opacity: showReasoning ? 1 : 0,
-              transition: "max-height 280ms var(--ease-out), opacity 200ms ease",
+              transition: "max-height var(--dur-tab) var(--ease-out), opacity var(--dur-tab) var(--ease-out)",
             }}
           >
             <div
@@ -560,7 +513,7 @@ export function NovaBlock({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                transition: "filter 180ms ease",
+                transition: "filter var(--dur-fast) var(--ease-out)",
               }}
               onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.1)")}
               onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.filter = "none")}
@@ -572,9 +525,9 @@ export function NovaBlock({
               Use this suggestion
             </button>
 
-            {/* Secondary — open edit mode */}
+            {/* Secondary — discuss in Ask Nova */}
             <button
-              onClick={handleEditFirst}
+              onClick={handleDiscussWithNova}
               style={{
                 background: "var(--bg-3)",
                 color: "var(--fg-1)",
@@ -588,7 +541,7 @@ export function NovaBlock({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
-                transition: "border-color 180ms ease, background 180ms ease",
+                transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--line-3)";
@@ -599,32 +552,8 @@ export function NovaBlock({
                 (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-3)";
               }}
             >
-              {/* Pencil glyph */}
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-                <path d="M8.5 1.5l2 2-6 6H2.5v-2l6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Edit first
-            </button>
-
-            {/* Ghost — dismiss */}
-            <button
-              onClick={handleSkip}
-              style={{
-                background: "none",
-                color: "var(--fg-3)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "7px 10px",
-                fontSize: "13px",
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                lineHeight: 1,
-                transition: "color 180ms ease",
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--fg-1)")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.color = "var(--fg-3)")}
-            >
-              Skip
+              <MessageSquareText size={13} />
+              Discuss with Nova
             </button>
           </>
         )}

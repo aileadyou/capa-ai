@@ -1,15 +1,21 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   AlertCircle,
   BarChart2,
-  FileText,
+  ClipboardList,
   FolderOpen,
   HelpCircle,
   LayoutGrid,
+  Moon,
+  ScrollText,
+  Search,
   Settings,
+  Sun,
 } from "lucide-react";
 import { useNotificationStore, usePersonaStore } from "@/store";
 import { PersonaSwitcher } from "@/components/shared/PersonaSwitcher";
+import { applyTheme, getInitialTheme, type ThemeMode } from "@/lib/theme";
 import logoReal from "@/assets/logo-real.png";
 
 const navMain = [
@@ -17,7 +23,12 @@ const navMain = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart2 },
   { title: "Findings", url: "/findings", icon: AlertCircle },
   { title: "All CAPAs", url: "/capa", icon: FolderOpen },
-  { title: "Reports", url: "/reports", icon: FileText },
+] as const;
+
+const navManagement = [
+  { title: "Action Plan", url: "/actions/consolidated", icon: ClipboardList },
+  { title: "Similarity", url: "/similarity", icon: Search },
+  { title: "Audit Trail", url: "/audit-trail", icon: ScrollText },
 ] as const;
 
 const navSystem = [
@@ -29,6 +40,7 @@ function isActive(pathname: string, url: string) {
   if (url === "/") return pathname === "/" || pathname === "/my-work";
   if (url === "/capa") return pathname === "/capa" || pathname.startsWith("/capa/");
   if (url === "/findings") return pathname === "/findings" || pathname.startsWith("/findings/");
+  if (url === "/actions/consolidated") return pathname.startsWith("/actions");
   return pathname === url || pathname.startsWith(`${url}/`);
 }
 
@@ -93,11 +105,22 @@ function NavItem({
 export function Sidebar() {
   const persona = usePersonaStore((state) => state.activePersona());
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+  const [theme, setTheme] = useState<ThemeMode>(() => getInitialTheme());
   const unreadCount = useNotificationStore((state) =>
     state.notifications.filter(
       (n) => n.recipientPersonaId === activePersonaId && !n.read,
     ).length,
   );
+  const themeLabel = theme === "dark" ? "Light mode" : "Dark mode";
+  const ThemeIcon = theme === "dark" ? Sun : Moon;
+
+  const toggleTheme = () => {
+    setTheme((current) => {
+      const nextTheme = current === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
+      return nextTheme;
+    });
+  };
 
   return (
     <aside
@@ -142,6 +165,44 @@ export function Sidebar() {
           ))}
         </ul>
 
+        {/* Management section */}
+        <div
+          style={{
+            marginTop: "20px",
+            paddingTop: "10px",
+            borderTop: "1px solid var(--line-1)",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              fontWeight: 500,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--fg-4)",
+              padding: "0 12px 6px",
+              margin: 0,
+            }}
+          >
+            Management
+          </p>
+          <ul
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+            }}
+          >
+            {navManagement.map((item) => (
+              <NavItem key={item.url} to={item.url} icon={item.icon} title={item.title} />
+            ))}
+          </ul>
+        </div>
+
         {/* System section */}
         <div
           style={{
@@ -155,7 +216,7 @@ export function Sidebar() {
               fontFamily: "var(--font-mono)",
               fontSize: "10px",
               fontWeight: 500,
-              letterSpacing: "0.14em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               padding: "0 12px 6px",
@@ -191,6 +252,19 @@ export function Sidebar() {
           gap: "6px",
         }}
       >
+        <div style={{ padding: "0 4px" }}>
+          <button
+            type="button"
+            className="theme-toggle-button"
+            aria-label={`Switch to ${themeLabel}`}
+            title={`Switch to ${themeLabel}`}
+            onClick={toggleTheme}
+          >
+            <ThemeIcon size={16} strokeWidth={1.8} />
+            <span>{themeLabel}</span>
+          </button>
+        </div>
+
         {/* Persona switcher */}
         <div style={{ padding: "0 4px" }}>
           <PersonaSwitcher />

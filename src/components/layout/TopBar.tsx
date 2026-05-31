@@ -68,7 +68,7 @@ export function TopBar() {
         height: "60px",
         display: "flex",
         alignItems: "center",
-        background: "rgba(10, 12, 15, 0.72)",
+        background: "var(--glass-dark)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         borderBottom: "1px solid var(--line-1)",
@@ -232,7 +232,7 @@ export function TopBar() {
             whiteSpace: "nowrap",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "rgba(169, 77, 204, 0.22)";
+            (e.currentTarget as HTMLElement).style.background = "color-mix(in srgb, var(--accent) 22%, transparent)";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.background = "var(--accent-soft)";

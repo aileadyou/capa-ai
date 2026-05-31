@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, Save } from "lucide-react";
 import { toast } from "sonner";
-import { EightDShell } from "@/components/layout/EightDShell";
+import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore } from "@/store";
@@ -97,6 +97,7 @@ function evaluateProblemStatement(statement: string, capa: CAPACase) {
 export function D1ProblemPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { embedded, onStepChange } = useEightDEmbed();
   const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
   const allCAs = useCapaStore((state) => state.correctiveActions);
   const allPAs = useCapaStore((state) => state.preventiveActions);
@@ -134,12 +135,19 @@ export function D1ProblemPage() {
   function saveProblem(advance: boolean) {
     setHasSubmitted(true);
 
-    if (!validation.isValid) {
+    if (!validation.isValid && !advance) {
       toast.error("Problem statement blocked", {
         description:
           "Add date, location, equipment/system reference, batch or lot, and measurable observation.",
       });
       return;
+    }
+
+    if (!validation.isValid && advance) {
+      toast.warning("Continuing with incomplete problem statement", {
+        description:
+          "Nova will let you continue, but this step still needs date, location, equipment/system reference, batch or lot, and measurable observation.",
+      });
     }
 
     updateProblemStatement(capa.id, statement.trim(), previewScore);
@@ -164,7 +172,11 @@ export function D1ProblemPage() {
         capaId: capa.id,
         findingId: capa.findingId,
       });
-      navigate(`/capa/${capa.id}/8d/containment`);
+      if (embedded && onStepChange) {
+        onStepChange("containment");
+      } else {
+        navigate(`/capa/${capa.id}/8d/containment`);
+      }
       return;
     }
 
@@ -186,7 +198,7 @@ export function D1ProblemPage() {
               fontFamily: "var(--font-mono)",
               color: "var(--fg-3)",
               margin: "0 0 6px",
-              letterSpacing: "0.04em",
+              letterSpacing: "0.18em",
             }}
           >
             {capa.id} · D1
@@ -242,7 +254,7 @@ export function D1ProblemPage() {
             style={{
               width: "100%",
               background: "var(--bg-4)",
-              border: `1px solid ${shouldShowBlocker ? "var(--error, #E05252)" : "var(--line-2)"}`,
+              border: `1px solid ${shouldShowBlocker ? "var(--danger)" : "var(--line-2)"}`,
               borderRadius: "var(--r-sm)",
               padding: "12px 14px",
               fontSize: "13px",
@@ -252,14 +264,14 @@ export function D1ProblemPage() {
               resize: "vertical",
               outline: "none",
               boxSizing: "border-box",
-              transition: "border-color 0.15s",
+              transition: "border-color var(--dur-fast) var(--ease-out)",
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = "var(--accent)";
               e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = shouldShowBlocker ? "var(--error, #E05252)" : "var(--line-2)";
+              e.currentTarget.style.borderColor = shouldShowBlocker ? "var(--danger)" : "var(--line-2)";
               e.currentTarget.style.boxShadow = "none";
             }}
           />
@@ -286,14 +298,14 @@ export function D1ProblemPage() {
               display: "flex",
               gap: "10px",
               padding: "12px 14px",
-              background: "rgba(224, 82, 82, 0.08)",
-              border: "1px solid rgba(224, 82, 82, 0.3)",
+              background: "var(--danger-soft)",
+              border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)",
               borderRadius: "var(--r-sm)",
             }}
           >
-            <AlertTriangle size={15} style={{ color: "#E05252", flexShrink: 0, marginTop: "1px" }} />
+            <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
             <div>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "#E05252", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+              <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
                 Problem statement is not specific enough
               </p>
               <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
@@ -310,7 +322,7 @@ export function D1ProblemPage() {
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               fontWeight: 600,
-              letterSpacing: "0.1em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               margin: "0 0 10px",
@@ -333,12 +345,12 @@ export function D1ProblemPage() {
                   gap: "10px",
                   padding: "10px 12px",
                   borderRadius: "var(--r-sm)",
-                  background: check.passed ? "rgba(52, 211, 153, 0.06)" : "var(--bg-3)",
-                  border: `1px solid ${check.passed ? "rgba(52, 211, 153, 0.2)" : "var(--line-1)"}`,
+                  background: check.passed ? "var(--success-soft)" : "var(--bg-3)",
+                  border: `1px solid ${check.passed ? "color-mix(in srgb, var(--success) 28%, transparent)" : "var(--line-1)"}`,
                 }}
               >
                 {check.passed ? (
-                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "#34D399", marginTop: "1px" }} />
+                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "var(--success)", marginTop: "1px" }} />
                 ) : (
                   <Circle size={14} style={{ flexShrink: 0, color: "var(--fg-4)", marginTop: "1px" }} />
                 )}

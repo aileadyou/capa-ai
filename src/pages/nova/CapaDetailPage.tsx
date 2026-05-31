@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -11,10 +11,19 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import NotFound from "@/pages/NotFound";
+import { EightDEmbedProvider } from "@/components/layout/EightDShell";
+import { D1ProblemPage } from "@/pages/nova/eight-d/D1ProblemPage";
+import { D2ContainmentPage } from "@/pages/nova/eight-d/D2ContainmentPage";
+import { D3RCAPage } from "@/pages/nova/eight-d/D3RCAPage";
+import { D4CorrectiveActionPage } from "@/pages/nova/eight-d/D4CorrectiveActionPage";
+import { D5PreventiveActionPage } from "@/pages/nova/eight-d/D5PreventiveActionPage";
+import { D6VerificationPage } from "@/pages/nova/eight-d/D6VerificationPage";
+import { D7SignOffPage } from "@/pages/nova/eight-d/D7SignOffPage";
 import { eightDSteps } from "@/routes";
 import { useAuditTrailStore, useCapaStore, usePersonaStore, useUIStore } from "@/store";
 import type { CAPACase, EightDStep, PreFillContext } from "@/types";
 import { formatCAPAType, formatDate, formatDateTime } from "@/utils/formatters";
+import { getScoreLiftTips } from "@/utils/scoring";
 
 /* ── Mock due dates (no dueDate field in data) ───────────────────── */
 const MOCK_DUE: Record<string, string> = {
@@ -45,6 +54,16 @@ const STEP_SHORT: Record<EightDStep, string> = {
   pa: "D5",
   verification: "D6",
   signoff: "D7",
+};
+
+const EMBEDDED_STEP_COMPONENTS: Record<EightDStep, React.ComponentType> = {
+  problem: D1ProblemPage,
+  containment: D2ContainmentPage,
+  rca: D3RCAPage,
+  ca: D4CorrectiveActionPage,
+  pa: D5PreventiveActionPage,
+  verification: D6VerificationPage,
+  signoff: D7SignOffPage,
 };
 
 /* ── Helpers ─────────────────────────────────────────────────────── */
@@ -84,7 +103,7 @@ function EyebrowLeft({ children }: { children: React.ReactNode }) {
         ...mono,
         fontSize: "10px",
         fontWeight: 500,
-        letterSpacing: "0.14em",
+        letterSpacing: "0.18em",
         textTransform: "uppercase" as const,
         color: "var(--fg-4)",
         margin: "0 0 8px",
@@ -98,12 +117,15 @@ function EyebrowLeft({ children }: { children: React.ReactNode }) {
 function StepItem({
   step,
   state,
-  capaId,
+  isSelected,
+  onSelect,
 }: {
   step: EightDStep;
   state: "done" | "active" | "locked";
-  capaId: string;
+  isSelected: boolean;
+  onSelect: () => void;
 }) {
+  const visualState = isSelected ? "active" : state;
   const styles: Record<string, React.CSSProperties> = {
     done: {
       background: "var(--bg-2)",
@@ -131,12 +153,12 @@ function StepItem({
     done: <Check size={12} strokeWidth={2.5} />,
     active: <CircleDot size={12} strokeWidth={2} />,
     locked: <Lock size={11} strokeWidth={2} />,
-  }[state];
+  }[visualState];
 
   const content = (
     <div
       style={{
-        ...styles[state],
+        ...styles[visualState],
         display: "flex",
         alignItems: "center",
         gap: "8px",
@@ -146,7 +168,7 @@ function StepItem({
         fontFamily: "var(--font-sans)",
         transition: "background 180ms",
         textDecoration: "none",
-        color: styles[state].color,
+        color: styles[visualState].color,
       }}
     >
       <span style={{ flexShrink: 0, opacity: state === "locked" ? 0.5 : 1 }}>{icon}</span>
@@ -172,15 +194,41 @@ function StepItem({
   }
 
   return (
-    <Link to={`/capa/${capaId}/8d/${step}`} style={{ textDecoration: "none", display: "block" }}>
+    <button
+      type="button"
+      onClick={onSelect}
+      style={{
+        all: "unset",
+        display: "block",
+        width: "100%",
+        cursor: "pointer",
+      }}
+    >
       {content}
-    </Link>
+    </button>
   );
 }
 
-function LeftColumn({ capa }: { capa: CAPACase }) {
+function LeftColumn({
+  capa,
+  selectedStep,
+  onSelectStep,
+  onOverview,
+}: {
+  capa: CAPACase;
+  selectedStep: EightDStep | null;
+  onSelectStep: (step: EightDStep) => void;
+  onOverview: () => void;
+}) {
   const personas = usePersonaStore((s) => s.personas);
   const pic = personas.find((p) => p.id === capa.disposisi?.assignedTo);
+  const scoreTips = getScoreLiftTips(capa.score);
+  const scoreRows = [
+    { label: "Problem", value: capa.score.problemSpecificity },
+    { label: "RCA", value: capa.score.rootCauseDepth },
+    { label: "Actions", value: capa.score.effectiveness },
+    { label: "Containment", value: capa.score.containment },
+  ];
   const dueRaw = MOCK_DUE[capa.id];
   const dueStr = dueRaw
     ? new Date(dueRaw).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
@@ -205,6 +253,31 @@ function LeftColumn({ capa }: { capa: CAPACase }) {
         paddingRight: "4px",
       }}
     >
+      {/* Overview shortcut */}
+      <button
+        type="button"
+        onClick={onOverview}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "6px",
+          padding: "7px 10px",
+          borderRadius: "var(--r-sm)",
+          border: selectedStep === null ? "1px solid var(--accent-line)" : "1px solid var(--line-2)",
+          background: selectedStep === null ? "var(--accent-soft)" : "var(--bg-2)",
+          color: selectedStep === null ? "var(--accent)" : "var(--fg-2)",
+          fontFamily: "var(--font-sans)",
+          fontSize: "12px",
+          fontWeight: 600,
+          cursor: "pointer",
+          transition: "background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out)",
+        }}
+      >
+        Overview
+      </button>
+
       {/* 8D Progress */}
       <div>
         <EyebrowLeft>8D Progress</EyebrowLeft>
@@ -214,7 +287,8 @@ function LeftColumn({ capa }: { capa: CAPACase }) {
               key={step}
               step={step}
               state={getStepState(step, capa.currentStep, capa.status)}
-              capaId={capa.id}
+              isSelected={selectedStep === step}
+              onSelect={() => onSelectStep(step)}
             />
           ))}
         </div>
@@ -252,7 +326,7 @@ function LeftColumn({ capa }: { capa: CAPACase }) {
                 style={{
                   ...mono,
                   fontSize: "9px",
-                  letterSpacing: "0.12em",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase" as const,
                   color: "var(--fg-4)",
                   margin: "0 0 2px",
@@ -280,31 +354,20 @@ function LeftColumn({ capa }: { capa: CAPACase }) {
       {/* Quality Score */}
       <div>
         <EyebrowLeft>Quality Score</EyebrowLeft>
-        <Link
-          to={`/capa/${capa.id}#score`}
-          style={{ textDecoration: "none" }}
-          onClick={(e) => {
-            e.preventDefault();
-            toast.info("Score breakdown", {
-              description: `Current score: ${capa.score.total}/100. Navigate to All CAPAs for full breakdown.`,
-            });
+        <div
+          id="score"
+          style={{
+            background: "var(--bg-2)",
+            border: "1px solid var(--line-2)",
+            borderRadius: "var(--r-md)",
+            padding: "14px 12px",
           }}
         >
-          <div
-            style={{
-              background: "var(--bg-2)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-md)",
-              padding: "16px 12px",
-              textAlign: "center",
-              cursor: "pointer",
-              transition: "border-color 180ms",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px" }}>
             <p
               style={{
                 fontFamily: "var(--font-sans)",
-                fontSize: "48px",
+                fontSize: "44px",
                 fontWeight: 600,
                 letterSpacing: "-0.03em",
                 color:
@@ -320,19 +383,117 @@ function LeftColumn({ capa }: { capa: CAPACase }) {
             >
               {capa.score.total}
             </p>
-            <p
+            <span
               style={{
                 fontFamily: "var(--font-mono)",
                 fontSize: "10px",
-                color: "var(--fg-4)",
-                margin: "6px 0 0",
-                letterSpacing: "0.04em",
+                color: capa.score.isAuditReady ? "var(--success)" : "var(--warning)",
+                background: capa.score.isAuditReady ? "var(--success-soft)" : "var(--warning-soft)",
+                borderRadius: "var(--r-full)",
+                padding: "2px 7px",
+                whiteSpace: "nowrap",
               }}
             >
-              Click for breakdown
-            </p>
+              {capa.score.isAuditReady ? "Audit ready" : "Needs lift"}
+            </span>
           </div>
-        </Link>
+          <p
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              color: "var(--fg-3)",
+              margin: "6px 0 12px",
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+            }}
+          >
+            Total / 100
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {scoreRows.map((row) => {
+              const pct = (row.value / 25) * 100;
+              const color =
+                row.value >= 20
+                  ? "var(--success)"
+                  : row.value >= 15
+                    ? "var(--warning)"
+                    : "var(--danger)";
+              return (
+                <div key={row.label}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", gap: "8px" }}>
+                    <span style={{ fontSize: "11px", color: "var(--fg-2)", fontWeight: 600 }}>{row.label}</span>
+                    <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-mono)" }}>
+                      {row.value}/25
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: "6px",
+                      background: "var(--bg-4)",
+                      borderRadius: "var(--r-full)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${pct}%`,
+                        height: "100%",
+                        background: color,
+                        borderRadius: "var(--r-full)",
+                        transition: "width var(--dur-tab) var(--ease-out)",
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {scoreTips.length > 0 && (
+            <div
+              style={{
+                marginTop: "12px",
+                paddingTop: "12px",
+                borderTop: "1px solid var(--line-1)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "9px",
+                  color: "var(--fg-3)",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  margin: 0,
+                }}
+              >
+                Lift tips
+              </p>
+              {scoreTips.map((tip) => (
+                <div
+                  key={`${tip.field}-${tip.subScore}`}
+                  style={{
+                    background: "var(--bg-3)",
+                    border: "1px solid var(--line-1)",
+                    borderRadius: "var(--r-sm)",
+                    padding: "8px 9px",
+                  }}
+                >
+                  <p style={{ margin: "0 0 3px", color: "var(--fg-2)", fontSize: "11px", fontWeight: 600 }}>
+                    {tip.field} +{tip.scoreGain}
+                  </p>
+                  <p style={{ margin: 0, color: "var(--fg-3)", fontSize: "11px", lineHeight: 1.5 }}>
+                    {tip.suggestion}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -386,7 +547,7 @@ function InfoGrid({ rows }: { rows: Array<{ label: string; value: string; span?:
               style={{
                 ...mono,
                 fontSize: "10px",
-                letterSpacing: "0.1em",
+                letterSpacing: "0.18em",
                 textTransform: "uppercase" as const,
                 color: "var(--fg-4)",
                 margin: "0 0 3px",
@@ -445,7 +606,7 @@ function CardLabel({ children }: { children: React.ReactNode }) {
         fontWeight: 600,
         color: "var(--fg-3)",
         textTransform: "uppercase" as const,
-        letterSpacing: "0.06em",
+        letterSpacing: "0.18em",
         margin: "0 0 12px",
       }}
     >
@@ -563,7 +724,7 @@ function NovaSummaryCard({ capa }: { capa: CAPACase }) {
             color: "var(--fg-3)",
           }}
         >
-          <span style={{ ...mono, fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase" as const, color: "var(--fg-4)" }}>
+          <span style={{ ...mono, fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>
             Confirmed root cause
           </span>
           <p style={{ margin: "4px 0 0", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
@@ -575,7 +736,383 @@ function NovaSummaryCard({ capa }: { capa: CAPACase }) {
   );
 }
 
-function RightColumn({ capa }: { capa: CAPACase }) {
+function statusTone(status: string): { bg: string; color: string } {
+  if (["completed", "verified", "approved"].includes(status)) {
+    return { bg: "var(--success-soft)", color: "var(--success)" };
+  }
+  if (["overdue", "rejected"].includes(status)) {
+    return { bg: "var(--danger-soft)", color: "var(--danger)" };
+  }
+  if (["in_progress", "pending"].includes(status)) {
+    return { bg: "var(--warning-soft)", color: "var(--warning)" };
+  }
+  return { bg: "var(--bg-4)", color: "var(--fg-3)" };
+}
+
+function EmptyStepState({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: "var(--bg-3)",
+        border: "1px solid var(--line-1)",
+        borderRadius: "var(--r-md)",
+        padding: "16px",
+        color: "var(--fg-3)",
+        fontSize: "13px",
+        lineHeight: 1.6,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StepDetailView({
+  capa,
+  step,
+  onBackToOverview,
+}: {
+  capa: CAPACase;
+  step: EightDStep;
+  onBackToOverview: () => void;
+}) {
+  const stepState = getStepState(step, capa.currentStep, capa.status);
+  const containmentAnswer = capa.gateAnswers.find((answer) => answer.questionId === "containment");
+  const problemAnswer = capa.gateAnswers.find((answer) => answer.questionId === "observation");
+  const stepTone = stepState === "done"
+    ? { bg: "var(--success-soft)", color: "var(--success)" }
+    : stepState === "active"
+      ? { bg: "var(--accent-soft)", color: "var(--accent)" }
+      : { bg: "var(--bg-4)", color: "var(--fg-3)" };
+
+  const renderStepBody = () => {
+    switch (step) {
+      case "problem":
+        return (
+          <Card>
+            <CardLabel>Problem statement</CardLabel>
+            <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+              {problemAnswer?.answer || "Problem statement has not been saved yet."}
+            </p>
+          </Card>
+        );
+      case "containment":
+        return (
+          <Card>
+            <CardLabel>Immediate containment</CardLabel>
+            {containmentAnswer ? (
+              <p style={{ margin: 0, whiteSpace: "pre-line", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+                {containmentAnswer.answer}
+              </p>
+            ) : (
+              <EmptyStepState>No containment action has been saved yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+      case "rca":
+        return (
+          <Card>
+            <CardLabel>Root cause analysis</CardLabel>
+            <InfoGrid rows={[{ label: "Method", value: capa.rca.method }]} />
+            <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              {capa.rca.confirmedRootCauses.length > 0 ? (
+                capa.rca.confirmedRootCauses.map((cause, index) => (
+                  <div
+                    key={`${cause}-${index}`}
+                    style={{
+                      background: "var(--bg-3)",
+                      border: "1px solid var(--line-1)",
+                      borderRadius: "var(--r-sm)",
+                      padding: "10px 12px",
+                      color: "var(--fg-2)",
+                      fontSize: "13px",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {cause}
+                  </div>
+                ))
+              ) : (
+                <EmptyStepState>No confirmed root cause yet.</EmptyStepState>
+              )}
+            </div>
+          </Card>
+        );
+      case "ca":
+        return (
+          <Card>
+            <CardLabel>Corrective actions</CardLabel>
+            {capa.correctiveActions.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {capa.correctiveActions.map((action) => {
+                  const tone = statusTone(action.status);
+                  return (
+                    <div
+                      key={action.id}
+                      style={{
+                        background: "var(--bg-3)",
+                        border: "1px solid var(--line-1)",
+                        borderRadius: "var(--r-md)",
+                        padding: "12px 14px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+                        <p style={{ margin: 0, color: "var(--fg-1)", fontSize: "13px", fontWeight: 600 }}>
+                          {action.id}
+                        </p>
+                        <Pill bg={tone.bg} color={tone.color}>{action.status.replace("_", " ")}</Pill>
+                      </div>
+                      <p style={{ margin: "0 0 10px", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+                        {action.description}
+                      </p>
+                      <InfoGrid
+                        rows={[
+                          { label: "PIC", value: action.pic },
+                          { label: "Due date", value: formatDate(action.dueDate) },
+                          { label: "Linked root cause", value: action.linkedRootCause, span: true },
+                          { label: "Verification", value: action.verificationMethod, span: true },
+                        ]}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyStepState>No corrective actions have been added yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+      case "pa":
+        return (
+          <Card>
+            <CardLabel>Preventive actions</CardLabel>
+            {capa.preventiveActions.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {capa.preventiveActions.map((action) => {
+                  const tone = statusTone(action.status);
+                  return (
+                    <div
+                      key={action.id}
+                      style={{
+                        background: "var(--bg-3)",
+                        border: "1px solid var(--line-1)",
+                        borderRadius: "var(--r-md)",
+                        padding: "12px 14px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+                        <p style={{ margin: 0, color: "var(--fg-1)", fontSize: "13px", fontWeight: 600 }}>
+                          {action.id}
+                        </p>
+                        <Pill bg={tone.bg} color={tone.color}>{action.status.replace("_", " ")}</Pill>
+                      </div>
+                      <p style={{ margin: "0 0 10px", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+                        {action.description}
+                      </p>
+                      <InfoGrid
+                        rows={[
+                          { label: "PIC", value: action.pic },
+                          { label: "Target date", value: formatDate(action.targetDate) },
+                        ]}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyStepState>No preventive actions have been added yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+      case "verification":
+        return (
+          <Card>
+            <CardLabel>Verification evidence</CardLabel>
+            {capa.verification.result || capa.verification.evidenceFileNames.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <InfoGrid
+                  rows={[
+                    { label: "Method", value: capa.verification.method ?? "" },
+                    { label: "Verified at", value: capa.verification.verifiedAt ? formatDateTime(capa.verification.verifiedAt) : "" },
+                    { label: "Verified by", value: capa.verification.verifiedBy ?? "" },
+                    { label: "Evidence files", value: capa.verification.evidenceFileNames.join(", ") },
+                  ]}
+                />
+                {capa.verification.result && (
+                  <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+                    {capa.verification.result}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <EmptyStepState>No verification result has been recorded yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+      case "signoff":
+        return (
+          <Card>
+            <CardLabel>Sign-off chain</CardLabel>
+            {capa.approvals.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {capa.approvals.map((approval) => {
+                  const tone = statusTone(approval.decision);
+                  return (
+                    <div
+                      key={`${approval.approverPersonaId}-${approval.role}`}
+                      style={{
+                        background: "var(--bg-3)",
+                        border: "1px solid var(--line-1)",
+                        borderRadius: "var(--r-md)",
+                        padding: "12px 14px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+                        <div>
+                          <p style={{ margin: 0, color: "var(--fg-1)", fontSize: "13px", fontWeight: 600 }}>
+                            {approval.approverName}
+                          </p>
+                          <p style={{ margin: "3px 0 0", color: "var(--fg-3)", fontSize: "12px" }}>
+                            {approval.role}
+                          </p>
+                        </div>
+                        <Pill bg={tone.bg} color={tone.color}>{approval.decision}</Pill>
+                      </div>
+                      {approval.notes && (
+                        <p style={{ margin: "0 0 8px", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+                          {approval.notes}
+                        </p>
+                      )}
+                      {approval.signedAt && (
+                        <p style={{ margin: 0, color: "var(--fg-3)", fontSize: "11px", fontFamily: "var(--font-mono)" }}>
+                          {formatDateTime(approval.signedAt)}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyStepState>No sign-off activity has been recorded yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+    }
+  };
+
+  return (
+    <div key={step} className="motion-tab-content" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
+      <p style={{ ...mono, fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>
+        <button
+          type="button"
+          onClick={onBackToOverview}
+          style={{
+            all: "unset",
+            color: "var(--fg-4)",
+            cursor: "pointer",
+          }}
+        >
+          CAPA Overview
+        </button>
+        {" / "}
+        <span style={{ color: "var(--fg-2)" }}>{STEP_LABELS[step]}</span>
+      </p>
+
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+        <div>
+          <h1
+            style={{
+              fontSize: "24px",
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              color: "var(--fg-1)",
+              margin: "0 0 6px",
+            }}
+          >
+            {STEP_LABELS[step]}
+          </h1>
+          <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+            Inline 8D workspace for {capa.id}. The URL stays on the CAPA hub while this panel changes context.
+          </p>
+        </div>
+        <Pill bg={stepTone.bg} color={stepTone.color}>
+          {stepState}
+        </Pill>
+      </div>
+
+      {renderStepBody()}
+
+      <Card bg="var(--bg-3)" accentLeft="var(--accent)">
+        <CardLabel>Nova context</CardLabel>
+        <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+          {capa.impact.rationale}
+        </p>
+      </Card>
+    </div>
+  );
+}
+
+function EditableStepWorkspace({
+  step,
+  onStepChange,
+  onBackToOverview,
+}: {
+  step: EightDStep;
+  onStepChange: (step: EightDStep) => void;
+  onBackToOverview: () => void;
+}) {
+  const StepComponent = EMBEDDED_STEP_COMPONENTS[step];
+
+  return (
+    <div key={step} className="motion-tab-content" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
+      <p style={{ ...mono, fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>
+        <button
+          type="button"
+          onClick={onBackToOverview}
+          style={{
+            all: "unset",
+            color: "var(--fg-4)",
+            cursor: "pointer",
+          }}
+        >
+          CAPA Overview
+        </button>
+        {" / "}
+        <span style={{ color: "var(--fg-2)" }}>{STEP_LABELS[step]}</span>
+      </p>
+
+      <EightDEmbedProvider onStepChange={onStepChange}>
+        <StepComponent />
+      </EightDEmbedProvider>
+    </div>
+  );
+}
+
+function RightColumn({
+  capa,
+  selectedStep,
+  onSelectStep,
+  onBackToOverview,
+}: {
+  capa: CAPACase;
+  selectedStep: EightDStep | null;
+  onSelectStep: (step: EightDStep) => void;
+  onBackToOverview: () => void;
+}) {
+  if (selectedStep) {
+    if (capa.status === "closed") {
+      return <StepDetailView capa={capa} step={selectedStep} onBackToOverview={onBackToOverview} />;
+    }
+
+    return (
+      <EditableStepWorkspace
+        step={selectedStep}
+        onStepChange={onSelectStep}
+        onBackToOverview={onBackToOverview}
+      />
+    );
+  }
+
   const source = getSourceSystem(capa.preFill);
   const severityColors: Record<string, { bg: string; color: string }> = {
     Critical: { bg: "var(--danger-soft)", color: "var(--danger)" },
@@ -587,7 +1124,7 @@ function RightColumn({ capa }: { capa: CAPACase }) {
   const statusColors: Record<string, { bg: string; color: string }> = {
     investigation: { bg: "var(--accent-soft)", color: "var(--accent)" },
     approval: { bg: "var(--warning-soft)", color: "var(--warning)" },
-    closed: { bg: "var(--success-soft, rgba(63,185,132,0.14))", color: "var(--success)" },
+    closed: { bg: "var(--success-soft)", color: "var(--success)" },
     draft: { bg: "var(--bg-4)", color: "var(--fg-3)" },
     disposisi: { bg: "var(--bg-4)", color: "var(--fg-2)" },
   };
@@ -668,8 +1205,9 @@ function RightColumn({ capa }: { capa: CAPACase }) {
 
       {/* CTA */}
       <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: "32px" }}>
-        <Link
-          to={`/capa/${capa.id}/8d/${capa.currentStep}`}
+        <button
+          type="button"
+          onClick={() => onSelectStep(capa.currentStep)}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -681,12 +1219,13 @@ function RightColumn({ capa }: { capa: CAPACase }) {
             fontWeight: 600,
             padding: "10px 20px",
             borderRadius: "var(--r-sm)",
-            textDecoration: "none",
+            border: "none",
+            cursor: "pointer",
           }}
         >
           {getCtaLabel(capa.currentStep)}
           <ArrowRight size={16} strokeWidth={2} />
-        </Link>
+        </button>
       </div>
     </div>
   );
@@ -699,6 +1238,7 @@ function RightColumn({ capa }: { capa: CAPACase }) {
 export function CapaDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [selectedStep, setSelectedStep] = useState<EightDStep | null>(null);
   const rawCapa = useCapaStore((s) => s.capas.find((c) => c.id === id));
   const allCAs = useCapaStore((s) => s.correctiveActions);
   const allPAs = useCapaStore((s) => s.preventiveActions);
@@ -791,8 +1331,18 @@ export function CapaDetailPage() {
 
       {/* ── Two-column layout ─────────────────────────────────── */}
       <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
-        <LeftColumn capa={capa} />
-        <RightColumn capa={capa} />
+        <LeftColumn
+          capa={capa}
+          selectedStep={selectedStep}
+          onSelectStep={setSelectedStep}
+          onOverview={() => setSelectedStep(null)}
+        />
+        <RightColumn
+          capa={capa}
+          selectedStep={selectedStep}
+          onSelectStep={setSelectedStep}
+          onBackToOverview={() => setSelectedStep(null)}
+        />
       </div>
     </div>
   );

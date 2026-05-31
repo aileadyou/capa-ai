@@ -108,7 +108,7 @@ export const DataQualityReport = ({ filename, analysis }: DataQualityReportProps
           {topIssues.map((issue, index) => (
             <Card key={index} className="p-4 space-y-2 border-l-4" style={{
               borderLeftColor: issue.severity === 'high' ? 'hsl(var(--destructive))' : 
-                             issue.severity === 'medium' ? 'hsl(var(--warning))' : 
+                             issue.severity === 'medium' ? 'hsl(var(--tw-warning))' :
                              'hsl(var(--muted))'
             }}>
               <div className="flex items-start justify-between gap-3">

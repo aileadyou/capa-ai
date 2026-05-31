@@ -12,6 +12,11 @@ interface ToastMessage {
 interface NovaChatContext {
   capaId?: string;
   step?: string;
+  source?: string;
+  suggestionId?: string;
+  suggestionContext?: string;
+  suggestionText?: string;
+  initialDraft?: string;
 }
 
 interface UIStore {
@@ -100,4 +105,3 @@ export const useUIStore = create<UIStore>()(
     },
   ),
 );
-

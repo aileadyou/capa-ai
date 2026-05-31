@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ArrowRight, Plus, Search, X } from "lucide-react";
 import { useCapaStore } from "@/store";
@@ -34,9 +35,9 @@ function novaText(finding: Finding) {
 
 function SeverityBadge({ severity }: { severity: Severity }) {
   const map: Record<Severity, { bg: string; color: string; label: string }> = {
-    Critical: { bg: "rgba(229,87,92,0.15)", color: "#E5575C", label: "Critical" },
-    Major: { bg: "rgba(229,87,92,0.10)", color: "#E5575C", label: "Major" },
-    Minor: { bg: "rgba(224,163,62,0.12)", color: "#E0A33E", label: "Minor" },
+    Critical: { bg: "var(--danger-soft)", color: "var(--danger)", label: "Critical" },
+    Major: { bg: "var(--danger-soft)", color: "var(--danger)", label: "Major" },
+    Minor: { bg: "var(--warning-soft)", color: "var(--warning)", label: "Minor" },
   };
   const s = map[severity] ?? map.Minor;
   return (
@@ -50,7 +51,7 @@ function SeverityBadge({ severity }: { severity: Severity }) {
         fontFamily: "var(--font-mono)",
         background: s.bg,
         color: s.color,
-        letterSpacing: "0.04em",
+        letterSpacing: "0.18em",
         whiteSpace: "nowrap",
       }}
     >
@@ -72,13 +73,13 @@ function StatusBadge({ status }: { status: FindingStatus }) {
       label: "No CAPA",
     },
     capa_closed: {
-      bg: "rgba(63,185,132,0.10)",
-      color: "#3FB984",
+      bg: "var(--success-soft)",
+      color: "var(--success)",
       label: "CAPA closed",
     },
     overdue: {
-      bg: "rgba(229,87,92,0.10)",
-      color: "#E5575C",
+      bg: "var(--danger-soft)",
+      color: "var(--danger)",
       label: "Overdue",
     },
   };
@@ -94,7 +95,7 @@ function StatusBadge({ status }: { status: FindingStatus }) {
         fontFamily: "var(--font-mono)",
         background: s.bg,
         color: s.color,
-        letterSpacing: "0.04em",
+        letterSpacing: "0.18em",
         whiteSpace: "nowrap",
       }}
     >
@@ -106,8 +107,8 @@ function StatusBadge({ status }: { status: FindingStatus }) {
 function TypePill({ type }: { type: CAPAType }) {
   const map: Record<CAPAType, { color: string }> = {
     deviation: { color: "var(--accent)" },
-    audit: { color: "#3FB984" },
-    complaint: { color: "#E0A33E" },
+    audit: { color: "var(--success)" },
+    complaint: { color: "var(--warning)" },
   };
   return (
     <span
@@ -121,7 +122,7 @@ function TypePill({ type }: { type: CAPAType }) {
         background: "var(--bg-4)",
         color: map[type]?.color ?? "var(--fg-3)",
         border: "1px solid var(--line-2)",
-        letterSpacing: "0.04em",
+        letterSpacing: "0.18em",
         whiteSpace: "nowrap",
       }}
     >
@@ -217,7 +218,7 @@ function FieldPair({ label, value }: { label: string; value?: string | null }) {
           fontSize: "10px",
           fontFamily: "var(--font-mono)",
           fontWeight: 600,
-          letterSpacing: "0.1em",
+          letterSpacing: "0.18em",
           textTransform: "uppercase",
           color: "var(--fg-4)",
           margin: "0 0 4px",
@@ -283,7 +284,9 @@ function FindingSlideOver({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -291,10 +294,10 @@ function FindingSlideOver({
         style={{
           position: "fixed",
           inset: 0,
-          background: "rgba(6,8,12,0.55)",
-          zIndex: 50,
+          background: "var(--glass-dark)",
+          zIndex: 60,
           backdropFilter: "blur(2px)",
-          animation: "fadeIn 200ms ease",
+          animation: "fadeIn var(--dur-tab) var(--ease-out)",
         }}
       />
 
@@ -310,12 +313,13 @@ function FindingSlideOver({
           right: 0,
           bottom: 0,
           width: "400px",
+          maxWidth: "100vw",
           background: "var(--bg-2)",
           borderLeft: "1px solid var(--line-2)",
-          zIndex: 51,
+          zIndex: 61,
           display: "flex",
           flexDirection: "column",
-          animation: "slideInRight 380ms cubic-bezier(0.22,1,0.36,1)",
+          animation: "leadSlideOver var(--dur-panel) var(--ease-out)",
         }}
       >
         {/* Header */}
@@ -335,7 +339,7 @@ function FindingSlideOver({
                 fontSize: "10px",
                 fontFamily: "var(--font-mono)",
                 fontWeight: 600,
-                letterSpacing: "0.1em",
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
                 color: "var(--fg-4)",
                 margin: "0 0 2px",
@@ -426,7 +430,7 @@ function FindingSlideOver({
                 fontSize: "10px",
                 fontFamily: "var(--font-mono)",
                 fontWeight: 600,
-                letterSpacing: "0.1em",
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
                 color: "var(--accent)",
                 margin: "0 0 8px",
@@ -528,7 +532,8 @@ function FindingSlideOver({
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
@@ -609,7 +614,7 @@ export function FindingsListPage() {
                 fontSize: "11px",
                 fontFamily: "var(--font-mono)",
                 fontWeight: 600,
-                letterSpacing: "0.1em",
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
                 color: "var(--fg-4)",
                 margin: "0 0 4px",
@@ -750,7 +755,7 @@ export function FindingsListPage() {
             fontSize: "11px",
             fontFamily: "var(--font-mono)",
             fontWeight: 600,
-            letterSpacing: "0.1em",
+            letterSpacing: "0.18em",
             textTransform: "uppercase",
             color: "var(--fg-4)",
             margin: 0,
@@ -792,7 +797,7 @@ export function FindingsListPage() {
                         fontSize: "10px",
                         fontFamily: "var(--font-mono)",
                         fontWeight: 600,
-                        letterSpacing: "0.1em",
+                        letterSpacing: "0.18em",
                         textTransform: "uppercase",
                         color: "var(--fg-4)",
                         background: "var(--bg-3)",
@@ -832,7 +837,7 @@ export function FindingsListPage() {
                     style={{
                       borderTop: "1px solid var(--line-1)",
                       cursor: "pointer",
-                      transition: "background 0.18s",
+                      transition: "background var(--dur-fast) var(--ease-out)",
                       opacity: dimmed ? 0.55 : 1,
                     }}
                     onMouseEnter={(e) =>

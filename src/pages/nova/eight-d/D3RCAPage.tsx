@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, ExternalLink, Save } from "lucide-react";
 import { toast } from "sonner";
-import { EightDShell } from "@/components/layout/EightDShell";
+import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import NotFound from "@/pages/NotFound";
 import { kgCitations } from "@/mock-data";
@@ -220,9 +220,9 @@ function evaluateRCA(method: RCAMethod, answers: string[], confirmedRootCause: s
 
 function OutcomeChip({ outcome }: { outcome: string }) {
   const styles: Record<string, { bg: string; color: string }> = {
-    Effective: { bg: "rgba(52, 211, 153, 0.10)", color: "#34D399" },
-    Ongoing: { bg: "rgba(251, 191, 36, 0.10)", color: "#FBBF24" },
-    Recurred: { bg: "rgba(224, 82, 82, 0.10)", color: "#E05252" },
+    Effective: { bg: "var(--success-soft)", color: "var(--success)" },
+    Ongoing: { bg: "var(--warning-soft)", color: "var(--warning)" },
+    Recurred: { bg: "var(--danger-soft)", color: "var(--danger)" },
   };
   const s = styles[outcome] ?? { bg: "var(--bg-3)", color: "var(--fg-3)" };
 
@@ -237,7 +237,7 @@ function OutcomeChip({ outcome }: { outcome: string }) {
         fontFamily: "var(--font-mono)",
         background: s.bg,
         color: s.color,
-        letterSpacing: "0.04em",
+        letterSpacing: "0.18em",
       }}
     >
       {outcome}
@@ -254,9 +254,9 @@ function SimilarCapaCard({
 }) {
   const scoreColor =
     citation.similarityScore >= 90
-      ? "#34D399"
+      ? "var(--success)"
       : citation.similarityScore >= 80
-        ? "#FBBF24"
+        ? "var(--warning)"
         : "var(--fg-3)";
 
   return (
@@ -271,7 +271,7 @@ function SimilarCapaCard({
         borderRadius: "var(--r-md)",
         padding: "14px",
         cursor: "pointer",
-        transition: "border-color 0.15s, background 0.15s",
+        transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
         fontFamily: "var(--font-sans)",
       }}
       onMouseEnter={(e) => {
@@ -427,7 +427,7 @@ function FiveWhysChain({
                     fontSize: "10px",
                     fontFamily: "var(--font-mono)",
                     fontWeight: 600,
-                    letterSpacing: "0.1em",
+                    letterSpacing: "0.18em",
                     textTransform: "uppercase",
                     color: isRootCause ? "var(--accent)" : "var(--fg-4)",
                     marginBottom: "4px",
@@ -487,7 +487,7 @@ function FishboneGrid({
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               fontWeight: 600,
-              letterSpacing: "0.1em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               margin: "0 0 8px",
@@ -523,7 +523,7 @@ function DecisionTree({ nodes }: { nodes: DecisionNode[] }) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-            <span style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-4)", letterSpacing: "0.08em" }}>
+            <span style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-4)", letterSpacing: "0.18em" }}>
               Node {index + 1}
             </span>
             <span
@@ -561,6 +561,7 @@ function DecisionTree({ nodes }: { nodes: DecisionNode[] }) {
 export function D3RCAPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { embedded, onStepChange } = useEightDEmbed();
   const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
   const allCAs = useCapaStore((state) => state.correctiveActions);
   const allPAs = useCapaStore((state) => state.preventiveActions);
@@ -663,12 +664,19 @@ export function D3RCAPage() {
   function saveRCA(advance: boolean) {
     setHasSubmitted(true);
 
-    if (!validation.isValid) {
+    if (!validation.isValid && !advance) {
       toast.error("RCA is blocked", {
         description:
           "Complete the RCA depth requirement and confirm a root cause before continuing.",
       });
       return;
+    }
+
+    if (!validation.isValid && advance) {
+      toast.warning("Continuing with incomplete RCA", {
+        description:
+          "Nova will let you continue, but RCA still needs the depth requirement and a confirmed root cause.",
+      });
     }
 
     updateRCA(capa.id, buildRCAData(), previewScore);
@@ -685,7 +693,11 @@ export function D3RCAPage() {
 
     if (advance) {
       updateCurrentStep(capa.id, "ca");
-      navigate(`/capa/${capa.id}/8d/ca`);
+      if (embedded && onStepChange) {
+        onStepChange("ca");
+      } else {
+        navigate(`/capa/${capa.id}/8d/ca`);
+      }
       return;
     }
 
@@ -706,7 +718,7 @@ export function D3RCAPage() {
               fontFamily: "var(--font-mono)",
               color: "var(--fg-3)",
               margin: "0 0 6px",
-              letterSpacing: "0.04em",
+              letterSpacing: "0.18em",
             }}
           >
             {capa.id} · D3
@@ -760,7 +772,7 @@ export function D3RCAPage() {
                   color: method === m ? "var(--accent)" : "var(--fg-2)",
                   border: `1px solid ${method === m ? "var(--accent-line)" : "var(--line-2)"}`,
                   cursor: "pointer",
-                  transition: "all 0.15s",
+                  transition: "all var(--dur-fast) var(--ease-out)",
                 }}
               >
                 {methodLabel[m]}
@@ -780,7 +792,7 @@ export function D3RCAPage() {
                 fontSize: "11px",
                 fontFamily: "var(--font-mono)",
                 fontWeight: 600,
-                letterSpacing: "0.1em",
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
                 color: "var(--fg-4)",
                 margin: "0 0 16px",
@@ -807,7 +819,7 @@ export function D3RCAPage() {
                 fontSize: "11px",
                 fontFamily: "var(--font-mono)",
                 fontWeight: 600,
-                letterSpacing: "0.1em",
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
                 color: "var(--fg-4)",
                 margin: "0 0 16px",
@@ -832,7 +844,7 @@ export function D3RCAPage() {
                 fontSize: "11px",
                 fontFamily: "var(--font-mono)",
                 fontWeight: 600,
-                letterSpacing: "0.1em",
+                letterSpacing: "0.18em",
                 textTransform: "uppercase",
                 color: "var(--fg-4)",
                 margin: "0 0 12px",
@@ -853,7 +865,7 @@ export function D3RCAPage() {
                   fontSize: "11px",
                   fontFamily: "var(--font-mono)",
                   fontWeight: 600,
-                  letterSpacing: "0.1em",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
                   color: "var(--fg-4)",
                   margin: 0,
@@ -938,14 +950,14 @@ export function D3RCAPage() {
               display: "flex",
               gap: "10px",
               padding: "12px 14px",
-              background: "rgba(224, 82, 82, 0.08)",
-              border: "1px solid rgba(224, 82, 82, 0.3)",
+              background: "var(--danger-soft)",
+              border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)",
               borderRadius: "var(--r-sm)",
             }}
           >
-            <AlertTriangle size={15} style={{ color: "#E05252", flexShrink: 0, marginTop: "1px" }} />
+            <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
             <div>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "#E05252", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+              <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
                 Root cause confirmation is incomplete
               </p>
               <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
@@ -962,7 +974,7 @@ export function D3RCAPage() {
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               fontWeight: 600,
-              letterSpacing: "0.1em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               margin: "0 0 10px",
@@ -979,12 +991,12 @@ export function D3RCAPage() {
                   gap: "10px",
                   padding: "10px 12px",
                   borderRadius: "var(--r-sm)",
-                  background: check.passed ? "rgba(52, 211, 153, 0.06)" : "var(--bg-3)",
-                  border: `1px solid ${check.passed ? "rgba(52, 211, 153, 0.2)" : "var(--line-1)"}`,
+                  background: check.passed ? "var(--success-soft)" : "var(--bg-3)",
+                  border: `1px solid ${check.passed ? "color-mix(in srgb, var(--success) 28%, transparent)" : "var(--line-1)"}`,
                 }}
               >
                 {check.passed ? (
-                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "#34D399", marginTop: "1px" }} />
+                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "var(--success)", marginTop: "1px" }} />
                 ) : (
                   <Circle size={14} style={{ flexShrink: 0, color: "var(--fg-4)", marginTop: "1px" }} />
                 )}

@@ -130,7 +130,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
         fontFamily: "var(--font-mono)",
         fontSize: "10px",
         fontWeight: 500,
-        letterSpacing: "0.14em",
+        letterSpacing: "0.18em",
         textTransform: "uppercase",
         color: "var(--fg-4)",
         margin: 0,

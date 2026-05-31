@@ -13,14 +13,14 @@ import {
 
 type RangeOption = "This Month" | "Last 3 Months" | "Year to Date" | "Last 12 Months";
 
-// ── Palette constants (hardcoded for SVG — CSS vars can't be used in SVG attributes) ──
-const CLR_ACCENT   = "#A94DCC";
-const CLR_SUCCESS  = "#3FB984";
-const CLR_FG3      = "#6A7280";
-const CLR_FG4      = "#444B56";
-const CLR_FG1      = "#F3F5F7";
-const CLR_BG4      = "#1D222A";
-const CLR_LINE1    = "rgba(255,255,255,0.07)";
+// ── Palette constants for SVG/chart attributes ───────────────────────────────
+const CLR_ACCENT = "var(--accent)";
+const CLR_SUCCESS = "var(--success)";
+const CLR_FG3 = "var(--fg-3)";
+const CLR_FG4 = "var(--fg-4)";
+const CLR_FG1 = "var(--fg-1)";
+const CLR_BG4 = "var(--bg-4)";
+const CLR_LINE1 = "var(--line-1)";
 
 // ── Date range selector ───────────────────────────────────────────────────────
 
@@ -70,7 +70,7 @@ function DateRangeSelector({
             borderRadius: "var(--r-md)",
             padding: "4px",
             minWidth: "160px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+            boxShadow: "var(--shadow-lg)",
           }}
         >
           {options.map((opt) => (
@@ -130,7 +130,7 @@ function KpiCard({
           padding: "20px 20px 20px 24px",
           overflow: "hidden",
           cursor: "pointer",
-          transition: "border-color 0.18s, background 0.18s",
+          transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLDivElement).style.borderColor = "var(--line-3)";
@@ -162,7 +162,7 @@ function KpiCard({
             fontSize: "10px",
             fontFamily: "var(--font-mono)",
             fontWeight: 600,
-            letterSpacing: "0.12em",
+            letterSpacing: "0.18em",
             textTransform: "uppercase",
             color: "var(--fg-4)",
             margin: "0 0 8px",
@@ -240,7 +240,7 @@ function Card({
               fontSize: "10px",
               fontFamily: "var(--font-mono)",
               fontWeight: 600,
-              letterSpacing: "0.12em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               margin: "0 0 4px",
@@ -308,8 +308,8 @@ function FindingTrendChart() {
     >
       <defs>
         <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={CLR_ACCENT} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={CLR_ACCENT} stopOpacity="0" />
+          <stop offset="0%" style={{ stopColor: CLR_ACCENT, stopOpacity: 0.28 }} />
+          <stop offset="100%" style={{ stopColor: CLR_ACCENT, stopOpacity: 0 }} />
         </linearGradient>
       </defs>
 
@@ -321,23 +321,23 @@ function FindingTrendChart() {
             x2={W - PAD.right}
             y1={toY(tick)}
             y2={toY(tick)}
-            stroke={CLR_LINE1}
+            style={{ stroke: CLR_LINE1 }}
             strokeWidth="1"
           />
-          <text x={PAD.left - 6} y={toY(tick) + 4} textAnchor="end" fontSize="9" fill={CLR_FG4}>
+          <text x={PAD.left - 6} y={toY(tick) + 4} textAnchor="end" fontSize="9" style={{ fill: CLR_FG4 }}>
             {tick}
           </text>
         </g>
       ))}
 
       {/* Area fill */}
-      <path d={areaPts} fill="url(#trendFill)" />
+      <path d={areaPts} style={{ fill: "url(#trendFill)" }} />
 
       {/* Line */}
       <path
         d={linePts}
         fill="none"
-        stroke={CLR_ACCENT}
+        style={{ stroke: CLR_ACCENT }}
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -345,7 +345,7 @@ function FindingTrendChart() {
 
       {/* Dots */}
       {totals.map((v, i) => (
-        <circle key={i} cx={toX(i)} cy={toY(v)} r="3" fill={CLR_ACCENT} />
+        <circle key={i} cx={toX(i)} cy={toY(v)} r="3" style={{ fill: CLR_ACCENT }} />
       ))}
 
       {/* X-axis labels — every other month */}
@@ -358,7 +358,7 @@ function FindingTrendChart() {
             y={H - 4}
             textAnchor="middle"
             fontSize="9"
-            fill={CLR_FG4}
+            style={{ fill: CLR_FG4 }}
           >
             {d.label.slice(0, 3)} {d.label.slice(-2)}
           </text>
@@ -535,8 +535,8 @@ function RootCauseBarChart() {
                     style={{
                       fontSize: "10px",
                       fontFamily: "var(--font-mono)",
-                      color: "var(--warning, #E0A33E)",
-                      background: "rgba(224,163,62,0.10)",
+                      color: "var(--warning)",
+                      background: "var(--warning-soft)",
                       padding: "1px 6px",
                       borderRadius: "var(--r-full)",
                     }}
@@ -589,7 +589,7 @@ function RootCauseBarChart() {
                     top: 0,
                     height: "100%",
                     width: `${recurringPct * (pct / 100)}%`,
-                    background: "rgba(224,163,62,0.45)",
+                    background: "color-mix(in srgb, var(--warning) 45%, transparent)",
                     borderRadius: "0 4px 4px 0",
                   }}
                 />
@@ -628,7 +628,7 @@ function RootCauseBarChart() {
               width: "20px",
               height: "6px",
               borderRadius: "3px",
-              background: "rgba(224,163,62,0.45)",
+              background: "color-mix(in srgb, var(--warning) 45%, transparent)",
             }}
           />
           <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-sans)" }}>
@@ -647,8 +647,8 @@ function DeptHeatmap() {
 
   function trackColor(rate: number) {
     if (rate >= 80) return CLR_SUCCESS;
-    if (rate >= 65) return "#E0A33E"; // --warning
-    return "#E5575C"; // --danger
+    if (rate >= 65) return "var(--warning)";
+    return "var(--danger)";
   }
 
   return (
@@ -680,8 +680,8 @@ function DeptHeatmap() {
                   style={{
                     fontSize: "10px",
                     fontFamily: "var(--font-mono)",
-                    color: "#E5575C",
-                    background: "rgba(229,87,92,0.10)",
+                    color: "var(--danger)",
+                    background: "var(--danger-soft)",
                     padding: "1px 6px",
                     borderRadius: "var(--r-full)",
                   }}
@@ -748,8 +748,8 @@ function DeptHeatmap() {
       >
         {[
           { color: CLR_SUCCESS, label: "≥ 80% on track" },
-          { color: "#E0A33E", label: "65–79% at risk" },
-          { color: "#E5575C", label: "< 65% needs attention" },
+          { color: "var(--warning)", label: "65–79% at risk" },
+          { color: "var(--danger)", label: "< 65% needs attention" },
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
             <div
@@ -796,7 +796,7 @@ export function DashboardPage() {
               fontSize: "11px",
               fontFamily: "var(--font-mono)",
               fontWeight: 600,
-              letterSpacing: "0.1em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "var(--fg-4)",
               margin: "0 0 4px",

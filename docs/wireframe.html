@@ -170,8 +170,11 @@
         <div style="font-weight:700;text-transform:uppercase;font-size:10px;color:#666;margin:12px 0 6px;">Supporting</div>
         <ul class="clean">
           <li>14 &middot; Quality Score Breakdown</li>
-          <li>15 &middot; Audit Trail</li>
+          <li>15 &middot; Audit Trail (per-CAPA)</li>
           <li>16 &middot; Nova AI — Unified Pattern</li>
+          <li>17 &middot; Audit Trail — Global View</li>
+          <li>18 &middot; Similarity Explorer (AI search)</li>
+          <li>19 &middot; Consolidated Action Plan (CA + PA)</li>
         </ul>
       </div>
     </div>
@@ -688,7 +691,43 @@
         <li><strong>Overview content</strong> (Source Data, QA Disposition, Nova Summary) is always visible on the right.</li>
         <li><strong>Score and CAPA info</strong> live in the left panel &mdash; no hidden tabs.</li>
         <li><strong>Audit Trail</strong> is accessible from the top bar, not buried in a tab.</li>
+        <li><strong>Actions tab</strong> (new): A tab/toggle at the top of the content area to switch between "Overview" (default) and "Actions". The Actions view shows all Corrective and Preventive actions for this CAPA only, with status, PIC, due date, and mark-complete controls. Replaces the old standalone CA/PA pages.</li>
       </ul>
+    </div>
+
+    <h3>Actions Tab (within CAPA Hub)</h3>
+    <div class="wf" style="max-width:840px;">
+      <div class="wf-topbar"><span>CAPA-2026-0341 / Actions</span><span>[Export PDF]</span></div>
+      <div style="padding:16px;">
+        <div style="display:flex;gap:8px;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:16px;">
+          <div class="btn">[Overview]</div>
+          <div class="btn btn-primary">[Actions]</div>
+        </div>
+
+        <div class="wf-title">Actions</div>
+        <div class="wf-subtitle">2 corrective + 1 preventive action &middot; 1 overdue</div>
+
+        <div style="font-weight:700;font-size:11px;margin:12px 0 6px;">CORRECTIVE ACTIONS</div>
+        <table class="wf-table">
+          <thead><tr><th>ID</th><th>Description</th><th>PIC</th><th>Due Date</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>CA-001</td><td>Replace HEPA filter HEPA-FILL-02</td><td>Maintenance</td><td>20 May 2026</td><td>[Completed]</td><td>[View Evidence]</td></tr>
+            <tr><td>CA-002</td><td>Update PM schedule to 12-month interval</td><td>Andi Wijaya</td><td>28 May 2026</td><td>[In Progress]</td><td>[Mark Complete]</td></tr>
+          </tbody>
+        </table>
+
+        <div style="font-weight:700;font-size:11px;margin:16px 0 6px;">PREVENTIVE ACTIONS</div>
+        <table class="wf-table">
+          <thead><tr><th>ID</th><th>Description</th><th>PIC</th><th>Target Date</th><th>Status</th><th>Recurrence</th></tr></thead>
+          <tbody>
+            <tr><td>PA-001</td><td>Trend-based PM review SOP for Grade A HEPA</td><td>Andi Wijaya</td><td>10 Jun 2026</td><td>[Open]</td><td>[Monitoring]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Why merge CA + PA here?</strong> The old app had separate /actions/corrective and /actions/preventive pages. QA Analysts rarely use those global views &mdash; they care about the actions <em>for the CAPA they&rsquo;re working on</em>. Moving actions into the Hub puts them one click away from where the work happens. The global cross-CAPA view is in the Consolidated Action Plan (section 19).
     </div>
   </div>
 
@@ -1132,6 +1171,397 @@
 
     <div class="note">
       <strong>Chat is secondary, not primary.</strong> The inline suggestion panel handles 90% of AI interactions. The chat is a fallback for freeform questions. It opens as a slide-over from the right (same as Finding detail), context-aware of the current CAPA and step.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 17. AUDIT TRAIL — GLOBAL VIEW                   -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">17</div>
+    <h1>Audit Trail &mdash; Global View</h1>
+    <p class="sub">Full-system event log for BPOM audit compliance and ALCOA+ traceability. Read-only. Exportable to CSV/PDF.</p>
+
+    <div class="callout">
+      <strong>Difference from section 15:</strong> Section 15 shows the per-CAPA audit trail (scoped to one case). This section is the <em>global</em> audit trail &mdash; all events across all CAPAs, findings, and system actions. Accessed from the sidebar nav.
+    </div>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>Audit Trail (Global)</span><span>[Export CSV] [Export PDF]</span></div>
+      <div style="padding:16px;">
+
+        <!-- KPI row -->
+        <div class="row" style="margin-bottom:16px;">
+          <div class="col">
+            <div class="box" style="text-align:center;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;">Total Events</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px;">248</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="box" style="text-align:center;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;">AI Decisions</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px;">47</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="box" style="text-align:center;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;">Integrations</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px;">31</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="box" style="text-align:center;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;">Showing</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px;">248</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="wf-title">Filters</div>
+        <div class="row">
+          <div class="col-2"><div class="input">[&#128269; Search actor, event, CAPA, before/after]</div></div>
+          <div class="col"><div class="input">[Domain &darr;]</div></div>
+          <div class="col"><div class="input">[CAPA ID &darr;]</div></div>
+          <div class="col"><div class="input">[Finding &darr;]</div></div>
+          <div class="col"><div class="input">[Actor &darr;]</div></div>
+          <div class="col"><div class="input">[Date &darr;]</div></div>
+        </div>
+
+        <!-- Table -->
+        <table class="wf-table" style="margin-top:16px;">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Domain</th>
+              <th>Actor</th>
+              <th>Action</th>
+              <th>CAPA / Finding</th>
+              <th>Before / After</th>
+              <th>Nova Metadata</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>EVT-0248<br><span style="color:#666;">31 May, 10:35</span></td>
+              <td>[AI Decision]<br><span style="color:#666;">Suggestion Accepted</span></td>
+              <td><strong>Andi Wijaya</strong><br><span style="color:#666;">QA Analyst</span></td>
+              <td>Nova suggestion for D3 root cause accepted.</td>
+              <td><a style="color:#333;text-decoration:underline;">CAPA-2026-0341</a></td>
+              <td><div class="box" style="padding:4px 6px;font-size:9px;margin:0;">Before: &mdash;<br>After: HEPA filter interval concern</div></td>
+              <td><div class="box box-filled" style="padding:4px 6px;font-size:9px;margin:0;">Nova Mock Engine v1<br>Confidence: 92%</div></td>
+            </tr>
+            <tr>
+              <td>EVT-0247<br><span style="color:#666;">31 May, 10:32</span></td>
+              <td>[System]<br><span style="color:#666;">Step Advanced</span></td>
+              <td><strong>System</strong><br><span style="color:#666;">Automation</span></td>
+              <td>CAPA advanced from D2 to D3.</td>
+              <td><a style="color:#333;text-decoration:underline;">CAPA-2026-0341</a></td>
+              <td><div class="box" style="padding:4px 6px;font-size:9px;margin:0;">Before: D2<br>After: D3</div></td>
+              <td><span style="color:#999;">Not AI-generated</span></td>
+            </tr>
+            <tr>
+              <td>EVT-0246<br><span style="color:#666;">30 May, 16:08</span></td>
+              <td>[Integration]<br><span style="color:#666;">Import</span></td>
+              <td><strong>System</strong><br><span style="color:#666;">Bizzmine Connector</span></td>
+              <td>Deviation DEV-2026-0341 imported from Bizzmine.</td>
+              <td><a style="color:#333;text-decoration:underline;">FND-DEV-001</a></td>
+              <td><span style="color:#999;">No field diff</span></td>
+              <td><span style="color:#999;">Not AI-generated</span></td>
+            </tr>
+            <tr><td colspan="7" style="text-align:center;color:#666;padding:12px;">... more rows (paginated, 50 per page) ...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Key features:</strong>
+      <ul>
+        <li><strong>Domain badges</strong>: System (blue), AI Decision (purple), Integration (teal), Clear Labeling (green).</li>
+        <li><strong>Nova Metadata column</strong>: model name, version, and confidence score for every AI-driven event. Critical for regulatory traceability.</li>
+        <li><strong>Before/After diff</strong>: Shows field-level changes for audit. Empty for events without data mutations.</li>
+        <li><strong>CAPA/Finding links</strong>: Clickable &mdash; jump directly to the CAPA Hub or Finding slide-over.</li>
+        <li><strong>Export</strong>: CSV for spreadsheet tools, PDF for paper audit submission.</li>
+        <li><strong>No edit/delete</strong>: This is a read-only append log. Events cannot be modified or removed.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 18. SIMILARITY EXPLORER                         -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">18</div>
+    <h1>Similarity Explorer &mdash; AI Search</h1>
+    <p class="sub">Standalone page for freeform AI-powered search across historical CAPA patterns. Used by QA Managers to identify recurring quality signals.</p>
+
+    <div class="callout">
+      <strong>Relationship to D3 RCA:</strong> The D3 step (section 10) shows "Similar Past CAPAs" inline as a Nova suggestion &mdash; that&rsquo;s automatic, context-bound to the active CAPA. This page is for <em>exploratory</em> searches: "Are there patterns of HEPA failures across departments?" or "What corrective actions worked for particulate complaints last year?"
+    </div>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>Similarity Explorer</span><span></span></div>
+      <div style="padding:16px;">
+
+        <!-- Search input -->
+        <div class="wf-title">AI Search</div>
+        <div class="wf-subtitle">Describe a finding or quality event to find similar historical CAPAs</div>
+        <div class="row" style="margin-top:8px;">
+          <div class="col-3"><div class="input">[&#128269; Environmental monitoring excursion in Grade A filling area with HEPA filter interval concern]</div></div>
+          <div class="col"><div class="btn btn-primary">[&#129504; AI Search]</div></div>
+        </div>
+
+        <!-- Filters -->
+        <div style="font-weight:700;font-size:11px;margin:20px 0 8px;">FILTERS</div>
+        <div class="row">
+          <div class="col">
+            <span class="label">Min similarity</span>
+            <div class="input">[|=======&bull;===| 75%]</div>
+          </div>
+          <div class="col">
+            <span class="label">Outcome</span>
+            <div class="input">[All Outcomes &darr;]</div>
+          </div>
+          <div class="col">
+            <span class="label">Type</span>
+            <div class="input">[All Types &darr;]</div>
+          </div>
+          <div class="col">
+            <span class="label">Year</span>
+            <div class="input">[All Years &darr;]</div>
+          </div>
+        </div>
+
+        <!-- Results grid (2-col cards) -->
+        <div style="font-weight:700;font-size:11px;margin:20px 0 8px;">RESULTS &middot; 8 matches</div>
+        <div class="split-2">
+          <div class="box">
+            <div style="display:flex;justify-content:space-between;">
+              <div>
+                <strong>CAPA-2025-0187</strong><br>
+                <span style="font-size:10px;color:#666;">DEV-2025-0892</span>
+              </div>
+              <div class="btn" style="padding:2px 8px;font-size:10px;height:fit-content;">[92% similar]</div>
+            </div>
+            <div style="margin-top:8px;">
+              <span class="label">Root Cause</span>
+              HEPA filter replacement interval exceeded due to no trend-based PM review mechanism.
+            </div>
+            <div style="margin-top:6px;">
+              <span class="label">Corrective Action</span>
+              <span style="color:#666;">Replaced HEPA unit + updated PM interval from 24 to 12 months.</span>
+            </div>
+            <div style="display:flex;gap:4px;margin-top:8px;">
+              <div class="btn" style="padding:2px 6px;font-size:9px;background:#e0e0e0;border:none;">[Effective]</div>
+              <div class="btn" style="padding:2px 6px;font-size:9px;border:none;">[Deviation]</div>
+              <div class="btn" style="padding:2px 6px;font-size:9px;border:none;">[2025]</div>
+            </div>
+            <div style="margin-top:8px;"><div class="btn" style="font-size:10px;">[Open Historical Detail]</div></div>
+          </div>
+
+          <div class="box">
+            <div style="display:flex;justify-content:space-between;">
+              <div>
+                <strong>CAPA-2024-0093</strong><br>
+                <span style="font-size:10px;color:#666;">AUD-2024-0412</span>
+              </div>
+              <div class="btn" style="padding:2px 8px;font-size:10px;height:fit-content;">[67% similar]</div>
+            </div>
+            <div style="margin-top:8px;">
+              <span class="label">Root Cause</span>
+              GMP documentation gap: air handling logbook not reconciled with EM schedule.
+            </div>
+            <div style="margin-top:6px;">
+              <span class="label">Corrective Action</span>
+              <span style="color:#666;">Revised SOP-ENV-003 to align logbook review with EM sampling frequency.</span>
+            </div>
+            <div style="display:flex;gap:4px;margin-top:8px;">
+              <div class="btn" style="padding:2px 6px;font-size:9px;background:#e0e0e0;border:none;">[Recurred]</div>
+              <div class="btn" style="padding:2px 6px;font-size:9px;border:none;">[Audit]</div>
+              <div class="btn" style="padding:2px 6px;font-size:9px;border:none;">[2024]</div>
+            </div>
+            <div style="margin-top:8px;"><div class="btn" style="font-size:10px;">[Open Historical Detail]</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Historical Detail Modal</h3>
+    <div class="wf" style="max-width:560px;margin:12px auto;">
+      <div style="padding:16px;border-bottom:2px solid #333;">
+        <div style="display:flex;justify-content:space-between;">
+          <strong>CAPA-2025-0187</strong>
+          <span>[&times;]</span>
+        </div>
+        <span style="font-size:10px;color:#666;">Historical CAPA similarity detail</span>
+      </div>
+      <div style="padding:16px;">
+        <div class="split-2">
+          <div class="box" style="font-size:10px;"><span class="label">Source ID</span>DEV-2025-0892</div>
+          <div class="box" style="font-size:10px;"><span class="label">Similarity</span>92%</div>
+          <div class="box" style="font-size:10px;"><span class="label">Type</span>Deviation</div>
+          <div class="box" style="font-size:10px;"><span class="label">Outcome</span>Effective</div>
+        </div>
+        <div style="margin-top:12px;">
+          <span class="label">Root Cause</span>
+          <p style="font-size:11px;">HEPA filter replacement interval exceeded due to no trend-based PM review mechanism.</p>
+        </div>
+        <div style="margin-top:8px;">
+          <span class="label">Corrective Action</span>
+          <p style="font-size:11px;">Replaced HEPA unit + updated PM interval from 24 to 12 months.</p>
+        </div>
+        <div class="box box-filled" style="margin-top:12px;font-size:10px;color:#666;">
+          Nova uses this case as a contextual citation only. The current CAPA still requires user confirmation and audit-ready evidence.
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Key features:</strong>
+      <ul>
+        <li><strong>Natural language search</strong>: Input a finding description, root cause hypothesis, or corrective action description. Nova computes vector similarity against historical CAPA embeddings.</li>
+        <li><strong>Outcome filtering</strong>: "Effective" CAPAs are gold &mdash; their corrective actions worked. "Recurred" are cautionary &mdash; something was missed.</li>
+        <li><strong>Similarity slider</strong>: Adjustable threshold (50&ndash;95%). Default 75% to avoid noise.</li>
+        <li><strong>Card grid</strong>: 2-column. Each card shows CAPA ID, Source ID, similarity %, root cause, corrective action, outcome badge, type badge, year.</li>
+        <li><strong>Detail modal</strong>: Full breakdown for one historical case. Read-only. Includes Nova disclaimer.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 19. CONSOLIDATED ACTION PLAN                    -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">19</div>
+    <h1>Consolidated Action Plan (CA + PA)</h1>
+    <p class="sub">Management-level cross-CAPA view that merges corrective and preventive actions. Grouped by root cause cluster, department, or risk priority. Used by QA Managers for portfolio oversight.</p>
+
+    <div class="callout">
+      <strong>How this relates to CAPA Hub Actions tab:</strong> The CAPA Hub (section 08) shows actions for <em>one CAPA</em>. This page shows actions across <em>all CAPAs</em>, grouped by recurring signals. It answers: &ldquo;Where are the systemic issues?&rdquo; and &ldquo;Which departments have the most overdue actions?&rdquo;
+    </div>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>Action Plan (Consolidated)</span><span>[Export Excel] [&#129504; AI Clustering]</span></div>
+      <div style="padding:16px;">
+
+        <!-- KPI row -->
+        <div class="row" style="margin-bottom:16px;">
+          <div class="col">
+            <div class="box" style="text-align:center;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;">Total Actions</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px;">18</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="box" style="text-align:center;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;">Corrective</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px;">12</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="box" style="text-align:center;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;">Preventive</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px;">6</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="box" style="text-align:center;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;">Overall Progress</div>
+              <div style="font-size:22px;font-weight:700;margin-top:4px;">64%</div>
+              <div style="background:#e0e0e0;height:6px;margin-top:6px;"><div style="background:#333;width:64%;height:100%;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Group mode selector -->
+        <div class="row" style="margin-bottom:16px;">
+          <div class="col">
+            <span class="label">Group by</span>
+            <div class="input">[Root Cause Cluster &darr;]</div>
+          </div>
+          <div class="col-3">
+            <div class="box box-filled" style="font-size:10px;color:#666;">
+              Nova clustering is active. Switch grouping modes to inspect management views.
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 1: HEPA Filter Maintenance -->
+        <div class="box" style="border:2px solid #333;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div>
+              <strong>HEPA Filter Maintenance</strong><br>
+              <span style="font-size:10px;color:#666;">Grouped by recurring RCA signal and action theme.</span>
+            </div>
+            <div class="btn" style="padding:2px 8px;font-size:10px;">[5 actions]</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#666;margin-bottom:4px;">
+            <span>Group progress</span><span>60%</span>
+          </div>
+          <div style="background:#e0e0e0;height:6px;margin-bottom:8px;"><div style="background:#333;width:60%;height:100%;"></div></div>
+          <div style="font-size:10px;color:#666;margin-bottom:8px;">PIC: Maintenance Team, Andi Wijaya</div>
+
+          <table class="wf-table">
+            <thead><tr><th>Type</th><th>Action</th><th>CAPA</th><th>PIC</th><th>Due / Target</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>[CA]</td><td>CA-001: Replace HEPA filter HEPA-FILL-02<br><span style="color:#666;">Root cause: PM interval exceeded</span></td><td><a style="text-decoration:underline;">CAPA-2026-0341</a></td><td>Maintenance</td><td>20 May 2026</td><td>[Completed]</td></tr>
+              <tr><td>[CA]</td><td>CA-002: Update PM schedule 18&rarr;12 months<br><span style="color:#666;">Root cause: PM interval exceeded</span></td><td><a style="text-decoration:underline;">CAPA-2026-0341</a></td><td>Andi Wijaya</td><td>28 May 2026</td><td>[In Progress]</td></tr>
+              <tr><td>[PA]</td><td>PA-001: Trend-based PM review SOP<br><span style="color:#666;">Root cause: No preventive control</span></td><td><a style="text-decoration:underline;">CAPA-2026-0341</a></td><td>Andi Wijaya</td><td>10 Jun 2026</td><td>[Open]</td></tr>
+              <tr><td>[CA]</td><td>CA-005: HEPA differential pressure alarm install<br><span style="color:#666;">Root cause: PM interval exceeded</span></td><td><a style="text-decoration:underline;">CAPA-2025-0187</a></td><td>Maintenance</td><td>15 Mar 2025</td><td>[Verified]</td></tr>
+              <tr><td>[PA]</td><td>PA-003: Quarterly HEPA trend dashboard<br><span style="color:#666;">Root cause: Lack of monitoring</span></td><td><a style="text-decoration:underline;">CAPA-2025-0187</a></td><td>QA Dept.</td><td>30 Apr 2025</td><td>[Completed]</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Group 2: GMP Documentation Control -->
+        <div class="box" style="border:2px solid #333;margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div>
+              <strong>GMP Documentation Control</strong><br>
+              <span style="font-size:10px;color:#666;">Grouped by recurring RCA signal and action theme.</span>
+            </div>
+            <div class="btn" style="padding:2px 8px;font-size:10px;">[4 actions]</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#666;margin-bottom:4px;">
+            <span>Group progress</span><span>75%</span>
+          </div>
+          <div style="background:#e0e0e0;height:6px;margin-bottom:8px;"><div style="background:#333;width:75%;height:100%;"></div></div>
+          <div style="font-size:10px;color:#666;">PIC: Siti Rahmawati, QA Documentation</div>
+        </div>
+
+        <div style="text-align:center;color:#666;margin-top:12px;font-size:11px;">... more groups ...</div>
+      </div>
+    </div>
+
+    <h3>AI Clustering Flow</h3>
+    <div class="flow">
+      <div class="flow-step">[AI Clustering] clicked</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step alt">Nova analyzes all open CA + PA</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step alt">Groups by recurring RCA signals</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step primary">Grouped view rendered</div>
+    </div>
+
+    <div class="note">
+      <strong>Key features:</strong>
+      <ul>
+        <li><strong>3 grouping modes</strong>: Root Cause Cluster (AI-driven, detects recurring themes), Department (org accountability), Risk Priority (overdue + severity-driven urgency).</li>
+        <li><strong>AI Clustering button</strong>: Triggers Nova to analyze all open actions and group them by semantic similarity of root causes. Without clicking, defaults to department grouping.</li>
+        <li><strong>Per-group progress bar</strong>: Shows how many actions in that cluster are completed vs. total.</li>
+        <li><strong>Unified CA + PA</strong>: Type column uses [CA] and [PA] badges. Both appear in same table sorted by due date.</li>
+        <li><strong>Cross-CAPA linking</strong>: Each action links back to its parent CAPA Hub.</li>
+        <li><strong>Export Excel</strong>: For management reporting and quality review meetings.</li>
+        <li><strong>Recurrence signal</strong>: If a root cause cluster has both "Effective" and "Recurred" historical outcomes, it gets flagged as a systemic risk.</li>
+      </ul>
+    </div>
+
+    <h3>Navigation</h3>
+    <div class="callout">
+      <strong>Sidebar placement:</strong> "Action Plan" appears in the sidebar nav under a "Management" section, alongside Dashboard. It&rsquo;s not a daily-use page &mdash; QA Managers visit it weekly or before management reviews. Route: <code>/actions/consolidated</code>
     </div>
   </div>
 

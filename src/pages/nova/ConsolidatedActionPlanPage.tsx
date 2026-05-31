@@ -1,352 +1,617 @@
+/**
+ * ConsolidatedActionPlanPage — Consolidated Action Plan (wireframe section 19)
+ *
+ * Management-level cross-CAPA view that merges corrective and preventive actions.
+ * Grouped by root cause cluster, department, or risk priority.
+ * AI Clustering detects recurring root cause patterns across CAPAs.
+ */
+
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BrainCircuit, Download, RefreshCcw } from "lucide-react";
+import { ArrowRight, BrainCircuit, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { AILoadingSpinner } from "@/components/shared/AILoadingSpinner";
 import { useCapaStore } from "@/store";
 import type { ActionStatus, CorrectiveAction, PreventiveAction } from "@/types";
 import { formatDate } from "@/utils/formatters";
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 type GroupMode = "rootCause" | "department" | "risk";
-type UnifiedAction =
-  | {
-      kind: "CA";
-      id: string;
-      capaId: string;
-      description: string;
-      pic: string;
-      targetDate: string;
-      status: ActionStatus;
-      department: string;
-      rootCause: string;
-      riskPriority: "High" | "Medium" | "Low";
-    }
-  | {
-      kind: "PA";
-      id: string;
-      capaId: string;
-      description: string;
-      pic: string;
-      targetDate: string;
-      status: ActionStatus;
-      department: string;
-      rootCause: string;
-      riskPriority: "High" | "Medium" | "Low";
-    };
+type RiskPriority = "High" | "Medium" | "Low";
+
+interface UnifiedAction {
+  kind: "CA" | "PA";
+  id: string;
+  capaId: string;
+  description: string;
+  pic: string;
+  targetDate: string;
+  status: ActionStatus;
+  department: string;
+  rootCause: string;
+  riskPriority: RiskPriority;
+}
 
 interface ActionGroup {
   id: string;
   title: string;
-  description: string;
   actions: UnifiedAction[];
 }
 
-function getRootCauseCluster(rootCause: string, description: string) {
+// ── Helpers ��──────────────────────────────────────────────────────────────────
+
+function getRootCauseCluster(rootCause: string, description: string): string {
   const text = `${rootCause} ${description}`.toLowerCase();
-
-  if (text.includes("hepa") || text.includes("airflow") || text.includes("environmental")) {
-    return "HEPA Filter Maintenance";
-  }
-
-  if (text.includes("documentation") || text.includes("verification") || text.includes("record")) {
-    return "GMP Documentation Control";
-  }
-
-  if (text.includes("visual") || text.includes("particulate") || text.includes("inspection")) {
-    return "Visual Inspection Reconciliation";
-  }
-
-  if (text.includes("cold") || text.includes("temperature") || text.includes("alarm")) {
-    return "Cold Chain Escalation";
-  }
-
+  if (text.includes("hepa") || text.includes("airflow") || text.includes("environmental")) return "HEPA Filter Maintenance";
+  if (text.includes("documentation") || text.includes("verification") || text.includes("record")) return "GMP Documentation Control";
+  if (text.includes("visual") || text.includes("particulate") || text.includes("inspection")) return "Visual Inspection Reconciliation";
+  if (text.includes("cold") || text.includes("temperature") || text.includes("alarm")) return "Cold Chain Escalation";
   return "General CAPA System";
 }
 
-function getRiskPriority(severity: string | undefined, status: ActionStatus, targetDate: string) {
+function getRiskPriority(severity: string | undefined, status: ActionStatus, targetDate: string): RiskPriority {
   const isLate = !["completed", "verified"].includes(status) && new Date(targetDate).getTime() < Date.now();
-
   if (severity === "Critical" || isLate) return "High";
   if (severity === "Major") return "Medium";
   return "Low";
 }
 
-function getProgress(actions: UnifiedAction[]) {
+function getGroupProgress(actions: UnifiedAction[]): number {
   if (actions.length === 0) return 0;
-  const completed = actions.filter((action) => ["completed", "verified"].includes(action.status)).length;
-  return Math.round((completed / actions.length) * 100);
+  return Math.round((actions.filter((a) => ["completed", "verified"].includes(a.status)).length / actions.length) * 100);
 }
 
-function groupActions(actions: UnifiedAction[], groupMode: GroupMode): ActionGroup[] {
-  const groupMap = new Map<string, UnifiedAction[]>();
-
-  actions.forEach((action) => {
-    const key =
-      groupMode === "rootCause"
-        ? getRootCauseCluster(action.rootCause, action.description)
-        : groupMode === "department"
-          ? action.department
-          : action.riskPriority;
-    groupMap.set(key, [...(groupMap.get(key) ?? []), action]);
-  });
-
-  return Array.from(groupMap.entries())
-    .map(([title, groupActionsValue]) => ({
-      id: title,
-      title,
-      description:
-        groupMode === "rootCause"
-          ? "Grouped by recurring RCA signal and action theme."
-          : groupMode === "department"
-            ? "Grouped by accountable operating area."
-            : "Grouped by severity, overdue risk, and closure urgency.",
-      actions: groupActionsValue,
-    }))
-    .sort((left, right) => right.actions.length - left.actions.length);
+function groupActions(actions: UnifiedAction[], mode: GroupMode): ActionGroup[] {
+  const map = new Map<string, UnifiedAction[]>();
+  for (const action of actions) {
+    const key = mode === "rootCause"
+      ? getRootCauseCluster(action.rootCause, action.description)
+      : mode === "department"
+        ? action.department
+        : action.riskPriority;
+    map.set(key, [...(map.get(key) ?? []), action]);
+  }
+  return Array.from(map.entries())
+    .map(([title, groupActions]) => ({ id: title, title, actions: groupActions }))
+    .sort((a, b) => b.actions.length - a.actions.length);
 }
+
+function statusColor(status: ActionStatus): { bg: string; border: string; text: string } {
+  switch (status) {
+    case "completed": case "verified": return { bg: "var(--success-soft)", border: "color-mix(in srgb, var(--success) 38%, transparent)", text: "var(--success)" };
+    case "overdue": return { bg: "var(--danger-soft)", border: "color-mix(in srgb, var(--danger) 38%, transparent)", text: "var(--danger)" };
+    case "in_progress": return { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" };
+    default: return { bg: "var(--bg-4)", border: "var(--line-2)", text: "var(--fg-3)" };
+  }
+}
+
+function statusLabel(status: ActionStatus): string {
+  switch (status) {
+    case "open": return "Open";
+    case "in_progress": return "In progress";
+    case "completed": return "Completed";
+    case "overdue": return "Overdue";
+    case "verified": return "Verified";
+  }
+}
+
+function riskColor(priority: RiskPriority): string {
+  if (priority === "High") return "var(--danger)";
+  if (priority === "Medium") return "var(--warning)";
+  return "var(--fg-3)";
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function KpiCard({ label, value, sub }: { label: string; value: number | string; sub?: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--line-2)",
+        borderRadius: "var(--r-lg)",
+        padding: "16px 20px",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "11px",
+          fontFamily: "var(--font-mono)",
+          fontWeight: 600,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--fg-3)",
+          marginBottom: "6px",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: "28px",
+          fontWeight: 700,
+          fontFamily: "var(--font-mono)",
+          color: "var(--fg-1)",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {value}
+      </div>
+      {sub}
+    </div>
+  );
+}
+
+function StyledSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: "100%",
+          height: "36px",
+          background: "var(--bg-4)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-sm)",
+          color: "var(--fg-2)",
+          fontSize: "13px",
+          fontFamily: "var(--font-sans)",
+          padding: "0 32px 0 10px",
+          appearance: "none",
+          cursor: "pointer",
+          outline: "none",
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+      <svg
+        width="12" height="12" viewBox="0 0 12 12" fill="none"
+        style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+      >
+        <path d="M3 5l3 3 3-3" stroke="var(--fg-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: ActionStatus }) {
+  const c = statusColor(status);
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "3px 8px",
+        borderRadius: "20px",
+        fontSize: "11px",
+        fontWeight: 600,
+        fontFamily: "var(--font-mono)",
+        background: c.bg,
+        border: `1px solid ${c.border}`,
+        color: c.text,
+      }}
+    >
+      {statusLabel(status)}
+    </span>
+  );
+}
+
+function KindBadge({ kind }: { kind: "CA" | "PA" }) {
+  const isCA = kind === "CA";
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "2px 7px",
+        borderRadius: "4px",
+        fontSize: "10px",
+        fontWeight: 700,
+        fontFamily: "var(--font-mono)",
+        letterSpacing: "0.18em",
+        background: isCA ? "var(--accent-soft)" : "var(--success-soft)",
+        color: isCA ? "var(--accent)" : "var(--success)",
+      }}
+    >
+      {kind}
+    </span>
+  );
+}
+
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div style={{ background: "var(--bg-4)", borderRadius: "3px", height: "6px", overflow: "hidden" }}>
+      <div
+        style={{
+          width: `${value}%`,
+          height: "100%",
+          background: value >= 80 ? "var(--success)" : value >= 50 ? "var(--warning)" : "var(--accent)",
+          borderRadius: "3px",
+          transition: "width 500ms var(--ease-out)",
+        }}
+      />
+    </div>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export function ConsolidatedActionPlanPage() {
-  const capas = useCapaStore((state) => state.capas);
-  const correctiveActions = useCapaStore((state) => state.correctiveActions);
-  const preventiveActions = useCapaStore((state) => state.preventiveActions);
-  const [groupMode, setGroupMode] = useState<GroupMode>("rootCause");
+  const capas = useCapaStore((s) => s.capas);
+  const correctiveActions = useCapaStore((s) => s.correctiveActions);
+  const preventiveActions = useCapaStore((s) => s.preventiveActions);
+  const [groupMode, setGroupMode] = useState<GroupMode>("department");
   const [hasClustered, setHasClustered] = useState(false);
   const [isClustering, setIsClustering] = useState(false);
 
   const unifiedActions = useMemo<UnifiedAction[]>(() => {
-    const capaById = new Map(capas.map((capa) => [capa.id, capa]));
+    const capaById = new Map(capas.map((c) => [c.id, c]));
 
-    const corrective = correctiveActions.map((action: CorrectiveAction): UnifiedAction => {
-      const capa = capaById.get(action.capaId);
+    const cas: UnifiedAction[] = correctiveActions.map((a: CorrectiveAction) => {
+      const capa = capaById.get(a.capaId);
       return {
         kind: "CA",
-        id: action.id,
-        capaId: action.capaId,
-        description: action.description,
-        pic: action.pic,
-        targetDate: action.dueDate,
-        status: action.status,
+        id: a.id,
+        capaId: a.capaId,
+        description: a.description,
+        pic: a.pic,
+        targetDate: a.dueDate,
+        status: a.status,
         department: capa?.department ?? "Unknown",
-        rootCause: action.linkedRootCause || capa?.rca.confirmedRootCauses[0] || "Unclassified root cause",
-        riskPriority: getRiskPriority(capa?.impact.severity, action.status, action.dueDate),
+        rootCause: a.linkedRootCause || capa?.rca.confirmedRootCauses[0] || "Unclassified",
+        riskPriority: getRiskPriority(capa?.impact.severity, a.status, a.dueDate),
       };
     });
 
-    const preventive = preventiveActions.map((action: PreventiveAction): UnifiedAction => {
-      const capa = capaById.get(action.capaId);
-      const rootCause = capa?.rca.confirmedRootCauses[0] ?? "Preventive control";
+    const pas: UnifiedAction[] = preventiveActions.map((a: PreventiveAction) => {
+      const capa = capaById.get(a.capaId);
       return {
         kind: "PA",
-        id: action.id,
-        capaId: action.capaId,
-        description: action.description,
-        pic: action.pic,
-        targetDate: action.targetDate,
-        status: action.status,
+        id: a.id,
+        capaId: a.capaId,
+        description: a.description,
+        pic: a.pic,
+        targetDate: a.targetDate,
+        status: a.status,
         department: capa?.department ?? "Unknown",
-        rootCause,
-        riskPriority: getRiskPriority(capa?.impact.severity, action.status, action.targetDate),
+        rootCause: capa?.rca.confirmedRootCauses[0] ?? "Preventive control",
+        riskPriority: getRiskPriority(capa?.impact.severity, a.status, a.targetDate),
       };
     });
 
-    return [...corrective, ...preventive];
+    return [...cas, ...pas];
   }, [capas, correctiveActions, preventiveActions]);
 
   const groups = useMemo(
     () => groupActions(unifiedActions, hasClustered ? groupMode : "department"),
     [groupMode, hasClustered, unifiedActions],
   );
-  const totalProgress = getProgress(unifiedActions);
 
-  async function runAIClustering() {
+  const totalProgress = getGroupProgress(unifiedActions);
+
+  async function runClustering() {
     setIsClustering(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 2500));
+    await new Promise((resolve) => setTimeout(resolve, 2200));
     setHasClustered(true);
     setIsClustering(false);
     toast.success("Nova clustering complete", {
-      description: "Actions were grouped by root cause, department, and risk priority signals.",
+      description: "Actions grouped by root cause, department, and risk priority signals.",
     });
   }
 
-  function exportToExcel() {
+  function handleExport() {
     toast.success("Export prepared", {
       description: "Consolidated action plan Excel export is mocked in this demo.",
     });
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <div className="animate-page-enter" style={{ maxWidth: "1300px" }}>
+      {/* ── Header ────────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Consolidated Action Plan</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Management overview that consolidates corrective and preventive actions by recurring root cause, department, or risk priority.
+          <h1
+            style={{
+              fontSize: "22px",
+              fontWeight: 600,
+              color: "var(--fg-1)",
+              fontFamily: "var(--font-sans)",
+              letterSpacing: "-0.02em",
+              margin: 0,
+            }}
+          >
+            Consolidated action plan
+          </h1>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", marginTop: "6px", maxWidth: "600px", lineHeight: "1.5" }}>
+            Management overview of corrective and preventive actions across all CAPAs, grouped by recurring root cause, department, or risk priority.
           </p>
         </div>
-        <div className="flex flex-col gap-2 md:flex-row">
-          <Button variant="outline" onClick={exportToExcel}>
-            <Download className="mr-2 h-4 w-4" />
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={handleExport}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 14px",
+              background: "var(--bg-3)",
+              border: "1px solid var(--line-2)",
+              borderRadius: "var(--r-sm)",
+              color: "var(--fg-2)",
+              fontSize: "13px",
+              fontFamily: "var(--font-sans)",
+              cursor: "pointer",
+              transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-3)"; e.currentTarget.style.background = "var(--bg-4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.background = "var(--bg-3)"; }}
+          >
+            <Download size={14} strokeWidth={1.75} />
             Export Excel
-          </Button>
-          <Button onClick={runAIClustering} disabled={isClustering}>
-            {isClustering ? <RefreshCcw className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
-            AI Clustering
-          </Button>
+          </button>
+          <button
+            onClick={runClustering}
+            disabled={isClustering}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "7px",
+              padding: "8px 16px",
+              background: isClustering ? "var(--bg-4)" : "var(--grad-brand)",
+              color: isClustering ? "var(--fg-3)" : "var(--on-accent)",
+              border: "none",
+              borderRadius: "var(--r-sm)",
+              fontSize: "13px",
+              fontWeight: 600,
+              fontFamily: "var(--font-sans)",
+              cursor: isClustering ? "not-allowed" : "pointer",
+              transition: "filter var(--dur-fast) var(--ease-out)",
+            }}
+            onMouseEnter={(e) => { if (!isClustering) e.currentTarget.style.filter = "brightness(1.1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+          >
+            {isClustering ? (
+              <Loader2 size={14} strokeWidth={1.75} style={{ animation: "spin 1s linear infinite" }} />
+            ) : (
+              <BrainCircuit size={14} strokeWidth={1.75} />
+            )}
+            {isClustering ? "Clustering..." : "AI Clustering"}
+          </button>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs font-medium uppercase text-muted-foreground">Total Actions</div>
-            <div className="mt-2 text-2xl font-semibold">{unifiedActions.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs font-medium uppercase text-muted-foreground">Corrective</div>
-            <div className="mt-2 text-2xl font-semibold">{correctiveActions.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs font-medium uppercase text-muted-foreground">Preventive</div>
-            <div className="mt-2 text-2xl font-semibold">{preventiveActions.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs font-medium uppercase text-muted-foreground">Overall Progress</div>
-            <div className="mt-2 text-2xl font-semibold">{totalProgress}%</div>
-            <Progress className="mt-3 h-2" value={totalProgress} />
-          </CardContent>
-        </Card>
+      {/* ── KPI row ───────────────────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "20px" }}>
+        <KpiCard label="Total actions" value={unifiedActions.length} />
+        <KpiCard label="Corrective" value={correctiveActions.length} />
+        <KpiCard label="Preventive" value={preventiveActions.length} />
+        <KpiCard
+          label="Overall progress"
+          value={`${totalProgress}%`}
+          sub={<ProgressBar value={totalProgress} />}
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Grouping</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-[280px_minmax(0,1fr)]">
-          <Select value={groupMode} onValueChange={(value) => setGroupMode(value as GroupMode)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="rootCause">Root Cause Cluster</SelectItem>
-              <SelectItem value="department">Department</SelectItem>
-              <SelectItem value="risk">Risk Priority</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="rounded border bg-muted/30 p-3 text-sm text-muted-foreground">
-            {hasClustered
-              ? "Nova clustering is active. Switch grouping modes to inspect management views."
-              : "Default view is grouped by department. Run AI Clustering to activate root cause and risk-priority grouping suggestions."}
-          </div>
-        </CardContent>
-      </Card>
+      {/* ── Group mode selector ───────────────────────────────────────── */}
+      <div
+        style={{
+          background: "var(--bg-2)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-lg)",
+          padding: "16px 20px",
+          marginBottom: "20px",
+          display: "grid",
+          gridTemplateColumns: "240px 1fr",
+          gap: "16px",
+          alignItems: "center",
+        }}
+      >
+        <StyledSelect
+          value={groupMode}
+          onChange={(v) => setGroupMode(v as GroupMode)}
+          options={[
+            { value: "rootCause", label: "Root cause cluster" },
+            { value: "department", label: "Department" },
+            { value: "risk", label: "Risk priority" },
+          ]}
+        />
+        <div
+          style={{
+            background: "var(--bg-3)",
+            borderRadius: "var(--r-sm)",
+            padding: "10px 14px",
+            fontSize: "12px",
+            color: "var(--fg-3)",
+            lineHeight: "1.5",
+          }}
+        >
+          {hasClustered
+            ? "Nova clustering is active. Switch grouping modes to inspect management views."
+            : "Default view is grouped by department. Run AI Clustering to activate root cause and risk-priority grouping."}
+        </div>
+      </div>
 
+      {/* ── Loading ───────────────────────────────────────────────────── */}
       {isClustering && (
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4 text-sm text-muted-foreground">
-            <AILoadingSpinner label="Nova is clustering CA and PA records by recurring quality signals..." />
-          </CardContent>
-        </Card>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "14px 20px",
+            background: "var(--bg-2)",
+            border: "1px solid var(--line-2)",
+            borderRadius: "var(--r-lg)",
+            marginBottom: "16px",
+            fontSize: "12px",
+            color: "var(--accent)",
+          }}
+        >
+          <Loader2 size={14} strokeWidth={1.75} style={{ animation: "spin 1s linear infinite" }} />
+          Nova is clustering CA and PA records by recurring quality signals...
+        </div>
       )}
 
-      <div className="space-y-4">
+      {/* ── Groups ────────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {groups.map((group) => {
-          const progress = getProgress(group.actions);
-          const owners = Array.from(new Set(group.actions.map((action) => action.pic))).slice(0, 4);
+          const progress = getGroupProgress(group.actions);
+          const owners = Array.from(new Set(group.actions.map((a) => a.pic))).slice(0, 4);
 
           return (
-            <Card key={group.id}>
-              <CardHeader>
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div
+              key={group.id}
+              style={{
+                background: "var(--bg-2)",
+                border: "1px solid var(--line-2)",
+                borderRadius: "var(--r-lg)",
+                overflow: "hidden",
+              }}
+            >
+              {/* Group header */}
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--line-1)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
                   <div>
-                    <CardTitle className="text-base">{group.title}</CardTitle>
-                    <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
-                  </div>
-                  <Badge variant="outline">{group.actions.length} actions</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_260px]">
-                  <div>
-                    <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Group progress</span>
-                      <span>{progress}%</span>
+                    <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--fg-1)" }}>{group.title}</div>
+                    <div style={{ fontSize: "12px", color: "var(--fg-3)", marginTop: "3px" }}>
+                      PIC: {owners.join(", ") || "Unassigned"}
                     </div>
-                    <Progress value={progress} className="h-2" />
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    PIC: <span className="text-foreground">{owners.join(", ") || "Unassigned"}</span>
-                  </div>
+                  <span
+                    style={{
+                      padding: "3px 10px",
+                      borderRadius: "20px",
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      fontFamily: "var(--font-mono)",
+                      background: "var(--bg-4)",
+                      border: "1px solid var(--line-2)",
+                      color: "var(--fg-2)",
+                    }}
+                  >
+                    {group.actions.length} action{group.actions.length !== 1 ? "s" : ""}
+                  </span>
                 </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ flex: 1 }}>
+                    <ProgressBar value={progress} />
+                  </div>
+                  <span style={{ fontSize: "12px", fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--fg-2)", minWidth: "32px", textAlign: "right" }}>
+                    {progress}%
+                  </span>
+                </div>
+              </div>
 
-                <div className="overflow-hidden rounded border">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-muted text-xs uppercase text-muted-foreground">
-                      <tr>
-                        <th className="px-3 py-2">Type</th>
-                        <th className="px-3 py-2">Action</th>
-                        <th className="px-3 py-2">CAPA</th>
-                        <th className="px-3 py-2">PIC</th>
-                        <th className="px-3 py-2">Due / Target</th>
-                        <th className="px-3 py-2">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.actions.map((action) => (
-                        <tr key={`${action.kind}-${action.id}`} className="border-t align-top">
-                          <td className="px-3 py-3">
-                            <Badge variant="outline">{action.kind}</Badge>
-                          </td>
-                          <td className="max-w-xl px-3 py-3">
-                            <div className="font-mono text-xs text-primary">{action.id}</div>
-                            <div className="mt-1">{action.description}</div>
-                            <div className="mt-2 text-xs text-muted-foreground">Root cause: {action.rootCause}</div>
-                          </td>
-                          <td className="px-3 py-3">
-                            <Link className="font-mono text-xs text-primary hover:underline" to={`/capa/${action.capaId}`}>
-                              {action.capaId}
-                            </Link>
-                          </td>
-                          <td className="px-3 py-3">{action.pic}</td>
-                          <td className="px-3 py-3">{formatDate(action.targetDate)}</td>
-                          <td className="px-3 py-3">
-                            <StatusBadge status={action.status} />
-                          </td>
-                        </tr>
+              {/* Group table */}
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "var(--font-sans)" }}>
+                  <thead>
+                    <tr style={{ background: "var(--bg-3)" }}>
+                      {["Type", "Action", "CAPA", "PIC", "Due / Target", "Status"].map((h) => (
+                        <th
+                          key={h}
+                          style={{
+                            padding: "9px 14px",
+                            textAlign: "left",
+                            fontSize: "10px",
+                            fontFamily: "var(--font-mono)",
+                            fontWeight: 600,
+                            letterSpacing: "0.18em",
+                            textTransform: "uppercase",
+                            color: "var(--fg-3)",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {h}
+                        </th>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.actions.map((action) => (
+                      <tr
+                        key={`${action.kind}-${action.id}`}
+                        style={{ borderTop: "1px solid var(--line-1)", verticalAlign: "top", transition: "background var(--dur-fast) var(--ease-out)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-3)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      >
+                        <td style={{ padding: "12px 14px" }}>
+                          <KindBadge kind={action.kind} />
+                        </td>
+                        <td style={{ padding: "12px 14px", maxWidth: "380px" }}>
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--accent)", marginBottom: "3px" }}>
+                            {action.id}
+                          </div>
+                          <div style={{ color: "var(--fg-2)", lineHeight: "1.4" }}>{action.description}</div>
+                          <div style={{ fontSize: "11px", color: "var(--fg-3)", marginTop: "4px" }}>
+                            Root cause: {action.rootCause}
+                          </div>
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>
+                          <Link
+                            to={`/capa/${action.capaId}`}
+                            style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--accent)", textDecoration: "none" }}
+                            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                          >
+                            {action.capaId}
+                          </Link>
+                        </td>
+                        <td style={{ padding: "12px 14px", color: "var(--fg-2)", whiteSpace: "nowrap" }}>{action.pic}</td>
+                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                          <div style={{ color: "var(--fg-2)" }}>{formatDate(action.targetDate)}</div>
+                          {action.riskPriority === "High" && (
+                            <div style={{ fontSize: "10px", fontWeight: 600, color: riskColor("High"), marginTop: "3px" }}>
+                              High risk
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>
+                          <StatusBadge status={action.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           );
         })}
       </div>
 
-      <div className="flex justify-end">
-        <Button asChild variant="outline">
-          <Link to="/actions/corrective">
-            Review Corrective Actions
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
+      {/* ── Footer link ───────────────────────────────────────────────── */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+        <Link
+          to="/capa"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "8px 14px",
+            background: "var(--bg-3)",
+            border: "1px solid var(--line-2)",
+            borderRadius: "var(--r-sm)",
+            color: "var(--fg-2)",
+            fontSize: "13px",
+            fontFamily: "var(--font-sans)",
+            textDecoration: "none",
+            transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-3)"; e.currentTarget.style.background = "var(--bg-4)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.background = "var(--bg-3)"; }}
+        >
+          View all CAPAs
+          <ArrowRight size={14} strokeWidth={1.75} />
+        </Link>
       </div>
     </div>
   );

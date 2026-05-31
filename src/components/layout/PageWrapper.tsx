@@ -18,7 +18,7 @@ export function PageWrapper({ children }: { children: ReactNode }) {
         <TopBar />
         <main
           key={location.pathname}
-          className="animate-page-enter mx-auto max-w-[1500px]"
+          className="animate-page-enter lead-motion-scope mx-auto max-w-[1500px]"
           style={{ padding: "24px 20px" }}
         >
           {children}

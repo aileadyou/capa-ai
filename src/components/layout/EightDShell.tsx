@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { createContext, ReactNode, useContext } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Check, CircleDot, Lock } from "lucide-react";
 import { eightDSteps } from "@/routes";
@@ -67,7 +67,7 @@ function StepItem({
         background: state === "active" ? "var(--accent-soft)" : "transparent",
         borderLeft: state === "active" ? "2px solid var(--accent)" : "2px solid transparent",
         cursor: state === "locked" ? "not-allowed" : "pointer",
-        transition: "background 0.15s, color 0.15s",
+        transition: "background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out)",
         textDecoration: "none",
         fontFamily: "var(--font-sans)",
       }}
@@ -100,7 +100,33 @@ interface EightDShellProps {
   sidebar?: ReactNode;
 }
 
+interface EightDEmbedContextValue {
+  embedded: boolean;
+  onStepChange?: (step: EightDStep) => void;
+}
+
+const EightDEmbedContext = createContext<EightDEmbedContextValue>({ embedded: false });
+
+export function EightDEmbedProvider({
+  children,
+  onStepChange,
+}: {
+  children: ReactNode;
+  onStepChange: (step: EightDStep) => void;
+}) {
+  return (
+    <EightDEmbedContext.Provider value={{ embedded: true, onStepChange }}>
+      {children}
+    </EightDEmbedContext.Provider>
+  );
+}
+
+export function useEightDEmbed() {
+  return useContext(EightDEmbedContext);
+}
+
 export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShellProps) {
+  const { embedded } = useEightDEmbed();
   const capa = useCapaStore((state) => state.capas.find((c) => c.id === capaId));
   const capaCurrentIndex = eightDSteps.indexOf(capa?.currentStep ?? "problem");
 
@@ -109,6 +135,14 @@ export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShe
     const idx = eightDSteps.indexOf(step);
     if (idx <= capaCurrentIndex) return "done";
     return "locked";
+  }
+
+  if (embedded) {
+    return (
+      <div key={activeStep} className="motion-tab-content" style={{ flex: 1, minWidth: 0 }}>
+        {children}
+      </div>
+    );
   }
 
   return (
@@ -149,7 +183,7 @@ export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShe
             fontSize: "10px",
             fontFamily: "var(--font-mono)",
             fontWeight: 500,
-            letterSpacing: "0.12em",
+            letterSpacing: "0.18em",
             textTransform: "uppercase",
             color: "var(--fg-4)",
             margin: "0 0 8px 10px",
@@ -176,12 +210,13 @@ export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShe
 
       {/* ── Center + optional right sidebar ───────────────────────────── */}
       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: "20px" }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div key={activeStep} className="motion-tab-content" style={{ flex: 1, minWidth: 0 }}>
           {children}
         </div>
 
         {sidebar && (
           <div
+            className="motion-reveal"
             style={{
               width: "280px",
               flexShrink: 0,

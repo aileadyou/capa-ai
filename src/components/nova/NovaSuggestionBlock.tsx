@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Sparkles } from "lucide-react";
-import { useAuditTrailStore } from "@/store";
+import { ChevronDown, ChevronRight, MessageSquareText, Sparkles } from "lucide-react";
+import { useAuditTrailStore, useUIStore } from "@/store";
 
 interface NovaSuggestionBlockProps {
   /** Short label for what this suggestion is about, e.g. "Why 1 answer" */
@@ -15,11 +15,9 @@ interface NovaSuggestionBlockProps {
   suggestionId?: string;
   /** Called when user accepts the suggestion (as-is or after editing) */
   onAccept?: (content: string) => void;
-  /** Called when user skips the suggestion */
-  onSkip?: () => void;
 }
 
-type Mode = "idle" | "editing" | "accepted" | "skipped";
+type Mode = "idle" | "editing" | "accepted";
 
 export function NovaSuggestionBlock({
   context,
@@ -28,12 +26,12 @@ export function NovaSuggestionBlock({
   capaId,
   suggestionId = "block",
   onAccept,
-  onSkip,
 }: NovaSuggestionBlockProps) {
   const [mode, setMode] = useState<Mode>("idle");
   const [draft, setDraft] = useState(suggestion);
   const [showReasoning, setShowReasoning] = useState(false);
   const addEvent = useAuditTrailStore((state) => state.addEvent);
+  const openNovaChat = useUIStore((state) => state.openNovaChat);
 
   function handleAccept() {
     setMode("accepted");
@@ -55,16 +53,24 @@ export function NovaSuggestionBlock({
     }
   }
 
-  function handleSkip() {
-    setMode("skipped");
-    onSkip?.();
+  function handleDiscussWithNova() {
+    const label = context ?? "Nova suggestion";
+    openNovaChat({
+      capaId,
+      step: suggestionId,
+      source: "nova-suggestion",
+      suggestionId,
+      suggestionContext: label,
+      suggestionText: draft,
+      initialDraft: `Help me review this ${label}. What should I ask or improve before using it?`,
+    });
     if (capaId) {
       addEvent({
         actorName: "Nova Demo User",
         actorRole: "CAPA User",
         domain: "ai_decision",
         eventType: "nova_suggestion_replaced",
-        action: `Nova suggestion ${suggestionId} skipped.`,
+        action: `Nova suggestion ${suggestionId} opened in Ask Nova for discussion.`,
         capaId,
         novaMetadata: {
           modelName: "Nova Mock Engine",
@@ -73,45 +79,6 @@ export function NovaSuggestionBlock({
         },
       });
     }
-  }
-
-  // ── Skipped state ────────────────────────────────────────────────────────
-  if (mode === "skipped") {
-    return (
-      <div
-        style={{
-          padding: "8px 12px",
-          borderRadius: "var(--r-sm)",
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-1)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "8px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Sparkles size={12} style={{ color: "var(--fg-4)" }} />
-          <span style={{ fontSize: "12px", color: "var(--fg-4)", fontFamily: "var(--font-sans)" }}>
-            Nova suggestion skipped
-          </span>
-        </div>
-        <button
-          onClick={() => { setMode("idle"); setDraft(suggestion); }}
-          style={{
-            fontSize: "11px",
-            color: "var(--accent)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: 0,
-            fontFamily: "var(--font-sans)",
-          }}
-        >
-          Restore
-        </button>
-      </div>
-    );
   }
 
   // ── Accepted state ───────────────────────────────────────────────────────
@@ -124,17 +91,23 @@ export function NovaSuggestionBlock({
           background: "var(--accent-soft)",
           border: "1px solid var(--accent-line)",
           display: "flex",
-          alignItems: "center",
+          flexDirection: "column",
+          alignItems: "flex-start",
           gap: "8px",
         }}
       >
-        <Sparkles size={12} style={{ color: "var(--accent)" }} />
-        <span style={{ fontSize: "12px", color: "var(--accent)", fontWeight: 600, fontFamily: "var(--font-sans)" }}>
-          Nova suggestion applied
-        </span>
-        <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-sans)" }}>
-          — edit the field below to refine
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Sparkles size={12} style={{ color: "var(--accent)" }} />
+          <span style={{ fontSize: "12px", color: "var(--accent)", fontWeight: 600, fontFamily: "var(--font-sans)" }}>
+            Nova suggestion applied
+          </span>
+          <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-sans)" }}>
+            — edit the field below to refine
+          </span>
+        </div>
+        <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "12px", lineHeight: 1.6, fontFamily: "var(--font-sans)" }}>
+          {draft}
+        </p>
       </div>
     );
   }
@@ -157,7 +130,7 @@ export function NovaSuggestionBlock({
             fontSize: "11px",
             fontFamily: "var(--font-mono)",
             fontWeight: 600,
-            letterSpacing: "0.06em",
+            letterSpacing: "0.18em",
             color: "var(--accent)",
             textTransform: "uppercase",
           }}
@@ -232,7 +205,6 @@ export function NovaSuggestionBlock({
             boxSizing: "border-box",
             boxShadow: "0 0 0 3px var(--accent-soft)",
           }}
-          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
       ) : (
@@ -304,7 +276,7 @@ export function NovaSuggestionBlock({
               Use this suggestion
             </button>
             <button
-              onClick={() => setMode("editing")}
+              onClick={handleDiscussWithNova}
               style={{
                 background: "var(--bg-4)",
                 color: "var(--fg-2)",
@@ -314,24 +286,13 @@ export function NovaSuggestionBlock({
                 fontSize: "12px",
                 cursor: "pointer",
                 fontFamily: "var(--font-sans)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
               }}
             >
-              Edit first
-            </button>
-            <button
-              onClick={handleSkip}
-              style={{
-                background: "transparent",
-                color: "var(--fg-3)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "6px 12px",
-                fontSize: "12px",
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
-              Skip
+              <MessageSquareText size={12} />
+              Discuss with Nova
             </button>
           </>
         )}
