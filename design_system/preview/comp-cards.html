@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+*{margin:0;box-sizing:border-box}
+body{background:var(--bg-1);color:var(--fg-1);font-family:var(--font-sans);padding:24px;-webkit-font-smoothing:antialiased;}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.col{display:flex;flex-direction:column;gap:12px}
+.lbl{font-family:var(--font-mono);font-size:11px;color:var(--fg-3);letter-spacing:.04em}
+.btn{font-family:var(--font-sans);font-weight:600;font-size:14px;border-radius:var(--r-md);padding:11px 18px;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all var(--dur-fast) var(--ease-out)}
+.btn-primary{background:var(--accent);color:var(--on-accent)}
+.btn-secondary{background:var(--bg-3);color:var(--fg-1);border-color:var(--line-2)}
+.btn-ghost{background:transparent;color:var(--fg-2)}
+.btn-sm{padding:7px 13px;font-size:13px;border-radius:var(--r-sm)}
+
+.card{width:280px;background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg);padding:20px;box-shadow:var(--shadow-inset-line)}
+.card:hover{border-color:var(--line-3)}
+
+</style></head><body><div class="row">
+<div class="card">
+  <div class="eyebrow" style="margin-bottom:14px">INFERENCE</div>
+  <div class="h3" style="font-size:21px;margin-bottom:6px">prod-cluster-01</div>
+  <div class="body-sm">12 models active · 4 regions</div>
+  <div class="row" style="margin-top:16px;gap:8px"><span class="metric" style="font-size:28px">142</span><span class="lbl" style="align-self:flex-end;padding-bottom:4px">ms p99</span></div>
+</div>
+<div class="col" style="gap:8px"><div class="lbl">SURFACE CARD</div><div class="lbl" style="color:var(--fg-2);max-width:160px">bg-2 · 1px line-2 · r-lg · inset top-light. No colored borders.</div></div>
+</div></body></html>

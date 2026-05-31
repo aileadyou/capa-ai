@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CAPA AI × Lead.AI DS — Claude Code Handoff</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#090B0E;color:#F3F5F7;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased;padding:0 0 80px}
+a{color:#C46890;text-decoration:none}
+a:hover{color:#E07D60}
+
+.hero{background:linear-gradient(135deg,#9B3AC5 0%,#C4688C 52%,#E07D60 100%);padding:48px 60px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0;background:rgba(9,11,14,0.55)}
+.hero-inner{position:relative;z-index:1}
+.hero h1{font-size:42px;font-weight:700;letter-spacing:-.03em;line-height:1.05;margin-bottom:10px}
+.hero p{font-size:17px;color:rgba(243,245,247,.8);max-width:640px}
+
+.shell{max-width:920px;margin:0 auto;padding:0 40px}
+
+.section{padding:52px 0 0}
+.section-num{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#6A7280;margin-bottom:14px}
+h2{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:18px;line-height:1.15}
+h3{font-size:16px;font-weight:700;letter-spacing:-.01em;margin-bottom:10px;color:#F3F5F7}
+p{color:#A2A9B4;margin-bottom:12px;max-width:680px}
+
+.card{background:#101318;border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:24px;margin-bottom:14px}
+.card+.card{margin-top:0}
+
+/* Steps */
+.steps{counter-reset:step;display:flex;flex-direction:column;gap:0}
+.step-item{display:flex;gap:20px;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.step-item:last-child{border-bottom:none}
+.step-num{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#9B3AC5,#C4688C);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-top:2px}
+.step-body h3{margin-bottom:6px}
+.step-body p{margin-bottom:8px}
+
+/* Code / prompt blocks */
+pre{font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.7;background:#060809;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:20px 24px;overflow-x:auto;color:#D4DBE6;margin:12px 0 6px;white-space:pre-wrap;word-break:break-word}
+.prompt-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#6A7280;margin-bottom:6px}
+.prompt-block{background:#070A0E;border:1px solid rgba(155,58,197,.3);border-radius:10px;padding:20px 24px;margin:14px 0}
+.prompt-block pre{background:transparent;border:none;padding:0;margin:0;color:#C9D0DB}
+
+/* File tree */
+.tree{font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.9;color:#A2A9B4;padding:18px 22px;background:#060809;border:1px solid rgba(255,255,255,.08);border-radius:10px}
+.tree .dir{color:#9B3AC5;font-weight:600}
+.tree .file{color:#C4688C}
+.tree .comment{color:#444B56}
+
+/* Screen inventory table */
+.screen-table{width:100%;border-collapse:collapse;margin:16px 0}
+.screen-table th{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#6A7280;text-align:left;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.screen-table td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top;color:#A2A9B4;font-size:14px}
+.screen-table td:first-child{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#C4688C;white-space:nowrap}
+.screen-table tr:hover td{background:rgba(255,255,255,.025)}
+.tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 8px;border-radius:999px;background:rgba(155,58,197,.15);color:#C4688C;border:1px solid rgba(155,58,197,.3);margin-right:4px}
+.tag.green{background:rgba(63,185,132,.12);color:#3FB984;border-color:rgba(63,185,132,.3)}
+.tag.warn{background:rgba(224,163,62,.12);color:#E0A33E;border-color:rgba(224,163,62,.3)}
+
+.divider{height:1px;background:rgba(255,255,255,.07);margin:52px 0 0}
+
+.tip{background:rgba(155,58,197,.08);border:1px solid rgba(155,58,197,.25);border-radius:10px;padding:16px 20px;margin:16px 0}
+.tip p{color:#C9D0DB;margin:0}
+
+.warn-box{background:rgba(224,163,62,.08);border:1px solid rgba(224,163,62,.28);border-radius:10px;padding:14px 18px;margin:14px 0}
+.warn-box p{color:#E0A33E;margin:0;font-size:14px}
+
+.copy-hint{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#444B56;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(243,245,247,.6);margin-bottom:16px">CLAUDE CODE HANDOFF · CAPA AI REVAMP</div>
+    <h1>From wireframe to<br>production UI</h1>
+    <p>Step-by-step setup guide + copy-paste prompts to revamp the CAPA AI app using the Lead.AI design system with Claude Code.</p>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">What we're building</div>
+    <h2>CAPA AI — pharma QA compliance app</h2>
+    <p>A reworked pharma QA application built around a persistent sidebar, CAPA Hub with 8D progress panel, and a unified Nova AI assistant pattern. 16 screens total.</p>
+
+    <table class="screen-table">
+      <thead><tr><th>Screen</th><th>Priority</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>My Work / Inbox</td><td><span class="tag green">Start here</span></td><td>Default landing, urgency-sorted CAPA list</td></tr>
+        <tr><td>Dashboard / Analytics</td><td><span class="tag green">Start here</span></td><td>KPI cards, charts, department heatmap</td></tr>
+        <tr><td>App Shell (sidebar + topbar)</td><td><span class="tag green">Start here</span></td><td>Persistent layout wrapper, all screens depend on it</td></tr>
+        <tr><td>Findings List</td><td><span class="tag">Next</span></td><td>Table + slide-over detail + "Create CAPA" CTA</td></tr>
+        <tr><td>CAPA List</td><td><span class="tag">Next</span></td><td>All CAPAs, filter tabs, 8D step column</td></tr>
+        <tr><td>New CAPA Intake Wizard</td><td><span class="tag">Next</span></td><td>4-step progressive form</td></tr>
+        <tr><td>CAPA Hub</td><td><span class="tag warn">★ Key</span></td><td>Overview + persistent 8D progress panel</td></tr>
+        <tr><td>8D Step screens (D1–D7)</td><td><span class="tag warn">★ Key</span></td><td>3-zone layout: progress panel + form + Nova suggestion</td></tr>
+        <tr><td>Quality Score Breakdown</td><td></td><td>Score modal/panel</td></tr>
+        <tr><td>Audit Trail</td><td></td><td>Accessible from topbar</td></tr>
+        <tr><td>Nova AI pattern</td><td><span class="tag warn">★ Key</span></td><td>Unified inline AI suggestion component</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Step 1 · Setup</div>
+    <h2>Drop the design system into your repo</h2>
+
+    <div class="steps">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Unzip and copy the design system</h3>
+          <p>Unzip the Lead.AI Design System download. Copy the whole folder into your repo as <code>design-system/</code> at the root.</p>
+          <div class="tree">
+<span class="dir">your-project/</span>
+├── <span class="dir">design-system/</span>          <span class="comment">← paste the whole zip here</span>
+│   ├── README.md
+│   ├── SKILL.md
+│   ├── colors_and_type.css
+│   ├── <span class="dir">fonts/</span>              <span class="comment">← Plus Jakarta Sans self-hosted</span>
+│   ├── <span class="dir">assets/</span>             <span class="comment">← logo-real.png, media/</span>
+│   └── <span class="dir">ui_kits/platform/</span>   <span class="comment">← reference components</span>
+├── <span class="dir">src/</span>
+│   └── <span class="dir">components/</span>
+└── ...
+          </div>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Wire the font + CSS tokens into your app</h3>
+          <p>In your global stylesheet (e.g. <code>app/globals.css</code> or <code>src/index.css</code>):</p>
+          <pre>/* At the top of globals.css */
+@import '../design-system/colors_and_type.css';
+
+/* Then your app styles, using the vars: */
+body {
+  background: var(--bg-1);
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+}</pre>
+          <p style="margin-top:8px">If you use Tailwind, extend your config to expose the CSS vars as utilities — or just use them inline/in CSS modules.</p>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Copy the wireframe into your repo too</h3>
+          <p>Save <code>wireframe.html</code> as <code>design-system/wireframe.html</code>. Claude Code will read it as structural reference.</p>
+        </div>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Verify Claude Code can see the files</h3>
+          <p>Open Claude Code in your project root and run a quick test:</p>
+          <div class="prompt-block">
+            <div class="prompt-label">Test prompt</div>
+            <pre>Read design-system/README.md and summarize the Lead.AI design system in 3 bullet points. Then read design-system/wireframe.html and list the 16 screens from the Table of Contents.</pre>
+          </div>
+          <p>If it reads both correctly, you're ready.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Step 2 · Orient Claude Code</div>
+    <h2>Send this as the first prompt — every session</h2>
+    <p>Paste this at the start of each Claude Code session for the revamp. It loads the full context once, so you don't have to re-explain.</p>
+
+    <div class="prompt-block">
+      <div class="prompt-label">Master context prompt — paste once per session</div>
+      <pre>You are revamping the CAPA AI pharma QA app to use the Lead.AI design system.
+
+Read these files to orient yourself:
+1. design-system/README.md — brand personality, visual foundations, content rules
+2. design-system/colors_and_type.css — all design tokens (CSS vars for color, type, spacing, radii, shadows, motion)
+3. design-system/wireframe.html — full UX wireframes for all 16 screens we're building
+4. design-system/ui_kits/platform/kit.css — utility classes (glass, glow-field, reveal, etc.)
+5. design-system/ui_kits/platform/Marketing.jsx and Console.jsx — reference component patterns
+
+Design system summary (do not deviate from these):
+- Background: near-black layered surfaces (--bg-0 to --bg-4)
+- Text: near-white primary (--fg-1), muted gray secondary (--fg-2)
+- Accent: SINGLE brand gradient purple→magenta→coral (#9B3AC5 → #C4688C → #E07D60)
+  — Primary buttons use var(--grad-brand) background
+  — Active nav items use var(--accent-soft) bg + var(--accent) text
+- Typography: Plus Jakarta Sans (--font-sans) for all UI, IBM Plex Mono (--font-mono) for eyebrows/metrics/code
+- Heading tracking: negative letter-spacing (-0.02em to -0.035em), semibold (600)
+- Cards: --bg-2 surface, 1px --line-2 border, --r-lg radius, optional inset top-light
+- Glass cards: backdrop-filter blur(22px) + rgba(255,255,255,0.07) — for content over imagery
+- Motion: opacity + translateY, 500–900ms, cubic-bezier(0.22,1,0.36,1). No bounce.
+- Copy: sentence case everywhere. No emoji. No exclamation marks. Calm, declarative.
+- Logo: use design-system/assets/logo-real.png
+
+App context:
+- CAPA AI = pharma QA compliance app for Fill-Finish/Warehouse/QA departments
+- Core user: QA Analyst (daily 8D workflow) + QA Manager (monitoring, sign-off)
+- Core flow: My Work → CAPA Hub → 8D step screens (D1–D7)
+- Nova = the AI assistant embedded inline in 8D steps as a suggestion block
+- The wireframe defines exact layouts — implement them faithfully, styled with this DS
+
+When I say "build screen X", implement it as a React component (or whatever the project stack uses) following the wireframe layout exactly, styled with the design system tokens. Do not invent new layouts; do not add sections not in the wireframe.</pre>
+    </div>
+
+    <div class="tip">
+      <p><strong>Tip:</strong> Save this in a file called <code>design-system/CLAUDE_CONTEXT.md</code> and just say "Read design-system/CLAUDE_CONTEXT.md to orient yourself" each session.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Step 3 · Build order + prompts</div>
+    <h2>Screen-by-screen prompts</h2>
+    <p>Run these in order. Each prompt assumes the master context has been loaded.</p>
+
+    <div class="card">
+      <div class="section-num" style="margin-bottom:8px">SPRINT 1 · Foundation</div>
+      <h3>App Shell (sidebar + topbar)</h3>
+      <p style="font-size:13px;margin-bottom:14px">Build this first — every other screen mounts inside it.</p>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Build the app shell component (sidebar + topbar) based on wireframe section 01 and 03's sidebar pattern.
+
+Sidebar (240px wide, fixed height):
+- Logo: design-system/assets/logo-real.png at 26px height, 16px horizontal padding
+- Nav items: My Work (badge count), Dashboard, Findings, All CAPAs, Reports, Settings/Help
+- Active state: var(--accent-soft) background, var(--accent) text color
+- Hover state: var(--bg-3) background, var(--fg-1) text, 180ms transition
+- Bottom: user avatar block with name + role + department
+- Border-right: 1px var(--line-1)
+- Background: var(--bg-1)
+
+Topbar (60px height, sticky):
+- Left: page title (h4, 17px, semibold)
+- Center: search field (var(--bg-3), --line-2 border, --r-sm radius, mono placeholder, ⌘K shortcut pill)
+- Right: notification bell icon (Lucide), Nova AI button (secondary btn-sm, "Ask Nova"), user avatar (32px circle with gradient)
+- Background: rgba(10,12,15,0.72) with backdrop-filter blur(20px)
+- Border-bottom: 1px var(--line-1)
+
+Use Lucide icons (1.75px stroke, 18–20px size). Sidebar nav icons: LayoutGrid, BarChart2, AlertCircle, FolderOpen, FileText, Settings.
+
+Wrap everything in a shell layout: sidebar fixed left, topbar sticky top of content area, main content scrollable.</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>My Work / Inbox</h3>
+      <p style="font-size:13px;margin-bottom:14px">Wireframe section 03.</p>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Build the My Work / Inbox screen. Wireframe reference: section 03.
+
+Layout: inside the app shell. Content area has no inner padding wrapper — sections have their own spacing.
+
+Sections (top to bottom):
+1. Greeting header — "Good morning, [Name]" (h2, --fg-1), subtitle line with date + active CAPA count (--fg-2, --font-mono, 13px)
+
+2. "Needs Attention" section — eyebrow label, then CAPA cards with a LEFT accent using var(--danger) color (3px solid border-left). Card shows: CAPA ID (mono, --fg-1, semibold), title, overdue status in --danger color, "Open →" link right-aligned.
+
+3. "My Active CAPAs" section — eyebrow label, list of CAPA cards (--bg-2, --line-2 border, --r-md). Each card: CAPA ID + title, badge row (severity, current 8D step, due date), "Open →" button.
+
+4. "Pending My Review" section — cards with left border --warning. Badge shows "D7 Sign-Off".
+
+5. "Recently Closed" section — cards at 45% opacity, strikethrough-style.
+
+Severity badges: use --danger-soft bg + --danger text for Major; --warning-soft + --warning for Minor. Status badges: mono font, 11px, pill shape.
+
+8D step badges (D1–D7): --accent-soft bg + --accent text.
+
+Overdue indicator: --danger text, shows "Overdue Xd". Due soon: --warning text.</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>CAPA Hub</h3>
+      <p style="font-size:13px;margin-bottom:14px">Wireframe section 08. The highest-leverage screen — get this right first.</p>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Build the CAPA Hub screen. Wireframe reference: section 08. This is the most important screen.
+
+Two-column layout inside the app shell content area:
+LEFT COLUMN (240px, fixed, not scrollable):
+  - "8D PROGRESS" eyebrow label
+  - 7 step items (D1–D7). States:
+    • Done: checkmark icon, --fg-3 text, --bg-2 bg
+    • Active: dot icon, --accent text, --accent-soft bg, left border var(--accent)
+    • Locked: lock icon, --fg-4 text, --bg-1 bg, cursor not-allowed
+  - Separator
+  - "CAPA INFO" eyebrow + info card (PIC, Dept, Due date, Source ID) in --bg-2
+  - "QUALITY SCORE" eyebrow + large score number (metric style, 52px, centered) in --bg-2 card, "Click for breakdown" caption
+
+RIGHT COLUMN (flex 1, scrollable):
+  - Breadcrumb: "CAPAs / CAPA-2026-0341" in --fg-3 mono
+  - Status badge row: source system badge, type, severity, status
+  - H1: CAPA title (h2 size, semibold, tight tracking)
+  - Subtitle: description (--fg-2)
+  - "Source Data" card (--bg-2): grid of field/value pairs
+  - "QA Disposition" card (--bg-2): reviewer info + rationale
+  - "Nova Summary" card: --bg-3, left border var(--accent) 3px, Nova icon + summary text
+  - CTA button right-aligned: "Continue working on D4 →" (btn-primary)
+
+Top bar action row (above two columns): "Export PDF" and "Audit Trail" ghost buttons right-aligned.</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>8D Step screens (D1 pattern + D3 RCA)</h3>
+      <p style="font-size:13px;margin-bottom:14px">Wireframe sections 09 + 10. D1 is the template; D3 shows the most complex variation.</p>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Build the 8D step screen layout. This is a reusable shell — all 7 steps (D1–D7) use the same layout, only the center form changes. Wireframe: sections 09 and 10.
+
+Three-zone layout:
+ZONE 1 — Left progress panel (180px):
+  - Back link "← CAPA-2026-XXXX" in --fg-3 mono
+  - 7 step items (same done/active/locked styling as CAPA Hub)
+
+ZONE 2 — Main form (flex 1):
+  - Page title: "D1 — Problem Statement" (h2) + subtitle "Step 1 of 7 · Define..."
+  - Nova suggestion block (inline, full width):
+    Background: var(--bg-3), left border 3px var(--accent), border-radius --r-md
+    Header: "Nova's Suggestion" with sparkle icon in --accent
+    Body: suggested text in --fg-2
+    Action row: "✓ Use this suggestion" (btn-primary btn-sm), "✎ Edit first" (btn-secondary btn-sm), "Skip" (btn-ghost)
+    Collapsible "Show reasoning" in --fg-3 mono
+  - Form section label (eyebrow)
+  - Form fields (textarea, inputs) — var(--bg-4), --line-2 border, --r-sm, focus: --accent border + --accent-soft shadow
+  - Quality checklist row: 4 small cards showing validation criteria (checkmark = --success, empty = --fg-4)
+  - Footer: "← Back" ghost button left, "Save Draft" + "Continue to D2 →" right
+
+For D3 RCA specifically, add:
+  - 5-Whys chain: indent each Why with a connecting line (1px --line-2). Why 5 (Root Cause) gets --line-3 border + bold label
+  - "Similar Past CAPAs" section below form: 2-column card grid, each card shows CAPA ID, area, root cause summary, resolution time, similarity % badge
+
+Make the Nova block a reusable <NovaBlock> component — it's used on every 8D step.</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Dashboard (Analytics)</h3>
+      <p style="font-size:13px;margin-bottom:14px">Wireframe section 04.</p>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Build the Analytics Dashboard screen. Wireframe: section 04.
+
+Layout:
+- Topbar addition: date range selector right-aligned ("This Month ▼" in --bg-3 btn-secondary)
+
+Content grid:
+ROW 1 — 4 KPI metric cards (--bg-2, --line-2, --r-lg):
+  Each card: eyebrow label, large metric number (metric class, 40px), subtitle caption.
+  "Overdue CAPAs" card gets a gradient left border using var(--grad-brand).
+  All cards are clickable → navigate to filtered CAPA list.
+
+ROW 2 — 2 chart placeholders side by side:
+  - Finding Trend (line chart placeholder — use a simple SVG area chart with fake data, --accent stroke)
+  - Breakdown by Type (donut placeholder — SVG with 3 segments in --accent, --success, --fg-3)
+  Each in --bg-2 card, --r-lg, with eyebrow label + subtitle.
+
+ROW 3 — Bar chart (left 60%) + Dept heatmap (right 40%):
+  - Top Root Cause Categories: horizontal bar chart, bars use var(--grad-brand) background
+  - Dept Completion Heatmap: rows with dept name, progress bar (var(--accent) fill on --bg-4 track), % and open count
+  Both in --bg-2 cards.</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Findings List</h3>
+      <p style="font-size:13px;margin-bottom:14px">Wireframe section 05.</p>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Build the Findings List screen with a slide-over detail panel. Wireframe: section 05.
+
+Main screen:
+- Filter row: search input (full text, --bg-3, --line-2, Lucide Search icon inside), then 3 select dropdowns (Type, Severity, Status) — all same height, --r-sm
+- Results count label (eyebrow, "15 FINDINGS")
+- Data table (--bg-2 card, no outer border, border-collapse):
+  Columns: ID + source badge, Type, Description, Severity, Dept, Reported, Status, Actions
+  Row hover: var(--bg-3) background, smooth 180ms
+  Severity badges: Major=--danger variant, Minor=--warning variant, Critical=--danger + bold
+  Status badges: "CAPA In Progress"=--accent variant, "No CAPA"=--fg-3 mono
+  Actions: "View" ghost link + "Open CAPA →" or "Create CAPA" button (btn-primary btn-sm)
+
+Slide-over panel (400px from right, overlay):
+- Backdrop: rgba(6,8,12,0.5) with fade-in
+- Panel: var(--bg-2), border-left 1px --line-2, full height, slide-in from right (transform translateX)
+- Header: "Finding Detail" + × close button
+- Badge row: type + severity + status
+- Field/value pairs: label (caption style, --fg-3) above value (--bg-3 pill/block, --fg-1)
+- "Nova Classification" block: --bg-3, --accent left border, Nova insight text
+- Actions at bottom: "Open CAPA →" btn-primary, "Close" btn-ghost</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>New CAPA Intake Wizard</h3>
+      <p style="font-size:13px;margin-bottom:14px">Wireframe section 07.</p>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Build the New CAPA Intake 4-step wizard. Wireframe: section 07.
+
+Outer layout: centered content max-width 720px inside the shell.
+
+Step indicator at top:
+- 4 steps: "Source Import", "Gate Questions", "Impact Assessment", "Review & Submit"
+- Done steps: gradient circle (--grad-brand), checkmark icon, label --fg-2
+- Active step: gradient circle, bold label --fg-1
+- Upcoming: --bg-4 circle, --fg-4 label
+- Connecting line between steps: --line-2 for upcoming, var(--accent) for done
+
+Each step content in --bg-2 card (full width, --r-lg, padding 32px):
+
+Step 1 — Source Import:
+  - Two options: "Import from system" (Bizzmine, Q100+) as selectable cards, or "Fill manually"
+  - Import card: logo placeholder + system name + "Connected" badge
+
+Step 2 — Gate Questions:
+  - Nova tip block (--bg-3, --accent left border)
+  - 3 textareas (Q1, Q2, Q3) with labels and required markers
+  - Textarea: --bg-4, --line-2, --r-sm, focus state with --accent glow
+
+Step 3 — Impact Assessment:
+  - Severity selector: 3 option cards (Minor/Major/Critical) with radio + description
+  - Area/Dept multi-select
+  - AI Risk indicator: Nova's severity assessment with confidence %
+
+Step 4 — Review & Submit:
+  - Read-only summary of all fields in cards
+  - "Submit CAPA" btn-primary large, "← Back" ghost
+
+Navigation: "← Back" left, "Continue →" right (btn-primary). Validate each step before allowing Continue.</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Nova AI component (unified)</h3>
+      <p style="font-size:13px;margin-bottom:14px">Wireframe section 16. Used across all 8D steps and the intake wizard.</p>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Build the unified NovaBlock component used across all 8D step screens and the CAPA intake wizard. Wireframe: section 16.
+
+NovaBlock props: { suggestion: string, reasoning?: string, onAccept, onEdit, onSkip, loading?: boolean }
+
+Visual anatomy:
+- Container: var(--bg-3), 1px var(--accent-line) border, --r-md radius, 3px left border var(--accent)
+- Header row: sparkle/stars Lucide icon in --accent, "Nova's Suggestion" label in --fg-1 semibold, right: confidence badge (e.g. "94% confident") in --accent-soft + --accent mono text
+- Body: suggestion text in --fg-2, 16px, line-height 1.6
+- Action row: "✓ Use this suggestion" btn-primary btn-sm, "✎ Edit first" btn-secondary btn-sm, "Skip" btn-ghost btn-sm
+- Expandable reasoning: "Show reasoning ↓" in --fg-3 mono 12px, expands smoothly to show reasoning text in --bg-4 block
+- Loading state: skeleton animation (--bg-3 → --bg-4 pulse) for when Nova is generating
+
+Behavior:
+- "Use this" → fills the textarea below with Nova's suggestion, highlights it briefly in --accent-soft
+- "Edit first" → same but textarea becomes immediately focused
+- "Skip" → collapses the block with opacity fade
+
+Make this a production-quality reusable React component. Export as NovaBlock.</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Step 4 · Iteration</div>
+    <h2>Useful follow-up prompts</h2>
+
+    <div class="card">
+      <h3>Visual polish pass</h3>
+      <div class="prompt-block">
+        <div class="prompt-label">After each screen is built</div>
+        <pre>Do a visual polish pass on [ScreenName]:
+1. Check all text colors — primary labels should be --fg-1, secondary/supporting should be --fg-2, captions/mono labels should be --fg-3
+2. Check all card borders — should be 1px var(--line-2), hover state 1px var(--line-3)
+3. Check all button states — primary uses var(--grad-brand), hover adds brightness(1.1) filter, active scale(0.99)
+4. Check heading letter-spacing — h1/h2/h3 should have negative tracking (-0.02em to -0.03em)
+5. Verify no hardcoded hex colors — everything should use CSS vars from colors_and_type.css
+6. Verify the eyebrow/kicker labels use --font-mono, uppercase, letter-spacing 0.18em, --fg-3 color</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Accessibility + empty states</h3>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Add empty states and loading skeletons to [ScreenName]:
+- Empty state: --bg-2 card, centered, Lucide icon in --fg-4 (40px), h3 in --fg-1, body text in --fg-2, optional CTA button. No emoji, no illustrations.
+- Loading skeleton: shimmer animation from --bg-3 to --bg-4, matching the shape of actual content cards.
+- Error state: --danger-soft bg, --danger left border, error message in --fg-2.
+Follow Lead.AI content voice: calm, declarative. E.g. empty CAPA list: "No CAPAs match your filters. Adjust the filters above or create a CAPA from a finding."</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Motion + transitions</h3>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Add motion to [ScreenName] following the Lead.AI motion DNA:
+- Scroll/mount reveals: opacity 0→1 + translateY(12px→0), duration 600ms, easing cubic-bezier(0.22,1,0.36,1)
+- Stagger sibling cards: 80ms delay between each
+- Slide-over panel: translateX(100%→0), 400ms, same easing
+- Hover transitions: 180ms (--dur-fast). No bounce. No spring physics.
+- Tab/step transitions: opacity fade, 300ms
+Do NOT add any bouncy, springy, or attention-seeking animations. Motion is slow, confident, and minimal.</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Dark theme check</h3>
+      <div class="prompt-block">
+        <div class="prompt-label">Prompt</div>
+        <pre>Audit [ScreenName] for dark theme correctness:
+- No pure white (#fff or white) backgrounds anywhere in the content area
+- No pure black text (use --fg-1 which is #F3F5F7)
+- All border colors should have < 20% opacity or use --line-* vars
+- Inputs: --bg-4 background, never white
+- Modals/popovers: --bg-3, shadow var(--shadow-lg)
+- Charts: --bg-2 background, grid lines use --line-1
+Fix any violations.</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Reference</div>
+    <h2>Quick token cheat sheet</h2>
+    <p>The most-used values. All defined in <code>design-system/colors_and_type.css</code>.</p>
+
+    <div class="card" style="margin-bottom:0">
+      <pre style="background:transparent;border:none;padding:0;margin:0">/* BACKGROUNDS (dark → light) */
+--bg-0: #060709   /* void / deepest */
+--bg-1: #0A0C0F   /* page base */
+--bg-2: #101318   /* cards */
+--bg-3: #161A20   /* elevated, popovers */
+--bg-4: #1D222A   /* inputs, hover */
+
+/* TEXT */
+--fg-1: #F3F5F7   /* primary */
+--fg-2: #A2A9B4   /* secondary */
+--fg-3: #6A7280   /* captions, mono labels */
+--fg-4: #444B56   /* disabled */
+
+/* BRAND ACCENT */
+--grad-brand: linear-gradient(135deg, #9B3AC5, #C4688C, #E07D60)
+--accent:      #A94DCC   /* interactive purple */
+--accent-soft: rgba(169,77,204,0.13)
+--accent-line: rgba(169,77,204,0.38)
+
+/* SEMANTIC */
+--success: #3FB984   --success-soft: rgba(63,185,132,0.14)
+--warning: #E0A33E   --warning-soft: rgba(224,163,62,0.14)
+--danger:  #E5575C   --danger-soft:  rgba(229,87,92,0.14)
+
+/* BORDERS */
+--line-1: rgba(255,255,255,0.07)   /* hairline */
+--line-2: rgba(255,255,255,0.11)   /* card */
+--line-3: rgba(255,255,255,0.18)   /* hover/focus */
+
+/* RADII */
+--r-sm: 10px  --r-md: 14px  --r-lg: 20px  --r-xl: 28px
+
+/* MOTION */
+--ease-out:  cubic-bezier(0.22, 1, 0.36, 1)
+--dur-fast:  220ms   --dur-base: 500ms   --dur-slow: 800ms
+
+/* GLASS (over imagery) */
+--glass-light: rgba(255,255,255,0.07)   /* frosted */
+--glass-dark:  rgba(14,17,23,0.55)      /* smoked */
+--glass-blur:  22px</pre>
+    </div>
+  </div>
+
+  <div style="height:80px"></div>
+</div>
+
+</body>
+</html>

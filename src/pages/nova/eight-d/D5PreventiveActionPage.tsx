@@ -1,54 +1,33 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CheckCircle2, Circle, ListChecks, MessageSquareText, Save, Trash2 } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { AlertTriangle, CheckCircle2, Circle, ListPlus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { BlockerBanner } from "@/components/shared/BlockerBanner";
-import { SeverityBadge } from "@/components/shared/SeverityBadge";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { NovaCoachTip } from "@/components/nova/NovaCoachTip";
-import { NovaSuggestionCard } from "@/components/nova/NovaSuggestionCard";
-import { ScoreSidebar } from "@/components/score/ScoreSidebar";
+import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
+import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import NotFound from "@/pages/NotFound";
-import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore, useUIStore } from "@/store";
-import type { NovaSuggestionStatus, PreventiveAction } from "@/types";
+import { useAuditTrailStore, useCapaStore } from "@/store";
+import type { PreventiveAction } from "@/types";
 import { computeActionEffectiveness, computeTotalQualityScore } from "@/utils/scoring";
-import { formatCAPAType, formatDate } from "@/utils/formatters";
+import { formatDate } from "@/utils/formatters";
 
-const paSuggestions: Record<string, string[]> = {
-  "CAPA-2026-0341": [
+// ── Mock suggestion data ─────────────────────────────────────────────────────
+
+const paSuggestions: Record<string, string> = {
+  "CAPA-2026-0341":
     "Revise SOP PM-HEPA-001 to require 12-month HEPA filter replacement for Grade A filling areas and add automated maintenance reminders 60 days before due date.",
-    "Add quarterly QA and Engineering review of classified-area airflow deterioration signals and HEPA replacement trend triggers.",
-  ],
-  "CAPA-2026-0089": [
+  "CAPA-2026-0089":
     "Revise the material transfer SOP to require same-time second-person verification, add an end-of-shift documentation checklist, and run weekly QA spot checks for three months.",
-    "Add documentation timeliness KPI review for WH-02 transfer records during monthly quality meetings.",
-  ],
-  "CAPA-2026-0112": [
+  "CAPA-2026-0112":
     "Update visual inspection reconciliation procedure to define escalation thresholds for reject variance, add QA reviewer checklist item, and retrain visual inspection reviewers and batch release QA personnel.",
-    "Trend particulate complaints and visual inspection reconciliation signals by lot family during monthly quality review.",
-  ],
 };
 
-const paReplacements: Record<string, string> = {
+const paReasoning: Record<string, string> = {
   "CAPA-2026-0341":
-    "Revise the HEPA preventive maintenance SOP to require 12-month Grade A/B replacement, automated reminders, and QA escalation for overdue replacement.",
+    "HEPA degradation recurrence risk is highest when replacement intervals are not enforced systemically. SOP revision with automated reminders closes the scheduling gap and prevents future drift.",
   "CAPA-2026-0089":
-    "Update transfer documentation controls with same-time verifier initials, supervisor end-shift checklist, and weekly QA spot checks for three months.",
+    "Late documentation recurrence stems from absent process controls. Second-person verification and end-of-shift checklists embed prevention at the point of execution, not after the fact.",
   "CAPA-2026-0112":
-    "Strengthen visual inspection reconciliation escalation thresholds and require QA reviewer confirmation before batch release closure.",
+    "Visual reconciliation deviations recur when escalation thresholds are undefined. Formalising reject variance limits and requiring QA reviewer sign-off makes the system self-correcting.",
 };
 
 const picOptions = [
@@ -59,40 +38,42 @@ const picOptions = [
   { value: "Dr. Ahmad Pratomo", label: "Dr. Ahmad Pratomo · SME" },
 ];
 
+// ── Status badge (inline) ────────────────────────────────────────────────────
+
+function ActionStatusBadge({ status }: { status: PreventiveAction["status"] }) {
+  const map: Record<PreventiveAction["status"], { label: string; color: string; bg: string }> = {
+    open: { label: "Open", color: "var(--fg-3)", bg: "var(--bg-3)" },
+    in_progress: { label: "In Progress", color: "var(--warning)", bg: "var(--warning-soft)" },
+    completed: { label: "Completed", color: "var(--success)", bg: "var(--success-soft)" },
+    overdue: { label: "Overdue", color: "var(--danger)", bg: "var(--danger-soft)" },
+    verified: { label: "Verified", color: "var(--accent)", bg: "var(--accent-soft)" },
+  };
+  const s = map[status] ?? map.open;
+  return (
+    <span
+      style={{
+        fontSize: "11px",
+        fontWeight: 600,
+        fontFamily: "var(--font-mono)",
+        color: s.color,
+        background: s.bg,
+        border: `1px solid ${s.color}40`,
+        borderRadius: "var(--r-full)",
+        padding: "2px 8px",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {s.label}
+    </span>
+  );
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
 function getDefaultTargetDate() {
   const target = new Date();
   target.setDate(target.getDate() + 21);
   return target.toISOString().slice(0, 10);
-}
-
-function WorkflowSteps({ capaId }: { capaId: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">8D Workflow</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-2 md:grid-cols-7">
-          {eightDSteps.map((step, index) => {
-            const isCurrent = step === "pa";
-            return (
-              <Link
-                key={step}
-                to={`/capa/${capaId}/8d/${step}`}
-                className={`rounded border px-3 py-2 text-xs font-medium transition ${
-                  isCurrent
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card hover:border-primary/50"
-                }`}
-              >
-                D{index + 1} {step === "ca" ? "CA" : step === "pa" ? "PA" : step}
-              </Link>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 function evaluatePreventiveAction(description: string, pic: string, targetDate: string) {
@@ -103,99 +84,151 @@ function evaluatePreventiveAction(description: string, pic: string, targetDate: 
   const checks = [
     {
       label: "Description is at least 30 characters",
+      hint: "Provide a specific forward-looking action with enough detail to be actionable",
       passed: description.trim().length >= 30,
     },
     {
       label: "Prevention is forward-looking",
+      hint: "Use keywords like revise, update, add, train, checklist, or escalation",
       passed: /\b(revise|update|add|trend|train|checklist|review|escalation|reminder|spot check)\b/i.test(description),
     },
     {
       label: "PIC selected",
+      hint: "Assign an accountable person in charge",
       passed: pic.trim().length > 0,
     },
     {
       label: "Target date is in the future",
+      hint: "Set a realistic completion deadline beyond today",
       passed: Boolean(target && target > today),
     },
   ];
 
-  return {
-    checks,
-    isValid: checks.every((check) => check.passed),
-  };
+  return { checks, isValid: checks.every((c) => c.passed) };
 }
 
+// ── Action list sub-component ────────────────────────────────────────────────
+
 function ActionList({ actions, onRemove }: { actions: PreventiveAction[]; onRemove: (id: string) => void }) {
+  if (actions.length === 0) return null;
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Preventive Action List</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {actions.length === 0 && (
-          <div className="rounded border bg-muted/30 p-4 text-sm text-muted-foreground">
-            No preventive actions have been added yet.
-          </div>
-        )}
-        {actions.map((action) => (
-          <div key={action.id} className="rounded border p-3">
-            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="font-mono text-xs text-primary">{action.id}</div>
-                <p className="mt-1 text-sm leading-6">{action.description}</p>
+    <div
+      style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--line-2)",
+        borderRadius: "var(--r-lg)",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          padding: "14px 16px",
+          borderBottom: "1px solid var(--line-1)",
+          background: "var(--bg-3)",
+        }}
+      >
+        <p
+          style={{
+            fontSize: "11px",
+            fontFamily: "var(--font-mono)",
+            fontWeight: 600,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "var(--fg-4)",
+            margin: 0,
+          }}
+        >
+          Added Preventive Actions
+        </p>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+        {actions.map((action, i) => (
+          <div
+            key={action.id}
+            style={{
+              padding: "14px 16px",
+              borderBottom: i < actions.length - 1 ? "1px solid var(--line-1)" : "none",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                  <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--accent)", fontWeight: 600 }}>
+                    {action.id}
+                  </span>
+                  <ActionStatusBadge status={action.status} />
+                </div>
+                <p style={{ fontSize: "13px", color: "var(--fg-2)", margin: "0 0 10px", lineHeight: "1.55" }}>
+                  {action.description}
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", margin: "0 0 3px" }}>PIC</p>
+                    <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: 0 }}>{action.pic}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", margin: "0 0 3px" }}>Target Date</p>
+                    <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: 0 }}>{formatDate(action.targetDate)}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", margin: "0 0 3px" }}>Nova Generated</p>
+                    <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: 0 }}>{action.novaGenerated ? "Yes" : "No"}</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <StatusBadge status={action.status} />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                  onClick={() => onRemove(action.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-            <div className="mt-3 grid gap-3 text-sm md:grid-cols-3">
-              <div>
-                <div className="text-xs font-medium uppercase text-muted-foreground">PIC</div>
-                <div className="mt-1">{action.pic}</div>
-              </div>
-              <div>
-                <div className="text-xs font-medium uppercase text-muted-foreground">Target Date</div>
-                <div className="mt-1">{formatDate(action.targetDate)}</div>
-              </div>
-              <div>
-                <div className="text-xs font-medium uppercase text-muted-foreground">Nova Generated</div>
-                <div className="mt-1">{action.novaGenerated ? "Yes" : "No"}</div>
-              </div>
+              <button
+                onClick={() => onRemove(action.id)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--fg-4)",
+                  padding: "4px",
+                  borderRadius: "var(--r-sm)",
+                  display: "flex",
+                  alignItems: "center",
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--danger)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-4)"; }}
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 export function D5PreventiveActionPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { embedded, onStepChange } = useEightDEmbed();
   const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
   const allCAs = useCapaStore((state) => state.correctiveActions);
   const allPAs = useCapaStore((state) => state.preventiveActions);
   const capa = useMemo(() => {
     if (!rawCapa) return undefined;
-    return { ...rawCapa, correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id), preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id) };
+    return {
+      ...rawCapa,
+      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
+      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
+    };
   }, [rawCapa, allCAs, allPAs]);
+
   const addPA = useCapaStore((state) => state.addPA);
   const removePA = useCapaStore((state) => state.removePA);
   const updateScore = useCapaStore((state) => state.updateScore);
   const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
-  const openNovaChat = useUIStore((state) => state.openNovaChat);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-  const [suggestionStatuses, setSuggestionStatuses] = useState<Record<string, NovaSuggestionStatus>>({});
-  const initialDescription = capa ? paSuggestions[capa.id]?.[0] ?? "" : "";
+
+  const initialDescription = capa ? paSuggestions[capa.id] ?? "" : "";
   const [description, setDescription] = useState(initialDescription);
   const [pic, setPic] = useState("Siti Rahmawati");
   const [targetDate, setTargetDate] = useState(getDefaultTargetDate());
@@ -213,23 +246,21 @@ export function D5PreventiveActionPage() {
     ...capa.score,
     effectiveness: computeActionEffectiveness(capa.correctiveActions, [...currentActions, draftAction]),
   });
+  void previewScore;
+
   const validation = evaluatePreventiveAction(description, pic, targetDate);
   const validExistingActionExists = currentActions.some(
     (action) => action.description.length >= 30 && new Date(action.targetDate).getTime() > Date.now(),
   );
   const shouldShowBlocker = hasSubmitted && !validation.isValid;
-
-  function handleSuggestionChange(suggestionId: string, status: NovaSuggestionStatus, content: string) {
-    setSuggestionStatuses((current) => ({ ...current, [suggestionId]: status }));
-    setDescription(content);
-  }
+  const passedCount = validation.checks.filter((c) => c.passed).length;
 
   function handleRemovePA(actionId: string) {
     removePA(actionId);
-    const remainingActions = currentActions.filter((action) => action.id !== actionId);
+    const remaining = currentActions.filter((a) => a.id !== actionId);
     const nextScore = computeTotalQualityScore({
       ...capa.score,
-      effectiveness: computeActionEffectiveness(capa.correctiveActions, remainingActions),
+      effectiveness: computeActionEffectiveness(capa.correctiveActions, remaining),
     });
     updateScore(capa.id, nextScore);
     toast.info("Preventive action removed");
@@ -269,7 +300,6 @@ export function D5PreventiveActionPage() {
       capaId: capa.id,
       findingId: capa.findingId,
     });
-
     toast.success("Preventive action added", {
       description: `${newAction.id} is now available in CAPA detail and the global action store.`,
     });
@@ -282,159 +312,196 @@ export function D5PreventiveActionPage() {
 
     const hasValidAction = validExistingActionExists || validation.isValid;
     if (!hasValidAction) {
-      toast.error("Preventive action is required", {
-        description: "Add at least one preventive action with a future target date.",
+      toast.warning("Continuing without a complete preventive action", {
+        description: "Nova will let you continue, but D5 still needs at least one preventive action with a future target date.",
       });
-      return;
-    }
-
-    if (!validExistingActionExists) {
+    } else if (!validExistingActionExists) {
       const added = addPreventiveAction();
       if (!added) return;
     }
 
     updateCurrentStep(capa.id, "verification");
-    navigate(`/capa/${capa.id}/8d/verification`);
+    if (embedded && onStepChange) {
+      onStepChange("verification");
+    } else {
+      navigate(`/capa/${capa.id}/8d/verification`);
+    }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <EightDShell capaId={capa.id} activeStep="pa">
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+
+        {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <div className="mb-3 flex flex-wrap gap-2">
-            <SeverityBadge severity={capa.impact.severity} />
-            <StatusBadge status={capa.status} />
-            <span className="rounded border bg-muted px-2.5 py-0.5 text-xs font-medium">
-              {formatCAPAType(capa.type)}
-            </span>
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">D5 Preventive Action</h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6 text-muted-foreground">
+          <p style={{ fontSize: "12px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", margin: "0 0 6px", letterSpacing: "0.18em" }}>
+            {capa.id} · D5
+          </p>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--fg-1)", margin: "0 0 8px", fontFamily: "var(--font-sans)" }}>
+            Preventive Action
+          </h1>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, lineHeight: "1.55", maxWidth: "600px" }}>
             Define preventive actions that reduce recurrence risk and strengthen the quality system beyond the immediate correction.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link to={`/capa/${capa.id}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to CAPA
-          </Link>
-        </Button>
-      </div>
 
-      <WorkflowSteps capaId={capa.id} />
+        {/* ── Existing actions ──────────────────────────────────────────── */}
+        <ActionList actions={currentActions} onRemove={handleRemovePA} />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="space-y-4">
-          <ActionList actions={currentActions} onRemove={handleRemovePA} />
+        {/* ── Nova suggestion block ────────────────────────────────────── */}
+        <NovaSuggestionBlock
+          context="preventive action"
+          suggestion={paSuggestions[capa.id] ?? initialDescription}
+          reasoning={paReasoning[capa.id]}
+          capaId={capa.id}
+          suggestionId="d5-pa"
+          onAccept={(content) => setDescription(content)}
+        />
 
-          <div className="space-y-3">
-            {(paSuggestions[capa.id] ?? [initialDescription]).map((suggestion, index) => {
-              const suggestionId = `pa-${capa.id}-${index + 1}`;
-              return (
-                <NovaSuggestionCard
-                  key={suggestionId}
-                  id={suggestionId}
-                  capaId={capa.id}
-                  context={`D5 Preventive Action Option ${index + 1}`}
-                  content={suggestion}
-                  replacementContent={paReplacements[capa.id] ?? suggestion}
-                  status={suggestionStatuses[suggestionId] ?? "pending"}
-                  onStatusChange={(status, content) => handleSuggestionChange(suggestionId, status, content)}
-                />
-              );
-            })}
+        {/* ── Add PA form ───────────────────────────────────────────────── */}
+        <div
+          style={{
+            background: "var(--bg-2)",
+            border: "1px solid var(--line-2)",
+            borderRadius: "var(--r-lg)",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "18px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <ListPlus size={15} style={{ color: "var(--accent)", flexShrink: 0 }} />
+            <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: 0 }}>
+              Add Preventive Action
+            </p>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <ListChecks className="h-4 w-4 text-primary" />
-                Add Preventive Action
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="pa-description">Description</Label>
-                <Textarea
-                  id="pa-description"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  rows={5}
-                />
-              </div>
+          {/* Description */}
+          <div>
+            <label htmlFor="pa-description" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+              Description
+            </label>
+            <textarea
+              id="pa-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={5}
+              style={{
+                width: "100%",
+                background: "var(--bg-4)",
+                border: `1px solid ${shouldShowBlocker && description.trim().length < 30 ? "var(--danger)" : "var(--line-2)"}`,
+                borderRadius: "var(--r-sm)",
+                padding: "12px 14px",
+                fontSize: "13px",
+                lineHeight: "1.65",
+                color: "var(--fg-1)",
+                fontFamily: "var(--font-sans)",
+                resize: "vertical",
+                outline: "none",
+                boxSizing: "border-box",
+                transition: "border-color var(--dur-fast) var(--ease-out)",
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+            />
+          </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>PIC</Label>
-                  <Select value={pic} onValueChange={setPic}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select PIC" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {picOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pa-target-date">Target date</Label>
-                  <Input
-                    id="pa-target-date"
-                    type="date"
-                    value={targetDate}
-                    onChange={(event) => setTargetDate(event.target.value)}
-                  />
-                </div>
+          {/* PIC + Target date */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+                Person in Charge
+              </label>
+              <div style={{ position: "relative" }}>
+                <select
+                  value={pic}
+                  onChange={(e) => setPic(e.target.value)}
+                  style={{ width: "100%", appearance: "none", background: "var(--bg-4)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "9px 36px 9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", cursor: "pointer" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+                >
+                  {picOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                </select>
+                <svg width="12" height="12" viewBox="0 0 12 12" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--fg-3)" }} fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
-
-              {shouldShowBlocker && (
-                <BlockerBanner
-                  title="Preventive action is incomplete"
-                  message="Each PA needs a forward-looking description, PIC, and target date in the future before continuing."
-                />
-              )}
-
-              <div className="grid gap-3 md:grid-cols-2">
-                {validation.checks.map((check) => (
-                  <div key={check.label} className="flex gap-2 rounded border p-3 text-sm">
-                    {check.passed ? (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-status-ready" />
-                    ) : (
-                      <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                    )}
-                    <span className={check.passed ? "" : "text-muted-foreground"}>{check.label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-col gap-3 md:flex-row md:justify-end">
-                <Button type="button" variant="outline" onClick={() => openNovaChat({ step: "pa", capaId: id })}>
-                  <MessageSquareText className="mr-2 h-4 w-4" />
-                  Ask Nova
-                </Button>
-                <Button type="button" variant="outline" onClick={addPreventiveAction}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Add PA
-                </Button>
-                <Button type="button" onClick={continueToVerification}>
-                  Continue to Verification
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div>
+              <label htmlFor="pa-target-date" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+                Target date
+              </label>
+              <input
+                id="pa-target-date"
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+                style={{ width: "100%", background: "var(--bg-4)", border: `1px solid ${shouldShowBlocker && !new Date(`${targetDate}T00:00:00`).getTime() ? "var(--danger)" : "var(--line-2)"}`, borderRadius: "var(--r-sm)", padding: "9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", boxSizing: "border-box" }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-4">
-          <ScoreSidebar score={previewScore} />
-          <NovaCoachTip>
-            Preventive action should make recurrence harder. Favor SOP changes, checklist controls, training with effectiveness checks, trend reviews, reminder controls, and escalation thresholds.
-          </NovaCoachTip>
+        {/* ── Blocker banner ───────────────────────────────────────────── */}
+        {shouldShowBlocker && (
+          <div style={{ display: "flex", gap: "10px", padding: "12px 14px", background: "var(--danger-soft)", border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)", borderRadius: "var(--r-sm)" }}>
+            <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
+            <div>
+              <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>Preventive action is incomplete</p>
+              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                Each PA needs a forward-looking description, PIC, and target date in the future before continuing.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Quality signals ──────────────────────────────────────────── */}
+        <div>
+          <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: "0 0 10px" }}>
+            Quality Signals
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            {validation.checks.map((check) => (
+              <div
+                key={check.label}
+                style={{ display: "flex", gap: "10px", padding: "10px 12px", borderRadius: "var(--r-sm)", background: check.passed ? "color-mix(in srgb, var(--success) 6%, transparent)" : "var(--bg-3)", border: `1px solid ${check.passed ? "color-mix(in srgb, var(--success) 28%, transparent)" : "var(--line-1)"}` }}
+              >
+                {check.passed ? (
+                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "var(--success)", marginTop: "1px" }} />
+                ) : (
+                  <Circle size={14} style={{ flexShrink: 0, color: "var(--fg-4)", marginTop: "1px" }} />
+                )}
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: "12px", fontWeight: check.passed ? 500 : 400, color: check.passed ? "var(--fg-2)" : "var(--fg-3)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>{check.label}</p>
+                  {!check.passed && <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)" }}>{check.hint}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: "11px", color: passedCount === 4 ? "var(--accent)" : "var(--fg-4)", fontFamily: "var(--font-mono)", marginTop: "8px" }}>
+            {passedCount}/4 checks passing
+          </p>
         </div>
+
+        {/* ── Footer actions ───────────────────────────────────────────── */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "10px", paddingTop: "8px", borderTop: "1px solid var(--line-1)" }}>
+          <button
+            onClick={addPreventiveAction}
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--bg-4)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "8px 16px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500 }}
+          >
+            <Save size={14} />
+            Add PA
+          </button>
+          <button
+            onClick={continueToVerification}
+            style={{ background: "var(--grad-brand)", color: "var(--on-accent)", border: "none", borderRadius: "var(--r-sm)", padding: "8px 20px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)", letterSpacing: "0.01em" }}
+          >
+            Continue to D6 Verification →
+          </button>
+        </div>
+
       </div>
-    </div>
+    </EightDShell>
   );
 }

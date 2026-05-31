@@ -116,7 +116,7 @@ export function TutorialOverlay() {
             left: targetRect.left - 8,
             width: targetRect.width + 16,
             height: targetRect.height + 16,
-            boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.5)",
+            boxShadow: "0 0 0 9999px var(--glass-dark)",
           }}
         />
       )}

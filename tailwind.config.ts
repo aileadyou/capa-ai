@@ -40,9 +40,9 @@ export default {
           foreground: "hsl(var(--muted-foreground))",
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-          light: "hsl(var(--accent-light))",
+          DEFAULT: "hsl(var(--tw-accent))",
+          foreground: "hsl(var(--tw-accent-foreground))",
+          light: "hsl(var(--tw-accent-light))",
         },
         nova: {
           DEFAULT: "hsl(var(--nova))",
@@ -78,14 +78,14 @@ export default {
           foreground: "hsl(var(--panel-foreground))",
         },
         success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
+          DEFAULT: "hsl(var(--tw-success))",
+          foreground: "hsl(var(--tw-success-foreground))",
         },
         warning: {
-          DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
+          DEFAULT: "hsl(var(--tw-warning))",
+          foreground: "hsl(var(--tw-warning-foreground))",
         },
-        info: "hsl(var(--info))",
+        info: "hsl(var(--tw-info))",
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

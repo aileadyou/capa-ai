@@ -1,0 +1,67 @@
+/* Shared kit styles for LEAD AI platform UI kit */
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--bg-1);color:var(--fg-1);font-family:var(--font-sans);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+::selection{background:var(--accent-soft);color:var(--fg-1)}
+
+/* buttons */
+.btn{font-weight:600;font-size:14px;border-radius:var(--r-md);padding:11px 18px;border:1px solid transparent;display:inline-flex;align-items:center;gap:8px;transition:all var(--dur-fast) var(--ease-out);white-space:nowrap}
+.btn:active{transform:scale(.99)}
+.btn-primary{background:var(--grad-brand);color:var(--on-accent);border:none}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-secondary{background:var(--bg-3);color:var(--fg-1);border-color:var(--line-2)}
+.btn-secondary:hover{border-color:var(--line-3);background:var(--bg-4)}
+.btn-ghost{color:var(--fg-2)}
+.btn-ghost:hover{color:var(--fg-1)}
+.btn-sm{padding:7px 13px;font-size:13px;border-radius:var(--r-sm)}
+/* gradient text — for accent headings / display text */
+.grad-text{background:var(--grad-brand);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* glow background helper — brand gradient blooms */
+.glow-field{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.glow-field::before{content:"";position:absolute;width:900px;height:900px;left:-10%;top:-40%;
+  background:radial-gradient(circle, rgba(155,58,197,0.45), transparent 60%);filter:blur(40px);opacity:.55;
+  animation:drift 14s var(--ease-in-out) infinite alternate}
+.glow-field::after{content:"";position:absolute;width:700px;height:700px;right:-5%;top:-10%;
+  background:radial-gradient(circle, rgba(224,125,96,0.32), transparent 60%);filter:blur(50px);opacity:.40;
+  animation:drift2 18s var(--ease-in-out) infinite alternate}
+@keyframes drift{from{transform:translate(0,0)}to{transform:translate(60px,40px)}}
+@keyframes drift2{from{transform:translate(0,0)}to{transform:translate(-50px,30px)}}
+
+/* scroll reveal */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity var(--dur-slow) var(--ease-out),transform var(--dur-slow) var(--ease-out)}
+.reveal.in{opacity:1;transform:none}
+
+.kit-card{background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-lg);box-shadow:var(--shadow-inset-line);transition:border-color var(--dur-fast) var(--ease-out)}
+.kit-card:hover{border-color:var(--line-3)}
+
+/* ---- GLASS CARDS ---- */
+/* Frosted film — use over dark/abstract media */
+.glass{
+  position:relative;
+  background:var(--glass-light);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.3);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.3);
+  border:1px solid var(--glass-border);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-md), inset 0 1px 0 0 var(--glass-border-top);
+}
+/* Smoked film — use over bright/busy media for max legibility */
+.glass-dark{
+  background:var(--glass-dark);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.1);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.1);
+}
+.glass:hover{border-color:var(--glass-border-top)}
+
+/* media well — image/video container with rounded mask */
+.media{position:relative;overflow:hidden;border-radius:var(--r-lg);border:1px solid var(--line-2);background:var(--bg-2)}
+.media img, .media image-slot{width:100%;height:100%;display:block;object-fit:cover}
+/* protection scrims for text over media */
+.scrim-b::after{content:"";position:absolute;inset:0;background:var(--scrim-bottom);pointer-events:none}
+.scrim-f::after{content:"";position:absolute;inset:0;background:var(--scrim-full);pointer-events:none}
+
+.hairline{height:1px;background:var(--line-1)}
+.fine-grid{background-image:linear-gradient(var(--line-1) 1px,transparent 1px),linear-gradient(90deg,var(--line-1) 1px,transparent 1px);background-size:48px 48px}

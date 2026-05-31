@@ -7,13 +7,19 @@ export function PageWrapper({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div
+      className="min-h-screen"
+      style={{ background: "var(--bg-1)", color: "var(--fg-1)", fontFamily: "var(--font-sans)" }}
+    >
       <Sidebar />
-      <div className="xl:pl-72">
+
+      {/* Content: shifted right of sidebar on xl */}
+      <div className="xl:pl-[240px]">
         <TopBar />
         <main
           key={location.pathname}
-          className="animate-page-enter mx-auto max-w-[1500px] px-4 py-6 xl:px-6"
+          className="animate-page-enter lead-motion-scope mx-auto max-w-[1500px]"
+          style={{ padding: "24px 20px" }}
         >
           {children}
         </main>
@@ -21,4 +27,3 @@ export function PageWrapper({ children }: { children: ReactNode }) {
     </div>
   );
 }
-

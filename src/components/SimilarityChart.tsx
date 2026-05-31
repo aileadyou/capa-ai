@@ -65,9 +65,9 @@ export const SimilarityChart = ({ cases, onCaseClick }: SimilarityChartProps) =>
                 key={`cell-${index}`}
                 fill={
                   entry.value >= 85
-                    ? "hsl(var(--success))"
+                    ? "hsl(var(--tw-success))"
                     : entry.value >= 70
-                    ? "hsl(var(--warning))"
+                    ? "hsl(var(--tw-warning))"
                     : "hsl(var(--primary))"
                 }
               />

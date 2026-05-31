@@ -10,7 +10,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieCha
 const getSeverityColor = (severity: string) => {
   switch (severity) {
     case "high": return "hsl(var(--destructive))";
-    case "medium": return "hsl(var(--warning))";
+    case "medium": return "hsl(var(--tw-warning))";
     case "low": return "hsl(var(--muted))";
     default: return "hsl(var(--muted))";
   }
@@ -50,7 +50,7 @@ export default function QualityDashboard() {
 
   const severityData = [
     { name: "High", value: issuesBySeverity.high || 0, fill: "hsl(var(--destructive))" },
-    { name: "Medium", value: issuesBySeverity.medium || 0, fill: "hsl(var(--warning))" },
+    { name: "Medium", value: issuesBySeverity.medium || 0, fill: "hsl(var(--tw-warning))" },
     { name: "Low", value: issuesBySeverity.low || 0, fill: "hsl(var(--muted))" },
   ];
 
@@ -151,7 +151,7 @@ export default function QualityDashboard() {
                             labelLine={false}
                             label={({ name, value }) => `${name}: ${value}`}
                             outerRadius={80}
-                            fill="#8884d8"
+                            fill="var(--accent)"
                             dataKey="value"
                           >
                             {severityData.map((entry, index) => (

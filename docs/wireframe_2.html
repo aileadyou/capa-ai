@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAPA AI — Interactive Wireframe</title>
+<style>
+  :root {
+    --bg: #f8f9fb;
+    --card: #fff;
+    --sidebar-bg: #0f172a;
+    --sidebar-text: #94a3b8;
+    --sidebar-active: #fff;
+    --primary: #3b82f6;
+    --primary-dark: #2563eb;
+    --accent-green: #22c55e;
+    --accent-red: #ef4444;
+    --accent-orange: #f59e0b;
+    --accent-purple: #8b5cf6;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --nova-bg: #eff6ff;
+    --nova-border: #bfdbfe;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,.1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+  /* ── SCREEN NAVIGATOR (top bar) ── */
+  .screen-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: #1e293b; color: #fff; display: flex; align-items: center;
+    padding: 0 16px; height: 42px; gap: 8px; font-size: 13px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .screen-nav .logo { font-weight: 700; margin-right: 16px; font-size: 14px; color: var(--primary); }
+  .screen-nav button {
+    background: none; border: 1px solid #334155; color: #cbd5e1; padding: 4px 10px;
+    border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap; transition: .15s;
+  }
+  .screen-nav button:hover { background: #334155; color: #fff; }
+  .screen-nav button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .screen-nav .sep { width: 1px; height: 20px; background: #334155; margin: 0 4px; }
+  .nav-scroll { display: flex; gap: 4px; overflow-x: auto; flex: 1; align-items: center; }
+
+  /* ── SCREEN CONTAINERS ── */
+  .screen { display: none; margin-top: 42px; min-height: calc(100vh - 42px); }
+  .screen.active { display: flex; }
+
+  /* ── APP SHELL ── */
+  .app-sidebar {
+    width: 220px; min-height: calc(100vh - 42px); background: var(--sidebar-bg);
+    color: var(--sidebar-text); padding: 20px 0; flex-shrink: 0;
+    display: flex; flex-direction: column;
+  }
+  .app-sidebar .brand { padding: 0 20px 20px; font-weight: 700; font-size: 16px; color: #fff; display: flex; align-items: center; gap: 8px; }
+  .app-sidebar .brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+  .app-sidebar nav { flex: 1; }
+  .app-sidebar .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+    color: var(--sidebar-text); text-decoration: none; font-size: 13px;
+    cursor: pointer; transition: .15s; border-left: 3px solid transparent;
+  }
+  .app-sidebar .nav-item:hover { background: rgba(255,255,255,.05); color: #e2e8f0; }
+  .app-sidebar .nav-item.active { background: rgba(59,130,246,.1); color: #fff; border-left-color: var(--primary); }
+  .app-sidebar .nav-item .icon { width: 18px; text-align: center; font-size: 15px; }
+  .app-sidebar .nav-item .badge-count {
+    margin-left: auto; background: var(--accent-red); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+  }
+  .app-sidebar .divider { height: 1px; background: #1e293b; margin: 12px 20px; }
+  .app-sidebar .user-info { padding: 16px 20px; border-top: 1px solid #1e293b; margin-top: auto; }
+  .app-sidebar .user-info .name { color: #e2e8f0; font-weight: 600; font-size: 13px; }
+  .app-sidebar .user-info .role { font-size: 11px; color: var(--text-light); }
+
+  .app-main { flex: 1; min-width: 0; }
+  .app-header {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .app-header .breadcrumb { font-size: 12px; color: var(--text-muted); }
+  .app-header .breadcrumb a { color: var(--primary); text-decoration: none; }
+  .app-header .header-actions { display: flex; gap: 8px; align-items: center; }
+  .app-content { padding: 24px; max-width: 1200px; }
+
+  /* ── REUSABLE COMPONENTS ── */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow); }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: space-between; }
+  .card-body { padding: 20px; }
+  .card + .card { margin-top: 16px; }
+
+  .badge {
+    display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; gap: 4px;
+  }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-orange { background: #fef3c7; color: #92400e; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+    border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid transparent; transition: .15s; text-decoration: none;
+  }
+  .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-outline { background: #fff; color: var(--text); border-color: var(--border); }
+  .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
+  .btn-green { background: var(--accent-green); color: #fff; }
+  .btn-red-outline { background: #fff; color: var(--accent-red); border-color: #fca5a5; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow); }
+  .kpi-card .label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+  .kpi-card .value { font-size: 28px; font-weight: 700; }
+  .kpi-card .sub { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+  .kpi-card.alert { border-left: 3px solid var(--accent-red); }
+  .kpi-card.good { border-left: 3px solid var(--accent-green); }
+
+  .chart-placeholder {
+    background: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: var(--radius);
+    height: 200px; display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: 13px; font-style: italic;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 12px; background: #f8fafc; border-bottom: 2px solid var(--border); font-weight: 600; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+  td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:hover td { background: #fafbfc; }
+
+  .filter-bar {
+    display: flex; gap: 8px; padding: 16px 20px; flex-wrap: wrap; align-items: center;
+  }
+  .filter-bar input, .filter-bar select {
+    padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; background: #fff; color: var(--text);
+  }
+  .filter-bar input { flex: 1; min-width: 200px; }
+
+  .nova-panel {
+    background: var(--nova-bg); border: 1px solid var(--nova-border);
+    border-radius: var(--radius-lg); padding: 16px 20px; margin-bottom: 16px;
+  }
+  .nova-panel .nova-header {
+    display: flex; align-items: center; gap: 8px; font-weight: 600;
+    color: var(--primary-dark); margin-bottom: 10px; font-size: 14px;
+  }
+  .nova-panel .nova-body { font-size: 13px; color: #374151; line-height: 1.6; }
+  .nova-panel .nova-actions { margin-top: 12px; display: flex; gap: 8px; }
+
+  .progress-sidebar { width: 260px; flex-shrink: 0; }
+  .step-list { list-style: none; }
+  .step-list li {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    font-size: 13px; cursor: pointer; border-left: 3px solid transparent;
+    transition: .1s;
+  }
+  .step-list li:hover { background: #f8fafc; }
+  .step-list li.completed .step-icon { color: var(--accent-green); }
+  .step-list li.current { background: #eff6ff; border-left-color: var(--primary); font-weight: 600; }
+  .step-list li.locked { color: var(--text-light); }
+  .step-icon { width: 20px; text-align: center; font-size: 16px; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-weight: 600; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .form-group textarea, .form-group input, .form-group select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 13px; font-family: inherit; resize: vertical;
+  }
+  .form-group textarea:focus, .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+
+  .check-list { list-style: none; display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+  .check-list li { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  .check-list li.pass { border-color: #86efac; background: #f0fdf4; }
+  .check-list li .ci { font-size: 16px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .page-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .page-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+
+  .flow-desc {
+    background: linear-gradient(135deg, #faf5ff, #eff6ff); border: 1px solid #c7d2fe;
+    border-radius: var(--radius-lg); padding: 20px; margin-bottom: 24px;
+  }
+  .flow-desc h3 { font-size: 15px; color: #4338ca; margin-bottom: 6px; }
+  .flow-desc p { font-size: 13px; color: #4b5563; line-height: 1.7; }
+  .flow-desc .flow-steps {
+    display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; align-items: center;
+  }
+  .flow-desc .flow-step {
+    background: #fff; border: 1px solid #c7d2fe; border-radius: 6px;
+    padding: 6px 12px; font-size: 12px; font-weight: 600; color: #4338ca;
+  }
+  .flow-desc .flow-arrow { color: #a5b4fc; font-size: 16px; }
+
+  /* ── ALERT / ACTION CARDS ── */
+  .alert-card {
+    border-left: 3px solid var(--accent-orange); background: #fffbeb; border-radius: var(--radius);
+    padding: 14px 16px; display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; margin-bottom: 8px;
+  }
+  .alert-card.urgent { border-left-color: var(--accent-red); background: #fef2f2; }
+
+  .inbox-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px; box-shadow: var(--shadow); transition: .1s;
+  }
+  .inbox-card:hover { border-color: var(--primary); box-shadow: var(--shadow-lg); }
+  .inbox-card .left { display: flex; flex-direction: column; gap: 4px; }
+  .inbox-card .capa-id { font-weight: 700; font-size: 14px; color: var(--primary); }
+  .inbox-card .capa-title { font-size: 13px; color: var(--text-muted); }
+  .inbox-card .meta { display: flex; gap: 8px; margin-top: 4px; }
+
+  .section-label { font-weight: 700; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin: 20px 0 12px; display: flex; align-items: center; gap: 8px; }
+  .section-label .count { background: #e2e8f0; color: var(--text); padding: 1px 8px; border-radius: 10px; font-size: 11px; }
+
+  .capa-info-sidebar { font-size: 13px; }
+  .capa-info-sidebar .info-row { padding: 8px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
+  .capa-info-sidebar .info-label { color: var(--text-muted); font-size: 12px; }
+  .capa-info-sidebar .info-value { font-weight: 600; }
+
+  .score-ring { width: 80px; height: 80px; border-radius: 50%; border: 6px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; margin: 12px auto; position: relative; }
+  .score-ring::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 6px solid var(--accent-orange); border-bottom-color: transparent; border-left-color: transparent; transform: rotate(-10deg); }
+
+  .score-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+  .score-bar-label { width: 140px; color: var(--text-muted); text-align: right; }
+  .score-bar-track { flex: 1; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 4px; }
+  .score-bar-value { width: 40px; font-weight: 600; }
+
+  .wizard-steps { display: flex; gap: 0; margin-bottom: 24px; }
+  .wizard-step {
+    flex: 1; padding: 12px 16px; text-align: center; font-size: 12px; font-weight: 600;
+    background: #f1f5f9; color: var(--text-muted); position: relative;
+    border-bottom: 3px solid transparent;
+  }
+  .wizard-step.active { background: #eff6ff; color: var(--primary); border-bottom-color: var(--primary); }
+  .wizard-step.done { background: #f0fdf4; color: var(--accent-green); border-bottom-color: var(--accent-green); }
+
+  .signoff-summary { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; }
+  .signoff-summary .ss-header {
+    padding: 10px 16px; background: #f8fafc; font-weight: 600; font-size: 13px;
+    cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .signoff-summary .ss-body { padding: 12px 16px; font-size: 13px; color: var(--text-muted); }
+
+  .audit-event { display: flex; gap: 16px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+  .audit-event .ae-time { width: 140px; color: var(--text-muted); font-size: 12px; flex-shrink: 0; }
+  .audit-event .ae-actor { font-weight: 600; }
+  .audit-event .ae-action { color: var(--text-muted); }
+
+  .slide-over {
+    position: fixed; top: 42px; right: 0; width: 440px; height: calc(100vh - 42px);
+    background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,.15); z-index: 100;
+    overflow-y: auto; padding: 24px; display: none;
+  }
+  .slide-over.open { display: block; }
+  .slide-over .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .two-col { grid-template-columns: 1fr; }
+    .app-sidebar { width: 60px; }
+    .app-sidebar .nav-item span, .app-sidebar .brand span, .app-sidebar .user-info { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN NAVIGATOR BAR                               -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen-nav">
+  <span class="logo">CAPA AI Wireframe</span>
+  <div class="nav-scroll">
+    <button class="active" onclick="showScreen('my-work')">My Work</button>
+    <button onclick="showScreen('dashboard')">Dashboard</button>
+    <button onclick="showScreen('findings')">Findings</button>
+    <span class="sep"></span>
+    <button onclick="showScreen('capa-list')">CAPA List</button>
+    <button onclick="showScreen('capa-intake')">New CAPA</button>
+    <button onclick="showScreen('capa-hub')">CAPA Hub</button>
+    <span class="sep"></span>
+    <button onclick="showScreen('d1')">D1</button>
+    <button onclick="showScreen('d3')">D3 RCA</button>
+    <button onclick="showScreen('d4')">D4 CA</button>
+    <button onclick="showScreen('d6')">D6 Verify</button>
+    <button onclick="showScreen('d7')">D7 Sign-Off</button>
+    <span class="sep"></span>
+    <button onclick="showScreen('score-modal')">Score</button>
+    <button onclick="showScreen('audit-trail')">Audit Trail</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: MY WORK (INBOX)                            -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen active" id="screen-my-work">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item active"><span class="icon">&#9776;</span> <span>My Work</span> <span class="badge-count">3</span></div>
+      <div class="nav-item" onclick="showScreen('dashboard')"><span class="icon">&#9635;</span> <span>Dashboard</span></div>
+      <div class="nav-item" onclick="showScreen('findings')"><span class="icon">&#128269;</span> <span>Findings</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+      <div class="nav-item"><span class="icon">&#128200;</span> <span>Reports</span></div>
+      <div class="divider"></div>
+      <div class="nav-item"><span class="icon">&#9881;</span> <span>Settings</span></div>
+      <div class="nav-item"><span class="icon">&#63;</span> <span>Help</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst &middot; Fill-Finish</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header">
+      <div class="breadcrumb">My Work</div>
+      <div class="header-actions">
+        <span style="cursor:pointer;font-size:18px" title="Notifications">&#128276;<sup style="color:var(--accent-red);font-size:10px;font-weight:700">2</sup></span>
+        <span style="cursor:pointer;font-size:18px;color:var(--primary)" title="Ask Nova">&#129302;</span>
+      </div>
+    </div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: My Work / Inbox</h3>
+        <p>Halaman pertama setelah login. User langsung melihat CAPA yang di-assign ke mereka, prioritas berdasarkan urgency dan due date. Ini menggantikan Dashboard sebagai landing page default untuk QA Analyst — karena yang paling penting buat mereka bukan grafik, tapi "apa yang harus saya kerjakan hari ini?"</p>
+        <div class="flow-steps">
+          <span class="flow-step">Login</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step" style="border-color:var(--primary);background:#eff6ff">My Work (you are here)</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">Click CAPA &rarr; CAPA Hub</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">Continue 8D step</span>
+        </div>
+      </div>
+
+      <div class="page-title">Good morning, Andi</div>
+      <p class="page-subtitle">Saturday, 31 May 2026 &middot; You have 3 active CAPAs</p>
+
+      <div class="section-label">&#9888;&#65039; Needs Attention <span class="count">1</span></div>
+      <div class="alert-card urgent">
+        <div>
+          <strong>CAPA-2026-0089</strong> &middot; GMP Documentation Gap
+          <div style="font-size:12px;color:var(--accent-red);margin-top:2px">&#9679; Overdue by 3 days &middot; D5 Preventive Action pending</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="showScreen('capa-hub')">Open &rarr;</button>
+      </div>
+
+      <div class="section-label">My Active CAPAs <span class="count">3</span></div>
+      <div class="inbox-card" onclick="showScreen('capa-hub')" style="cursor:pointer">
+        <div class="left">
+          <div class="capa-id">CAPA-2026-0341</div>
+          <div class="capa-title">Environmental Monitoring Excursion in Grade A Fill Suite</div>
+          <div class="meta">
+            <span class="badge badge-red">Major</span>
+            <span class="badge badge-blue">D4 CA</span>
+            <span class="badge badge-gray">Due in 6 days</span>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm">Open &rarr;</button>
+      </div>
+      <div class="inbox-card">
+        <div class="left">
+          <div class="capa-id">CAPA-2026-0089</div>
+          <div class="capa-title">GMP Documentation Gap — Material Transfer Records</div>
+          <div class="meta">
+            <span class="badge badge-red">Major</span>
+            <span class="badge badge-purple">D5 PA</span>
+            <span class="badge" style="background:#fee2e2;color:#991b1b">Overdue</span>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm">Open &rarr;</button>
+      </div>
+      <div class="inbox-card">
+        <div class="left">
+          <div class="capa-id">CAPA-2026-0112</div>
+          <div class="capa-title">Visible Particulate in Returned Vaccine Vial</div>
+          <div class="meta">
+            <span class="badge badge-red">Major</span>
+            <span class="badge badge-blue">D3 RCA</span>
+            <span class="badge badge-gray">Due in 12 days</span>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm">Open &rarr;</button>
+      </div>
+
+      <div class="section-label">Pending My Review <span class="count">1</span></div>
+      <div class="inbox-card" style="border-left: 3px solid var(--accent-purple)">
+        <div class="left">
+          <div class="capa-id">CAPA-2026-0312</div>
+          <div class="capa-title">Autoclave Cycle Printout Incomplete</div>
+          <div class="meta">
+            <span class="badge badge-orange">Minor</span>
+            <span class="badge badge-green">D7 Sign-Off</span>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="showScreen('d7')">Review &rarr;</button>
+      </div>
+
+      <div class="section-label">Recently Closed <span class="count">2</span></div>
+      <div class="inbox-card" style="opacity:.6">
+        <div class="left">
+          <div class="capa-id" style="color:var(--text-muted)">CAPA-2026-0205</div>
+          <div class="capa-title">Cleaning Validation Protocol Deviation</div>
+          <div class="meta">
+            <span class="badge badge-green">Closed</span>
+            <span class="badge badge-gray">Score: 92</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: DASHBOARD                                   -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-dashboard">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span> <span class="badge-count">3</span></div>
+      <div class="nav-item active"><span class="icon">&#9635;</span> <span>Dashboard</span></div>
+      <div class="nav-item" onclick="showScreen('findings')"><span class="icon">&#128269;</span> <span>Findings</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+      <div class="nav-item"><span class="icon">&#128200;</span> <span>Reports</span></div>
+      <div class="divider"></div>
+      <div class="nav-item"><span class="icon">&#9881;</span> <span>Settings</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst &middot; Fill-Finish</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header">
+      <div class="breadcrumb">Dashboard</div>
+      <div class="header-actions">
+        <select style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px"><option>This Month</option><option>Last 30 Days</option><option>Custom</option></select>
+      </div>
+    </div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: Analytics Dashboard</h3>
+        <p>High-level monitoring untuk QA Manager/Supervisor. KPI cards di atas, diikuti charts dan heatmap. Dashboard bukan default landing lagi (sekarang My Work), tapi tetap accessible dari sidebar. Klik KPI card bisa drill-down ke filtered CAPA list.</p>
+        <div class="flow-steps">
+          <span class="flow-step">Sidebar &rarr; Dashboard</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">KPI / Chart drill-down</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">Filtered CAPA List</span>
+        </div>
+      </div>
+
+      <div class="page-title">Analytics Dashboard</div>
+      <p class="page-subtitle">Month to date &middot; May 2026</p>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="label">Total Findings</div><div class="value">6</div><div class="sub">Month to date</div></div>
+        <div class="kpi-card"><div class="label">Open CAPAs</div><div class="value">6</div><div class="sub">Across all statuses</div></div>
+        <div class="kpi-card alert"><div class="label">Overdue CAPAs</div><div class="value" style="color:var(--accent-red)">2</div><div class="sub">Needs management attention</div></div>
+        <div class="kpi-card good"><div class="label">Effectiveness Rate</div><div class="value" style="color:var(--accent-green)">87%</div><div class="sub">Verified CAPA effectiveness</div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="card"><div class="card-header">Finding Trend</div><div class="card-body"><div class="chart-placeholder">Line chart — 12-month trend (Deviation, Audit Finding, Complaint)</div></div></div>
+        <div class="card"><div class="card-header">Breakdown by Type</div><div class="card-body"><div class="chart-placeholder">Donut chart — Deviation 5 / Audit 5 / Complaint 5</div></div></div>
+      </div>
+      <div class="two-col" style="margin-top:16px">
+        <div class="card"><div class="card-header">Top Root Cause Categories</div><div class="card-body"><div class="chart-placeholder">Horizontal bar chart — Maintenance Interval, Documentation, etc.</div></div></div>
+        <div class="card"><div class="card-header">Department Completion Heatmap</div><div class="card-body">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="width:100px;font-size:13px">Fill-Finish</span><div style="flex:1;height:24px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="width:78%;height:100%;background:var(--primary);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600">78%</div></div><span style="font-size:12px;color:var(--text-muted)">1 open</span></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="width:100px;font-size:13px">Warehouse</span><div style="flex:1;height:24px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="width:64%;height:100%;background:var(--accent-orange);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600">64%</div></div><span style="font-size:12px;color:var(--text-muted)">2 open &middot; 1 overdue</span></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><span style="width:100px;font-size:13px">QA Compliance</span><div style="flex:1;height:24px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="width:86%;height:100%;background:var(--accent-green);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600">86%</div></div><span style="font-size:12px;color:var(--text-muted)">1 open</span></div>
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:100px;font-size:13px">Production</span><div style="flex:1;height:24px;background:#e2e8f0;border-radius:4px;overflow:hidden"><div style="width:72%;height:100%;background:var(--primary);border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600">72%</div></div><span style="font-size:12px;color:var(--text-muted)">1 open</span></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: FINDINGS LIST                               -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-findings">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span> <span class="badge-count">3</span></div>
+      <div class="nav-item" onclick="showScreen('dashboard')"><span class="icon">&#9635;</span> <span>Dashboard</span></div>
+      <div class="nav-item active"><span class="icon">&#128269;</span> <span>Findings</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+      <div class="nav-item"><span class="icon">&#128200;</span> <span>Reports</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst &middot; Fill-Finish</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header">
+      <div class="breadcrumb">Findings</div>
+      <div class="header-actions"><button class="btn btn-primary" onclick="showScreen('capa-intake')">+ New CAPA</button></div>
+    </div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: Findings List</h3>
+        <p>Semua temuan (Deviation, Audit Finding, Complaint) yang diimpor dari Bizzmine/Q100+. Setiap finding yang belum punya CAPA bisa dikonversi. Yang sudah punya CAPA langsung bisa dibuka. Tombol "New CAPA" hanya ada di sini (dihapus dari CAPA List untuk menghindari redundansi).</p>
+        <div class="flow-steps">
+          <span class="flow-step">Findings List</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">View Finding (slide-over)</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">Create CAPA / Open existing</span>
+        </div>
+      </div>
+
+      <div class="page-title">Findings</div>
+      <p class="page-subtitle">Review imported findings from Bizzmine, Q100+, and Bizzmine Complaint</p>
+
+      <div class="card">
+        <div class="filter-bar">
+          <input placeholder="Search ID, description, source..." />
+          <select><option>All Types</option><option>Deviation</option><option>Audit Finding</option><option>Complaint</option></select>
+          <select><option>All Severities</option><option>Critical</option><option>Major</option><option>Minor</option></select>
+          <select><option>All Statuses</option><option>No CAPA</option><option>CAPA In Progress</option><option>CAPA Closed</option></select>
+        </div>
+        <div class="card-header"><span>15 Findings</span></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>ID</th><th>Type</th><th>Description</th><th>Severity</th><th>Dept</th><th>Reported</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong style="color:var(--primary)">DEV-2026-0341</strong><br><span class="badge badge-gray" style="font-size:10px;margin-top:4px">Bizzmine</span></td>
+                <td>Deviation</td>
+                <td>Environmental monitoring excursion in Grade A filling suite</td>
+                <td><span class="badge badge-red">Major</span></td>
+                <td>Fill-Finish</td>
+                <td>18 May</td>
+                <td><span class="badge badge-blue">CAPA In Progress</span></td>
+                <td>
+                  <button class="btn btn-outline btn-sm" style="margin-bottom:4px" onclick="toggleSlideOver()">View</button><br>
+                  <button class="btn btn-primary btn-sm" onclick="showScreen('capa-hub')">Open CAPA &rarr;</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--primary)">AUD-2026-0089</strong><br><span class="badge badge-gray" style="font-size:10px;margin-top:4px">Q100+</span></td>
+                <td>Audit Finding</td>
+                <td>GMP documentation gap in material transfer records</td>
+                <td><span class="badge badge-red">Major</span></td>
+                <td>Warehouse</td>
+                <td>15 May</td>
+                <td><span class="badge badge-blue">CAPA In Progress</span></td>
+                <td>
+                  <button class="btn btn-outline btn-sm" style="margin-bottom:4px">View</button><br>
+                  <button class="btn btn-primary btn-sm">Open CAPA &rarr;</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--primary)">CMP-2026-0112</strong><br><span class="badge badge-gray" style="font-size:10px;margin-top:4px">Bizzmine</span></td>
+                <td>Complaint</td>
+                <td>Visible particulate in returned vaccine vial</td>
+                <td><span class="badge badge-red">Major</span></td>
+                <td>QA / Prod</td>
+                <td>12 May</td>
+                <td><span class="badge badge-blue">CAPA In Progress</span></td>
+                <td>
+                  <button class="btn btn-outline btn-sm" style="margin-bottom:4px">View</button><br>
+                  <button class="btn btn-primary btn-sm">Open CAPA &rarr;</button>
+                </td>
+              </tr>
+              <tr style="opacity:.5">
+                <td><strong>DEV-2026-0456</strong><br><span class="badge badge-gray" style="font-size:10px;margin-top:4px">Bizzmine</span></td>
+                <td>Deviation</td>
+                <td>Temperature excursion in cold storage</td>
+                <td><span class="badge badge-orange">Minor</span></td>
+                <td>Supply Chain</td>
+                <td>10 May</td>
+                <td><span class="badge badge-gray">No CAPA</span></td>
+                <td><button class="btn btn-outline btn-sm" style="margin-bottom:4px">View</button><br><button class="btn btn-primary btn-sm" onclick="showScreen('capa-intake')">Create CAPA</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Finding detail slide-over -->
+  <div class="slide-over" id="slide-finding">
+    <button class="close-btn" onclick="toggleSlideOver()">&times;</button>
+    <h3 style="margin-bottom:4px">Finding Detail</h3>
+    <div style="display:flex;gap:6px;margin-bottom:16px"><span class="badge badge-gray">Deviation</span><span class="badge badge-red">Major</span><span class="badge badge-blue">CAPA In Progress</span></div>
+    <div class="form-group"><label>Finding ID</label><div>DEV-2026-0341</div></div>
+    <div class="form-group"><label>Reported</label><div>18 May 2026, 09:42</div></div>
+    <div class="form-group"><label>Area</label><div>Grade A Fill Suite</div></div>
+    <div class="form-group"><label>Equipment</label><div>HEPA-FF-L2-07</div></div>
+    <div class="form-group"><label>Affected Batches</label><div>VAC-26-0518-A, VAC-26-0518-B</div></div>
+    <div class="form-group"><label>Initial Observation</label><div style="color:var(--text)">Particle count exceeded the Grade A alert threshold for 12 minutes during routine environmental monitoring on shift A.</div></div>
+    <div class="nova-panel" style="margin-top:16px">
+      <div class="nova-header">&#129302; Nova Classification</div>
+      <div class="nova-body">Major deviation in critical aseptic filling area. Recommends full 8D CAPA workflow.</div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="showScreen('capa-hub')">Open CAPA &rarr;</button>
+      <button class="btn btn-outline" onclick="toggleSlideOver()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: CAPA LIST                                   -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-capa-list">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span> <span class="badge-count">3</span></div>
+      <div class="nav-item" onclick="showScreen('dashboard')"><span class="icon">&#9635;</span> <span>Dashboard</span></div>
+      <div class="nav-item" onclick="showScreen('findings')"><span class="icon">&#128269;</span> <span>Findings</span></div>
+      <div class="nav-item active"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+      <div class="nav-item"><span class="icon">&#128200;</span> <span>Reports</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst &middot; Fill-Finish</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header"><div class="breadcrumb">All CAPAs</div></div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: CAPA List</h3>
+        <p>Daftar semua CAPA, bisa difilter. Kolom "Step" baru menunjukkan tahap 8D aktif. Tombol "New CAPA" dihapus dari sini (harus via Findings) untuk single entry point. Tab di atas untuk quick-filter status.</p>
+      </div>
+
+      <div class="page-title">All CAPAs</div>
+      <div style="display:flex;gap:4px;margin-bottom:16px">
+        <button class="btn btn-primary btn-sm">All (8)</button>
+        <button class="btn btn-outline btn-sm">In Progress (5)</button>
+        <button class="btn btn-outline btn-sm" style="color:var(--accent-red)">Overdue (2)</button>
+        <button class="btn btn-outline btn-sm">Closed (1)</button>
+      </div>
+
+      <div class="card">
+        <div class="filter-bar">
+          <input placeholder="Search CAPA, finding, title..." />
+          <select><option>All Types</option></select>
+          <select><option>All Departments</option></select>
+          <select><option>All PICs</option></select>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>CAPA</th><th>Type</th><th>Severity</th><th>Status</th><th>Step</th><th>Score</th><th>PIC</th><th>Due</th><th></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong style="color:var(--primary)">CAPA-2026-0341</strong><br><span style="font-size:12px;color:var(--text-muted)">EM Excursion Fill Suite</span></td>
+                <td>Deviation</td>
+                <td><span class="badge badge-red">Major</span></td>
+                <td><span class="badge badge-blue">Investigation</span></td>
+                <td><span class="badge badge-purple">D4 CA</span></td>
+                <td><span class="badge badge-orange">77</span></td>
+                <td>Siti R.</td>
+                <td>24 May<br><span style="font-size:11px;color:var(--accent-orange)">6 days</span></td>
+                <td><button class="btn btn-primary btn-sm" onclick="showScreen('capa-hub')">Open &rarr;</button></td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--primary)">CAPA-2026-0089</strong><br><span style="font-size:12px;color:var(--text-muted)">GMP Doc Gap</span></td>
+                <td>Audit</td>
+                <td><span class="badge badge-red">Major</span></td>
+                <td><span class="badge" style="background:#fee2e2;color:#991b1b">Overdue</span></td>
+                <td><span class="badge badge-purple">D5 PA</span></td>
+                <td><span class="badge badge-red">62</span></td>
+                <td>Andi W.</td>
+                <td style="color:var(--accent-red);font-weight:600">Overdue<br><span style="font-size:11px">3 days</span></td>
+                <td><button class="btn btn-outline btn-sm">Open &rarr;</button></td>
+              </tr>
+              <tr>
+                <td><strong style="color:var(--primary)">CAPA-2026-0312</strong><br><span style="font-size:12px;color:var(--text-muted)">Autoclave Printout</span></td>
+                <td>Deviation</td>
+                <td><span class="badge badge-orange">Minor</span></td>
+                <td><span class="badge badge-green">Sign-Off</span></td>
+                <td><span class="badge badge-green">D7</span></td>
+                <td><span class="badge badge-green">91</span></td>
+                <td>Budi S.</td>
+                <td>02 Jun</td>
+                <td><button class="btn btn-outline btn-sm" onclick="showScreen('d7')">Open &rarr;</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: NEW CAPA INTAKE                             -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-capa-intake">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span></div>
+      <div class="nav-item" onclick="showScreen('dashboard')"><span class="icon">&#9635;</span> <span>Dashboard</span></div>
+      <div class="nav-item" onclick="showScreen('findings')"><span class="icon">&#128269;</span> <span>Findings</span></div>
+      <div class="nav-item active"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header"><div class="breadcrumb"><a href="#" onclick="showScreen('capa-list');return false">CAPAs</a> / New CAPA</div></div>
+    <div class="app-content" style="max-width:760px;margin:0 auto">
+      <div class="flow-desc">
+        <h3>Screen: New CAPA Intake (Wizard)</h3>
+        <p>Multi-step wizard menggantikan form satu halaman. Step 1: impor data dari source system. Step 2: jawab gate questions. Step 3: AI klasifikasi severity dan assign. Step 4: review dan submit. Progresif dan tidak overwhelming.</p>
+        <div class="flow-steps">
+          <span class="flow-step">Findings page &rarr; "Create CAPA"</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step" style="border-color:var(--primary);background:#eff6ff">Intake Wizard (4 steps)</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">CAPA Hub (D1)</span>
+        </div>
+      </div>
+
+      <div class="page-title">New CAPA Intake</div>
+      <p class="page-subtitle">Import from source system or fill manually</p>
+
+      <div class="wizard-steps">
+        <div class="wizard-step done">1. Source Import</div>
+        <div class="wizard-step active">2. Gate Questions</div>
+        <div class="wizard-step">3. Impact Assessment</div>
+        <div class="wizard-step">4. Review &amp; Submit</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Gate Questions</div>
+        <div class="card-body">
+          <div class="nova-panel">
+            <div class="nova-header">&#129302; Nova Tip</div>
+            <div class="nova-body">Answer gate questions to help Nova assess severity. Be specific: include dates, batch numbers, and measurable observations.</div>
+          </div>
+          <div class="form-group">
+            <label>Q1: What happened and when was it observed?</label>
+            <textarea rows="3" placeholder="Include date, shift, area, and measurable observation...">Particle count exceeded the Grade A alert threshold for 12 minutes during routine EM on shift A, 18 May 2026.</textarea>
+          </div>
+          <div class="form-group">
+            <label>Q2: What is the potential product/patient impact?</label>
+            <textarea rows="3" placeholder="Describe impact on product quality, patient safety, or compliance..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Q3: What immediate containment action was taken?</label>
+            <textarea rows="3" placeholder="Describe actions already taken to contain the issue..."></textarea>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:16px">
+            <button class="btn btn-outline">&larr; Back to Source Import</button>
+            <button class="btn btn-primary">Continue to Impact Assessment &rarr;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: CAPA HUB                                    -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-capa-hub">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span></div>
+      <div class="nav-item" onclick="showScreen('dashboard')"><span class="icon">&#9635;</span> <span>Dashboard</span></div>
+      <div class="nav-item" onclick="showScreen('findings')"><span class="icon">&#128269;</span> <span>Findings</span></div>
+      <div class="nav-item active"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header"><div class="breadcrumb"><a href="#" onclick="showScreen('capa-list');return false">CAPAs</a> / CAPA-2026-0341</div>
+      <div class="header-actions">
+        <button class="btn btn-outline btn-sm">Export PDF</button>
+        <button class="btn btn-outline btn-sm" onclick="showScreen('audit-trail')">Audit Trail</button>
+      </div>
+    </div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: CAPA Hub (Reworked Detail Page)</h3>
+        <p>Central page untuk satu CAPA. Menggantikan sistem 4-tab lama. Left panel selalu menampilkan 8D progress tracker — klik step untuk langsung masuk. CAPA context (ID, title, severity) selalu terlihat. Score, info, dan audit trail accessible tanpa pindah tab.</p>
+        <div class="flow-steps">
+          <span class="flow-step">My Work / CAPA List</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step" style="border-color:var(--primary);background:#eff6ff">CAPA Hub</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step">Click D-step &rarr; 8D page</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+        <span class="badge badge-gray">Imported from Bizzmine</span>
+        <span class="badge badge-blue">Deviation</span>
+        <span class="badge badge-red">Major</span>
+        <span class="badge badge-purple">Investigation</span>
+        <span class="badge badge-orange" style="cursor:pointer" onclick="showScreen('score-modal')">77 &middot; Improve Score</span>
+      </div>
+      <h2 style="font-size:20px;font-weight:700;margin-bottom:2px">CAPA-2026-0341</h2>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px">Environmental Monitoring Excursion in Grade A Fill Suite</p>
+
+      <div style="display:flex;gap:20px">
+        <!-- LEFT: 8D Progress panel -->
+        <div class="progress-sidebar">
+          <div class="card">
+            <div class="card-header">8D Progress</div>
+            <ul class="step-list">
+              <li class="completed" onclick="showScreen('d1')"><span class="step-icon">&#9989;</span> D1 Problem Statement</li>
+              <li class="completed"><span class="step-icon">&#9989;</span> D2 Containment</li>
+              <li class="completed" onclick="showScreen('d3')"><span class="step-icon">&#9989;</span> D3 Root Cause</li>
+              <li class="current" onclick="showScreen('d4')"><span class="step-icon">&#128309;</span> D4 Corrective Action</li>
+              <li class="locked"><span class="step-icon">&#9711;</span> D5 Preventive Action</li>
+              <li class="locked" onclick="showScreen('d6')"><span class="step-icon">&#9711;</span> D6 Verification</li>
+              <li class="locked" onclick="showScreen('d7')"><span class="step-icon">&#9711;</span> D7 Sign-Off</li>
+            </ul>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="card-header">CAPA Info</div>
+            <div class="card-body capa-info-sidebar">
+              <div class="info-row"><span class="info-label">PIC</span><span class="info-value">Siti Rahmawati</span></div>
+              <div class="info-row"><span class="info-label">Department</span><span class="info-value">Fill-Finish</span></div>
+              <div class="info-row"><span class="info-label">Due Date</span><span class="info-value" style="color:var(--accent-orange)">24 May (6 days)</span></div>
+              <div class="info-row"><span class="info-label">Source</span><span class="info-value" style="color:var(--primary);cursor:pointer">DEV-2026-0341</span></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="card-header" style="cursor:pointer" onclick="showScreen('score-modal')">Quality Score</div>
+            <div class="card-body" style="text-align:center">
+              <div class="score-ring">77</div>
+              <div style="font-size:12px;color:var(--text-muted)">Click for breakdown</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Main content -->
+        <div style="flex:1;min-width:0">
+          <div class="card">
+            <div class="card-header">Source Data</div>
+            <div class="card-body" style="font-size:13px">
+              <div class="two-col" style="gap:12px">
+                <div><span style="color:var(--text-muted);font-size:12px">DEVIATION ID</span><br>DEV-2026-0341</div>
+                <div><span style="color:var(--text-muted);font-size:12px">REPORTED</span><br>18 May 2026, 09:42</div>
+                <div><span style="color:var(--text-muted);font-size:12px">AREA</span><br>Grade A Fill Suite</div>
+                <div><span style="color:var(--text-muted);font-size:12px">EQUIPMENT</span><br>HEPA-FF-L2-07</div>
+                <div><span style="color:var(--text-muted);font-size:12px">AFFECTED BATCHES</span><br>VAC-26-0518-A, VAC-26-0518-B</div>
+                <div><span style="color:var(--text-muted);font-size:12px">INITIATOR</span><br>Andi Wijaya</div>
+              </div>
+              <div style="margin-top:12px"><span style="color:var(--text-muted);font-size:12px">INITIAL OBSERVATION</span><br>Particle count exceeded the Grade A alert threshold for 12 minutes during routine EM on shift A.</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">QA Disposition</div>
+            <div class="card-body" style="font-size:13px">
+              <div style="display:flex;gap:24px;margin-bottom:8px">
+                <div><span style="color:var(--text-muted);font-size:12px">REVIEWED BY</span><br>Siti Rahmawati</div>
+                <div><span style="color:var(--text-muted);font-size:12px">ASSIGNED TO</span><br>Andi Wijaya</div>
+                <div><span style="color:var(--text-muted);font-size:12px">SEVERITY</span><br><span class="badge badge-red">Major</span></div>
+              </div>
+              <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;color:var(--text-muted)">Excursion in critical aseptic filling area involving active vaccine batches warrants full 8D investigation.</div>
+            </div>
+          </div>
+          <div class="nova-panel">
+            <div class="nova-header">&#129302; Nova Summary</div>
+            <div class="nova-body">Nova detected a Major deviation in a controlled filling area involving a vaccine batch, requiring immediate containment. The confirmed root cause is: HEPA filter replacement interval remained at 18 months despite trend evidence supporting 12 months.</div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:16px">
+            <button class="btn btn-primary" onclick="showScreen('d4')">Continue Working on D4 &rarr;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: D1 PROBLEM STATEMENT                        -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-d1">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header"><div class="breadcrumb"><a href="#" onclick="showScreen('capa-hub');return false">CAPA-2026-0341</a> / D1 Problem Statement</div></div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: D1 — Problem Statement</h3>
+        <p>Step pertama 8D: definisikan masalah secara spesifik dan terukur. Nova menyarankan problem statement yang bisa langsung di-accept, di-edit, atau di-skip. Validation checklist memastikan statement cukup detail sebelum bisa lanjut ke D2.</p>
+      </div>
+
+      <div style="display:flex;gap:20px">
+        <div class="progress-sidebar">
+          <div class="card">
+            <div class="card-header" style="font-size:13px"><a href="#" onclick="showScreen('capa-hub');return false" style="color:var(--primary);text-decoration:none">&larr; CAPA-2026-0341</a></div>
+            <ul class="step-list">
+              <li class="current" onclick="showScreen('d1')"><span class="step-icon">&#128309;</span> D1 Problem</li>
+              <li class="locked"><span class="step-icon">&#9711;</span> D2 Containment</li>
+              <li class="locked" onclick="showScreen('d3')"><span class="step-icon">&#9711;</span> D3 RCA</li>
+              <li class="locked" onclick="showScreen('d4')"><span class="step-icon">&#9711;</span> D4 CA</li>
+              <li class="locked"><span class="step-icon">&#9711;</span> D5 PA</li>
+              <li class="locked" onclick="showScreen('d6')"><span class="step-icon">&#9711;</span> D6 Verify</li>
+              <li class="locked" onclick="showScreen('d7')"><span class="step-icon">&#9711;</span> D7 Sign-Off</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:0">
+          <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">D1 &mdash; Problem Statement</h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Step 1 of 7 &middot; Define the problem with specific, measurable details</p>
+
+          <div class="nova-panel">
+            <div class="nova-header">&#129302; Nova's Suggestion</div>
+            <div class="nova-body">On 18 May 2026 during vaccine filling operation in Grade A Fill Suite Line FILL-02, environmental monitoring detected particle count excursion for batch VAC-26-0518-A. The excursion lasted approximately 12 minutes and was associated with HEPA unit HEPA-FILL-02.</div>
+            <div class="nova-actions">
+              <button class="btn btn-primary btn-sm">&#10003; Use this suggestion</button>
+              <button class="btn btn-outline btn-sm">&#9998; Edit first</button>
+              <button class="btn btn-outline btn-sm">Skip</button>
+            </div>
+            <details style="margin-top:8px;font-size:12px;color:var(--text-muted)"><summary style="cursor:pointer">Show reasoning</summary><p style="margin-top:4px">Nova composed this from the source finding data, including the specific time, area, equipment ID, and batch number. It uses the IS/IS NOT framework to be specific and measurable.</p></details>
+          </div>
+
+          <div class="card">
+            <div class="card-header">Problem Statement Editor</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Problem Statement</label>
+                <textarea rows="5">Particle count exceeded the Grade A alert threshold for 12 minutes during shift A on 18 May 2026.</textarea>
+              </div>
+              <ul class="check-list">
+                <li class="pass"><span class="ci">&#9989;</span> Contains date/time</li>
+                <li class="pass"><span class="ci">&#9989;</span> Measurable observation</li>
+                <li class="pass"><span class="ci">&#9989;</span> Affected area</li>
+                <li><span class="ci">&#9711;</span> Min 50 characters</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:16px">
+            <button class="btn btn-outline" onclick="showScreen('capa-hub')">&larr; Back to CAPA Hub</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline">Save Draft</button>
+              <button class="btn btn-primary">Continue to D2 &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: D3 ROOT CAUSE ANALYSIS                      -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-d3">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header"><div class="breadcrumb"><a href="#" onclick="showScreen('capa-hub');return false">CAPA-2026-0341</a> / D3 Root Cause Analysis</div></div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: D3 — Root Cause Analysis</h3>
+        <p>Langkah terpenting: identifikasi akar masalah sebenarnya. Nova menyarankan root cause berdasarkan data dan pattern historis. User memilih metode (5-Whys, Fishbone, dll). Di bawah form ada "Similar Past CAPAs" — kasus serupa dari database historis.</p>
+      </div>
+
+      <div style="display:flex;gap:20px">
+        <div class="progress-sidebar">
+          <div class="card">
+            <div class="card-header" style="font-size:13px"><a href="#" onclick="showScreen('capa-hub');return false" style="color:var(--primary);text-decoration:none">&larr; CAPA-2026-0341</a></div>
+            <ul class="step-list">
+              <li class="completed" onclick="showScreen('d1')"><span class="step-icon">&#9989;</span> D1 Problem</li>
+              <li class="completed"><span class="step-icon">&#9989;</span> D2 Containment</li>
+              <li class="current"><span class="step-icon">&#128309;</span> D3 RCA</li>
+              <li class="locked" onclick="showScreen('d4')"><span class="step-icon">&#9711;</span> D4 CA</li>
+              <li class="locked"><span class="step-icon">&#9711;</span> D5 PA</li>
+              <li class="locked" onclick="showScreen('d6')"><span class="step-icon">&#9711;</span> D6 Verify</li>
+              <li class="locked" onclick="showScreen('d7')"><span class="step-icon">&#9711;</span> D7 Sign-Off</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:0">
+          <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">D3 &mdash; Root Cause Analysis</h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Step 3 of 7 &middot; Identify the true root cause using a structured method</p>
+
+          <div class="nova-panel">
+            <div class="nova-header">&#129302; Nova's Root Cause Suggestion</div>
+            <div class="nova-body"><strong>Suggested Root Cause:</strong> HEPA filter replacement interval remained at 18 months despite trend evidence supporting 12 months.<br><strong>Method:</strong> 5-Whys analysis</div>
+            <div class="nova-actions">
+              <button class="btn btn-primary btn-sm">&#10003; Use this</button>
+              <button class="btn btn-outline btn-sm">&#9998; Edit</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">RCA Method</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Method</label>
+                <select><option selected>5-Whys</option><option>Fishbone / Ishikawa</option><option>FMEA</option><option>Manual</option></select>
+              </div>
+              <div style="border-left:3px solid var(--primary);padding-left:16px;margin:16px 0">
+                <div class="form-group"><label>Why 1</label><input value="Particle count exceeded Grade A limit" /></div>
+                <div class="form-group"><label>Why 2</label><input value="HEPA filter efficiency degraded below threshold" /></div>
+                <div class="form-group"><label>Why 3</label><input value="Filter was past its effective service life" /></div>
+                <div class="form-group"><label>Why 4</label><input value="Replacement schedule set at 18 months instead of 12" /></div>
+                <div class="form-group"><label style="color:var(--primary)">Why 5 (Root Cause)</label><input value="PM interval not updated based on trend data review" style="border-color:var(--primary);font-weight:600" /></div>
+              </div>
+              <div class="form-group">
+                <label>Confirmed Root Cause Summary</label>
+                <textarea rows="3">HEPA filter replacement interval remained at 18 months despite trend evidence supporting 12 months.</textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">Similar Past CAPAs</div>
+            <div class="card-body">
+              <div style="display:flex;gap:12px">
+                <div style="flex:1;border:1px solid var(--border);border-radius:6px;padding:12px">
+                  <div style="font-weight:600;color:var(--primary)">CAPA-2025-0234</div>
+                  <div style="font-size:12px;color:var(--text-muted)">Same HEPA line &middot; Fill-Finish</div>
+                  <div style="font-size:12px">Root cause: Filter schedule &middot; Resolved in 14 days</div>
+                  <span class="badge badge-green" style="margin-top:4px">92% similar</span>
+                </div>
+                <div style="flex:1;border:1px solid var(--border);border-radius:6px;padding:12px">
+                  <div style="font-weight:600;color:var(--primary)">CAPA-2025-0187</div>
+                  <div style="font-size:12px;color:var(--text-muted)">Different area &middot; Sterile Prep</div>
+                  <div style="font-size:12px">Root cause: Airflow calibration &middot; 21 days</div>
+                  <span class="badge badge-orange" style="margin-top:4px">67% similar</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:16px">
+            <button class="btn btn-outline">&larr; Back to D2</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline">Save Draft</button>
+              <button class="btn btn-primary" onclick="showScreen('d4')">Continue to D4 &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: D4 CORRECTIVE ACTION                        -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-d4">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header"><div class="breadcrumb"><a href="#" onclick="showScreen('capa-hub');return false">CAPA-2026-0341</a> / D4 Corrective Action</div></div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: D4 — Corrective Action</h3>
+        <p>Rencana aksi perbaikan permanen. User menambahkan aksi satu per satu. Nova menyarankan aksi berdasarkan root cause di D3. Setiap aksi punya owner, target date, dan status tracking.</p>
+      </div>
+
+      <div style="display:flex;gap:20px">
+        <div class="progress-sidebar">
+          <div class="card">
+            <div class="card-header" style="font-size:13px"><a href="#" onclick="showScreen('capa-hub');return false" style="color:var(--primary);text-decoration:none">&larr; CAPA-2026-0341</a></div>
+            <ul class="step-list">
+              <li class="completed" onclick="showScreen('d1')"><span class="step-icon">&#9989;</span> D1 Problem</li>
+              <li class="completed"><span class="step-icon">&#9989;</span> D2 Containment</li>
+              <li class="completed" onclick="showScreen('d3')"><span class="step-icon">&#9989;</span> D3 RCA</li>
+              <li class="current"><span class="step-icon">&#128309;</span> D4 CA</li>
+              <li class="locked"><span class="step-icon">&#9711;</span> D5 PA</li>
+              <li class="locked" onclick="showScreen('d6')"><span class="step-icon">&#9711;</span> D6 Verify</li>
+              <li class="locked" onclick="showScreen('d7')"><span class="step-icon">&#9711;</span> D7 Sign-Off</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:0">
+          <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">D4 &mdash; Corrective Action</h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Step 4 of 7 &middot; Define permanent corrective actions</p>
+
+          <div class="nova-panel">
+            <div class="nova-header">&#129302; Nova's Suggested Actions</div>
+            <div class="nova-body">Based on root cause "PM interval not updated based on trend data", Nova suggests:<br>1. Replace HEPA filter unit HEPA-FILL-02 immediately<br>2. Update PM schedule from 18 to 12 months for all Grade A HEPA units</div>
+            <div class="nova-actions">
+              <button class="btn btn-primary btn-sm">&#10003; Add all suggestions</button>
+              <button class="btn btn-outline btn-sm">Pick individually</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">Corrective Actions <button class="btn btn-primary btn-sm" style="font-size:11px">+ Add Action</button></div>
+            <div class="card-body">
+              <div style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;background:#fafbfc">
+                <div style="display:flex;justify-content:space-between;align-items:start">
+                  <div style="font-weight:600;font-size:14px">CA-1: Replace HEPA filter HEPA-FILL-02</div>
+                  <span class="badge badge-green">Done</span>
+                </div>
+                <div style="display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--text-muted)">
+                  <span>Owner: Maintenance Team</span>
+                  <span>Target: 20 May 2026</span>
+                  <span>Evidence: &#10003;</span>
+                </div>
+              </div>
+              <div style="border:1px solid var(--border);border-radius:8px;padding:16px;background:#fff">
+                <div style="display:flex;justify-content:space-between;align-items:start">
+                  <div style="font-weight:600;font-size:14px">CA-2: Update PM schedule to 12-month interval</div>
+                  <span class="badge badge-blue">In Progress</span>
+                </div>
+                <div style="display:flex;gap:16px;margin-top:8px;font-size:12px;color:var(--text-muted)">
+                  <span>Owner: Andi Wijaya</span>
+                  <span>Target: 28 May 2026</span>
+                  <span>Evidence: pending</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:16px">
+            <button class="btn btn-outline" onclick="showScreen('d3')">&larr; Back to D3</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline">Save Draft</button>
+              <button class="btn btn-primary">Continue to D5 &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: D6 VERIFICATION                             -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-d6">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header"><div class="breadcrumb"><a href="#" onclick="showScreen('capa-hub');return false">CAPA-2026-0341</a> / D6 Verification</div></div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: D6 — Verification</h3>
+        <p>Buktikan bahwa corrective dan preventive actions benar-benar berhasil. User pilih metode verifikasi, tulis hasil, dan upload bukti (mock). Validation checklist memastikan semua field lengkap sebelum bisa ke Sign-Off.</p>
+      </div>
+
+      <div style="display:flex;gap:20px">
+        <div class="progress-sidebar">
+          <div class="card">
+            <div class="card-header" style="font-size:13px"><a href="#" onclick="showScreen('capa-hub');return false" style="color:var(--primary);text-decoration:none">&larr; CAPA-2026-0341</a></div>
+            <ul class="step-list">
+              <li class="completed" onclick="showScreen('d1')"><span class="step-icon">&#9989;</span> D1 Problem</li>
+              <li class="completed"><span class="step-icon">&#9989;</span> D2 Containment</li>
+              <li class="completed" onclick="showScreen('d3')"><span class="step-icon">&#9989;</span> D3 RCA</li>
+              <li class="completed" onclick="showScreen('d4')"><span class="step-icon">&#9989;</span> D4 CA</li>
+              <li class="completed"><span class="step-icon">&#9989;</span> D5 PA</li>
+              <li class="current"><span class="step-icon">&#128309;</span> D6 Verify</li>
+              <li class="locked" onclick="showScreen('d7')"><span class="step-icon">&#9711;</span> D7 Sign-Off</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:0">
+          <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">D6 &mdash; Verification</h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Step 6 of 7 &middot; Prove that actions were effective</p>
+
+          <div class="card">
+            <div class="card-header">Verification Evidence</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Verification Method</label>
+                <select>
+                  <option>Select method...</option>
+                  <option selected>EM re-test &amp; airflow requalification review</option>
+                  <option>Process review &amp; QA spot check</option>
+                  <option>Batch trend monitoring</option>
+                  <option>Re-sampling</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Verification Result</label>
+                <textarea rows="4">Post-replacement monitoring showed particle counts within alert and action limits for three consecutive checks. Airflow requalification passed acceptance criteria.</textarea>
+              </div>
+              <div class="form-group">
+                <label>Evidence Upload</label>
+                <div style="display:flex;gap:8px">
+                  <input value="HEPA-FILL-02-Requalification.pdf" style="flex:1" />
+                  <button class="btn btn-outline btn-sm">Upload</button>
+                </div>
+                <div style="margin-top:8px;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px">&#128206; Uploaded: <strong>HEPA-FILL-02-Requalification.pdf</strong></div>
+              </div>
+
+              <ul class="check-list">
+                <li class="pass"><span class="ci">&#9989;</span> Method selected</li>
+                <li class="pass"><span class="ci">&#9989;</span> Result documented</li>
+                <li class="pass"><span class="ci">&#9989;</span> Evidence uploaded</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:16px">
+            <button class="btn btn-outline">&larr; Back to D5</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline">Save Draft</button>
+              <button class="btn btn-primary" onclick="showScreen('d7')">Continue to D7 &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: D7 SIGN-OFF                                 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-d7">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Siti Rahmawati</div><div class="role">QA Manager</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header"><div class="breadcrumb"><a href="#" onclick="showScreen('capa-hub');return false">CAPA-2026-0341</a> / D7 Sign-Off</div></div>
+    <div class="app-content">
+      <div class="flow-desc">
+        <h3>Screen: D7 — Sign-Off</h3>
+        <p>Langkah terakhir: QA Manager me-review seluruh 8D, melihat score akhir, dan membuat keputusan: Approve &amp; Close atau Return for Revision. Semua D1-D6 ditampilkan dalam collapsible summary supaya reviewer bisa memverifikasi tanpa harus buka tiap halaman.</p>
+        <div class="flow-steps">
+          <span class="flow-step">D1-D6 completed</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step" style="border-color:var(--primary);background:#eff6ff">D7 Sign-Off</span>
+          <span class="flow-arrow">&rarr;</span>
+          <span class="flow-step" style="border-color:var(--accent-green)">CAPA Closed</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:20px">
+        <div class="progress-sidebar">
+          <div class="card">
+            <div class="card-header" style="font-size:13px"><a href="#" onclick="showScreen('capa-hub');return false" style="color:var(--primary);text-decoration:none">&larr; CAPA-2026-0341</a></div>
+            <ul class="step-list">
+              <li class="completed" onclick="showScreen('d1')"><span class="step-icon">&#9989;</span> D1 Problem</li>
+              <li class="completed"><span class="step-icon">&#9989;</span> D2 Containment</li>
+              <li class="completed" onclick="showScreen('d3')"><span class="step-icon">&#9989;</span> D3 RCA</li>
+              <li class="completed" onclick="showScreen('d4')"><span class="step-icon">&#9989;</span> D4 CA</li>
+              <li class="completed"><span class="step-icon">&#9989;</span> D5 PA</li>
+              <li class="completed" onclick="showScreen('d6')"><span class="step-icon">&#9989;</span> D6 Verify</li>
+              <li class="current"><span class="step-icon">&#128309;</span> D7 Sign-Off</li>
+            </ul>
+          </div>
+          <div class="card" style="margin-top:12px">
+            <div class="card-header">Final Score</div>
+            <div class="card-body" style="text-align:center">
+              <div class="score-ring" style="border-color:#86efac">91</div>
+              <span class="badge badge-green">Audit Ready</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1;min-width:0">
+          <h2 style="font-size:18px;font-weight:700;margin-bottom:4px">D7 &mdash; Sign-Off &amp; Closure</h2>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Final step &middot; Review all evidence and approve or return</p>
+
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header">8D Summary Review</div>
+            <div class="card-body">
+              <div class="signoff-summary"><div class="ss-header">D1 — Problem Statement <span>&#9989;</span></div><div class="ss-body">Particle count exceeded Grade A alert threshold for 12 minutes during shift A on 18 May 2026.</div></div>
+              <div class="signoff-summary"><div class="ss-header">D2 — Containment <span>&#9989;</span></div><div class="ss-body">Batch quarantined, area isolated, backup HEPA activated.</div></div>
+              <div class="signoff-summary"><div class="ss-header">D3 — Root Cause <span>&#9989;</span></div><div class="ss-body">HEPA filter PM interval not updated from 18 to 12 months based on trend data.</div></div>
+              <div class="signoff-summary"><div class="ss-header">D4 — Corrective Actions <span>&#9989;</span></div><div class="ss-body">2 actions: Filter replaced + PM schedule updated to 12 months.</div></div>
+              <div class="signoff-summary"><div class="ss-header">D5 — Preventive Actions <span>&#9989;</span></div><div class="ss-body">Trend-based PM review SOP established for all HEPA units.</div></div>
+              <div class="signoff-summary"><div class="ss-header">D6 — Verification <span>&#9989;</span></div><div class="ss-body">3 consecutive post-replacement checks passed. Evidence: HEPA-FILL-02-Requalification.pdf</div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">Sign-Off Decision</div>
+            <div class="card-body">
+              <div class="two-col" style="margin-bottom:16px">
+                <div class="form-group"><label>Reviewing QA</label><input value="Siti Rahmawati" readonly style="background:#f8fafc" /></div>
+                <div class="form-group"><label>Role</label><input value="QA Manager" readonly style="background:#f8fafc" /></div>
+              </div>
+              <div class="form-group"><label>Comments</label><textarea rows="3" placeholder="Optional comments for the record...">All evidence reviewed and satisfactory. Root cause addressed with updated PM schedule.</textarea></div>
+              <div style="background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:12px;font-size:12px;color:var(--text-muted);margin-bottom:16px">By approving, I confirm this CAPA record is complete, accurate, and meets GMP/ALCOA+ requirements.</div>
+              <div style="display:flex;gap:12px">
+                <button class="btn btn-green" style="flex:1;justify-content:center;font-size:14px">&#10003; Approve &amp; Close CAPA</button>
+                <button class="btn btn-red-outline" style="justify-content:center">&#10007; Return for Revision</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: QUALITY SCORE MODAL                         -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-score-modal">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header"><div class="breadcrumb"><a href="#" onclick="showScreen('capa-hub');return false">CAPA-2026-0341</a> / Quality Score</div></div>
+    <div class="app-content" style="max-width:600px">
+      <div class="flow-desc">
+        <h3>Screen: Quality Score Breakdown</h3>
+        <p>Ini bisa modal atau halaman tersendiri. Menjelaskan ke user apa artinya score 77, dimensi mana yang lemah, dan apa yang harus dilakukan untuk menaikkan score. Transparency penting untuk compliance.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Quality Score &mdash; CAPA-2026-0341</div>
+        <div class="card-body">
+          <div style="text-align:center;margin-bottom:24px">
+            <div class="score-ring" style="font-size:28px">77</div>
+            <div style="font-size:13px;color:var(--text-muted)">out of 100</div>
+          </div>
+
+          <div class="score-bar-row"><span class="score-bar-label">Problem clarity (D1)</span><div class="score-bar-track"><div class="score-bar-fill" style="width:90%;background:var(--accent-green)"></div></div><span class="score-bar-value">18/20</span></div>
+          <div class="score-bar-row"><span class="score-bar-label">Containment (D2)</span><div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--accent-green)"></div></div><span class="score-bar-value">15/15</span></div>
+          <div class="score-bar-row"><span class="score-bar-label">RCA depth (D3)</span><div class="score-bar-track"><div class="score-bar-fill" style="width:60%;background:var(--accent-orange)"></div></div><span class="score-bar-value" style="color:var(--accent-orange)">12/20</span></div>
+          <div class="score-bar-row"><span class="score-bar-label">CA/PA specificity (D4/D5)</span><div class="score-bar-track"><div class="score-bar-fill" style="width:50%;background:var(--accent-orange)"></div></div><span class="score-bar-value" style="color:var(--accent-orange)">10/20</span></div>
+          <div class="score-bar-row"><span class="score-bar-label">Verification (D6)</span><div class="score-bar-track"><div class="score-bar-fill" style="width:80%;background:var(--primary)"></div></div><span class="score-bar-value">12/15</span></div>
+          <div class="score-bar-row"><span class="score-bar-label">Timeliness</span><div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--accent-green)"></div></div><span class="score-bar-value">10/10</span></div>
+
+          <div style="margin-top:20px;padding:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px">
+            <div style="font-weight:600;font-size:13px;margin-bottom:8px">How to reach 90+:</div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:6px">
+              <div>&#128161; Add more detail to 5-Whys chain in D3 <span class="badge badge-blue" style="font-size:10px">+5 pts</span></div>
+              <div>&#128161; Add training record evidence in D5 <span class="badge badge-blue" style="font-size:10px">+5 pts</span></div>
+              <div>&#128161; Add second evidence file to D6 <span class="badge badge-blue" style="font-size:10px">+3 pts</span></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end">
+            <button class="btn btn-outline" onclick="showScreen('capa-hub')">Close</button>
+            <button class="btn btn-primary" onclick="showScreen('d3')">Go to D3 &rarr;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SCREEN: AUDIT TRAIL                                 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="screen" id="screen-audit-trail">
+  <div class="app-sidebar">
+    <div class="brand"><span class="dot"></span> CAPA AI</div>
+    <nav>
+      <div class="nav-item" onclick="showScreen('my-work')"><span class="icon">&#9776;</span> <span>My Work</span></div>
+      <div class="nav-item" onclick="showScreen('capa-list')"><span class="icon">&#128193;</span> <span>All CAPAs</span></div>
+    </nav>
+    <div class="user-info"><div class="name">Andi Wijaya</div><div class="role">QA Analyst</div></div>
+  </div>
+  <div class="app-main">
+    <div class="app-header">
+      <div class="breadcrumb"><a href="#" onclick="showScreen('capa-hub');return false">CAPA-2026-0341</a> / Audit Trail</div>
+      <div class="header-actions"><button class="btn btn-outline btn-sm">Export PDF</button></div>
+    </div>
+    <div class="app-content" style="max-width:800px">
+      <div class="flow-desc">
+        <h3>Screen: Audit Trail</h3>
+        <p>Full traceable history semua aksi pada satu CAPA. Required untuk audit BPOM dan compliance ALCOA+. Menampilkan siapa melakukan apa, kapan, dan perubahan before/after. Bisa di-export ke PDF.</p>
+      </div>
+
+      <div class="page-title">Audit Trail</div>
+      <p class="page-subtitle">CAPA-2026-0341 &middot; 12 events</p>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="audit-event">
+            <div class="ae-time">31 May 2026<br>10:35</div>
+            <div>
+              <div class="ae-actor">Siti Rahmawati <span class="badge badge-green" style="font-size:10px">D7 Approved</span></div>
+              <div class="ae-action">CAPA approved and closed. Comments: "All evidence reviewed and satisfactory."</div>
+            </div>
+          </div>
+          <div class="audit-event">
+            <div class="ae-time">30 May 2026<br>14:22</div>
+            <div>
+              <div class="ae-actor">Andi Wijaya <span class="badge badge-blue" style="font-size:10px">D6 Completed</span></div>
+              <div class="ae-action">Verification completed. Method: EM re-test. Evidence: HEPA-FILL-02-Requalification.pdf</div>
+            </div>
+          </div>
+          <div class="audit-event">
+            <div class="ae-time">28 May 2026<br>09:15</div>
+            <div>
+              <div class="ae-actor">Andi Wijaya <span class="badge badge-purple" style="font-size:10px">D5 Completed</span></div>
+              <div class="ae-action">Preventive actions documented. 1 action: Trend-based PM review SOP.</div>
+            </div>
+          </div>
+          <div class="audit-event">
+            <div class="ae-time">25 May 2026<br>11:30</div>
+            <div>
+              <div class="ae-actor">Andi Wijaya <span class="badge badge-blue" style="font-size:10px">D4 Completed</span></div>
+              <div class="ae-action">Corrective actions completed. 2 actions defined.</div>
+            </div>
+          </div>
+          <div class="audit-event">
+            <div class="ae-time">22 May 2026<br>16:45</div>
+            <div>
+              <div class="ae-actor">Andi Wijaya <span class="badge badge-gray" style="font-size:10px">AI Used</span></div>
+              <div class="ae-action">Nova suggestion accepted for D3 root cause. Before: (empty) &rarr; After: "HEPA filter PM interval not updated..."</div>
+            </div>
+          </div>
+          <div class="audit-event">
+            <div class="ae-time">20 May 2026<br>10:05</div>
+            <div>
+              <div class="ae-actor">Siti Rahmawati <span class="badge badge-orange" style="font-size:10px">QA Disposition</span></div>
+              <div class="ae-action">Finding dispositioned as Major severity. Assigned to Andi Wijaya for 8D investigation.</div>
+            </div>
+          </div>
+          <div class="audit-event">
+            <div class="ae-time">18 May 2026<br>09:42</div>
+            <div>
+              <div class="ae-actor">System <span class="badge badge-gray" style="font-size:10px">CAPA Created</span></div>
+              <div class="ae-action">CAPA-2026-0341 created from finding DEV-2026-0341 (Bizzmine import).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('screen-' + name);
+  if (target) target.classList.add('active');
+  document.querySelectorAll('.screen-nav button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.screen-nav button').forEach(b => {
+    if (b.textContent.toLowerCase().includes(name.replace(/-/g,' ').replace('capa hub','capa hub').replace('capa list','capa list'))) b.classList.add('active');
+  });
+  // Scroll to top
+  window.scrollTo(0, 0);
+  // Close any open slide-over
+  document.querySelectorAll('.slide-over').forEach(s => s.classList.remove('open'));
+}
+
+function toggleSlideOver() {
+  document.getElementById('slide-finding').classList.toggle('open');
+}
+
+// Active button highlight
+document.querySelectorAll('.screen-nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.screen-nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

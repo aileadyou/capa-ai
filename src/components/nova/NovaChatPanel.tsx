@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Send, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,15 @@ export function NovaChatPanel() {
   const closeNovaChat = useUIStore((state) => state.closeNovaChat);
   const novaChatContext = useUIStore((state) => state.novaChatContext);
   const step = novaChatContext.step ?? "problem";
+  const contextKey = [
+    novaChatContext.source,
+    novaChatContext.capaId,
+    novaChatContext.step,
+    novaChatContext.suggestionId,
+  ].filter(Boolean).join(":");
   const [draft, setDraft] = useState("");
+  const lastContextKeyRef = useRef("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "nova",
@@ -27,6 +35,13 @@ export function NovaChatPanel() {
   const [isThinking, setIsThinking] = useState(false);
 
   const quickPrompts = useMemo(() => getChatPrompts(step), [step]);
+
+  useEffect(() => {
+    if (!isOpen || !contextKey || lastContextKeyRef.current === contextKey) return;
+    lastContextKeyRef.current = contextKey;
+    setDraft(novaChatContext.initialDraft ?? "");
+    window.setTimeout(() => textareaRef.current?.focus(), 0);
+  }, [contextKey, isOpen, novaChatContext.initialDraft]);
 
   if (!isOpen) return null;
 
@@ -42,7 +57,7 @@ export function NovaChatPanel() {
   };
 
   return (
-    <aside className="fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg">
+    <aside className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg">
       <div className="flex items-center justify-between border-b p-4">
         <div className="flex items-center gap-2 font-semibold text-nova">
           <Sparkles className="h-4 w-4" />
@@ -72,6 +87,34 @@ export function NovaChatPanel() {
       </div>
 
       <div className="border-t p-4 space-y-3">
+        {novaChatContext.source === "nova-suggestion" && novaChatContext.suggestionText && (
+          <div
+            style={{
+              background: "var(--accent-soft)",
+              border: "1px solid var(--accent-line)",
+              borderRadius: "var(--r-sm)",
+              padding: "10px 12px",
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                fontWeight: 600,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "var(--accent)",
+                margin: "0 0 6px",
+              }}
+            >
+              Suggestion context
+            </p>
+            <p style={{ color: "var(--fg-2)", fontSize: "12px", lineHeight: 1.55, margin: 0 }}>
+              {novaChatContext.suggestionContext ? `${novaChatContext.suggestionContext}: ` : ""}
+              {novaChatContext.suggestionText}
+            </p>
+          </div>
+        )}
         {quickPrompts.length > 0 && messages.length <= 1 && (
           <div className="space-y-2">
             <div className="text-xs font-medium text-muted-foreground">Suggested prompts</div>
@@ -79,7 +122,7 @@ export function NovaChatPanel() {
               {quickPrompts.map((prompt) => (
                 <button
                   key={prompt}
-                  className="rounded border bg-muted/30 px-3 py-2 text-left text-xs hover:border-nova/40 hover:bg-nova/5 hover:text-nova transition-colors"
+                  className="motion-hover rounded border bg-muted/30 px-3 py-2 text-left text-xs transition-colors hover:border-nova/40 hover:bg-nova/5 hover:text-nova"
                   onClick={() => sendMessage(prompt)}
                 >
                   {prompt}
@@ -89,6 +132,7 @@ export function NovaChatPanel() {
           </div>
         )}
         <Textarea
+          ref={textareaRef}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {

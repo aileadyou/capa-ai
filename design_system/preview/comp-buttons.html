@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+*{margin:0;box-sizing:border-box}
+body{background:var(--bg-1);color:var(--fg-1);font-family:var(--font-sans);padding:24px;-webkit-font-smoothing:antialiased;}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.col{display:flex;flex-direction:column;gap:6px}
+.lbl{font-family:var(--font-mono);font-size:11px;color:var(--fg-3);letter-spacing:.04em}
+.val{font-family:var(--font-mono);font-size:11px;color:var(--fg-2)}
+.swatch{border-radius:10px;border:1px solid var(--line-2)}
+
+.btn{font-family:var(--font-sans);font-weight:600;font-size:14px;border-radius:14px;padding:11px 18px;border:1px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 220ms}
+.btn-primary{background:linear-gradient(135deg,#9B3AC5,#C4688C,#E07D60);color:#F8F0FF;border:none}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-secondary{background:var(--bg-3);color:var(--fg-1);border-color:var(--line-2)}
+.btn-ghost{background:transparent;color:var(--fg-2)}
+.btn-sm{padding:7px 13px;font-size:13px;border-radius:10px}
+.grad-text{background:linear-gradient(135deg,#9B3AC5,#C4688C,#E07D60);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+</style></head><body><div class="col" style="gap:14px">
+<div class="row">
+  <button class="btn btn-primary">Start a deployment →</button>
+  <button class="btn btn-secondary">Read the docs</button>
+  <button class="btn btn-ghost">Cancel</button>
+</div>
+<div class="row">
+  <button class="btn btn-primary btn-sm">Primary</button>
+  <button class="btn btn-secondary btn-sm">Secondary</button>
+  <button class="btn btn-primary" style="opacity:.4;cursor:not-allowed">Disabled</button>
+  <span class="h3 grad-text" style="font-size:22px">Gradient text</span>
+</div>
+<div class="lbl">GRADIENT BUTTON · purple → magenta → coral + .grad-text utility</div>
+</div></body></html>

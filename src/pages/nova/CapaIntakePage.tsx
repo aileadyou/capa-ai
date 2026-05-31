@@ -1,86 +1,136 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, DownloadCloud, Sparkles } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { AILoadingSpinner } from "@/components/shared/AILoadingSpinner";
-import { BlockerBanner } from "@/components/shared/BlockerBanner";
-import { SeverityBadge } from "@/components/shared/SeverityBadge";
-import { SourceBadge } from "@/components/shared/SourceBadge";
-import { ScoreSidebar } from "@/components/score/ScoreSidebar";
-import { NovaCoachTip } from "@/components/nova/NovaCoachTip";
 import { classifyImpact, importSourceData } from "@/services/novaService";
 import { useCapaStore } from "@/store";
-import type { CAPAType, GateQuestionID, ImpactClassification, PreFillContext, QualityScore } from "@/types";
-import { computeProblemSpecificity, computeRootCauseDepth, computeTotalQualityScore } from "@/utils/scoring";
-import { formatCAPAType, formatDateTime } from "@/utils/formatters";
+import type { CAPAType, GateQuestionID, ImpactClassification, PreFillContext, Severity } from "@/types";
+import { computeIntakeScore, getPrefillSummary, getSuggestedTitle } from "@/utils/intakeHelpers";
+import { formatDateTime } from "@/utils/formatters";
 
-const sourceIdByType: Record<CAPAType, string> = {
-  deviation: "DEV-2026-0341",
-  audit: "AUD-2026-0089",
-  complaint: "CMP-2026-0112",
-};
+// ── Static config ─────────────────────────────────────────────────────────────
 
-const fetchLabelByType: Record<CAPAType, string> = {
-  deviation: "Fetch from Bizzmine",
-  audit: "Fetch from Q100+",
-  complaint: "Fetch from Bizzmine Complaint",
-};
+const SOURCE_CARDS = [
+  {
+    type: "deviation" as CAPAType,
+    system: "Bizzmine",
+    sourceId: "DEV-2026-0341",
+    badge: "Deviation",
+    description: "Environmental monitoring, process deviation, batch issue",
+    color: "var(--accent)",
+    softBg: "var(--accent-soft)",
+    softBorder: "var(--accent-line)",
+    selectedBg: "var(--accent-soft)",
+  },
+  {
+    type: "audit" as CAPAType,
+    system: "Q100+",
+    sourceId: "AUD-2026-0089",
+    badge: "Audit finding",
+    description: "Internal audit, regulatory inspection, compliance gap",
+    color: "var(--success)",
+    softBg: "var(--success-soft)",
+    softBorder: "color-mix(in srgb, var(--success) 38%, transparent)",
+    selectedBg: "var(--success-soft)",
+  },
+  {
+    type: "complaint" as CAPAType,
+    system: "Bizzmine",
+    sourceId: "CMP-2026-0112",
+    badge: "Complaint",
+    description: "Customer complaint, adverse event, field quality report",
+    color: "var(--warning)",
+    softBg: "var(--warning-soft)",
+    softBorder: "color-mix(in srgb, var(--warning) 38%, transparent)",
+    selectedBg: "var(--warning-soft)",
+  },
+] as const;
 
-const loadingCopyByType: Record<CAPAType, string> = {
-  deviation: "Nova is importing source data from Bizzmine...",
-  audit: "Nova is importing audit finding data from Q100+...",
-  complaint: "Nova is importing complaint data from Bizzmine Complaint...",
-};
-
-const submitLabelByType: Record<CAPAType, string> = {
-  deviation: "Submit to QA",
-  audit: "Submit to QA Compliance",
-  complaint: "Submit to QA Complaint",
-};
-
-const gateQuestions: Array<{ id: GateQuestionID; question: string; placeholder: string }> = [
+const GATE_QUESTIONS: Array<{
+  id: GateQuestionID;
+  question: string;
+  placeholder: string;
+  required: boolean;
+}> = [
   {
     id: "observation",
     question: "What happened and when was it observed?",
     placeholder: "Include date, shift, area, and measurable observation.",
-  },
-  {
-    id: "scope",
-    question: "Which product, batch, lot, equipment, or area is affected?",
-    placeholder: "Name affected batch/lot, equipment ID, area, and source record.",
+    required: true,
   },
   {
     id: "impact",
     question: "What is the potential quality or GMP impact?",
-    placeholder: "Explain why this should be treated as Minor, Major, or Critical.",
+    placeholder: "Explain why this may be Minor, Major, or Critical.",
+    required: true,
   },
   {
     id: "containment",
     question: "What immediate containment is already in place?",
     placeholder: "Describe hold, quarantine, restriction, or review actions.",
+    required: true,
+  },
+  {
+    id: "scope",
+    question: "Which product, batch, lot, equipment, or area is affected?",
+    placeholder: "Name affected batch/lot, equipment ID, area, and source record.",
+    required: false,
   },
   {
     id: "cause_confirmation",
     question: "What evidence is needed to confirm the root cause?",
     placeholder: "Mention records, trend review, sample assessment, or investigation method.",
+    required: false,
   },
   {
     id: "effectiveness_criteria",
     question: "How will effectiveness be verified?",
     placeholder: "Define expected evidence and timeframe.",
+    required: false,
   },
 ];
+
+const SEVERITY_OPTIONS: Array<{
+  value: Severity;
+  label: string;
+  description: string;
+  color: string;
+  softBg: string;
+  softBorder: string;
+  weight: string;
+}> = [
+  {
+    value: "Minor",
+    label: "Minor",
+    description: "Limited product impact. No direct patient risk. Correctable at site level without regulatory notification.",
+    color: "var(--warning)",
+    softBg: "var(--warning-soft)",
+    softBorder: "color-mix(in srgb, var(--warning) 38%, transparent)",
+    weight: "Low",
+  },
+  {
+    value: "Major",
+    label: "Major",
+    description: "Significant process deviation or compliance gap. Potential product impact. Requires full CAPA investigation.",
+    color: "var(--danger)",
+    softBg: "var(--danger-soft)",
+    softBorder: "color-mix(in srgb, var(--danger) 38%, transparent)",
+    weight: "Medium",
+  },
+  {
+    value: "Critical",
+    label: "Critical",
+    description: "Direct patient safety or regulatory risk. Immediate containment and escalation required. May trigger recall assessment.",
+    color: "var(--danger)",
+    softBg: "var(--danger-soft)",
+    softBorder: "color-mix(in srgb, var(--danger) 38%, transparent)",
+    weight: "High",
+  },
+];
+
+const STEP_LABELS = ["Source import", "Gate questions", "Impact assessment", "Review & submit"];
+
+// ── Helper functions ──────────────────────────────────────────────────────────
 
 function isCAPAType(value: string | null): value is CAPAType {
   return value === "deviation" || value === "audit" || value === "complaint";
@@ -91,77 +141,290 @@ function getPrefillSource(prefill: PreFillContext) {
   return prefill.source;
 }
 
-function getSuggestedTitle(type: CAPAType, prefill?: PreFillContext) {
-  if (!prefill) return `${formatCAPAType(type)} CAPA Intake`;
-  if (prefill.source === "Bizzmine") return `CAPA for ${prefill.deviationId}: Environmental Monitoring Excursion`;
-  if (prefill.source === "Q100+") return `CAPA for ${prefill.findingId}: GMP Documentation Gap`;
-  return `CAPA for ${prefill.complaintId}: Visible Particulate Matter Complaint`;
-}
+// ── Step indicator ────────────────────────────────────────────────────────────
 
-function getPrefillSummary(prefill: PreFillContext) {
-  if (prefill.source === "Bizzmine") {
-    return [
-      ["Deviation ID", prefill.deviationId],
-      ["Reported", formatDateTime(prefill.reportedAt)],
-      ["Occurred", formatDateTime(prefill.occurredAt)],
-      ["Area", prefill.location.area],
-      ["Line", prefill.location.line],
-      ["Equipment ID", prefill.location.equipmentId],
-      ["Affected Batches", prefill.affectedBatches.join(", ")],
-      ["Initial Observation", prefill.initialObservation],
-    ];
-  }
+function StepIndicator({ current }: { current: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "center" }}>
+      {STEP_LABELS.map((label, i) => {
+        const stepNum = i + 1;
+        const isDone = stepNum < current;
+        const isActive = stepNum === current;
 
-  if (prefill.source === "Q100+") {
-    return [
-      ["Finding ID", prefill.findingId],
-      ["Audit ID", prefill.auditId],
-      ["Audit Date", formatDateTime(prefill.auditDate)],
-      ["Auditor", `${prefill.auditor.name} · ${prefill.auditor.organization}`],
-      ["Auditee", `${prefill.auditee.department} · ${prefill.auditee.contactPerson}`],
-      ["Category", prefill.findingCategory],
-      ["Regulation", prefill.regulationReference.join(", ")],
-      ["Description", prefill.findingDescription],
-    ];
-  }
+        return (
+          <div key={label} style={{ display: "flex", alignItems: "flex-start", flex: i < STEP_LABELS.length - 1 ? 1 : "none" }}>
+            {/* Step node */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+              {/* Circle */}
+              <div
+                style={{
+                  width: "30px",
+                  height: "30px",
+                  borderRadius: "50%",
+                  background: isDone || isActive ? "var(--grad-brand)" : "var(--bg-4)",
+                  border: isDone || isActive ? "none" : "1px solid var(--line-2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  transition: "background 0.3s",
+                }}
+              >
+                {isDone ? (
+                  <Check size={14} style={{ color: "var(--on-accent)" }} strokeWidth={2.5} />
+                ) : (
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      fontFamily: "var(--font-mono)",
+                      color: isActive ? "var(--on-accent)" : "var(--fg-4)",
+                    }}
+                  >
+                    {stepNum}
+                  </span>
+                )}
+              </div>
+              {/* Label */}
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontFamily: "var(--font-sans)",
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive ? "var(--fg-1)" : isDone ? "var(--fg-2)" : "var(--fg-4)",
+                  textAlign: "center",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {label}
+              </span>
+            </div>
 
-  return [
-    ["Complaint ID", prefill.complaintId],
-    ["Reported", formatDateTime(prefill.reportedAt)],
-    ["Customer", `${prefill.customer.name} · ${prefill.customer.type}`],
-    ["Product", prefill.product.name],
-    ["Lot Number", prefill.product.lotNumber],
-    ["Expiry Date", prefill.product.expiryDate],
-    ["Complaint Type", prefill.complaintType],
-    ["Description", prefill.description],
-  ];
-}
-
-function computeIntakeScore(title: string, gateAnswers: Record<GateQuestionID, string>): QualityScore {
-  const combinedAnswers = Object.values(gateAnswers).join(" ");
-  const problemSpecificity = computeProblemSpecificity(`${title} ${combinedAnswers}`);
-  const rootCauseDepth = computeRootCauseDepth([gateAnswers.cause_confirmation], 2);
-  const effectiveness = Math.min(
-    25,
-    (gateAnswers.effectiveness_criteria.length >= 30 ? 12 : 4) +
-      (gateAnswers.impact.length >= 30 ? 6 : 2) +
-      (gateAnswers.scope.length >= 30 ? 5 : 1),
+            {/* Connector line (not after last step) */}
+            {i < STEP_LABELS.length - 1 && (
+              <div
+                style={{
+                  flex: 1,
+                  height: "1px",
+                  marginTop: "14px",
+                  background: isDone ? "var(--accent)" : "var(--line-2)",
+                  minWidth: "32px",
+                  transition: "background 0.3s",
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
-  const containment = Math.min(
-    25,
-    (gateAnswers.containment.length >= 30 ? 14 : 4) +
-      (/\b(hold|quarantine|restrict|review|assessment|sample)\b/i.test(gateAnswers.containment)
-        ? 8
-        : 0),
-  );
-
-  return computeTotalQualityScore({
-    problemSpecificity,
-    rootCauseDepth,
-    effectiveness,
-    containment,
-  });
 }
+
+// ── Reusable field components ─────────────────────────────────────────────────
+
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <label
+      style={{
+        display: "block",
+        fontSize: "12px",
+        fontWeight: 600,
+        color: "var(--fg-2)",
+        marginBottom: "6px",
+        fontFamily: "var(--font-sans)",
+      }}
+    >
+      {children}
+      {required && (
+        <span style={{ color: "var(--danger)", marginLeft: "3px" }}>*</span>
+      )}
+    </label>
+  );
+}
+
+function StyledTextarea({
+  value,
+  onChange,
+  placeholder,
+  rows = 4,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  rows?: number;
+}) {
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      style={{
+        width: "100%",
+        background: "var(--bg-4)",
+        border: "1px solid var(--line-2)",
+        borderRadius: "var(--r-sm)",
+        padding: "10px 12px",
+        fontSize: "13px",
+        lineHeight: "1.6",
+        color: "var(--fg-1)",
+        fontFamily: "var(--font-sans)",
+        resize: "vertical",
+        outline: "none",
+        boxSizing: "border-box",
+        transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderColor = "var(--accent)";
+        e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderColor = "var(--line-2)";
+        e.currentTarget.style.boxShadow = "none";
+      }}
+    />
+  );
+}
+
+function ReviewField({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div>
+      <p
+        style={{
+          fontSize: "10px",
+          fontFamily: "var(--font-mono)",
+          fontWeight: 600,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--fg-4)",
+          margin: "0 0 4px",
+        }}
+      >
+        {label}
+      </p>
+      <p
+        style={{
+          fontSize: "13px",
+          color: "var(--fg-1)",
+          margin: 0,
+          lineHeight: "1.55",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+// ── Wizard card shell ────────────────────────────────────────────────────────
+
+function WizardCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--line-2)",
+        borderRadius: "var(--r-lg)",
+        padding: "32px",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── Navigation buttons ────────────────────────────────────────────────────────
+
+function NavButtons({
+  step,
+  onBack,
+  onNext,
+  nextLabel = "Continue",
+  nextDisabled = false,
+  isLoading = false,
+}: {
+  step: number;
+  onBack?: () => void;
+  onNext: () => void;
+  nextLabel?: string;
+  nextDisabled?: boolean;
+  isLoading?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginTop: "28px",
+        paddingTop: "20px",
+        borderTop: "1px solid var(--line-1)",
+      }}
+    >
+      {step > 1 && onBack ? (
+        <button
+          onClick={onBack}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "transparent",
+            color: "var(--fg-3)",
+            border: "1px solid var(--line-2)",
+            borderRadius: "var(--r-sm)",
+            padding: "8px 16px",
+            fontSize: "13px",
+            cursor: "pointer",
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          <ArrowLeft size={13} />
+          Back
+        </button>
+      ) : (
+        <div />
+      )}
+
+      <button
+        onClick={onNext}
+        disabled={nextDisabled || isLoading}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          background: nextDisabled ? "var(--bg-4)" : "var(--grad-brand)",
+          color: nextDisabled ? "var(--fg-4)" : "var(--on-accent)",
+          border: "none",
+          borderRadius: "var(--r-sm)",
+          padding: "9px 20px",
+          fontSize: "13px",
+          fontWeight: 600,
+          cursor: nextDisabled || isLoading ? "not-allowed" : "pointer",
+          fontFamily: "var(--font-sans)",
+          letterSpacing: "0.01em",
+          opacity: nextDisabled ? 0.6 : 1,
+          transition: "opacity var(--dur-fast) var(--ease-out)",
+        }}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+            Importing…
+          </>
+        ) : (
+          <>
+            {nextLabel}
+            {step < 4 && <ArrowRight size={13} />}
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function CapaIntakePage() {
   const navigate = useNavigate();
@@ -169,14 +432,20 @@ export function CapaIntakePage() {
   const queryType = searchParams.get("type");
   const querySourceId = searchParams.get("sourceId");
   const initialType = isCAPAType(queryType) ? queryType : "deviation";
+
+  // Wizard state
+  const [step, setStep] = useState(1);
+
+  // Step 1 — source
   const [selectedType, setSelectedType] = useState<CAPAType>(initialType);
-  const [sourceId, setSourceId] = useState(querySourceId ?? sourceIdByType[initialType]);
+  const [sourceId, setSourceId] = useState(
+    querySourceId ?? SOURCE_CARDS.find((c) => c.type === initialType)?.sourceId ?? "DEV-2026-0341",
+  );
   const [prefill, setPrefill] = useState<PreFillContext | undefined>();
-  const [impact, setImpact] = useState<ImpactClassification | undefined>();
-  const [title, setTitle] = useState(getSuggestedTitle(initialType));
-  const [isLoadingSource, setIsLoadingSource] = useState(false);
-  const [isClassifying, setIsClassifying] = useState(false);
-  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+
+  // Step 2 — gate questions
   const [gateAnswers, setGateAnswers] = useState<Record<GateQuestionID, string>>({
     observation: "",
     scope: "",
@@ -185,236 +454,953 @@ export function CapaIntakePage() {
     cause_confirmation: "",
     effectiveness_criteria: "",
   });
+
+  // Step 3 — impact
+  const [impactClassification, setImpactClassification] = useState<ImpactClassification | undefined>();
+  const [selectedSeverity, setSelectedSeverity] = useState<Severity | undefined>();
+  const [title, setTitle] = useState(getSuggestedTitle(initialType));
+
+  // Step 4 — submit
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
   const createCAPAFromFinding = useCapaStore((state) => state.createCAPAFromFinding);
   const existingFinding = useCapaStore((state) =>
-    state.findings.find((finding) => finding.id === sourceId),
+    state.findings.find((f) => f.id === sourceId),
   );
 
+  // When source card selection changes, reset prefill
   useEffect(() => {
     if (!querySourceId) {
-      setSourceId(sourceIdByType[selectedType]);
+      const card = SOURCE_CARDS.find((c) => c.type === selectedType);
+      if (card) setSourceId(card.sourceId);
     }
     setPrefill(undefined);
-    setImpact(undefined);
+    setImpactClassification(undefined);
     setTitle(getSuggestedTitle(selectedType));
   }, [querySourceId, selectedType]);
 
-  const score = useMemo(() => computeIntakeScore(title, gateAnswers), [gateAnswers, title]);
-  const missingGateAnswers = gateQuestions.filter((question) => !gateAnswers[question.id].trim());
-  const canSubmit = Boolean(prefill && impact && title.trim().length >= 10 && missingGateAnswers.length === 0);
+  // Sync Nova severity to selector default
+  useEffect(() => {
+    if (impactClassification?.severity) {
+      setSelectedSeverity(impactClassification.severity);
+    }
+  }, [impactClassification]);
 
-  const handleFetchSource = async () => {
-    setIsLoadingSource(true);
-    setSubmitAttempted(false);
+  const score = useMemo(() => computeIntakeScore(title, gateAnswers), [title, gateAnswers]);
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+
+  async function handleImport(type: CAPAType, id: string) {
+    setIsLoading(true);
+    setSelectedType(type);
+    setSourceId(id);
     try {
-      const imported = await importSourceData(selectedType, sourceId);
+      const imported = await importSourceData(type, id);
       setPrefill(imported);
-      const suggestedTitle = getSuggestedTitle(selectedType, imported);
+      const suggestedTitle = getSuggestedTitle(type, imported);
       setTitle(suggestedTitle);
-      setIsClassifying(true);
       const classification = await classifyImpact(imported);
-      setImpact(classification);
+      setImpactClassification(classification);
+      setSelectedSeverity(classification.severity);
       toast("Source data imported", {
         description: `Imported from ${getPrefillSource(imported)}.`,
       });
-    } catch (error) {
-      toast("Source data unavailable", {
-        description: error instanceof Error ? error.message : "Nova could not import the selected source record.",
+      setStep(2);
+    } catch (err) {
+      toast.error("Import failed", {
+        description: err instanceof Error ? err.message : "Nova could not import the source record.",
       });
     } finally {
-      setIsLoadingSource(false);
-      setIsClassifying(false);
+      setIsLoading(false);
     }
-  };
+  }
 
-  const handleSubmit = () => {
+  function handleManualMode() {
+    setManualMode(true);
+    setPrefill(undefined);
+    setStep(2);
+  }
+
+  function handleSubmit() {
     setSubmitAttempted(true);
-    if (!canSubmit) return;
-
     const capa = createCAPAFromFinding(sourceId, selectedType);
     if (!capa) {
-      toast("CAPA could not be created", {
+      toast.error("CAPA could not be created", {
         description: "The selected source finding is not available in the demo dataset.",
       });
       return;
     }
-
-    toast("CAPA ready", {
+    toast.success("CAPA created", {
       description: `${capa.id} is ready for the 8D workflow.`,
     });
     navigate(`/capa/${capa.id}`);
-  };
+  }
+
+  // ── Step validation ─────────────────────────────────────────────────────────
+
+  const step2Valid = gateAnswers.observation.trim().length >= 20;
+  const step3Valid = Boolean(selectedSeverity);
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">New CAPA Intake</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Import mocked source data, let Nova classify impact, answer intake gate questions, and create an audit-ready CAPA workflow.
-          </p>
-        </div>
-        <Button onClick={handleSubmit}>
-          {submitLabelByType[selectedType]}
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+    <div
+      style={{
+        maxWidth: "720px",
+        margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: "28px",
+      }}
+    >
+      {/* Page header */}
+      <div>
+        <Link
+          to="/findings"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            fontSize: "12px",
+            color: "var(--fg-3)",
+            textDecoration: "none",
+            marginBottom: "10px",
+            fontFamily: "var(--font-sans)",
+          }}
+        >
+          <ArrowLeft size={13} />
+          Back to findings
+        </Link>
+        <h1
+          style={{
+            fontSize: "22px",
+            fontWeight: 700,
+            color: "var(--fg-1)",
+            margin: "0 0 4px",
+            fontFamily: "var(--font-sans)",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          New CAPA intake
+        </h1>
+        <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+          Import from source system, answer gate questions, and create an audit-ready CAPA workflow.
+        </p>
       </div>
 
-      {submitAttempted && !canSubmit && (
-        <BlockerBanner
-          title="CAPA intake is incomplete"
-          message="Import source data, keep a clear title, and answer all gate questions before submitting to QA."
-        />
+      {/* Step indicator */}
+      <StepIndicator current={step} />
+
+      {/* ── Step 1: Source Import ─────────────────────────────────────────── */}
+      {step === 1 && (
+        <WizardCard>
+          <p
+            style={{
+              fontSize: "11px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 600,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--fg-4)",
+              margin: "0 0 4px",
+            }}
+          >
+            Step 1
+          </p>
+          <h2
+            style={{
+              fontSize: "17px",
+              fontWeight: 700,
+              color: "var(--fg-1)",
+              margin: "0 0 6px",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Source import
+          </h2>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: "0 0 24px", fontFamily: "var(--font-sans)" }}>
+            Select a connected source system to auto-populate source data, or fill manually.
+          </p>
+
+          {/* Source system cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "12px" }}>
+            {SOURCE_CARDS.map((card) => (
+              <div
+                key={card.type}
+                style={{
+                  background: "var(--bg-3)",
+                  border: `1px solid ${selectedType === card.type && prefill ? card.softBorder : "var(--line-2)"}`,
+                  borderRadius: "var(--r-md)",
+                  padding: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  transition: "border-color var(--dur-fast) var(--ease-out)",
+                }}
+              >
+                {/* System header */}
+                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                  <div>
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: "var(--fg-1)",
+                        margin: "0 0 2px",
+                        fontFamily: "var(--font-sans)",
+                      }}
+                    >
+                      {card.system}
+                    </p>
+                    <span
+                      style={{
+                        display: "inline-block",
+                        fontSize: "10px",
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 600,
+                        color: card.color,
+                        background: card.softBg,
+                        padding: "1px 6px",
+                        borderRadius: "var(--r-full)",
+                        letterSpacing: "0.18em",
+                      }}
+                    >
+                      {card.badge}
+                    </span>
+                  </div>
+                  {/* Connected badge */}
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontFamily: "var(--font-mono)",
+                      color: "var(--success)",
+                      background: "var(--success-soft)",
+                      padding: "2px 7px",
+                      borderRadius: "var(--r-full)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Connected
+                  </span>
+                </div>
+
+                {/* Source ID */}
+                <p
+                  style={{
+                    fontSize: "11px",
+                    fontFamily: "var(--font-mono)",
+                    color: "var(--fg-3)",
+                    margin: 0,
+                    background: "var(--bg-4)",
+                    padding: "4px 8px",
+                    borderRadius: "var(--r-sm)",
+                    border: "1px solid var(--line-1)",
+                  }}
+                >
+                  {card.sourceId}
+                </p>
+
+                {/* Description */}
+                <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)", lineHeight: "1.4" }}>
+                  {card.description}
+                </p>
+
+                {/* Import button */}
+                <button
+                  onClick={() => handleImport(card.type, card.sourceId)}
+                  disabled={isLoading}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "5px",
+                    background: selectedType === card.type && prefill ? card.selectedBg : "var(--bg-4)",
+                    color: selectedType === card.type && prefill ? card.color : "var(--fg-2)",
+                    border: `1px solid ${selectedType === card.type && prefill ? card.softBorder : "var(--line-2)"}`,
+                    borderRadius: "var(--r-sm)",
+                    padding: "7px 0",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: isLoading ? "wait" : "pointer",
+                    fontFamily: "var(--font-sans)",
+                    marginTop: "auto",
+                    width: "100%",
+                    transition: "all var(--dur-fast) var(--ease-out)",
+                  }}
+                >
+                  {isLoading && selectedType === card.type ? (
+                    <>
+                      <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                      Importing…
+                    </>
+                  ) : selectedType === card.type && prefill ? (
+                    <>
+                      <Check size={12} strokeWidth={2.5} />
+                      Imported
+                    </>
+                  ) : (
+                    <>
+                      Import and continue
+                      <ArrowRight size={12} />
+                    </>
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Manual option */}
+          <button
+            onClick={handleManualMode}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              gap: "8px",
+              background: "transparent",
+              color: "var(--fg-3)",
+              border: "1px dashed var(--line-2)",
+              borderRadius: "var(--r-md)",
+              padding: "12px",
+              fontSize: "13px",
+              cursor: "pointer",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Fill manually without source import
+            <ArrowRight size={13} />
+          </button>
+
+          {existingFinding?.linkedCapaId && (
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "10px 14px",
+                background: "var(--accent-soft)",
+                border: "1px solid var(--accent-line)",
+                borderRadius: "var(--r-sm)",
+                fontSize: "12px",
+                color: "var(--accent)",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              <Sparkles size={12} style={{ display: "inline", marginRight: "6px" }} />
+              This finding is already linked to {existingFinding.linkedCapaId}. Submitting will open the existing CAPA.
+            </div>
+          )}
+        </WizardCard>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Source Import</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
-              <div>
-                <label className="text-xs font-medium uppercase text-muted-foreground">CAPA Type</label>
-                <Select value={selectedType} onValueChange={(value) => setSelectedType(value as CAPAType)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="deviation">Deviation</SelectItem>
-                    <SelectItem value="audit">Audit Finding</SelectItem>
-                    <SelectItem value="complaint">Complaint</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs font-medium uppercase text-muted-foreground">Source ID</label>
-                <Input value={sourceId} onChange={(event) => setSourceId(event.target.value)} className="mt-1" />
-              </div>
-              <div className="flex items-end">
-                <Button className="w-full" onClick={handleFetchSource} disabled={isLoadingSource}>
-                  <DownloadCloud className="mr-2 h-4 w-4" />
-                  {fetchLabelByType[selectedType]}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+      {/* ── Step 2: Gate Questions ────────────────────────────────────────── */}
+      {step === 2 && (
+        <WizardCard>
+          <p
+            style={{
+              fontSize: "11px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 600,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--fg-4)",
+              margin: "0 0 4px",
+            }}
+          >
+            Step 2
+          </p>
+          <h2
+            style={{
+              fontSize: "17px",
+              fontWeight: 700,
+              color: "var(--fg-1)",
+              margin: "0 0 6px",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Gate questions
+          </h2>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: "0 0 20px", fontFamily: "var(--font-sans)" }}>
+            Answer questions to help Nova assess severity and scope. Be specific: include dates, batch numbers, and measurable observations.
+          </p>
 
-          {(isLoadingSource || isClassifying) && (
-            <AILoadingSpinner label={isLoadingSource ? loadingCopyByType[selectedType] : "Nova is analyzing..."} />
-          )}
+          {/* Nova tip */}
+          <div
+            style={{
+              background: "var(--bg-3)",
+              borderLeft: "3px solid var(--accent)",
+              borderRadius: "var(--r-md)",
+              padding: "12px 16px",
+              marginBottom: "24px",
+              display: "flex",
+              gap: "10px",
+            }}
+          >
+            <Sparkles size={14} style={{ color: "var(--accent)", flexShrink: 0, marginTop: "1px" }} />
+            <div>
+              <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--accent)", margin: "0 0 3px", fontFamily: "var(--font-sans)" }}>
+                Nova tip
+              </p>
+              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)", lineHeight: "1.55" }}>
+                Be specific about dates, batch numbers, and measurable observations. Vague answers will lower your quality score and may delay CAPA approval.
+              </p>
+            </div>
+          </div>
 
-          {prefill && (
-            <Card>
-              <CardHeader>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <CardTitle className="text-base">Imported Source Data</CardTitle>
-                  <SourceBadge source={getPrefillSource(prefill)} />
-                </div>
-              </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {getPrefillSummary(prefill).map(([label, value]) => (
-                  <div key={label} className={label === "Description" || label === "Initial Observation" ? "md:col-span-2 xl:col-span-3" : ""}>
-                    <div className="text-xs font-medium uppercase text-muted-foreground">{label}</div>
-                    <div className="mt-1 text-sm">{value}</div>
+          {/* Required questions */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+            {GATE_QUESTIONS.filter((q) => q.required).map((q) => (
+              <div key={q.id}>
+                <FieldLabel required>{q.question}</FieldLabel>
+                <StyledTextarea
+                  value={gateAnswers[q.id]}
+                  onChange={(v) => setGateAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                  placeholder={q.placeholder}
+                  rows={4}
+                />
+              </div>
+            ))}
+
+            {/* Additional context */}
+            <div
+              style={{
+                paddingTop: "18px",
+                borderTop: "1px solid var(--line-1)",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 600,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "var(--fg-4)",
+                  margin: "0 0 16px",
+                }}
+              >
+                Additional context (recommended)
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {GATE_QUESTIONS.filter((q) => !q.required).map((q) => (
+                  <div key={q.id}>
+                    <FieldLabel>{q.question}</FieldLabel>
+                    <StyledTextarea
+                      value={gateAnswers[q.id]}
+                      onChange={(v) => setGateAnswers((prev) => ({ ...prev, [q.id]: v }))}
+                      placeholder={q.placeholder}
+                      rows={3}
+                    />
                   </div>
                 ))}
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">CAPA Draft</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-xs font-medium uppercase text-muted-foreground">Suggested CAPA Title</label>
-                <Input value={title} onChange={(event) => setTitle(event.target.value)} className="mt-1" />
               </div>
-              {impact && (
-                <div className="rounded border bg-muted/30 p-3">
-                  <div className="mb-2 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-nova" />
-                    <span className="text-sm font-medium">Nova Impact Classification</span>
-                    <SeverityBadge severity={impact.severity} />
-                  </div>
-                  <p className="text-sm leading-6 text-muted-foreground">{impact.rationale}</p>
-                  <div className="mt-3 grid gap-2 md:grid-cols-3">
-                    {impact.factors.map((factor) => (
-                      <div key={factor.factor} className="rounded border bg-background p-2 text-xs">
-                        <div className="font-medium">{factor.factor}</div>
-                        <div className="mt-1 text-muted-foreground">{factor.value}</div>
-                        <div className="mt-1 text-primary">Weight {factor.weight}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {!impact && (
-                <NovaCoachTip>
-                  Fetch source data first. Nova will classify all three golden demo cases as Major severity and explain the audit rationale.
-                </NovaCoachTip>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Gate Questions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {gateQuestions.map((question) => (
-                <div key={question.id}>
-                  <label className="text-sm font-medium">{question.question}</label>
-                  <Textarea
-                    value={gateAnswers[question.id]}
-                    onChange={(event) =>
-                      setGateAnswers((current) => ({
-                        ...current,
-                        [question.id]: event.target.value,
-                      }))
-                    }
-                    placeholder={question.placeholder}
-                    className="mt-2"
-                  />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+          <NavButtons
+            step={step}
+            onBack={() => setStep(1)}
+            onNext={() => {
+              if (!step2Valid) {
+                toast.error("Please answer the first question", {
+                  description: "Describe what happened with at least a brief explanation.",
+                });
+                return;
+              }
+              setStep(3);
+            }}
+            nextLabel="Continue to impact"
+          />
+        </WizardCard>
+      )}
 
-        <div className="space-y-4">
-          <ScoreSidebar score={score} />
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Submission Check</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Source imported</span>
-                <span className={prefill ? "text-status-ready" : "text-muted-foreground"}>{prefill ? "Ready" : "Missing"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Impact classified</span>
-                <span className={impact ? "text-status-ready" : "text-muted-foreground"}>{impact ? "Ready" : "Missing"}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Gate questions</span>
-                <span className={missingGateAnswers.length === 0 ? "text-status-ready" : "text-muted-foreground"}>
-                  {gateQuestions.length - missingGateAnswers.length}/{gateQuestions.length}
+      {/* ── Step 3: Impact Assessment ─────────────────────────────────────── */}
+      {step === 3 && (
+        <WizardCard>
+          <p
+            style={{
+              fontSize: "11px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 600,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--fg-4)",
+              margin: "0 0 4px",
+            }}
+          >
+            Step 3
+          </p>
+          <h2
+            style={{
+              fontSize: "17px",
+              fontWeight: 700,
+              color: "var(--fg-1)",
+              margin: "0 0 6px",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Impact assessment
+          </h2>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: "0 0 24px", fontFamily: "var(--font-sans)" }}>
+            Select a severity level. Nova's recommendation is pre-filled if you imported source data.
+          </p>
+
+          {/* Nova AI assessment */}
+          {impactClassification ? (
+            <div
+              style={{
+                background: "var(--bg-3)",
+                borderLeft: "3px solid var(--accent)",
+                borderRadius: "var(--r-md)",
+                padding: "14px 16px",
+                marginBottom: "24px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                <Sparkles size={13} style={{ color: "var(--accent)" }} />
+                <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--accent)", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+                  Nova assessment
+                </span>
+                <span
+                  style={{
+                    fontSize: "11px",
+                    fontFamily: "var(--font-mono)",
+                    fontWeight: 700,
+                    color: impactClassification.severity === "Minor" ? "var(--warning)" : "var(--danger)",
+                    background: impactClassification.severity === "Minor" ? "var(--warning-soft)" : "var(--danger-soft)",
+                    padding: "1px 8px",
+                    borderRadius: "var(--r-full)",
+                    marginLeft: "4px",
+                  }}
+                >
+                  {impactClassification.severity}
+                </span>
+                <span style={{ fontSize: "11px", color: "var(--fg-3)", marginLeft: "auto", fontFamily: "var(--font-mono)" }}>
+                  {Math.round(impactClassification.totalWeight)}% confidence
                 </span>
               </div>
-              {existingFinding?.linkedCapaId && (
-                <div className="rounded border bg-primary/5 p-2 text-xs text-muted-foreground">
-                  This source finding is already linked to {existingFinding.linkedCapaId}. Submit will open the existing CAPA.
+              <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: "0 0 10px", fontFamily: "var(--font-sans)", lineHeight: "1.55" }}>
+                {impactClassification.rationale}
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                {impactClassification.factors.map((factor) => (
+                  <div
+                    key={factor.factor}
+                    style={{
+                      background: "var(--bg-4)",
+                      borderRadius: "var(--r-sm)",
+                      padding: "8px 10px",
+                      border: "1px solid var(--line-1)",
+                    }}
+                  >
+                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", margin: "0 0 3px", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+                      {factor.factor}
+                    </p>
+                    <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: "0 0 4px", fontFamily: "var(--font-sans)" }}>
+                      {factor.value}
+                    </p>
+                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--accent)", margin: 0 }}>
+                      Weight {factor.weight}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                background: "var(--bg-3)",
+                border: "1px solid var(--line-1)",
+                borderRadius: "var(--r-md)",
+                padding: "12px 16px",
+                marginBottom: "24px",
+                display: "flex",
+                gap: "10px",
+              }}
+            >
+              <Sparkles size={13} style={{ color: "var(--fg-4)", flexShrink: 0, marginTop: "1px" }} />
+              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                No source data was imported. Select a severity level manually based on your assessment.
+              </p>
+            </div>
+          )}
+
+          {/* Severity cards */}
+          <p
+            style={{
+              fontSize: "12px",
+              fontWeight: 600,
+              color: "var(--fg-2)",
+              margin: "0 0 10px",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Severity classification <span style={{ color: "var(--danger)" }}>*</span>
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "24px" }}>
+            {SEVERITY_OPTIONS.map((opt) => {
+              const isSelected = selectedSeverity === opt.value;
+              const isNova = impactClassification?.severity === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => setSelectedSeverity(opt.value)}
+                  style={{
+                    textAlign: "left",
+                    background: isSelected ? opt.softBg : "var(--bg-3)",
+                    border: `1px solid ${isSelected ? opt.softBorder : "var(--line-2)"}`,
+                    borderRadius: "var(--r-md)",
+                    padding: "14px",
+                    cursor: "pointer",
+                    transition: "all var(--dur-fast) var(--ease-out)",
+                    position: "relative",
+                  }}
+                >
+                  {/* Nova recommendation badge */}
+                  {isNova && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "8px",
+                        right: "8px",
+                        fontSize: "9px",
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 600,
+                        color: "var(--accent)",
+                        background: "var(--accent-soft)",
+                        padding: "1px 5px",
+                        borderRadius: "var(--r-full)",
+                        letterSpacing: "0.18em",
+                      }}
+                    >
+                      Nova
+                    </span>
+                  )}
+                  {/* Radio indicator */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                    <div
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "50%",
+                        border: `2px solid ${isSelected ? opt.color : "var(--line-3)"}`,
+                        background: isSelected ? opt.color : "transparent",
+                        flexShrink: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {isSelected && (
+                        <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--on-accent)" }} />
+                      )}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        color: isSelected ? opt.color : "var(--fg-2)",
+                        fontFamily: "var(--font-sans)",
+                      }}
+                    >
+                      {opt.label}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "11px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)", lineHeight: "1.45" }}>
+                    {opt.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* CAPA title */}
+          <div>
+            <FieldLabel required>CAPA title</FieldLabel>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter a descriptive title for this CAPA"
+              style={{
+                width: "100%",
+                background: "var(--bg-4)",
+                border: "1px solid var(--line-2)",
+                borderRadius: "var(--r-sm)",
+                padding: "9px 12px",
+                fontSize: "13px",
+                color: "var(--fg-1)",
+                fontFamily: "var(--font-sans)",
+                outline: "none",
+                boxSizing: "border-box",
+                transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--accent)";
+                e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--line-2)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <NavButtons
+            step={step}
+            onBack={() => setStep(2)}
+            onNext={() => {
+              if (!step3Valid) {
+                toast.error("Select a severity level", {
+                  description: "Choose Minor, Major, or Critical before continuing.",
+                });
+                return;
+              }
+              setStep(4);
+            }}
+            nextLabel="Review & submit"
+          />
+        </WizardCard>
+      )}
+
+      {/* ── Step 4: Review & Submit ────────────────────────────────────────── */}
+      {step === 4 && (
+        <WizardCard>
+          <p
+            style={{
+              fontSize: "11px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 600,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--fg-4)",
+              margin: "0 0 4px",
+            }}
+          >
+            Step 4
+          </p>
+          <h2
+            style={{
+              fontSize: "17px",
+              fontWeight: 700,
+              color: "var(--fg-1)",
+              margin: "0 0 6px",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Review & submit
+          </h2>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: "0 0 24px", fontFamily: "var(--font-sans)" }}>
+            Review the CAPA details before submitting. This will create the CAPA and open the 8D workflow.
+          </p>
+
+          {/* Summary cards */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+            {/* Source summary */}
+            <div
+              style={{
+                background: "var(--bg-3)",
+                border: "1px solid var(--line-1)",
+                borderRadius: "var(--r-md)",
+                padding: "16px",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 600,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "var(--fg-4)",
+                  margin: "0 0 12px",
+                }}
+              >
+                Source data
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <ReviewField label="CAPA type" value={selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} />
+                <ReviewField label="Source ID" value={sourceId} />
+                <ReviewField label="System" value={prefill ? getPrefillSource(prefill) : "Manual entry"} />
+                <ReviewField label="Severity" value={selectedSeverity} />
+              </div>
+              {title && (
+                <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--line-1)" }}>
+                  <ReviewField label="CAPA title" value={title} />
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+
+            {/* Imported source detail */}
+            {prefill && (
+              <div
+                style={{
+                  background: "var(--bg-3)",
+                  border: "1px solid var(--line-1)",
+                  borderRadius: "var(--r-md)",
+                  padding: "16px",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: "11px",
+                    fontFamily: "var(--font-mono)",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "var(--fg-4)",
+                    margin: "0 0 12px",
+                  }}
+                >
+                  Imported from {getPrefillSource(prefill)}
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  {getPrefillSummary(prefill).slice(0, 6).map(([label, value]) => (
+                    <ReviewField key={label} label={label} value={value} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Gate answers */}
+            <div
+              style={{
+                background: "var(--bg-3)",
+                border: "1px solid var(--line-1)",
+                borderRadius: "var(--r-md)",
+                padding: "16px",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 600,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "var(--fg-4)",
+                  margin: "0 0 12px",
+                }}
+              >
+                Gate questions
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {GATE_QUESTIONS.filter((q) => gateAnswers[q.id].trim()).map((q) => (
+                  <ReviewField key={q.id} label={q.question} value={gateAnswers[q.id]} />
+                ))}
+                {!Object.values(gateAnswers).some((v) => v.trim()) && (
+                  <p style={{ fontSize: "12px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                    No answers provided.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Readiness checklist */}
+            <div
+              style={{
+                background: "var(--bg-3)",
+                border: "1px solid var(--line-1)",
+                borderRadius: "var(--r-md)",
+                padding: "16px",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 600,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "var(--fg-4)",
+                  margin: "0 0 12px",
+                }}
+              >
+                Readiness check
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {[
+                  { label: "Source imported or manual mode selected", passed: Boolean(prefill) || manualMode },
+                  { label: "Gate questions answered", passed: gateAnswers.observation.trim().length >= 20 },
+                  { label: "Severity level selected", passed: Boolean(selectedSeverity) },
+                  { label: "CAPA title provided", passed: title.trim().length >= 10 },
+                  { label: "Nova impact classification", passed: Boolean(impactClassification) },
+                ].map((item) => (
+                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CheckCircle2
+                      size={14}
+                      style={{ flexShrink: 0, color: item.passed ? "var(--success)" : "var(--fg-4)" }}
+                    />
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        color: item.passed ? "var(--fg-2)" : "var(--fg-4)",
+                        fontFamily: "var(--font-sans)",
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Submit / Back */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "28px",
+              paddingTop: "20px",
+              borderTop: "1px solid var(--line-1)",
+            }}
+          >
+            <button
+              onClick={() => setStep(3)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "transparent",
+                color: "var(--fg-3)",
+                border: "1px solid var(--line-2)",
+                borderRadius: "var(--r-sm)",
+                padding: "8px 16px",
+                fontSize: "13px",
+                cursor: "pointer",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
+              <ArrowLeft size={13} />
+              Back
+            </button>
+
+            <button
+              onClick={handleSubmit}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                background: "var(--grad-brand)",
+                color: "var(--on-accent)",
+                border: "none",
+                borderRadius: "var(--r-sm)",
+                padding: "10px 28px",
+                fontSize: "14px",
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: "var(--font-sans)",
+                letterSpacing: "0.01em",
+              }}
+            >
+              Submit CAPA
+              <ArrowRight size={15} />
+            </button>
+          </div>
+        </WizardCard>
+      )}
     </div>
   );
 }
-

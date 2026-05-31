@@ -1,278 +1,489 @@
+/**
+ * CapaListPage — All CAPAs view (wireframe section 06)
+ *
+ * Filterable table of all CAPA cases with quality score, severity,
+ * status, PIC, and due-date visibility.
+ */
+
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Plus, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { SeverityBadge } from "@/components/shared/SeverityBadge";
-import { ScorePill } from "@/components/shared/ScorePill";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useCapaStore, usePersonaStore } from "@/store";
 import type { CAPACase, CAPAStatus, CAPAType, CorrectiveAction, PersonaID, PreventiveAction, Severity } from "@/types";
-import { formatCAPAType, formatDate, formatRelativeTime } from "@/utils/formatters";
+import { formatCAPAStatus, formatCAPAType, formatDate, formatRelativeTime } from "@/utils/formatters";
 
-const allValue = "all";
-const dateFilters = ["all", "overdue", "next_7_days", "updated_30_days"] as const;
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-type DateFilter = (typeof dateFilters)[number];
+const ALL = "all";
+const DATE_FILTERS = ["all", "overdue", "next_7_days", "updated_30_days"] as const;
+type DateFilter = (typeof DATE_FILTERS)[number];
 
-interface CapaRow {
-  capa: CAPACase;
-  nextDueDate?: string;
+// ── Color maps (CSS vars only) ────────────────────────────────────────────────
+
+const SEVERITY_COLORS: Record<Severity, { bg: string; border: string; text: string }> = {
+  Minor: { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" },
+  Major: { bg: "var(--warning-soft)", border: "color-mix(in srgb, var(--warning) 38%, transparent)", text: "var(--warning)" },
+  Critical: { bg: "var(--danger-soft)", border: "color-mix(in srgb, var(--danger) 38%, transparent)", text: "var(--danger)" },
+};
+
+const STATUS_COLORS: Record<CAPAStatus, { bg: string; border: string; text: string }> = {
+  draft: { bg: "var(--bg-4)", border: "var(--line-2)", text: "var(--fg-3)" },
+  disposisi: { bg: "var(--warning-soft)", border: "color-mix(in srgb, var(--warning) 38%, transparent)", text: "var(--warning)" },
+  investigation: { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" },
+  approval: { bg: "var(--warning-soft)", border: "color-mix(in srgb, var(--warning) 38%, transparent)", text: "var(--warning)" },
+  closed: { bg: "var(--success-soft)", border: "color-mix(in srgb, var(--success) 38%, transparent)", text: "var(--success)" },
+};
+
+const TYPE_COLORS: Record<CAPAType, { bg: string; text: string }> = {
+  deviation: { bg: "var(--accent-soft)", text: "var(--accent)" },
+  audit: { bg: "var(--success-soft)", text: "var(--success)" },
+  complaint: { bg: "var(--warning-soft)", text: "var(--warning)" },
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function getNextDueDate(capaId: string, cas: CorrectiveAction[], pas: PreventiveAction[]): string | undefined {
+  return [
+    ...cas.filter((a) => a.capaId === capaId && !["completed", "verified"].includes(a.status)).map((a) => a.dueDate),
+    ...pas.filter((a) => a.capaId === capaId && !["completed", "verified"].includes(a.status)).map((a) => a.targetDate),
+  ].sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0];
 }
 
-function getNextDueDate(
-  capaId: string,
-  correctiveActions: CorrectiveAction[],
-  preventiveActions: PreventiveAction[],
-) {
-  const dates = [
-    ...correctiveActions
-      .filter((action) => action.capaId === capaId && !["completed", "verified"].includes(action.status))
-      .map((action) => action.dueDate),
-    ...preventiveActions
-      .filter((action) => action.capaId === capaId && !["completed", "verified"].includes(action.status))
-      .map((action) => action.targetDate),
-  ].sort((left, right) => new Date(left).getTime() - new Date(right).getTime());
-
-  return dates[0];
-}
-
-function isWithinNextSevenDays(date: string) {
+function isWithinNextSevenDays(date: string): boolean {
   const now = new Date();
   const target = new Date(date);
-  const sevenDaysFromNow = new Date(now);
-  sevenDaysFromNow.setDate(now.getDate() + 7);
-  return target >= now && target <= sevenDaysFromNow;
+  const cutoff = new Date(now);
+  cutoff.setDate(now.getDate() + 7);
+  return target >= now && target <= cutoff;
 }
 
+function isOverdue(date: string): boolean {
+  return new Date(date).getTime() < Date.now();
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function StyledSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: "100%",
+          height: "36px",
+          background: "var(--bg-4)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-sm)",
+          color: "var(--fg-2)",
+          fontSize: "13px",
+          fontFamily: "var(--font-sans)",
+          padding: "0 32px 0 10px",
+          appearance: "none",
+          cursor: "pointer",
+          outline: "none",
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+        style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+        <path d="M3 5l3 3 3-3" stroke="var(--fg-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+function SeverityBadge({ severity }: { severity: Severity }) {
+  const c = SEVERITY_COLORS[severity];
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "3px 8px",
+      borderRadius: "20px",
+      fontSize: "11px",
+      fontWeight: 600,
+      fontFamily: "var(--font-mono)",
+      background: c.bg,
+      border: `1px solid ${c.border}`,
+      color: c.text,
+    }}>
+      {severity}
+    </span>
+  );
+}
+
+function StatusBadge({ status }: { status: CAPAStatus }) {
+  const c = STATUS_COLORS[status];
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "3px 8px",
+      borderRadius: "20px",
+      fontSize: "11px",
+      fontWeight: 600,
+      fontFamily: "var(--font-mono)",
+      background: c.bg,
+      border: `1px solid ${c.border}`,
+      color: c.text,
+    }}>
+      {formatCAPAStatus(status)}
+    </span>
+  );
+}
+
+function TypePill({ type }: { type: CAPAType }) {
+  const c = TYPE_COLORS[type];
+  return (
+    <span style={{
+      display: "inline-block",
+      padding: "3px 8px",
+      borderRadius: "4px",
+      fontSize: "11px",
+      fontWeight: 500,
+      fontFamily: "var(--font-mono)",
+      background: c.bg,
+      color: c.text,
+    }}>
+      {formatCAPAType(type)}
+    </span>
+  );
+}
+
+function ScorePill({ score }: { score: number }) {
+  const isReady = score >= 80;
+  const isWarn = score >= 60 && score < 80;
+  const color = isReady ? "var(--success)" : isWarn ? "var(--warning)" : "var(--danger)";
+  const bg = isReady ? "var(--success-soft)" : isWarn ? "var(--warning-soft)" : "var(--danger-soft)";
+  const border = isReady
+    ? "color-mix(in srgb, var(--success) 38%, transparent)"
+    : isWarn
+      ? "color-mix(in srgb, var(--warning) 38%, transparent)"
+      : "color-mix(in srgb, var(--danger) 38%, transparent)";
+  return (
+    <span style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "4px",
+      padding: "3px 8px",
+      borderRadius: "20px",
+      fontSize: "12px",
+      fontWeight: 700,
+      fontFamily: "var(--font-mono)",
+      background: bg,
+      border: `1px solid ${border}`,
+      color,
+    }}>
+      {score}
+    </span>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
+interface CapaRow { capa: CAPACase; nextDueDate?: string; }
+
 export function CapaListPage() {
-  const capas = useCapaStore((state) => state.capas);
-  const correctiveActions = useCapaStore((state) => state.correctiveActions);
-  const preventiveActions = useCapaStore((state) => state.preventiveActions);
-  const personas = usePersonaStore((state) => state.personas);
+  const navigate = useNavigate();
+  const capas = useCapaStore((s) => s.capas);
+  const correctiveActions = useCapaStore((s) => s.correctiveActions);
+  const preventiveActions = useCapaStore((s) => s.preventiveActions);
+  const personas = usePersonaStore((s) => s.personas);
   const getPersonaName = (id: PersonaID) => personas.find((p) => p.id === id)?.displayName ?? id;
+
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<CAPAType | typeof allValue>(allValue);
-  const [statusFilter, setStatusFilter] = useState<CAPAStatus | typeof allValue>(allValue);
-  const [departmentFilter, setDepartmentFilter] = useState(allValue);
-  const [severityFilter, setSeverityFilter] = useState<Severity | typeof allValue>(allValue);
-  const [dateFilter, setDateFilter] = useState<DateFilter>(allValue);
+  const [typeFilter, setTypeFilter] = useState<string>(ALL);
+  const [statusFilter, setStatusFilter] = useState<string>(ALL);
+  const [departmentFilter, setDepartmentFilter] = useState(ALL);
+  const [severityFilter, setSeverityFilter] = useState<string>(ALL);
+  const [dateFilter, setDateFilter] = useState<DateFilter>(ALL);
 
   const departments = useMemo(
-    () => Array.from(new Set(capas.map((capa) => capa.department))).sort(),
+    () => Array.from(new Set(capas.map((c) => c.department))).sort(),
     [capas],
   );
 
   const rows = useMemo<CapaRow[]>(
-    () =>
-      capas.map((capa) => ({
-        capa,
-        nextDueDate: getNextDueDate(capa.id, correctiveActions, preventiveActions),
-      })),
+    () => capas.map((capa) => ({
+      capa,
+      nextDueDate: getNextDueDate(capa.id, correctiveActions, preventiveActions),
+    })),
     [capas, correctiveActions, preventiveActions],
   );
 
   const filteredRows = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
     const now = new Date();
     const updatedCutoff = new Date(now);
     updatedCutoff.setDate(now.getDate() - 30);
 
     return rows.filter(({ capa, nextDueDate }) => {
-      if (typeFilter !== allValue && capa.type !== typeFilter) return false;
-      if (statusFilter !== allValue && capa.status !== statusFilter) return false;
-      if (departmentFilter !== allValue && capa.department !== departmentFilter) return false;
-      if (severityFilter !== allValue && capa.impact.severity !== severityFilter) return false;
-      if (dateFilter === "overdue" && (!nextDueDate || new Date(nextDueDate) >= now)) return false;
+      if (typeFilter !== ALL && capa.type !== typeFilter) return false;
+      if (statusFilter !== ALL && capa.status !== statusFilter) return false;
+      if (departmentFilter !== ALL && capa.department !== departmentFilter) return false;
+      if (severityFilter !== ALL && capa.impact.severity !== severityFilter) return false;
+      if (dateFilter === "overdue" && (!nextDueDate || !isOverdue(nextDueDate))) return false;
       if (dateFilter === "next_7_days" && (!nextDueDate || !isWithinNextSevenDays(nextDueDate))) return false;
       if (dateFilter === "updated_30_days" && new Date(capa.updatedAt) < updatedCutoff) return false;
-      if (!normalizedQuery) return true;
-
-      return [
-        capa.id,
-        capa.findingId,
-        capa.title,
-        capa.department,
-        capa.status,
-        capa.type,
-        capa.assignedTo,
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery);
+      if (!q) return true;
+      return [capa.id, capa.findingId, capa.title, capa.department, capa.status, capa.type, capa.assignedTo]
+        .join(" ").toLowerCase().includes(q);
     });
   }, [dateFilter, departmentFilter, query, rows, severityFilter, statusFilter, typeFilter]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <div className="animate-page-enter" style={{ maxWidth: "1400px" }}>
+
+      {/* ── Header ──────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">CAPA List</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Track every Deviation, Audit Finding, and Complaint CAPA with quality score, due date, status, and workflow entry points.
+          <h1 style={{
+            fontSize: "22px",
+            fontWeight: 600,
+            letterSpacing: "-0.025em",
+            color: "var(--fg-1)",
+            fontFamily: "var(--font-sans)",
+            margin: 0,
+          }}>
+            CAPA list
+          </h1>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", marginTop: "6px", lineHeight: "1.5", maxWidth: "560px" }}>
+            Track every deviation, audit finding, and complaint CAPA with quality score, due date, and workflow status.
           </p>
         </div>
-        <Button asChild>
-          <Link to="/capa/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New CAPA
-          </Link>
-        </Button>
+        <Link
+          to="/capa/new"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "7px",
+            padding: "9px 18px",
+            background: "var(--grad-brand)",
+            color: "var(--on-accent)",
+            borderRadius: "var(--r-sm)",
+            fontSize: "13px",
+            fontWeight: 600,
+            fontFamily: "var(--font-sans)",
+            textDecoration: "none",
+            transition: "filter var(--dur-fast) var(--ease-out)",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.1)")}
+          onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
+        >
+          <Plus size={14} strokeWidth={2} />
+          New CAPA
+        </Link>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 xl:grid-cols-[minmax(260px,1.5fr)_repeat(5,minmax(150px,1fr))]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="pl-9"
-                placeholder="Search CAPA, finding, title, or department"
-              />
-            </div>
-            <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as CAPAType | typeof allValue)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Types</SelectItem>
-                <SelectItem value="deviation">Deviation</SelectItem>
-                <SelectItem value="audit">Audit Finding</SelectItem>
-                <SelectItem value="complaint">Complaint</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as CAPAStatus | typeof allValue)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="disposisi">Disposition</SelectItem>
-                <SelectItem value="investigation">Investigation</SelectItem>
-                <SelectItem value="approval">Approval</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Departments</SelectItem>
-                {departments.map((department) => (
-                  <SelectItem key={department} value={department}>
-                    {department}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={severityFilter} onValueChange={(value) => setSeverityFilter(value as Severity | typeof allValue)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Severities</SelectItem>
-                <SelectItem value="Minor">Minor</SelectItem>
-                <SelectItem value="Major">Major</SelectItem>
-                <SelectItem value="Critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as DateFilter)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Date" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Dates</SelectItem>
-                <SelectItem value="overdue">Overdue Due Date</SelectItem>
-                <SelectItem value="next_7_days">Due Next 7 Days</SelectItem>
-                <SelectItem value="updated_30_days">Updated Last 30 Days</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* ── Filter bar ──────────────────────────────────────────────── */}
+      <div style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--line-2)",
+        borderRadius: "var(--r-lg)",
+        padding: "16px",
+        marginBottom: "16px",
+      }}>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(240px, 1.5fr) repeat(5, minmax(130px, 1fr))",
+          gap: "10px",
+          alignItems: "end",
+        }}>
+          {/* Search */}
+          <div style={{ position: "relative" }}>
+            <Search size={14} strokeWidth={1.75} style={{
+              position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--fg-3)",
+            }} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search CAPA, finding, title, or department"
+              style={{
+                width: "100%",
+                height: "36px",
+                background: "var(--bg-4)",
+                border: "1px solid var(--line-2)",
+                borderRadius: "var(--r-sm)",
+                color: "var(--fg-1)",
+                fontSize: "13px",
+                fontFamily: "var(--font-sans)",
+                padding: "0 12px 0 32px",
+                outline: "none",
+                transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+            />
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{filteredRows.length} CAPA Cases</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-hidden rounded border">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-muted text-xs uppercase text-muted-foreground">
+          <StyledSelect value={typeFilter} onChange={setTypeFilter}
+            options={[{ value: ALL, label: "All types" }, { value: "deviation", label: "Deviation" }, { value: "audit", label: "Audit Finding" }, { value: "complaint", label: "Complaint" }]} />
+
+          <StyledSelect value={statusFilter} onChange={setStatusFilter}
+            options={[{ value: ALL, label: "All statuses" }, { value: "draft", label: "Draft" }, { value: "disposisi", label: "Disposition" }, { value: "investigation", label: "Investigation" }, { value: "approval", label: "Approval" }, { value: "closed", label: "Closed" }]} />
+
+          <StyledSelect value={departmentFilter} onChange={setDepartmentFilter}
+            options={[{ value: ALL, label: "All departments" }, ...departments.map((d) => ({ value: d, label: d }))]} />
+
+          <StyledSelect value={severityFilter} onChange={setSeverityFilter}
+            options={[{ value: ALL, label: "All severities" }, { value: "Minor", label: "Minor" }, { value: "Major", label: "Major" }, { value: "Critical", label: "Critical" }]} />
+
+          <StyledSelect value={dateFilter} onChange={(v) => setDateFilter(v as DateFilter)}
+            options={[{ value: ALL, label: "All dates" }, { value: "overdue", label: "Overdue" }, { value: "next_7_days", label: "Due next 7 days" }, { value: "updated_30_days", label: "Updated last 30 days" }]} />
+        </div>
+      </div>
+
+      {/* ── Results count ────────────────────────────────────────────── */}
+      <div style={{
+        fontSize: "11px",
+        fontFamily: "var(--font-mono)",
+        fontWeight: 600,
+        letterSpacing: "0.18em",
+        textTransform: "uppercase",
+        color: "var(--fg-3)",
+        marginBottom: "10px",
+      }}>
+        {filteredRows.length} CAPA case{filteredRows.length !== 1 ? "s" : ""}
+      </div>
+
+      {/* ── Table ───────────────────────────────────────────────────── */}
+      <div style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--line-2)",
+        borderRadius: "var(--r-lg)",
+        overflow: "hidden",
+      }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "var(--font-sans)" }}>
+            <thead>
+              <tr style={{ background: "var(--bg-3)", borderBottom: "1px solid var(--line-1)" }}>
+                {["CAPA", "Type", "Severity", "Status", "Quality", "PIC", "Due date", ""].map((h) => (
+                  <th key={h} style={{
+                    padding: "10px 14px",
+                    textAlign: "left",
+                    fontSize: "10px",
+                    fontFamily: "var(--font-mono)",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "var(--fg-3)",
+                    whiteSpace: "nowrap",
+                  }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRows.length === 0 && (
                 <tr>
-                  <th className="px-3 py-2">CAPA</th>
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Severity</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Quality</th>
-                  <th className="px-3 py-2">PIC</th>
-                  <th className="px-3 py-2">Due Date</th>
-                  <th className="px-3 py-2">Action</th>
+                  <td colSpan={8} style={{ padding: "40px 16px", textAlign: "center", color: "var(--fg-3)", fontSize: "13px" }}>
+                    No CAPA cases match the current filters.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredRows.map(({ capa, nextDueDate }) => (
-                  <tr key={capa.id} className="border-t align-top">
-                    <td className="max-w-sm px-3 py-3">
-                      <Link className="font-mono text-xs font-medium text-primary hover:underline" to={`/capa/${capa.id}`}>
+              )}
+              {filteredRows.map(({ capa, nextDueDate }) => {
+                const overdue = nextDueDate && isOverdue(nextDueDate);
+                return (
+                  <tr
+                    key={capa.id}
+                    style={{ borderTop: "1px solid var(--line-1)", verticalAlign: "middle", transition: "background var(--dur-fast) var(--ease-out)", cursor: "pointer" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-3)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    onClick={() => navigate(`/capa/${capa.id}`)}
+                  >
+                    {/* CAPA ID + title */}
+                    <td style={{ padding: "12px 14px", maxWidth: "320px" }}>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--accent)", marginBottom: "3px" }}>
                         {capa.id}
-                      </Link>
-                      <div className="mt-1 font-medium">{capa.title}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">
+                      </div>
+                      <div style={{ fontWeight: 500, color: "var(--fg-1)", lineHeight: "1.4" }}>
+                        {capa.title}
+                      </div>
+                      <div style={{ fontSize: "11px", color: "var(--fg-3)", marginTop: "3px" }}>
                         {capa.findingId} · {capa.department}
                       </div>
                     </td>
-                    <td className="px-3 py-3">{formatCAPAType(capa.type)}</td>
-                    <td className="px-3 py-3">
+
+                    <td style={{ padding: "12px 14px" }}>
+                      <TypePill type={capa.type} />
+                    </td>
+
+                    <td style={{ padding: "12px 14px" }}>
                       <SeverityBadge severity={capa.impact.severity} />
                     </td>
-                    <td className="px-3 py-3">
+
+                    <td style={{ padding: "12px 14px" }}>
                       <StatusBadge status={capa.status} />
                     </td>
-                    <td className="px-3 py-3">
+
+                    <td style={{ padding: "12px 14px" }}>
                       <ScorePill score={capa.score.total} />
                     </td>
-                    <td className="px-3 py-3 text-xs">{getPersonaName(capa.assignedTo as PersonaID)}</td>
-                    <td className="px-3 py-3">
+
+                    <td style={{ padding: "12px 14px", color: "var(--fg-2)", fontSize: "12px", whiteSpace: "nowrap" }}>
+                      {getPersonaName(capa.assignedTo as PersonaID)}
+                    </td>
+
+                    {/* Due date */}
+                    <td style={{ padding: "12px 14px" }}>
                       {nextDueDate ? (
-                        <div>
-                          <div>{formatDate(nextDueDate)}</div>
-                          <div className="text-xs text-muted-foreground">{formatRelativeTime(nextDueDate)}</div>
-                        </div>
+                        <>
+                          <div style={{ color: overdue ? "var(--danger)" : "var(--fg-2)", fontSize: "13px" }}>
+                            {formatDate(nextDueDate)}
+                          </div>
+                          <div style={{ fontSize: "11px", color: overdue ? "var(--danger)" : "var(--fg-3)", marginTop: "2px" }}>
+                            {formatRelativeTime(nextDueDate)}
+                          </div>
+                        </>
                       ) : (
-                        <span className="text-muted-foreground">No open action</span>
+                        <span style={{ fontSize: "12px", color: "var(--fg-3)" }}>No open action</span>
                       )}
                     </td>
-                    <td className="px-3 py-3">
-                      <Button asChild size="sm">
-                        <Link to={`/capa/${capa.id}`}>
-                          Open
-                          <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
+
+                    {/* Open button */}
+                    <td style={{ padding: "12px 14px" }} onClick={(e) => e.stopPropagation()}>
+                      <Link
+                        to={`/capa/${capa.id}`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "6px 12px",
+                          background: "var(--accent-soft)",
+                          border: "1px solid var(--accent-line)",
+                          borderRadius: "var(--r-sm)",
+                          color: "var(--accent)",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          fontFamily: "var(--font-sans)",
+                          textDecoration: "none",
+                          transition: "background var(--dur-fast) var(--ease-out)",
+                          whiteSpace: "nowrap",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--accent) 20%, transparent)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent-soft)")}
+                      >
+                        Open
+                        <ArrowRight size={12} strokeWidth={2} />
+                      </Link>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

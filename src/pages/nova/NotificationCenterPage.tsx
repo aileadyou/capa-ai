@@ -271,7 +271,7 @@ export function NotificationCenterPage() {
                 >
                   <div className="mt-0.5">
                     <div className="h-5 w-9 rounded-full bg-primary/80 p-0.5">
-                      <div className="ml-auto h-4 w-4 rounded-full bg-white" />
+                      <div className="ml-auto h-4 w-4 rounded-full bg-[var(--on-accent)]" />
                     </div>
                   </div>
                   <div>

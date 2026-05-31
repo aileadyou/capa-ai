@@ -1,400 +1,1248 @@
-import { useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowRight,
-  CheckCircle2,
-  Circle,
+  Check,
+  CircleDot,
   Download,
-  FileJson,
-  FileSpreadsheet,
-  FileText,
-  ListPlus,
-  MessageSquareText,
-  Send,
-  Share2,
+  Lock,
+  ScrollText,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SeverityBadge } from "@/components/shared/SeverityBadge";
-import { ScorePill } from "@/components/shared/ScorePill";
-import { SourceBadge } from "@/components/shared/SourceBadge";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { ScoreSidebar } from "@/components/score/ScoreSidebar";
 import NotFound from "@/pages/NotFound";
+import { EightDEmbedProvider } from "@/components/layout/EightDShell";
+import { D1ProblemPage } from "@/pages/nova/eight-d/D1ProblemPage";
+import { D2ContainmentPage } from "@/pages/nova/eight-d/D2ContainmentPage";
+import { D3RCAPage } from "@/pages/nova/eight-d/D3RCAPage";
+import { D4CorrectiveActionPage } from "@/pages/nova/eight-d/D4CorrectiveActionPage";
+import { D5PreventiveActionPage } from "@/pages/nova/eight-d/D5PreventiveActionPage";
+import { D6VerificationPage } from "@/pages/nova/eight-d/D6VerificationPage";
+import { D7SignOffPage } from "@/pages/nova/eight-d/D7SignOffPage";
 import { eightDSteps } from "@/routes";
 import { useAuditTrailStore, useCapaStore, usePersonaStore, useUIStore } from "@/store";
-import { getSimilarityResults } from "@/services/novaService";
-import type {
-  ActionStatus,
-  CAPACase,
-  CorrectiveAction,
-  Disposisi,
-  EightDStep,
-  PreFillContext,
-  PreventiveAction,
-} from "@/types";
+import type { CAPACase, EightDStep, PreFillContext } from "@/types";
 import { formatCAPAType, formatDate, formatDateTime } from "@/utils/formatters";
+import { getScoreLiftTips } from "@/utils/scoring";
 
-const stepLabels: Record<EightDStep, string> = {
-  problem: "D1 Problem",
+/* ── Mock due dates (no dueDate field in data) ───────────────────── */
+const MOCK_DUE: Record<string, string> = {
+  "CAPA-2026-0341": "2026-06-06",
+  "CAPA-2026-0089": "2026-05-28",
+  "CAPA-2026-0112": "2026-06-12",
+  "CAPA-2026-0298": "2026-06-04",
+  "CAPA-2026-0275": "2026-06-17",
+  "CAPA-2026-0188": "2026-03-07",
+};
+
+/* ── Step labels ─────────────────────────────────────────────────── */
+const STEP_LABELS: Record<EightDStep, string> = {
+  problem: "D1 Problem statement",
   containment: "D2 Containment",
-  rca: "D3 RCA",
-  ca: "D4 Corrective Action",
-  pa: "D5 Preventive Action",
+  rca: "D3 Root cause analysis",
+  ca: "D4 Corrective action",
+  pa: "D5 Preventive action",
   verification: "D6 Verification",
   signoff: "D7 Sign-off",
 };
 
-function InfoRow({ label, value }: { label: string; value?: string | number }) {
-  if (value === undefined || value === "") return null;
+const STEP_SHORT: Record<EightDStep, string> = {
+  problem: "D1",
+  containment: "D2",
+  rca: "D3",
+  ca: "D4",
+  pa: "D5",
+  verification: "D6",
+  signoff: "D7",
+};
+
+const EMBEDDED_STEP_COMPONENTS: Record<EightDStep, React.ComponentType> = {
+  problem: D1ProblemPage,
+  containment: D2ContainmentPage,
+  rca: D3RCAPage,
+  ca: D4CorrectiveActionPage,
+  pa: D5PreventiveActionPage,
+  verification: D6VerificationPage,
+  signoff: D7SignOffPage,
+};
+
+/* ── Helpers ─────────────────────────────────────────────────────── */
+
+function getStepState(
+  step: EightDStep,
+  currentStep: EightDStep,
+  status: string,
+): "done" | "active" | "locked" {
+  if (status === "closed") return "done";
+  const ci = eightDSteps.indexOf(currentStep);
+  const si = eightDSteps.indexOf(step);
+  if (si < ci) return "done";
+  if (si === ci) return "active";
+  return "locked";
+}
+
+function getCtaLabel(step: EightDStep): string {
+  return `Continue working on ${STEP_SHORT[step]}`;
+}
+
+function getSourceSystem(prefill: PreFillContext): string {
+  return prefill.source === "Bizzmine-Complaint" ? "Bizzmine Complaint" : prefill.source;
+}
+
+/* ── Design token shortcuts ──────────────────────────────────────── */
+const mono = { fontFamily: "var(--font-mono)" };
+
+/* ════════════════════════════════════════════════════════════════════
+   LEFT COLUMN — 8D Progress + CAPA Info + Score
+   ════════════════════════════════════════════════════════════════════ */
+
+function EyebrowLeft({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      style={{
+        ...mono,
+        fontSize: "10px",
+        fontWeight: 500,
+        letterSpacing: "0.18em",
+        textTransform: "uppercase" as const,
+        color: "var(--fg-4)",
+        margin: "0 0 8px",
+      }}
+    >
+      {children}
+    </p>
+  );
+}
+
+function StepItem({
+  step,
+  state,
+  isSelected,
+  onSelect,
+}: {
+  step: EightDStep;
+  state: "done" | "active" | "locked";
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const visualState = isSelected ? "active" : state;
+  const styles: Record<string, React.CSSProperties> = {
+    done: {
+      background: "var(--bg-2)",
+      color: "var(--fg-3)",
+      border: "1px solid var(--line-1)",
+      cursor: "pointer",
+    },
+    active: {
+      background: "var(--accent-soft)",
+      color: "var(--accent)",
+      border: "1px solid var(--accent-line)",
+      borderLeft: "3px solid var(--accent)",
+      fontWeight: 600,
+      cursor: "pointer",
+    },
+    locked: {
+      background: "var(--bg-1)",
+      color: "var(--fg-4)",
+      border: "1px solid var(--line-1)",
+      cursor: "not-allowed",
+    },
+  };
+
+  const icon = {
+    done: <Check size={12} strokeWidth={2.5} />,
+    active: <CircleDot size={12} strokeWidth={2} />,
+    locked: <Lock size={11} strokeWidth={2} />,
+  }[visualState];
+
+  const content = (
+    <div
+      style={{
+        ...styles[visualState],
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "8px 10px",
+        borderRadius: "var(--r-sm)",
+        fontSize: "12px",
+        fontFamily: "var(--font-sans)",
+        transition: "background 180ms",
+        textDecoration: "none",
+        color: styles[visualState].color,
+      }}
+    >
+      <span style={{ flexShrink: 0, opacity: state === "locked" ? 0.5 : 1 }}>{icon}</span>
+      <span
+        style={{
+          ...mono,
+          fontSize: "10px",
+          fontWeight: 600,
+          marginRight: "2px",
+          opacity: state === "locked" ? 0.5 : 1,
+        }}
+      >
+        {STEP_SHORT[step]}
+      </span>
+      <span style={{ flex: 1, fontSize: "12px" }}>
+        {STEP_LABELS[step].replace(/^D\d+ /, "")}
+      </span>
+    </div>
+  );
+
+  if (state === "locked") {
+    return <div>{content}</div>;
+  }
 
   return (
-    <div>
-      <div className="text-xs font-medium uppercase text-muted-foreground">{label}</div>
-      <div className="mt-1 text-sm">{value}</div>
+    <button
+      type="button"
+      onClick={onSelect}
+      style={{
+        all: "unset",
+        display: "block",
+        width: "100%",
+        cursor: "pointer",
+      }}
+    >
+      {content}
+    </button>
+  );
+}
+
+function LeftColumn({
+  capa,
+  selectedStep,
+  onSelectStep,
+  onOverview,
+}: {
+  capa: CAPACase;
+  selectedStep: EightDStep | null;
+  onSelectStep: (step: EightDStep) => void;
+  onOverview: () => void;
+}) {
+  const personas = usePersonaStore((s) => s.personas);
+  const pic = personas.find((p) => p.id === capa.disposisi?.assignedTo);
+  const scoreTips = getScoreLiftTips(capa.score);
+  const scoreRows = [
+    { label: "Problem", value: capa.score.problemSpecificity },
+    { label: "RCA", value: capa.score.rootCauseDepth },
+    { label: "Actions", value: capa.score.effectiveness },
+    { label: "Containment", value: capa.score.containment },
+  ];
+  const dueRaw = MOCK_DUE[capa.id];
+  const dueStr = dueRaw
+    ? new Date(dueRaw).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    : "—";
+  const isDue = dueRaw ? new Date(dueRaw) < new Date("2026-05-31") : false;
+  const sourceId = capa.preFill.source === "Q100+"
+    ? (capa.preFill as any).findingId ?? capa.findingId
+    : (capa.preFill as any).deviationId ?? (capa.preFill as any).complaintId ?? capa.findingId;
+
+  return (
+    <div
+      style={{
+        width: "220px",
+        flexShrink: 0,
+        position: "sticky",
+        top: "72px",
+        height: "calc(100vh - 96px)",
+        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: "20px",
+        paddingRight: "4px",
+      }}
+    >
+      {/* Overview shortcut */}
+      <button
+        type="button"
+        onClick={onOverview}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "6px",
+          padding: "7px 10px",
+          borderRadius: "var(--r-sm)",
+          border: selectedStep === null ? "1px solid var(--accent-line)" : "1px solid var(--line-2)",
+          background: selectedStep === null ? "var(--accent-soft)" : "var(--bg-2)",
+          color: selectedStep === null ? "var(--accent)" : "var(--fg-2)",
+          fontFamily: "var(--font-sans)",
+          fontSize: "12px",
+          fontWeight: 600,
+          cursor: "pointer",
+          transition: "background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out)",
+        }}
+      >
+        Overview
+      </button>
+
+      {/* 8D Progress */}
+      <div>
+        <EyebrowLeft>8D Progress</EyebrowLeft>
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          {eightDSteps.map((step) => (
+            <StepItem
+              key={step}
+              step={step}
+              state={getStepState(step, capa.currentStep, capa.status)}
+              isSelected={selectedStep === step}
+              onSelect={() => onSelectStep(step)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ borderTop: "1px solid var(--line-1)" }} />
+
+      {/* CAPA Info */}
+      <div>
+        <EyebrowLeft>CAPA Info</EyebrowLeft>
+        <div
+          style={{
+            background: "var(--bg-2)",
+            border: "1px solid var(--line-2)",
+            borderRadius: "var(--r-md)",
+            padding: "12px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          {[
+            { label: "PIC", value: pic?.displayName ?? capa.disposisi?.assignedTo ?? "—" },
+            { label: "Dept", value: capa.department },
+            {
+              label: "Due date",
+              value: dueStr,
+              color: isDue ? "var(--danger)" : undefined,
+            },
+            { label: "Source", value: sourceId },
+          ].map(({ label, value, color }) => (
+            <div key={label}>
+              <p
+                style={{
+                  ...mono,
+                  fontSize: "9px",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase" as const,
+                  color: "var(--fg-4)",
+                  margin: "0 0 2px",
+                }}
+              >
+                {label}
+              </p>
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "12px",
+                  color: color ?? "var(--fg-2)",
+                  margin: 0,
+                  overflowWrap: "break-word",
+                  fontWeight: color ? 600 : 400,
+                }}
+              >
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quality Score */}
+      <div>
+        <EyebrowLeft>Quality Score</EyebrowLeft>
+        <div
+          id="score"
+          style={{
+            background: "var(--bg-2)",
+            border: "1px solid var(--line-2)",
+            borderRadius: "var(--r-md)",
+            padding: "14px 12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px" }}>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "44px",
+                fontWeight: 600,
+                letterSpacing: "-0.03em",
+                color:
+                  capa.score.total >= 80
+                    ? "var(--success)"
+                    : capa.score.total >= 60
+                      ? "var(--warning)"
+                      : "var(--danger)",
+                margin: 0,
+                lineHeight: 1,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {capa.score.total}
+            </p>
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                color: capa.score.isAuditReady ? "var(--success)" : "var(--warning)",
+                background: capa.score.isAuditReady ? "var(--success-soft)" : "var(--warning-soft)",
+                borderRadius: "var(--r-full)",
+                padding: "2px 7px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {capa.score.isAuditReady ? "Audit ready" : "Needs lift"}
+            </span>
+          </div>
+          <p
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              color: "var(--fg-3)",
+              margin: "6px 0 12px",
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+            }}
+          >
+            Total / 100
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {scoreRows.map((row) => {
+              const pct = (row.value / 25) * 100;
+              const color =
+                row.value >= 20
+                  ? "var(--success)"
+                  : row.value >= 15
+                    ? "var(--warning)"
+                    : "var(--danger)";
+              return (
+                <div key={row.label}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", gap: "8px" }}>
+                    <span style={{ fontSize: "11px", color: "var(--fg-2)", fontWeight: 600 }}>{row.label}</span>
+                    <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-mono)" }}>
+                      {row.value}/25
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: "6px",
+                      background: "var(--bg-4)",
+                      borderRadius: "var(--r-full)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${pct}%`,
+                        height: "100%",
+                        background: color,
+                        borderRadius: "var(--r-full)",
+                        transition: "width var(--dur-tab) var(--ease-out)",
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {scoreTips.length > 0 && (
+            <div
+              style={{
+                marginTop: "12px",
+                paddingTop: "12px",
+                borderTop: "1px solid var(--line-1)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "9px",
+                  color: "var(--fg-3)",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  margin: 0,
+                }}
+              >
+                Lift tips
+              </p>
+              {scoreTips.map((tip) => (
+                <div
+                  key={`${tip.field}-${tip.subScore}`}
+                  style={{
+                    background: "var(--bg-3)",
+                    border: "1px solid var(--line-1)",
+                    borderRadius: "var(--r-sm)",
+                    padding: "8px 9px",
+                  }}
+                >
+                  <p style={{ margin: "0 0 3px", color: "var(--fg-2)", fontSize: "11px", fontWeight: 600 }}>
+                    {tip.field} +{tip.scoreGain}
+                  </p>
+                  <p style={{ margin: 0, color: "var(--fg-3)", fontSize: "11px", lineHeight: 1.5 }}>
+                    {tip.suggestion}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
 
-function getSourceSystem(prefill: PreFillContext) {
-  return prefill.source === "Bizzmine-Complaint" ? "Bizzmine Complaint" : prefill.source;
+/* ════════════════════════════════════════════════════════════════════
+   RIGHT COLUMN — Content
+   ════════════════════════════════════════════════════════════════════ */
+
+function Pill({
+  children,
+  bg = "var(--bg-3)",
+  color = "var(--fg-2)",
+}: {
+  children: React.ReactNode;
+  bg?: string;
+  color?: string;
+}) {
+  return (
+    <span
+      style={{
+        background: bg,
+        color,
+        fontFamily: "var(--font-mono)",
+        fontSize: "11px",
+        fontWeight: 500,
+        padding: "3px 10px",
+        borderRadius: "var(--r-full)",
+        border: "1px solid var(--line-2)",
+        whiteSpace: "nowrap" as const,
+      }}
+    >
+      {children}
+    </span>
+  );
 }
 
-function SourceDataPanel({ prefill }: { prefill: PreFillContext }) {
-  if (prefill.source === "Bizzmine") {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Source Data</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <InfoRow label="Deviation ID" value={prefill.deviationId} />
-          <InfoRow label="Reported" value={formatDateTime(prefill.reportedAt)} />
-          <InfoRow label="Occurred" value={formatDateTime(prefill.occurredAt)} />
-          <InfoRow label="Area" value={prefill.location.area} />
-          <InfoRow label="Line" value={prefill.location.line} />
-          <InfoRow label="Equipment" value={prefill.location.equipmentId} />
-          <InfoRow label="Initiator" value={`${prefill.initiator.name} · ${prefill.initiator.role}`} />
-          <InfoRow label="Affected Batches" value={prefill.affectedBatches.join(", ")} />
-          <InfoRow label="SOP References" value={prefill.sopReferences.join(", ")} />
-          <div className="md:col-span-2 xl:col-span-3">
-            <InfoRow label="Initial Observation" value={prefill.initialObservation} />
+function InfoGrid({ rows }: { rows: Array<{ label: string; value: string; span?: boolean }> }) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "12px 24px",
+      }}
+    >
+      {rows.map(({ label, value, span }) =>
+        value ? (
+          <div key={label} style={span ? { gridColumn: "1 / -1" } : {}}>
+            <p
+              style={{
+                ...mono,
+                fontSize: "10px",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase" as const,
+                color: "var(--fg-4)",
+                margin: "0 0 3px",
+              }}
+            >
+              {label}
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "13px",
+                color: "var(--fg-2)",
+                margin: 0,
+                lineHeight: 1.5,
+              }}
+            >
+              {value}
+            </p>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
+        ) : null,
+      )}
+    </div>
+  );
+}
 
-  if (prefill.source === "Q100+") {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Source Data</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <InfoRow label="Finding ID" value={prefill.findingId} />
-          <InfoRow label="Audit ID" value={prefill.auditId} />
-          <InfoRow label="Audit Type" value={prefill.auditType} />
-          <InfoRow label="Audit Date" value={formatDateTime(prefill.auditDate)} />
-          <InfoRow label="Auditor" value={`${prefill.auditor.name} · ${prefill.auditor.organization}`} />
-          <InfoRow label="Auditee" value={`${prefill.auditee.department} · ${prefill.auditee.contactPerson}`} />
-          <InfoRow label="Category" value={prefill.findingCategory} />
-          <InfoRow label="Regulation" value={prefill.regulationReference.join(", ")} />
-          <InfoRow label="SOP References" value={prefill.sopReferences.join(", ")} />
-          <div className="md:col-span-2 xl:col-span-3">
-            <InfoRow label="Finding Description" value={prefill.findingDescription} />
-          </div>
-        </CardContent>
-      </Card>
-    );
+function Card({
+  children,
+  accentLeft,
+  bg = "var(--bg-2)",
+}: {
+  children: React.ReactNode;
+  accentLeft?: string;
+  bg?: string;
+}) {
+  return (
+    <div
+      style={{
+        background: bg,
+        border: "1px solid var(--line-2)",
+        borderRadius: "var(--r-md)",
+        borderLeft: accentLeft ? `3px solid ${accentLeft}` : undefined,
+        padding: "16px 20px",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function CardLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      style={{
+        fontFamily: "var(--font-sans)",
+        fontSize: "12px",
+        fontWeight: 600,
+        color: "var(--fg-3)",
+        textTransform: "uppercase" as const,
+        letterSpacing: "0.18em",
+        margin: "0 0 12px",
+      }}
+    >
+      {children}
+    </p>
+  );
+}
+
+function SourceDataCard({ prefill }: { prefill: PreFillContext }) {
+  let rows: Array<{ label: string; value: string; span?: boolean }> = [];
+
+  if (prefill.source === "Bizzmine") {
+    rows = [
+      { label: "Deviation ID", value: prefill.deviationId ?? "" },
+      { label: "Reported", value: prefill.reportedAt ? formatDateTime(prefill.reportedAt) : "" },
+      { label: "Area", value: prefill.location?.area ?? "" },
+      { label: "Line", value: prefill.location?.line ?? "" },
+      { label: "Equipment", value: prefill.location?.equipmentId ?? "" },
+      { label: "Initiator", value: prefill.initiator ? `${prefill.initiator.name} · ${prefill.initiator.role}` : "" },
+      { label: "Affected batches", value: prefill.affectedBatches?.join(", ") ?? "" },
+      { label: "SOP references", value: prefill.sopReferences?.join(", ") ?? "" },
+      { label: "Initial observation", value: prefill.initialObservation ?? "", span: true },
+    ];
+  } else if (prefill.source === "Q100+") {
+    rows = [
+      { label: "Finding ID", value: (prefill as any).findingId ?? "" },
+      { label: "Audit ID", value: (prefill as any).auditId ?? "" },
+      { label: "Audit type", value: (prefill as any).auditType ?? "" },
+      { label: "Audit date", value: (prefill as any).auditDate ? formatDateTime((prefill as any).auditDate) : "" },
+      { label: "Auditor", value: (prefill as any).auditor ? `${(prefill as any).auditor.name} · ${(prefill as any).auditor.organization}` : "" },
+      { label: "Auditee dept", value: (prefill as any).auditee?.department ?? "" },
+      { label: "Category", value: (prefill as any).findingCategory ?? "" },
+      { label: "Regulation", value: (prefill as any).regulationReference?.join(", ") ?? "" },
+      { label: "Finding description", value: (prefill as any).findingDescription ?? "", span: true },
+    ];
+  } else {
+    rows = [
+      { label: "Complaint ID", value: (prefill as any).complaintId ?? "" },
+      { label: "Reported", value: prefill.reportedAt ? formatDateTime(prefill.reportedAt) : "" },
+      { label: "Customer", value: (prefill as any).customer ? `${(prefill as any).customer.name} · ${(prefill as any).customer.type}` : "" },
+      { label: "Product", value: (prefill as any).product?.name ?? "" },
+      { label: "Lot number", value: (prefill as any).product?.lotNumber ?? "" },
+      { label: "Complaint type", value: (prefill as any).complaintType ?? "" },
+      { label: "Description", value: (prefill as any).description ?? "", span: true },
+    ];
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Source Data</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <InfoRow label="Complaint ID" value={prefill.complaintId} />
-        <InfoRow label="Reported" value={formatDateTime(prefill.reportedAt)} />
-        <InfoRow label="Customer" value={`${prefill.customer.name} · ${prefill.customer.type}`} />
-        <InfoRow label="Product" value={prefill.product.name} />
-        <InfoRow label="Lot Number" value={prefill.product.lotNumber} />
-        <InfoRow label="Expiry Date" value={prefill.product.expiryDate} />
-        <InfoRow label="Complaint Type" value={prefill.complaintType} />
-        <div className="md:col-span-2 xl:col-span-3">
-          <InfoRow label="Complaint Description" value={prefill.description} />
-        </div>
-      </CardContent>
+      <CardLabel>Source data</CardLabel>
+      <InfoGrid rows={rows} />
     </Card>
   );
 }
 
-function DispositionCard({ disposisi }: { disposisi: Disposisi }) {
-  const personas = usePersonaStore((state) => state.personas);
+function DispositionCard({ capa }: { capa: CAPACase }) {
+  const personas = usePersonaStore((s) => s.personas);
+  if (!capa.disposisi) return null;
+  const { disposisi } = capa;
   const reviewer = personas.find((p) => p.id === disposisi.reviewerPersonaId);
   const assignee = personas.find((p) => p.id === disposisi.assignedTo);
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <CheckCircle2 className="h-4 w-4 text-status-ready" />
-          QA Disposition
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <div className="grid gap-3 md:grid-cols-3">
-          <InfoRow label="Reviewed By" value={reviewer?.displayName ?? disposisi.reviewerPersonaId} />
-          <InfoRow label="Assigned To" value={assignee?.displayName ?? disposisi.assignedTo} />
-          <InfoRow label="Severity" value={disposisi.severity} />
-        </div>
-        <div className="rounded border bg-muted/30 p-3 text-sm leading-6 text-muted-foreground">
-          {disposisi.rationale}
-        </div>
-        <div className="text-xs text-muted-foreground">
-          Dispositioned on {formatDateTime(disposisi.dispositionAt)}
-        </div>
-      </CardContent>
+      <CardLabel>QA Disposition</CardLabel>
+      <InfoGrid
+        rows={[
+          { label: "Reviewed by", value: reviewer?.displayName ?? disposisi.reviewerPersonaId },
+          { label: "Assigned to", value: assignee?.displayName ?? disposisi.assignedTo },
+          { label: "Severity confirmed", value: disposisi.severity },
+          { label: "Dispositioned on", value: formatDateTime(disposisi.dispositionAt) },
+        ]}
+      />
+      <div
+        style={{
+          marginTop: "14px",
+          padding: "12px 14px",
+          background: "var(--bg-3)",
+          borderRadius: "var(--r-sm)",
+          fontSize: "13px",
+          color: "var(--fg-2)",
+          lineHeight: 1.65,
+        }}
+      >
+        {disposisi.rationale}
+      </div>
     </Card>
   );
 }
 
-function NovaSummary({ capa }: { capa: CAPACase }) {
-  const rootCause = capa.rca.confirmedRootCauses[0] ?? "Root cause confirmation is still in progress.";
+function NovaSummaryCard({ capa }: { capa: CAPACase }) {
+  const rootCause =
+    capa.rca.confirmedRootCauses[0] ?? "Root cause confirmation is still in progress.";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="h-4 w-4 text-primary" />
-          Nova Summary
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm leading-6">
-        <p>{capa.impact.rationale}</p>
-        <Separator />
-        <InfoRow label="Confirmed Root Cause" value={rootCause} />
-        <InfoRow label="RCA Method" value={capa.rca.method.split("_").join(" ")} />
-      </CardContent>
-    </Card>
-  );
-}
-
-function SimilarCases({ capa }: { capa: CAPACase }) {
-  const similarCases = getSimilarityResults(capa.rca.confirmedRootCauses[0] ?? capa.title).slice(0, 3);
-  const openCitationPanel = useUIStore((state) => state.openCitationPanel);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Similar Cases</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {similarCases.map((caseItem) => (
-          <button
-            key={`${caseItem.capaId}-${caseItem.deviationId}`}
-            className="w-full rounded border p-3 text-left transition hover:border-primary/50 hover:bg-primary/5"
-            onClick={() => openCitationPanel(caseItem.capaId)}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="font-mono text-xs text-primary">{caseItem.capaId}</div>
-              <div className="flex items-center gap-1 text-xs font-medium">
-                {caseItem.similarityScore}% match
-                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-              </div>
-            </div>
-            <p className="mt-2 text-sm">{caseItem.rootCause}</p>
-            <div className="mt-2 text-xs text-muted-foreground">
-              {caseItem.outcome} · {caseItem.year}
-            </div>
-          </button>
-        ))}
-        {similarCases.length === 0 && (
-          <div className="rounded border bg-muted/30 p-3 text-sm text-muted-foreground">
-            No similar historical cases found for this CAPA.
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function Timeline({ capa }: { capa: CAPACase }) {
-  const items = [
-    {
-      label: "Source imported",
-      description: `${capa.findingId} imported from ${getSourceSystem(capa.preFill)}.`,
-      date: capa.createdAt,
-      active: true,
-    },
-    {
-      label: "Impact classified",
-      description: `Nova classified this as ${capa.impact.severity}.`,
-      date: capa.impact.computedAt,
-      active: true,
-    },
-    {
-      label: "Investigation workflow",
-      description: `Current step: ${stepLabels[capa.currentStep]}.`,
-      date: capa.updatedAt,
-      active: capa.status !== "draft",
-    },
-    {
-      label: "Audit Ready closure",
-      description: capa.status === "closed" ? "CAPA is closed." : "Closure is pending.",
-      date: capa.updatedAt,
-      active: capa.status === "closed",
-    },
-  ];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Timeline</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {items.map((item, index) => (
-          <div key={item.label} className="flex gap-3">
-            <div className="flex flex-col items-center">
-              {item.active ? (
-                <CheckCircle2 className="h-4 w-4 text-status-ready" />
-              ) : (
-                <Circle className="h-4 w-4 text-muted-foreground" />
-              )}
-              {index < items.length - 1 && <div className="mt-1 h-8 w-px bg-border" />}
-            </div>
-            <div>
-              <div className="text-sm font-medium">{item.label}</div>
-              <div className="text-xs text-muted-foreground">{item.description}</div>
-              <div className="mt-1 text-xs text-muted-foreground">{formatDateTime(item.date)}</div>
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
-
-function EightDWorkflow({ capa }: { capa: CAPACase }) {
-  const currentIndex = eightDSteps.indexOf(capa.currentStep);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">8D Workflow</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {eightDSteps.map((step, index) => {
-            const isComplete = index < currentIndex || capa.status === "closed";
-            const isCurrent = step === capa.currentStep;
-
-            return (
-              <Link
-                key={step}
-                to={`/capa/${capa.id}/8d/${step}`}
-                className="rounded border bg-card p-3 transition hover:border-primary/60 hover:bg-primary/5"
-              >
-                <div className="flex items-center gap-2">
-                  {isComplete ? (
-                    <CheckCircle2 className="h-4 w-4 text-status-ready" />
-                  ) : (
-                    <Circle className={isCurrent ? "h-4 w-4 text-primary" : "h-4 w-4 text-muted-foreground"} />
-                  )}
-                  <div className="text-sm font-medium">{stepLabels[step]}</div>
-                </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {isCurrent ? "Current step" : isComplete ? "Completed" : "Pending"}
-                </div>
-              </Link>
-            );
-          })}
+    <Card bg="var(--bg-3)" accentLeft="var(--accent)">
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+        <Sparkles
+          size={14}
+          strokeWidth={1.75}
+          style={{ color: "var(--accent)", flexShrink: 0 }}
+        />
+        <CardLabel>Nova Summary</CardLabel>
+      </div>
+      <p style={{ fontSize: "13px", color: "var(--fg-2)", lineHeight: 1.65, margin: "0 0 12px" }}>
+        {capa.impact.rationale}
+      </p>
+      {capa.rca.confirmedRootCauses.length > 0 && (
+        <div
+          style={{
+            padding: "10px 12px",
+            background: "var(--bg-4)",
+            borderRadius: "var(--r-sm)",
+            fontSize: "12px",
+            color: "var(--fg-3)",
+          }}
+        >
+          <span style={{ ...mono, fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>
+            Confirmed root cause
+          </span>
+          <p style={{ margin: "4px 0 0", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+            {rootCause}
+          </p>
         </div>
-        <div className="flex flex-col gap-3 rounded border bg-muted/30 p-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="text-sm font-semibold">Continue from {stepLabels[capa.currentStep]}</div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              This opens the active workflow route for the selected CAPA.
-            </p>
-          </div>
-          <Button asChild>
-            <Link to={`/capa/${capa.id}/8d/${capa.currentStep}`}>
-              Continue Workflow
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
+      )}
     </Card>
   );
 }
 
-function ActionList({
-  title,
-  emptyText,
-  actions,
-  dateLabel,
+function statusTone(status: string): { bg: string; color: string } {
+  if (["completed", "verified", "approved"].includes(status)) {
+    return { bg: "var(--success-soft)", color: "var(--success)" };
+  }
+  if (["overdue", "rejected"].includes(status)) {
+    return { bg: "var(--danger-soft)", color: "var(--danger)" };
+  }
+  if (["in_progress", "pending"].includes(status)) {
+    return { bg: "var(--warning-soft)", color: "var(--warning)" };
+  }
+  return { bg: "var(--bg-4)", color: "var(--fg-3)" };
+}
+
+function EmptyStepState({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: "var(--bg-3)",
+        border: "1px solid var(--line-1)",
+        borderRadius: "var(--r-md)",
+        padding: "16px",
+        color: "var(--fg-3)",
+        fontSize: "13px",
+        lineHeight: 1.6,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function StepDetailView({
+  capa,
+  step,
+  onBackToOverview,
 }: {
-  title: string;
-  emptyText: string;
-  actions: Array<CorrectiveAction | PreventiveAction>;
-  dateLabel: string;
+  capa: CAPACase;
+  step: EightDStep;
+  onBackToOverview: () => void;
 }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {actions.length === 0 && <div className="text-sm text-muted-foreground">{emptyText}</div>}
-        {actions.map((action) => {
-          const date = "dueDate" in action ? action.dueDate : action.targetDate;
-          return (
-            <div key={action.id} className="rounded border p-3">
-              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <div className="font-mono text-xs text-primary">{action.id}</div>
-                  <p className="mt-1 text-sm leading-6">{action.description}</p>
-                </div>
-                <StatusBadge status={action.status as Exclude<ActionStatus, "overdue"> | "overdue"} />
-              </div>
-              <div className="mt-3 grid gap-3 text-sm md:grid-cols-3">
-                <InfoRow label="PIC" value={action.pic} />
-                <InfoRow label={dateLabel} value={formatDate(date)} />
-                <InfoRow label="Nova Generated" value={action.novaGenerated ? "Yes" : "No"} />
-              </div>
+  const stepState = getStepState(step, capa.currentStep, capa.status);
+  const containmentAnswer = capa.gateAnswers.find((answer) => answer.questionId === "containment");
+  const problemAnswer = capa.gateAnswers.find((answer) => answer.questionId === "observation");
+  const stepTone = stepState === "done"
+    ? { bg: "var(--success-soft)", color: "var(--success)" }
+    : stepState === "active"
+      ? { bg: "var(--accent-soft)", color: "var(--accent)" }
+      : { bg: "var(--bg-4)", color: "var(--fg-3)" };
+
+  const renderStepBody = () => {
+    switch (step) {
+      case "problem":
+        return (
+          <Card>
+            <CardLabel>Problem statement</CardLabel>
+            <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+              {problemAnswer?.answer || "Problem statement has not been saved yet."}
+            </p>
+          </Card>
+        );
+      case "containment":
+        return (
+          <Card>
+            <CardLabel>Immediate containment</CardLabel>
+            {containmentAnswer ? (
+              <p style={{ margin: 0, whiteSpace: "pre-line", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+                {containmentAnswer.answer}
+              </p>
+            ) : (
+              <EmptyStepState>No containment action has been saved yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+      case "rca":
+        return (
+          <Card>
+            <CardLabel>Root cause analysis</CardLabel>
+            <InfoGrid rows={[{ label: "Method", value: capa.rca.method }]} />
+            <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              {capa.rca.confirmedRootCauses.length > 0 ? (
+                capa.rca.confirmedRootCauses.map((cause, index) => (
+                  <div
+                    key={`${cause}-${index}`}
+                    style={{
+                      background: "var(--bg-3)",
+                      border: "1px solid var(--line-1)",
+                      borderRadius: "var(--r-sm)",
+                      padding: "10px 12px",
+                      color: "var(--fg-2)",
+                      fontSize: "13px",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {cause}
+                  </div>
+                ))
+              ) : (
+                <EmptyStepState>No confirmed root cause yet.</EmptyStepState>
+              )}
             </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+          </Card>
+        );
+      case "ca":
+        return (
+          <Card>
+            <CardLabel>Corrective actions</CardLabel>
+            {capa.correctiveActions.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {capa.correctiveActions.map((action) => {
+                  const tone = statusTone(action.status);
+                  return (
+                    <div
+                      key={action.id}
+                      style={{
+                        background: "var(--bg-3)",
+                        border: "1px solid var(--line-1)",
+                        borderRadius: "var(--r-md)",
+                        padding: "12px 14px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+                        <p style={{ margin: 0, color: "var(--fg-1)", fontSize: "13px", fontWeight: 600 }}>
+                          {action.id}
+                        </p>
+                        <Pill bg={tone.bg} color={tone.color}>{action.status.replace("_", " ")}</Pill>
+                      </div>
+                      <p style={{ margin: "0 0 10px", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+                        {action.description}
+                      </p>
+                      <InfoGrid
+                        rows={[
+                          { label: "PIC", value: action.pic },
+                          { label: "Due date", value: formatDate(action.dueDate) },
+                          { label: "Linked root cause", value: action.linkedRootCause, span: true },
+                          { label: "Verification", value: action.verificationMethod, span: true },
+                        ]}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyStepState>No corrective actions have been added yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+      case "pa":
+        return (
+          <Card>
+            <CardLabel>Preventive actions</CardLabel>
+            {capa.preventiveActions.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {capa.preventiveActions.map((action) => {
+                  const tone = statusTone(action.status);
+                  return (
+                    <div
+                      key={action.id}
+                      style={{
+                        background: "var(--bg-3)",
+                        border: "1px solid var(--line-1)",
+                        borderRadius: "var(--r-md)",
+                        padding: "12px 14px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+                        <p style={{ margin: 0, color: "var(--fg-1)", fontSize: "13px", fontWeight: 600 }}>
+                          {action.id}
+                        </p>
+                        <Pill bg={tone.bg} color={tone.color}>{action.status.replace("_", " ")}</Pill>
+                      </div>
+                      <p style={{ margin: "0 0 10px", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+                        {action.description}
+                      </p>
+                      <InfoGrid
+                        rows={[
+                          { label: "PIC", value: action.pic },
+                          { label: "Target date", value: formatDate(action.targetDate) },
+                        ]}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyStepState>No preventive actions have been added yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+      case "verification":
+        return (
+          <Card>
+            <CardLabel>Verification evidence</CardLabel>
+            {capa.verification.result || capa.verification.evidenceFileNames.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <InfoGrid
+                  rows={[
+                    { label: "Method", value: capa.verification.method ?? "" },
+                    { label: "Verified at", value: capa.verification.verifiedAt ? formatDateTime(capa.verification.verifiedAt) : "" },
+                    { label: "Verified by", value: capa.verification.verifiedBy ?? "" },
+                    { label: "Evidence files", value: capa.verification.evidenceFileNames.join(", ") },
+                  ]}
+                />
+                {capa.verification.result && (
+                  <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+                    {capa.verification.result}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <EmptyStepState>No verification result has been recorded yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+      case "signoff":
+        return (
+          <Card>
+            <CardLabel>Sign-off chain</CardLabel>
+            {capa.approvals.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {capa.approvals.map((approval) => {
+                  const tone = statusTone(approval.decision);
+                  return (
+                    <div
+                      key={`${approval.approverPersonaId}-${approval.role}`}
+                      style={{
+                        background: "var(--bg-3)",
+                        border: "1px solid var(--line-1)",
+                        borderRadius: "var(--r-md)",
+                        padding: "12px 14px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+                        <div>
+                          <p style={{ margin: 0, color: "var(--fg-1)", fontSize: "13px", fontWeight: 600 }}>
+                            {approval.approverName}
+                          </p>
+                          <p style={{ margin: "3px 0 0", color: "var(--fg-3)", fontSize: "12px" }}>
+                            {approval.role}
+                          </p>
+                        </div>
+                        <Pill bg={tone.bg} color={tone.color}>{approval.decision}</Pill>
+                      </div>
+                      {approval.notes && (
+                        <p style={{ margin: "0 0 8px", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+                          {approval.notes}
+                        </p>
+                      )}
+                      {approval.signedAt && (
+                        <p style={{ margin: 0, color: "var(--fg-3)", fontSize: "11px", fontFamily: "var(--font-mono)" }}>
+                          {formatDateTime(approval.signedAt)}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyStepState>No sign-off activity has been recorded yet.</EmptyStepState>
+            )}
+          </Card>
+        );
+    }
+  };
+
+  return (
+    <div key={step} className="motion-tab-content" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
+      <p style={{ ...mono, fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>
+        <button
+          type="button"
+          onClick={onBackToOverview}
+          style={{
+            all: "unset",
+            color: "var(--fg-4)",
+            cursor: "pointer",
+          }}
+        >
+          CAPA Overview
+        </button>
+        {" / "}
+        <span style={{ color: "var(--fg-2)" }}>{STEP_LABELS[step]}</span>
+      </p>
+
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+        <div>
+          <h1
+            style={{
+              fontSize: "24px",
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              color: "var(--fg-1)",
+              margin: "0 0 6px",
+            }}
+          >
+            {STEP_LABELS[step]}
+          </h1>
+          <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+            Inline 8D workspace for {capa.id}. The URL stays on the CAPA hub while this panel changes context.
+          </p>
+        </div>
+        <Pill bg={stepTone.bg} color={stepTone.color}>
+          {stepState}
+        </Pill>
+      </div>
+
+      {renderStepBody()}
+
+      <Card bg="var(--bg-3)" accentLeft="var(--accent)">
+        <CardLabel>Nova context</CardLabel>
+        <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+          {capa.impact.rationale}
+        </p>
+      </Card>
+    </div>
   );
 }
+
+function EditableStepWorkspace({
+  step,
+  onStepChange,
+  onBackToOverview,
+}: {
+  step: EightDStep;
+  onStepChange: (step: EightDStep) => void;
+  onBackToOverview: () => void;
+}) {
+  const StepComponent = EMBEDDED_STEP_COMPONENTS[step];
+
+  return (
+    <div key={step} className="motion-tab-content" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
+      <p style={{ ...mono, fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>
+        <button
+          type="button"
+          onClick={onBackToOverview}
+          style={{
+            all: "unset",
+            color: "var(--fg-4)",
+            cursor: "pointer",
+          }}
+        >
+          CAPA Overview
+        </button>
+        {" / "}
+        <span style={{ color: "var(--fg-2)" }}>{STEP_LABELS[step]}</span>
+      </p>
+
+      <EightDEmbedProvider onStepChange={onStepChange}>
+        <StepComponent />
+      </EightDEmbedProvider>
+    </div>
+  );
+}
+
+function RightColumn({
+  capa,
+  selectedStep,
+  onSelectStep,
+  onBackToOverview,
+}: {
+  capa: CAPACase;
+  selectedStep: EightDStep | null;
+  onSelectStep: (step: EightDStep) => void;
+  onBackToOverview: () => void;
+}) {
+  if (selectedStep) {
+    if (capa.status === "closed") {
+      return <StepDetailView capa={capa} step={selectedStep} onBackToOverview={onBackToOverview} />;
+    }
+
+    return (
+      <EditableStepWorkspace
+        step={selectedStep}
+        onStepChange={onSelectStep}
+        onBackToOverview={onBackToOverview}
+      />
+    );
+  }
+
+  const source = getSourceSystem(capa.preFill);
+  const severityColors: Record<string, { bg: string; color: string }> = {
+    Critical: { bg: "var(--danger-soft)", color: "var(--danger)" },
+    Major: { bg: "var(--danger-soft)", color: "var(--danger)" },
+    Minor: { bg: "var(--warning-soft)", color: "var(--warning)" },
+  };
+  const sev = severityColors[capa.impact.severity] ?? { bg: "var(--bg-3)", color: "var(--fg-2)" };
+
+  const statusColors: Record<string, { bg: string; color: string }> = {
+    investigation: { bg: "var(--accent-soft)", color: "var(--accent)" },
+    approval: { bg: "var(--warning-soft)", color: "var(--warning)" },
+    closed: { bg: "var(--success-soft)", color: "var(--success)" },
+    draft: { bg: "var(--bg-4)", color: "var(--fg-3)" },
+    disposisi: { bg: "var(--bg-4)", color: "var(--fg-2)" },
+  };
+  const st = statusColors[capa.status] ?? { bg: "var(--bg-3)", color: "var(--fg-2)" };
+  const statusLabel: Record<string, string> = {
+    investigation: "In progress",
+    approval: "Pending approval",
+    closed: "Closed",
+    draft: "Draft",
+    disposisi: "QA disposition",
+  };
+
+  return (
+    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Breadcrumb */}
+      <p
+        style={{
+          ...mono,
+          fontSize: "12px",
+          color: "var(--fg-3)",
+          margin: 0,
+        }}
+      >
+        <Link to="/capa" style={{ color: "var(--fg-4)", textDecoration: "none" }}>
+          All CAPAs
+        </Link>
+        {" / "}
+        <span style={{ color: "var(--fg-2)" }}>{capa.id}</span>
+      </p>
+
+      {/* Badge row */}
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" as const }}>
+        <Pill>{source}</Pill>
+        <Pill>{formatCAPAType(capa.type)}</Pill>
+        <Pill bg={sev.bg} color={sev.color}>
+          {capa.impact.severity}
+        </Pill>
+        <Pill bg={st.bg} color={st.color}>
+          {statusLabel[capa.status] ?? capa.status}
+        </Pill>
+      </div>
+
+      {/* Title */}
+      <div>
+        <h1
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: "22px",
+            fontWeight: 600,
+            letterSpacing: "-0.018em",
+            color: "var(--fg-1)",
+            margin: "0 0 6px",
+          }}
+        >
+          {capa.id}
+        </h1>
+        <p
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: "14px",
+            color: "var(--fg-2)",
+            margin: 0,
+            lineHeight: 1.6,
+          }}
+        >
+          {capa.title}
+        </p>
+      </div>
+
+      {/* Source data */}
+      <SourceDataCard prefill={capa.preFill} />
+
+      {/* QA Disposition */}
+      {capa.disposisi && <DispositionCard capa={capa} />}
+
+      {/* Nova Summary */}
+      <NovaSummaryCard capa={capa} />
+
+      {/* CTA */}
+      <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: "32px" }}>
+        <button
+          type="button"
+          onClick={() => onSelectStep(capa.currentStep)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "var(--grad-brand)",
+            color: "var(--on-accent)",
+            fontFamily: "var(--font-sans)",
+            fontSize: "14px",
+            fontWeight: 600,
+            padding: "10px 20px",
+            borderRadius: "var(--r-sm)",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          {getCtaLabel(capa.currentStep)}
+          <ArrowRight size={16} strokeWidth={2} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   PAGE ROOT
+   ════════════════════════════════════════════════════════════════════ */
 
 export function CapaDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [selectedStep, setSelectedStep] = useState<EightDStep | null>(null);
+  const rawCapa = useCapaStore((s) => s.capas.find((c) => c.id === id));
+  const allCAs = useCapaStore((s) => s.correctiveActions);
+  const allPAs = useCapaStore((s) => s.preventiveActions);
 
-  // Stable store reads — return direct store references, not derived objects
-  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
-  const allCAs = useCapaStore((state) => state.correctiveActions);
-  const allPAs = useCapaStore((state) => state.preventiveActions);
-  const allFindings = useCapaStore((state) => state.findings);
-  const allAuditEvents = useAuditTrailStore((state) => state.events);
-
-  // Derived values — computed once per dependency change, not on every render
   const capa = useMemo(() => {
     if (!rawCapa) return undefined;
     return {
@@ -404,216 +1252,97 @@ export function CapaDetailPage() {
     };
   }, [rawCapa, allCAs, allPAs]);
 
-  const finding = useMemo(
-    () => (capa ? allFindings.find((f) => f.id === capa.findingId) : undefined),
-    [capa, allFindings],
-  );
-
-  const auditEvents = useMemo(
-    () => (id ? allAuditEvents.filter((e) => e.capaId === id) : []),
-    [allAuditEvents, id],
-  );
-
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <div className="mb-3 flex flex-wrap gap-2">
-            <SourceBadge source={getSourceSystem(capa.preFill)} />
-            <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
-              {formatCAPAType(capa.type)}
-            </Badge>
-            <SeverityBadge severity={capa.impact.severity} />
-            <StatusBadge status={capa.status} />
-            <ScorePill score={capa.score.total} />
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">{capa.id}</h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6 text-muted-foreground">{capa.title}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
-              <DropdownMenuItem onClick={() => toast.success("PDF export prepared", { description: "PDF export is mocked in this demo." })}>
-                <FileText className="mr-2 h-4 w-4" />
-                Export as PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.success("Word export prepared", { description: "Word export is mocked in this demo." })}>
-                <FileText className="mr-2 h-4 w-4" />
-                Export as Word
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.success("Excel export prepared", { description: "Excel export is mocked in this demo." })}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Export as Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.success("JSON export prepared", { description: "JSON export is mocked in this demo." })}>
-                <FileJson className="mr-2 h-4 w-4" />
-                Export as JSON
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => toast.success("Share link copied", { description: `${window.location.href} copied to clipboard (mocked).` })}>
-                <Share2 className="mr-2 h-4 w-4" />
-                Copy Share Link
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.success("Sent to Bizzmine", { description: `${capa.id} data has been sent to Bizzmine (mocked).` })}>
-                <Send className="mr-2 h-4 w-4" />
-                Send to Bizzmine
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button asChild>
-            <Link to={`/capa/${capa.id}/8d/${capa.currentStep}`}>
-              {capa.gateAnswers.length === 0 ? "Start 8D Workflow" : "Continue Workflow"}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
+    <div style={{ fontFamily: "var(--font-sans)" }}>
+      {/* ── Top action bar ────────────────────────────────────── */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "8px",
+          marginBottom: "24px",
+        }}
+      >
+        <button
+          onClick={() =>
+            toast.info("Export PDF", { description: "PDF export is mocked in this demo." })
+          }
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "7px 14px",
+            borderRadius: "var(--r-sm)",
+            background: "transparent",
+            border: "1px solid var(--line-2)",
+            color: "var(--fg-2)",
+            fontSize: "13px",
+            fontWeight: 500,
+            fontFamily: "var(--font-sans)",
+            cursor: "pointer",
+            transition: "background 180ms, color 180ms",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "var(--bg-3)";
+            (e.currentTarget as HTMLElement).style.color = "var(--fg-1)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+            (e.currentTarget as HTMLElement).style.color = "var(--fg-2)";
+          }}
+        >
+          <Download size={14} strokeWidth={1.75} />
+          Export PDF
+        </button>
+        <button
+          onClick={() => navigate(`/audit-trail`)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "7px 14px",
+            borderRadius: "var(--r-sm)",
+            background: "transparent",
+            border: "1px solid var(--line-2)",
+            color: "var(--fg-2)",
+            fontSize: "13px",
+            fontWeight: 500,
+            fontFamily: "var(--font-sans)",
+            cursor: "pointer",
+            transition: "background 180ms, color 180ms",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "var(--bg-3)";
+            (e.currentTarget as HTMLElement).style.color = "var(--fg-1)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+            (e.currentTarget as HTMLElement).style.color = "var(--fg-2)";
+          }}
+        >
+          <ScrollText size={14} strokeWidth={1.75} />
+          Audit trail
+        </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-5">
-        <Card>
-          <CardContent className="p-4">
-            <InfoRow label="CAPA ID" value={capa.id} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <InfoRow label="Type" value={formatCAPAType(capa.type)} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <InfoRow label="Department" value={capa.department} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <InfoRow label="Current Step" value={stepLabels[capa.currentStep]} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <InfoRow label="Updated" value={formatDateTime(capa.updatedAt)} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <Tabs defaultValue="overview" className="min-w-0">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 md:grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="workflow">8D Workflow</TabsTrigger>
-            <TabsTrigger value="audit">Audit Trail</TabsTrigger>
-            <TabsTrigger value="actions">Actions</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="mt-4 space-y-4">
-            <SourceDataPanel prefill={capa.preFill} />
-            {capa.disposisi && <DispositionCard disposisi={capa.disposisi} />}
-            <div className="grid gap-4 xl:grid-cols-2">
-              <NovaSummary capa={capa} />
-              <SimilarCases capa={capa} />
-            </div>
-            <Timeline capa={capa} />
-            {finding && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Linked Finding</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <div className="font-mono text-xs text-primary">{finding.id}</div>
-                    <p className="mt-1 text-sm text-muted-foreground">{finding.shortDescription}</p>
-                  </div>
-                  <Button asChild variant="outline">
-                    <Link to={`/findings/${finding.id}`}>Open Finding</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="workflow" className="mt-4">
-            <EightDWorkflow capa={capa} />
-          </TabsContent>
-
-          <TabsContent value="audit" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <FileText className="h-4 w-4 text-primary" />
-                  Audit Trail
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {auditEvents.map((event) => (
-                  <div key={event.id} className="rounded border p-3">
-                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <div className="font-medium">{event.action}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {event.actorName} · {event.actorRole} · {event.domain}
-                        </div>
-                      </div>
-                      <div className="text-xs text-muted-foreground">{formatDateTime(event.timestamp)}</div>
-                    </div>
-                    {event.novaMetadata && (
-                      <div className="mt-3 rounded bg-muted/40 p-2 text-xs text-muted-foreground">
-                        {event.novaMetadata.modelName} {event.novaMetadata.modelVersion} · confidence{" "}
-                        {event.novaMetadata.confidenceScore}%
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {auditEvents.length === 0 && (
-                  <div className="rounded border bg-muted/30 p-4 text-sm text-muted-foreground">
-                    No CAPA-specific audit events have been captured yet.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="actions" className="mt-4 space-y-4">
-            <div className="flex flex-col gap-3 md:flex-row md:justify-end">
-              <Button asChild variant="outline">
-                <Link to={`/capa/${capa.id}/8d/ca`}>
-                  <ListPlus className="mr-2 h-4 w-4" />
-                  Add Corrective Action
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to={`/capa/${capa.id}/8d/pa`}>
-                  <MessageSquareText className="mr-2 h-4 w-4" />
-                  Add Preventive Action
-                </Link>
-              </Button>
-            </div>
-            <ActionList
-              title="Corrective Actions"
-              emptyText="No corrective actions have been added yet."
-              actions={capa.correctiveActions}
-              dateLabel="Due Date"
-            />
-            <ActionList
-              title="Preventive Actions"
-              emptyText="No preventive actions have been added yet."
-              actions={capa.preventiveActions}
-              dateLabel="Target Date"
-            />
-          </TabsContent>
-        </Tabs>
-
-        <ScoreSidebar score={capa.score} />
+      {/* ── Two-column layout ─────────────────────────────────── */}
+      <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
+        <LeftColumn
+          capa={capa}
+          selectedStep={selectedStep}
+          onSelectStep={setSelectedStep}
+          onOverview={() => setSelectedStep(null)}
+        />
+        <RightColumn
+          capa={capa}
+          selectedStep={selectedStep}
+          onSelectStep={setSelectedStep}
+          onBackToOverview={() => setSelectedStep(null)}
+        />
       </div>
     </div>
   );

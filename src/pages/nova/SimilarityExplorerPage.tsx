@@ -1,71 +1,322 @@
+/**
+ * SimilarityExplorerPage — AI-powered historical CAPA search (wireframe section 18)
+ *
+ * Standalone page for freeform semantic search across historical CAPA patterns.
+ * Used by QA Managers to identify recurring quality signals and compare outcomes.
+ */
+
 import { useMemo, useState } from "react";
-import { BrainCircuit, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
-import { AILoadingSpinner } from "@/components/shared/AILoadingSpinner";
+import { BrainCircuit, Loader2, Search, X } from "lucide-react";
 import { kgCitations } from "@/mock-data";
 import type { CAPAType, KGCitation } from "@/types";
 import { formatCAPAType } from "@/utils/formatters";
 
-const allValue = "all";
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-type OutcomeFilter = KGCitation["outcome"] | typeof allValue;
-type TypeFilter = CAPAType | typeof allValue;
-type YearFilter = string;
+const ALL = "all";
+type OutcomeFilter = KGCitation["outcome"] | typeof ALL;
+type TypeFilter = CAPAType | typeof ALL;
 
-function searchSimilarity(query: string) {
-  const normalizedQuery = query.trim().toLowerCase();
+const OUTCOME_COLORS: Record<KGCitation["outcome"], { bg: string; border: string; text: string }> = {
+  Effective: { bg: "var(--success-soft)", border: "color-mix(in srgb, var(--success) 38%, transparent)", text: "var(--success)" },
+  Recurred: { bg: "var(--danger-soft)", border: "color-mix(in srgb, var(--danger) 38%, transparent)", text: "var(--danger)" },
+  Ongoing: { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" },
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function searchSimilarity(query: string): KGCitation[] {
+  const q = query.trim().toLowerCase();
   const results = structuredClone(kgCitations) as KGCitation[];
+  if (!q) return results;
 
-  if (!normalizedQuery) return results;
-
-  const matched = results.filter((citation) =>
-    [
-      citation.deviationId,
-      citation.capaId,
-      citation.rootCause,
-      citation.correctiveAction,
-      citation.outcome,
-      citation.sourceType,
-      citation.year,
-    ]
+  const matched = results.filter((c) =>
+    [c.deviationId, c.capaId, c.rootCause, c.correctiveAction, c.outcome, c.sourceType, String(c.year)]
       .join(" ")
       .toLowerCase()
-      .includes(normalizedQuery),
+      .includes(q),
   );
 
   if (matched.length > 0) return matched;
 
+  // Fallback: return all with decayed scores
   return results
-    .map((citation, index) => ({
-      ...citation,
-      similarityScore: Math.max(70, citation.similarityScore - index * 3),
-    }))
-    .sort((left, right) => right.similarityScore - left.similarityScore);
+    .map((c, i) => ({ ...c, similarityScore: Math.max(70, c.similarityScore - i * 3) }))
+    .sort((a, b) => b.similarityScore - a.similarityScore);
 }
 
-function outcomeClassName(outcome: KGCitation["outcome"]) {
-  if (outcome === "Effective") return "border-status-ready/30 bg-status-ready/10 text-status-ready";
-  if (outcome === "Recurred") return "border-destructive/30 bg-destructive/10 text-destructive";
-  return "border-status-investigation/30 bg-status-investigation/10 text-status-investigation";
+function similarityColor(score: number): string {
+  if (score >= 85) return "var(--success)";
+  if (score >= 70) return "var(--warning)";
+  return "var(--fg-3)";
 }
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function OutcomeBadge({ outcome }: { outcome: KGCitation["outcome"] }) {
+  const colors = OUTCOME_COLORS[outcome];
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "3px 8px",
+        borderRadius: "20px",
+        fontSize: "11px",
+        fontWeight: 600,
+        fontFamily: "var(--font-mono)",
+        background: colors.bg,
+        border: `1px solid ${colors.border}`,
+        color: colors.text,
+      }}
+    >
+      {outcome}
+    </span>
+  );
+}
+
+function TypeBadge({ type }: { type: CAPAType }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "3px 8px",
+        borderRadius: "20px",
+        fontSize: "11px",
+        fontWeight: 500,
+        fontFamily: "var(--font-mono)",
+        background: "var(--bg-4)",
+        border: "1px solid var(--line-2)",
+        color: "var(--fg-2)",
+      }}
+    >
+      {formatCAPAType(type)}
+    </span>
+  );
+}
+
+function StyledSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: "100%",
+          height: "36px",
+          background: "var(--bg-4)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-sm)",
+          color: "var(--fg-2)",
+          fontSize: "13px",
+          fontFamily: "var(--font-sans)",
+          padding: "0 32px 0 10px",
+          appearance: "none",
+          cursor: "pointer",
+          outline: "none",
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+      <svg
+        width="12" height="12" viewBox="0 0 12 12" fill="none"
+        style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+      >
+        <path d="M3 5l3 3 3-3" stroke="var(--fg-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+// ── Detail modal ──────────────────────────────────────────────────────────────
+
+function DetailModal({
+  citation,
+  onClose,
+}: {
+  citation: KGCitation;
+  onClose: () => void;
+}) {
+  // Close on Escape
+  useState(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "var(--glass-dark)",
+          backdropFilter: "blur(2px)",
+          zIndex: 999,
+          animation: "fadeIn var(--dur-tab) var(--ease-out)",
+        }}
+      />
+      {/* Panel */}
+      <div
+        style={{
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "520px",
+          maxWidth: "90vw",
+          maxHeight: "85vh",
+          overflow: "auto",
+          background: "var(--bg-2)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-lg)",
+          zIndex: 1000,
+          animation: "leadReveal var(--dur-tab) var(--ease-out)",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: "16px 20px",
+            borderBottom: "1px solid var(--line-1)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--fg-1)", fontFamily: "var(--font-sans)" }}>
+              {citation.capaId}
+            </div>
+            <div style={{ fontSize: "12px", color: "var(--fg-3)", marginTop: "2px" }}>
+              Historical CAPA similarity detail
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--fg-3)",
+              padding: "4px",
+              borderRadius: "var(--r-sm)",
+            }}
+          >
+            <X size={18} strokeWidth={1.75} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div style={{ padding: "20px" }}>
+          {/* Meta grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
+            {[
+              ["Source ID", citation.deviationId],
+              ["Similarity", `${citation.similarityScore}%`],
+              ["Type", formatCAPAType(citation.sourceType)],
+              ["Outcome", citation.outcome],
+            ].map(([label, val]) => (
+              <div
+                key={label}
+                style={{
+                  background: "var(--bg-3)",
+                  borderRadius: "var(--r-sm)",
+                  padding: "10px 12px",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "10px",
+                    fontFamily: "var(--font-mono)",
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "var(--fg-3)",
+                    marginBottom: "4px",
+                  }}
+                >
+                  {label}
+                </div>
+                <div style={{ fontSize: "13px", color: "var(--fg-1)", fontWeight: 500 }}>{val}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Root cause */}
+          <div style={{ marginBottom: "16px" }}>
+            <div
+              style={{
+                fontSize: "10px",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 600,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "var(--fg-3)",
+                marginBottom: "6px",
+              }}
+            >
+              Root cause
+            </div>
+            <p style={{ fontSize: "13px", color: "var(--fg-2)", lineHeight: "1.6", margin: 0 }}>
+              {citation.rootCause}
+            </p>
+          </div>
+
+          {/* Corrective action */}
+          <div style={{ marginBottom: "16px" }}>
+            <div
+              style={{
+                fontSize: "10px",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 600,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "var(--fg-3)",
+                marginBottom: "6px",
+              }}
+            >
+              Corrective action
+            </div>
+            <p style={{ fontSize: "13px", color: "var(--fg-2)", lineHeight: "1.6", margin: 0 }}>
+              {citation.correctiveAction}
+            </p>
+          </div>
+
+          {/* Disclaimer */}
+          <div
+            style={{
+              background: "var(--bg-3)",
+              borderRadius: "var(--r-sm)",
+              padding: "12px 14px",
+              fontSize: "12px",
+              color: "var(--fg-3)",
+              lineHeight: "1.5",
+              borderLeft: "3px solid var(--accent)",
+            }}
+          >
+            Nova uses this case as a contextual citation only. The current CAPA still requires user confirmation and audit-ready evidence.
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export function SimilarityExplorerPage() {
   const [query, setQuery] = useState(
@@ -74,27 +325,24 @@ export function SimilarityExplorerPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<KGCitation[]>([]);
-  const [minSimilarity, setMinSimilarity] = useState([75]);
-  const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>(allValue);
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>(allValue);
-  const [yearFilter, setYearFilter] = useState<YearFilter>(allValue);
+  const [minSimilarity, setMinSimilarity] = useState(75);
+  const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>(ALL);
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>(ALL);
+  const [yearFilter, setYearFilter] = useState<string>(ALL);
   const [selectedResult, setSelectedResult] = useState<KGCitation | undefined>();
 
   const years = useMemo(
-    () =>
-      Array.from(new Set((kgCitations as KGCitation[]).map((citation) => String(citation.year)))).sort(
-        (left, right) => Number(right) - Number(left),
-      ),
+    () => Array.from(new Set(kgCitations.map((c) => String(c.year)))).sort((a, b) => Number(b) - Number(a)),
     [],
   );
 
   const filteredResults = useMemo(
     () =>
-      results.filter((result) => {
-        if (result.similarityScore < minSimilarity[0]) return false;
-        if (outcomeFilter !== allValue && result.outcome !== outcomeFilter) return false;
-        if (typeFilter !== allValue && result.sourceType !== typeFilter) return false;
-        if (yearFilter !== allValue && String(result.year) !== yearFilter) return false;
+      results.filter((r) => {
+        if (r.similarityScore < minSimilarity) return false;
+        if (outcomeFilter !== ALL && r.outcome !== outcomeFilter) return false;
+        if (typeFilter !== ALL && r.sourceType !== typeFilter) return false;
+        if (yearFilter !== ALL && String(r.year) !== yearFilter) return false;
         return true;
       }),
     [minSimilarity, outcomeFilter, results, typeFilter, yearFilter],
@@ -102,190 +350,370 @@ export function SimilarityExplorerPage() {
 
   async function runSearch() {
     setIsSearching(true);
-    await new Promise((resolve) => window.setTimeout(resolve, 2500));
+    await new Promise((resolve) => setTimeout(resolve, 2200));
     setResults(searchSimilarity(query));
     setHasSearched(true);
     setIsSearching(false);
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Similarity Analysis</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+    <div className="animate-page-enter" style={{ maxWidth: "1200px" }}>
+      {/* ── Header ────────────────────────────────────────────────────── */}
+      <div style={{ marginBottom: "24px" }}>
+        <h1
+          style={{
+            fontSize: "22px",
+            fontWeight: 600,
+            color: "var(--fg-1)",
+            fontFamily: "var(--font-sans)",
+            letterSpacing: "-0.02em",
+            margin: 0,
+          }}
+        >
+          Similarity explorer
+        </h1>
+        <p style={{ fontSize: "13px", color: "var(--fg-3)", marginTop: "6px", maxWidth: "620px", lineHeight: "1.5" }}>
           Search historical CAPA patterns by finding description, root cause, corrective action, outcome, and source type.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">AI Search</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="pl-9"
-                placeholder="Describe a finding to search for similar historical CAPAs"
-              />
-            </div>
-            <Button onClick={runSearch} disabled={isSearching}>
-              <BrainCircuit className="mr-2 h-4 w-4" />
-              AI Search
-            </Button>
+      {/* ── Search card ───────────────────────────────────────────────── */}
+      <div
+        style={{
+          background: "var(--bg-2)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-lg)",
+          padding: "20px",
+          marginBottom: "16px",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "11px",
+            fontFamily: "var(--font-mono)",
+            fontWeight: 600,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: "var(--fg-3)",
+            marginBottom: "10px",
+          }}
+        >
+          AI search
+        </div>
+        <div style={{ display: "flex", gap: "10px" }}>
+          {/* Input */}
+          <div style={{ flex: 1, position: "relative" }}>
+            <Search
+              size={14}
+              strokeWidth={1.75}
+              style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--fg-3)" }}
+            />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !isSearching) runSearch(); }}
+              placeholder="Describe a finding to search for similar historical CAPAs"
+              style={{
+                width: "100%",
+                height: "40px",
+                background: "var(--bg-4)",
+                border: "1px solid var(--line-2)",
+                borderRadius: "var(--r-sm)",
+                color: "var(--fg-1)",
+                fontSize: "14px",
+                fontFamily: "var(--font-sans)",
+                padding: "0 14px 0 36px",
+                outline: "none",
+                transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+            />
           </div>
-          {isSearching && <AILoadingSpinner label="Nova is searching historical CAPA similarity..." />}
-        </CardContent>
-      </Card>
+          {/* Button */}
+          <button
+            onClick={runSearch}
+            disabled={isSearching}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "7px",
+              padding: "0 20px",
+              height: "40px",
+              background: isSearching ? "var(--bg-4)" : "var(--grad-brand)",
+              color: isSearching ? "var(--fg-3)" : "var(--on-accent)",
+              border: "none",
+              borderRadius: "var(--r-sm)",
+              fontSize: "13px",
+              fontWeight: 600,
+              fontFamily: "var(--font-sans)",
+              cursor: isSearching ? "not-allowed" : "pointer",
+              whiteSpace: "nowrap",
+              transition: "filter var(--dur-fast) var(--ease-out)",
+            }}
+            onMouseEnter={(e) => { if (!isSearching) e.currentTarget.style.filter = "brightness(1.1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+          >
+            {isSearching ? (
+              <Loader2 size={14} strokeWidth={1.75} style={{ animation: "spin 1s linear infinite" }} />
+            ) : (
+              <BrainCircuit size={14} strokeWidth={1.75} />
+            )}
+            {isSearching ? "Searching..." : "AI Search"}
+          </button>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 lg:grid-cols-[minmax(220px,1fr)_repeat(3,minmax(150px,1fr))]">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Min similarity</span>
-                <span className="font-medium">{minSimilarity[0]}%</span>
-              </div>
-              <Slider value={minSimilarity} onValueChange={setMinSimilarity} min={50} max={95} step={1} />
-            </div>
-            <Select value={outcomeFilter} onValueChange={(value) => setOutcomeFilter(value as OutcomeFilter)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Outcome" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Outcomes</SelectItem>
-                <SelectItem value="Effective">Effective</SelectItem>
-                <SelectItem value="Recurred">Recurred</SelectItem>
-                <SelectItem value="Ongoing">Ongoing</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as TypeFilter)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Types</SelectItem>
-                <SelectItem value="deviation">Deviation</SelectItem>
-                <SelectItem value="audit">Audit Finding</SelectItem>
-                <SelectItem value="complaint">Complaint</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Years</SelectItem>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Loading indicator */}
+        {isSearching && (
+          <div
+            style={{
+              marginTop: "12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "12px",
+              color: "var(--accent)",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            <Loader2 size={13} strokeWidth={1.75} style={{ animation: "spin 1s linear infinite" }} />
+            Nova is searching historical CAPA similarity...
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        {!hasSearched && (
-          <Card className="xl:col-span-2">
-            <CardContent className="p-8 text-center text-sm text-muted-foreground">
-              Enter any finding description and run AI Search to compare it with historical CAPA patterns.
-            </CardContent>
-          </Card>
         )}
-        {hasSearched && filteredResults.length === 0 && (
-          <Card className="xl:col-span-2">
-            <CardContent className="p-8 text-center text-sm text-muted-foreground">
-              No similarity results match the current filters.
-            </CardContent>
-          </Card>
-        )}
-        {filteredResults.map((result) => (
-          <Card key={`${result.capaId}-${result.deviationId}`} className="shadow-sm">
-            <CardHeader>
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <CardTitle className="text-base">{result.capaId}</CardTitle>
-                  <p className="mt-1 font-mono text-xs text-muted-foreground">{result.deviationId}</p>
-                </div>
-                <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
-                  {result.similarityScore}% similar
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="text-xs font-medium uppercase text-muted-foreground">Root Cause</div>
-                <p className="mt-1 text-sm leading-6">{result.rootCause}</p>
-              </div>
-              <div>
-                <div className="text-xs font-medium uppercase text-muted-foreground">Corrective Action</div>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">{result.correctiveAction}</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline" className={outcomeClassName(result.outcome)}>
-                  {result.outcome}
-                </Badge>
-                <Badge variant="outline">{formatCAPAType(result.sourceType)}</Badge>
-                <Badge variant="outline">{result.year}</Badge>
-              </div>
-              <Button variant="outline" onClick={() => setSelectedResult(result)}>
-                Open Historical Detail
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
-      <Dialog open={Boolean(selectedResult)} onOpenChange={(open) => !open && setSelectedResult(undefined)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{selectedResult?.capaId}</DialogTitle>
-            <DialogDescription>Historical CAPA similarity detail</DialogDescription>
-          </DialogHeader>
-          {selectedResult && (
-            <div className="space-y-4 text-sm">
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded border p-3">
-                  <div className="text-xs font-medium uppercase text-muted-foreground">Source ID</div>
-                  <div className="mt-1 font-mono">{selectedResult.deviationId}</div>
+      {/* ── Filter bar ────────────────────────────────────────────────── */}
+      <div
+        style={{
+          background: "var(--bg-2)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-lg)",
+          padding: "16px 20px",
+          marginBottom: "16px",
+        }}
+      >
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(180px,1fr) repeat(3, minmax(130px,1fr))", gap: "12px", alignItems: "end" }}>
+          {/* Similarity slider */}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+              <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 500, color: "var(--fg-3)", textTransform: "uppercase", letterSpacing: "0.18em" }}>
+                Min similarity
+              </span>
+              <span style={{ fontSize: "12px", fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--fg-1)" }}>
+                {minSimilarity}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={50}
+              max={95}
+              step={1}
+              value={minSimilarity}
+              onChange={(e) => setMinSimilarity(Number(e.target.value))}
+              style={{
+                width: "100%",
+                height: "4px",
+                accentColor: "var(--accent)",
+                cursor: "pointer",
+              }}
+            />
+          </div>
+
+          {/* Outcome */}
+          <StyledSelect
+            value={outcomeFilter}
+            onChange={(v) => setOutcomeFilter(v as OutcomeFilter)}
+            options={[
+              { value: ALL, label: "All outcomes" },
+              { value: "Effective", label: "Effective" },
+              { value: "Recurred", label: "Recurred" },
+              { value: "Ongoing", label: "Ongoing" },
+            ]}
+          />
+
+          {/* Type */}
+          <StyledSelect
+            value={typeFilter}
+            onChange={(v) => setTypeFilter(v as TypeFilter)}
+            options={[
+              { value: ALL, label: "All types" },
+              { value: "deviation", label: "Deviation" },
+              { value: "audit", label: "Audit Finding" },
+              { value: "complaint", label: "Complaint" },
+            ]}
+          />
+
+          {/* Year */}
+          <StyledSelect
+            value={yearFilter}
+            onChange={setYearFilter}
+            options={[{ value: ALL, label: "All years" }, ...years.map((y) => ({ value: y, label: y }))]}
+          />
+        </div>
+      </div>
+
+      {/* ── Results ───────────────────────────────────────────────────── */}
+      {!hasSearched && (
+        <div
+          style={{
+            background: "var(--bg-2)",
+            border: "1px solid var(--line-2)",
+            borderRadius: "var(--r-lg)",
+            padding: "48px 20px",
+            textAlign: "center",
+          }}
+        >
+          <BrainCircuit size={32} strokeWidth={1.25} style={{ color: "var(--fg-3)", margin: "0 auto 12px" }} />
+          <p style={{ color: "var(--fg-3)", fontSize: "13px", margin: 0, lineHeight: "1.5" }}>
+            Enter a finding description and run AI Search to compare it with historical CAPA patterns.
+          </p>
+        </div>
+      )}
+
+      {hasSearched && (
+        <>
+          {/* Result count */}
+          <div
+            style={{
+              fontSize: "11px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 600,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color: "var(--fg-3)",
+              marginBottom: "12px",
+            }}
+          >
+            {filteredResults.length} match{filteredResults.length !== 1 ? "es" : ""}
+          </div>
+
+          {filteredResults.length === 0 ? (
+            <div
+              style={{
+                background: "var(--bg-2)",
+                border: "1px solid var(--line-2)",
+                borderRadius: "var(--r-lg)",
+                padding: "40px 20px",
+                textAlign: "center",
+                color: "var(--fg-3)",
+                fontSize: "13px",
+              }}
+            >
+              No similarity results match the current filters.
+            </div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              {filteredResults.map((citation) => (
+                <div
+                  key={`${citation.capaId}-${citation.deviationId}`}
+                  style={{
+                    background: "var(--bg-2)",
+                    border: "1px solid var(--line-2)",
+                    borderRadius: "var(--r-lg)",
+                    padding: "18px",
+                    transition: "border-color var(--dur-fast) var(--ease-out)",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--line-3)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--line-2)")}
+                  onClick={() => setSelectedResult(citation)}
+                >
+                  {/* Header */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                    <div>
+                      <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--fg-1)" }}>{citation.capaId}</div>
+                      <div style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", marginTop: "2px" }}>
+                        {citation.deviationId}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: "20px",
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        fontFamily: "var(--font-mono)",
+                        color: similarityColor(citation.similarityScore),
+                        background: "var(--bg-4)",
+                        border: "1px solid var(--line-2)",
+                      }}
+                    >
+                      {citation.similarityScore}%
+                    </span>
+                  </div>
+
+                  {/* Root cause */}
+                  <div style={{ marginBottom: "10px" }}>
+                    <div
+                      style={{
+                        fontSize: "10px",
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 600,
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                        color: "var(--fg-3)",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Root cause
+                    </div>
+                    <p style={{ fontSize: "13px", color: "var(--fg-2)", lineHeight: "1.5", margin: 0 }}>
+                      {citation.rootCause}
+                    </p>
+                  </div>
+
+                  {/* Corrective action */}
+                  <div style={{ marginBottom: "12px" }}>
+                    <div
+                      style={{
+                        fontSize: "10px",
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 600,
+                        letterSpacing: "0.18em",
+                        textTransform: "uppercase",
+                        color: "var(--fg-3)",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Corrective action
+                    </div>
+                    <p style={{ fontSize: "13px", color: "var(--fg-3)", lineHeight: "1.5", margin: 0 }}>
+                      {citation.correctiveAction}
+                    </p>
+                  </div>
+
+                  {/* Badges */}
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    <OutcomeBadge outcome={citation.outcome} />
+                    <TypeBadge type={citation.sourceType} />
+                    <span
+                      style={{
+                        display: "inline-block",
+                        padding: "3px 8px",
+                        borderRadius: "20px",
+                        fontSize: "11px",
+                        fontFamily: "var(--font-mono)",
+                        fontWeight: 500,
+                        background: "var(--bg-4)",
+                        border: "1px solid var(--line-2)",
+                        color: "var(--fg-3)",
+                      }}
+                    >
+                      {citation.year}
+                    </span>
+                  </div>
                 </div>
-                <div className="rounded border p-3">
-                  <div className="text-xs font-medium uppercase text-muted-foreground">Similarity</div>
-                  <div className="mt-1">{selectedResult.similarityScore}%</div>
-                </div>
-                <div className="rounded border p-3">
-                  <div className="text-xs font-medium uppercase text-muted-foreground">Type</div>
-                  <div className="mt-1">{formatCAPAType(selectedResult.sourceType)}</div>
-                </div>
-                <div className="rounded border p-3">
-                  <div className="text-xs font-medium uppercase text-muted-foreground">Outcome</div>
-                  <div className="mt-1">{selectedResult.outcome}</div>
-                </div>
-              </div>
-              <div>
-                <div className="text-xs font-medium uppercase text-muted-foreground">Root Cause</div>
-                <p className="mt-1 leading-6">{selectedResult.rootCause}</p>
-              </div>
-              <div>
-                <div className="text-xs font-medium uppercase text-muted-foreground">Corrective Action</div>
-                <p className="mt-1 leading-6">{selectedResult.correctiveAction}</p>
-              </div>
-              <div className="rounded border bg-muted/30 p-3 text-muted-foreground">
-                Nova uses this case as a contextual citation only. The current CAPA still requires user confirmation and audit-ready evidence.
-              </div>
+              ))}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </>
+      )}
+
+      {/* ── Detail modal ──────────────────────────────────────────────── */}
+      {selectedResult && (
+        <DetailModal citation={selectedResult} onClose={() => setSelectedResult(undefined)} />
+      )}
     </div>
   );
 }

@@ -36,10 +36,10 @@ const departmentBreakdownData = [
 ];
 
 const priorityDistributionData = [
-  { name: "Critical", value: 8, color: "#ef4444" },
-  { name: "High", value: 15, color: "#f97316" },
-  { name: "Medium", value: 22, color: "#6b7280" },
-  { name: "Low", value: 12, color: "#d1d5db" },
+  { name: "Critical", value: 8, color: "var(--danger)" },
+  { name: "High", value: 15, color: "var(--warning)" },
+  { name: "Medium", value: 22, color: "var(--fg-3)" },
+  { name: "Low", value: 12, color: "var(--fg-2)" },
 ];
 
 const priorityTasks = [
@@ -252,9 +252,9 @@ export default function CapaDashboard() {
                     }}
                   />
                   <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '8px' }} iconType="circle" iconSize={6} />
-                  <Line type="monotone" dataKey="deviations" name="Deviations" stroke="#f97316" strokeWidth={2} dot={{ r: 2 }} />
-                  <Line type="monotone" dataKey="audits" name="Audits" stroke="#3b82f6" strokeWidth={2} dot={{ r: 2 }} />
-                  <Line type="monotone" dataKey="complaints" name="Complaints" stroke="#a855f7" strokeWidth={2} dot={{ r: 2 }} />
+                  <Line type="monotone" dataKey="deviations" name="Deviations" stroke="var(--warning)" strokeWidth={2} dot={{ r: 2 }} />
+                  <Line type="monotone" dataKey="audits" name="Audits" stroke="var(--accent)" strokeWidth={2} dot={{ r: 2 }} />
+                  <Line type="monotone" dataKey="complaints" name="Complaints" stroke="var(--success)" strokeWidth={2} dot={{ r: 2 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -289,9 +289,9 @@ export default function CapaDashboard() {
                     }}
                   />
                   <Legend wrapperStyle={{ fontSize: '10px', paddingTop: '8px' }} iconType="rect" iconSize={8} />
-                  <Bar dataKey="deviations" name="Deviations" stackId="a" fill="#f97316" />
-                  <Bar dataKey="audits" name="Audits" stackId="a" fill="#3b82f6" />
-                  <Bar dataKey="complaints" name="Complaints" stackId="a" fill="#a855f7" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="deviations" name="Deviations" stackId="a" fill="var(--warning)" />
+                  <Bar dataKey="audits" name="Audits" stackId="a" fill="var(--accent)" />
+                  <Bar dataKey="complaints" name="Complaints" stackId="a" fill="var(--success)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -1,356 +1,614 @@
+/**
+ * AuditTrailPage — Global Audit Trail (wireframe section 17)
+ *
+ * Full-system event log for BPOM audit compliance and ALCOA+ traceability.
+ * Read-only append log. Filterable. Exportable to CSV/PDF.
+ */
+
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Download, Search } from "lucide-react";
+import { Download, FileText, Search } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuditTrailStore } from "@/store";
 import type { AuditDomain, AuditEvent, AuditEventType } from "@/types";
 import { formatDateTime } from "@/utils/formatters";
 
-const allValue = "all";
-const dateFilters = ["all", "today", "last_7_days", "last_30_days"] as const;
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-type DateFilter = (typeof dateFilters)[number];
+const ALL = "all";
+const DATE_FILTERS = ["all", "today", "last_7_days", "last_30_days"] as const;
+type DateFilter = (typeof DATE_FILTERS)[number];
 
-function domainClassName(domain: AuditDomain) {
-  const classes: Record<AuditDomain, string> = {
-    system: "border-status-investigation/30 bg-status-investigation/10 text-status-investigation",
-    ai_decision: "border-nova/30 bg-nova/10 text-nova",
-    integration: "border-primary/30 bg-primary/10 text-primary",
-    clear_labeling: "border-status-ready/30 bg-status-ready/10 text-status-ready",
-  };
+const DOMAIN_COLORS: Record<AuditDomain, { bg: string; border: string; text: string }> = {
+  system: { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" },
+  ai_decision: { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" },
+  integration: { bg: "var(--success-soft)", border: "color-mix(in srgb, var(--success) 38%, transparent)", text: "var(--success)" },
+  clear_labeling: { bg: "var(--success-soft)", border: "color-mix(in srgb, var(--success) 38%, transparent)", text: "var(--success)" },
+};
 
-  return classes[domain];
-}
+const DOMAIN_LABELS: Record<AuditDomain, string> = {
+  system: "System",
+  ai_decision: "AI Decision",
+  integration: "Integration",
+  clear_labeling: "Clear Labeling",
+};
 
-function formatDomain(domain: AuditDomain) {
-  const labels: Record<AuditDomain, string> = {
-    system: "System",
-    ai_decision: "AI Decision",
-    integration: "Integration",
-    clear_labeling: "Clear Labeling",
-  };
+const DATE_FILTER_LABELS: Record<DateFilter, string> = {
+  all: "All dates",
+  today: "Today",
+  last_7_days: "Last 7 days",
+  last_30_days: "Last 30 days",
+};
 
-  return labels[domain];
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatEventType(eventType: AuditEventType) {
+function formatEventType(eventType: AuditEventType): string {
   return eventType
     .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
 
-function isInDateFilter(timestamp: string, dateFilter: DateFilter) {
-  if (dateFilter === "all") return true;
-
-  const eventDate = new Date(timestamp);
+function isInDateFilter(timestamp: string, filter: DateFilter): boolean {
+  if (filter === "all") return true;
+  const d = new Date(timestamp);
   const now = new Date();
-
-  if (dateFilter === "today") {
-    return eventDate.toDateString() === now.toDateString();
-  }
-
+  if (filter === "today") return d.toDateString() === now.toDateString();
   const cutoff = new Date(now);
-  cutoff.setDate(now.getDate() - (dateFilter === "last_7_days" ? 7 : 30));
-  return eventDate >= cutoff;
+  cutoff.setDate(now.getDate() - (filter === "last_7_days" ? 7 : 30));
+  return d >= cutoff;
 }
 
+// ── Styled sub-components ─────────────────────────────────────────────────────
+
+function StyledSelect({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <div style={{ position: "relative" }}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: "100%",
+          height: "36px",
+          background: "var(--bg-4)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-sm)",
+          color: "var(--fg-2)",
+          fontSize: "13px",
+          fontFamily: "var(--font-sans)",
+          padding: "0 32px 0 10px",
+          appearance: "none",
+          cursor: "pointer",
+          outline: "none",
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+      >
+        <path d="M3 5l3 3 3-3" stroke="var(--fg-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
+function DomainBadge({ domain }: { domain: AuditDomain }) {
+  const colors = DOMAIN_COLORS[domain];
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "3px 8px",
+        borderRadius: "20px",
+        fontSize: "11px",
+        fontWeight: 600,
+        fontFamily: "var(--font-mono)",
+        background: colors.bg,
+        border: `1px solid ${colors.border}`,
+        color: colors.text,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {DOMAIN_LABELS[domain]}
+    </span>
+  );
+}
+
+function KpiCard({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div
+      style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--line-2)",
+        borderRadius: "var(--r-lg)",
+        padding: "16px 20px",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "11px",
+          fontFamily: "var(--font-mono)",
+          fontWeight: 600,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--fg-3)",
+          marginBottom: "6px",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: "28px",
+          fontWeight: 700,
+          fontFamily: "var(--font-mono)",
+          color: "var(--fg-1)",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+
 export function AuditTrailPage() {
-  const events = useAuditTrailStore((state) => state.events);
+  const events = useAuditTrailStore((s) => s.events);
   const [query, setQuery] = useState("");
-  const [domainFilter, setDomainFilter] = useState<AuditDomain | typeof allValue>(allValue);
-  const [capaFilter, setCapaFilter] = useState(allValue);
-  const [findingFilter, setFindingFilter] = useState(allValue);
-  const [actorFilter, setActorFilter] = useState(allValue);
-  const [dateFilter, setDateFilter] = useState<DateFilter>(allValue);
+  const [domainFilter, setDomainFilter] = useState<string>(ALL);
+  const [capaFilter, setCapaFilter] = useState(ALL);
+  const [findingFilter, setFindingFilter] = useState(ALL);
+  const [actorFilter, setActorFilter] = useState(ALL);
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
 
   const sortedEvents = useMemo(
-    () =>
-      [...events].sort(
-        (left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime(),
-      ),
+    () => [...events].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     [events],
   );
 
   const capaIds = useMemo(
-    () => Array.from(new Set(events.map((event) => event.capaId).filter(Boolean) as string[])).sort(),
+    () => Array.from(new Set(events.map((e) => e.capaId).filter(Boolean) as string[])).sort(),
     [events],
   );
   const findingIds = useMemo(
-    () => Array.from(new Set(events.map((event) => event.findingId).filter(Boolean) as string[])).sort(),
+    () => Array.from(new Set(events.map((e) => e.findingId).filter(Boolean) as string[])).sort(),
     [events],
   );
   const actors = useMemo(
-    () => Array.from(new Set(events.map((event) => event.actorName))).sort(),
+    () => Array.from(new Set(events.map((e) => e.actorName))).sort(),
     [events],
   );
 
   const filteredEvents = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return sortedEvents.filter((event) => {
-      if (domainFilter !== allValue && event.domain !== domainFilter) return false;
-      if (capaFilter !== allValue && event.capaId !== capaFilter) return false;
-      if (findingFilter !== allValue && event.findingId !== findingFilter) return false;
-      if (actorFilter !== allValue && event.actorName !== actorFilter) return false;
-      if (!isInDateFilter(event.timestamp, dateFilter)) return false;
-      if (!normalizedQuery) return true;
-
-      return [
-        event.id,
-        event.actorName,
-        event.actorRole,
-        event.action,
-        event.capaId,
-        event.findingId,
-        event.before,
-        event.after,
-        event.eventType,
-        event.domain,
-      ]
+    const q = query.trim().toLowerCase();
+    return sortedEvents.filter((evt) => {
+      if (domainFilter !== ALL && evt.domain !== domainFilter) return false;
+      if (capaFilter !== ALL && evt.capaId !== capaFilter) return false;
+      if (findingFilter !== ALL && evt.findingId !== findingFilter) return false;
+      if (actorFilter !== ALL && evt.actorName !== actorFilter) return false;
+      if (!isInDateFilter(evt.timestamp, dateFilter)) return false;
+      if (!q) return true;
+      return [evt.id, evt.actorName, evt.actorRole, evt.action, evt.capaId, evt.findingId, evt.before, evt.after, evt.eventType, evt.domain]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-        .includes(normalizedQuery);
+        .includes(q);
     });
   }, [actorFilter, capaFilter, dateFilter, domainFilter, findingFilter, query, sortedEvents]);
 
-  function exportAuditTrail() {
-    toast.success("Audit trail export prepared", {
-      description: "CSV/PDF export is mocked in this frontend demo.",
+  const aiDecisionCount = useMemo(() => events.filter((e) => e.domain === "ai_decision").length, [events]);
+  const integrationCount = useMemo(() => events.filter((e) => e.domain === "integration").length, [events]);
+
+  function handleExport(format: "csv" | "pdf") {
+    toast.success(`Audit trail ${format.toUpperCase()} export prepared`, {
+      description: `${format.toUpperCase()} export is mocked in this frontend demo.`,
     });
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <div className="animate-page-enter" style={{ maxWidth: "1400px" }}>
+      {/* ── Header ────────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Global Audit Trail</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Read-only event log for system actions, Nova decisions, integration imports, notifications, approvals, and field changes.
+          <h1
+            style={{
+              fontSize: "22px",
+              fontWeight: 600,
+              color: "var(--fg-1)",
+              fontFamily: "var(--font-sans)",
+              letterSpacing: "-0.02em",
+              margin: 0,
+            }}
+          >
+            Global audit trail
+          </h1>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", marginTop: "6px", maxWidth: "600px", lineHeight: "1.5" }}>
+            Read-only event log for system actions, Nova decisions, integration imports, and approvals. ALCOA+ compliant.
           </p>
         </div>
-        <Button variant="outline" onClick={exportAuditTrail}>
-          <Download className="mr-2 h-4 w-4" />
-          Export CSV/PDF
-        </Button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={() => handleExport("csv")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 14px",
+              background: "var(--bg-3)",
+              border: "1px solid var(--line-2)",
+              borderRadius: "var(--r-sm)",
+              color: "var(--fg-2)",
+              fontSize: "13px",
+              fontFamily: "var(--font-sans)",
+              cursor: "pointer",
+              transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-3)"; e.currentTarget.style.background = "var(--bg-4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.background = "var(--bg-3)"; }}
+          >
+            <Download size={14} strokeWidth={1.75} />
+            Export CSV
+          </button>
+          <button
+            onClick={() => handleExport("pdf")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 14px",
+              background: "var(--bg-3)",
+              border: "1px solid var(--line-2)",
+              borderRadius: "var(--r-sm)",
+              color: "var(--fg-2)",
+              fontSize: "13px",
+              fontFamily: "var(--font-sans)",
+              cursor: "pointer",
+              transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-3)"; e.currentTarget.style.background = "var(--bg-4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.background = "var(--bg-3)"; }}
+          >
+            <FileText size={14} strokeWidth={1.75} />
+            Export PDF
+          </button>
+        </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs font-medium uppercase text-muted-foreground">Events</div>
-            <div className="mt-2 text-2xl font-semibold">{events.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs font-medium uppercase text-muted-foreground">AI Decisions</div>
-            <div className="mt-2 text-2xl font-semibold">
-              {events.filter((event) => event.domain === "ai_decision").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs font-medium uppercase text-muted-foreground">Integrations</div>
-            <div className="mt-2 text-2xl font-semibold">
-              {events.filter((event) => event.domain === "integration").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-xs font-medium uppercase text-muted-foreground">Filtered</div>
-            <div className="mt-2 text-2xl font-semibold">{filteredEvents.length}</div>
-          </CardContent>
-        </Card>
+      {/* ── KPI row ───────────────────────────────────────────────────── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "20px" }}>
+        <KpiCard label="Total events" value={events.length} />
+        <KpiCard label="AI decisions" value={aiDecisionCount} />
+        <KpiCard label="Integrations" value={integrationCount} />
+        <KpiCard label="Showing" value={filteredEvents.length} />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 xl:grid-cols-[minmax(260px,1.5fr)_repeat(5,minmax(150px,1fr))]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="pl-9"
-                placeholder="Search actor, event, CAPA, finding, before/after"
-              />
-            </div>
-            <Select value={domainFilter} onValueChange={(value) => setDomainFilter(value as AuditDomain | typeof allValue)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Domain" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Domains</SelectItem>
-                <SelectItem value="system">System</SelectItem>
-                <SelectItem value="ai_decision">AI Decision</SelectItem>
-                <SelectItem value="integration">Integration</SelectItem>
-                <SelectItem value="clear_labeling">Clear Labeling</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={capaFilter} onValueChange={setCapaFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="CAPA ID" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All CAPAs</SelectItem>
-                {capaIds.map((capaId) => (
-                  <SelectItem key={capaId} value={capaId}>
-                    {capaId}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={findingFilter} onValueChange={setFindingFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Finding ID" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Findings</SelectItem>
-                {findingIds.map((findingId) => (
-                  <SelectItem key={findingId} value={findingId}>
-                    {findingId}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={actorFilter} onValueChange={setActorFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Actor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Actors</SelectItem>
-                {actors.map((actor) => (
-                  <SelectItem key={actor} value={actor}>
-                    {actor}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as DateFilter)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Date" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Dates</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="last_7_days">Last 7 Days</SelectItem>
-                <SelectItem value="last_30_days">Last 30 Days</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* ── Filter bar ────────────────────────────────────────────────── */}
+      <div
+        style={{
+          background: "var(--bg-2)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-lg)",
+          padding: "16px",
+          marginBottom: "20px",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(240px, 1.5fr) repeat(5, minmax(130px, 1fr))",
+            gap: "10px",
+            alignItems: "end",
+          }}
+        >
+          {/* Search */}
+          <div style={{ position: "relative" }}>
+            <Search
+              size={14}
+              strokeWidth={1.75}
+              style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--fg-3)" }}
+            />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search actor, event, CAPA, before/after"
+              style={{
+                width: "100%",
+                height: "36px",
+                background: "var(--bg-4)",
+                border: "1px solid var(--line-2)",
+                borderRadius: "var(--r-sm)",
+                color: "var(--fg-1)",
+                fontSize: "13px",
+                fontFamily: "var(--font-sans)",
+                padding: "0 12px 0 32px",
+                outline: "none",
+                transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+            />
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{filteredEvents.length} Audit Events</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-hidden rounded border">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-muted text-xs uppercase text-muted-foreground">
+          {/* Domain */}
+          <StyledSelect
+            value={domainFilter}
+            onChange={setDomainFilter}
+            options={[
+              { value: ALL, label: "All domains" },
+              { value: "system", label: "System" },
+              { value: "ai_decision", label: "AI Decision" },
+              { value: "integration", label: "Integration" },
+              { value: "clear_labeling", label: "Clear Labeling" },
+            ]}
+          />
+
+          {/* CAPA ID */}
+          <StyledSelect
+            value={capaFilter}
+            onChange={setCapaFilter}
+            options={[{ value: ALL, label: "All CAPAs" }, ...capaIds.map((id) => ({ value: id, label: id }))]}
+          />
+
+          {/* Finding ID */}
+          <StyledSelect
+            value={findingFilter}
+            onChange={setFindingFilter}
+            options={[{ value: ALL, label: "All findings" }, ...findingIds.map((id) => ({ value: id, label: id }))]}
+          />
+
+          {/* Actor */}
+          <StyledSelect
+            value={actorFilter}
+            onChange={setActorFilter}
+            options={[{ value: ALL, label: "All actors" }, ...actors.map((a) => ({ value: a, label: a }))]}
+          />
+
+          {/* Date range */}
+          <StyledSelect
+            value={dateFilter}
+            onChange={(v) => setDateFilter(v as DateFilter)}
+            options={DATE_FILTERS.map((f) => ({ value: f, label: DATE_FILTER_LABELS[f] }))}
+          />
+        </div>
+      </div>
+
+      {/* ── Results count ─────────────────────────────────────────────── */}
+      <div
+        style={{
+          fontSize: "11px",
+          fontFamily: "var(--font-mono)",
+          fontWeight: 600,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--fg-3)",
+          marginBottom: "10px",
+        }}
+      >
+        {filteredEvents.length} audit events
+      </div>
+
+      {/* ── Table ─────────────────────────────────────────────────────── */}
+      <div
+        style={{
+          background: "var(--bg-2)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-lg)",
+          overflow: "hidden",
+        }}
+      >
+        <div style={{ overflowX: "auto" }}>
+          <table
+            style={{
+              width: "100%",
+              borderCollapse: "collapse",
+              fontSize: "13px",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            <thead>
+              <tr
+                style={{
+                  background: "var(--bg-3)",
+                  borderBottom: "1px solid var(--line-1)",
+                }}
+              >
+                {["Timestamp", "Domain", "Actor", "Action", "CAPA / Finding", "Before / After", "Nova metadata"].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "10px 12px",
+                      textAlign: "left",
+                      fontSize: "10px",
+                      fontFamily: "var(--font-mono)",
+                      fontWeight: 600,
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                      color: "var(--fg-3)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredEvents.length === 0 && (
                 <tr>
-                  <th className="px-3 py-2">Timestamp</th>
-                  <th className="px-3 py-2">Domain</th>
-                  <th className="px-3 py-2">Actor</th>
-                  <th className="px-3 py-2">Action</th>
-                  <th className="px-3 py-2">CAPA / Finding</th>
-                  <th className="px-3 py-2">Before / After</th>
-                  <th className="px-3 py-2">Nova Metadata</th>
+                  <td
+                    colSpan={7}
+                    style={{ padding: "40px 16px", textAlign: "center", color: "var(--fg-3)", fontSize: "13px" }}
+                  >
+                    No audit events match the current filters.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filteredEvents.map((event: AuditEvent) => (
-                  <tr key={event.id} className="border-t align-top">
-                    <td className="px-3 py-3">
-                      <div className="font-mono text-xs">{event.id}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{formatDateTime(event.timestamp)}</div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <Badge variant="outline" className={domainClassName(event.domain)}>
-                        {formatDomain(event.domain)}
-                      </Badge>
-                      <div className="mt-2 text-xs text-muted-foreground">{formatEventType(event.eventType)}</div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="font-medium">{event.actorName}</div>
-                      <div className="mt-1 text-xs text-muted-foreground">{event.actorRole}</div>
-                    </td>
-                    <td className="max-w-md px-3 py-3">{event.action}</td>
-                    <td className="px-3 py-3">
-                      {event.capaId ? (
-                        <Link className="font-mono text-xs text-primary hover:underline" to={`/capa/${event.capaId}`}>
-                          {event.capaId}
+              )}
+              {filteredEvents.map((evt: AuditEvent) => (
+                <tr
+                  key={evt.id}
+                  style={{
+                    borderBottom: "1px solid var(--line-1)",
+                    verticalAlign: "top",
+                    transition: "background var(--dur-fast) var(--ease-out)",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-3)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  {/* Timestamp */}
+                  <td style={{ padding: "12px", minWidth: "120px" }}>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--fg-3)" }}>{evt.id}</div>
+                    <div style={{ fontSize: "12px", color: "var(--fg-2)", marginTop: "3px" }}>{formatDateTime(evt.timestamp)}</div>
+                  </td>
+
+                  {/* Domain */}
+                  <td style={{ padding: "12px", minWidth: "130px" }}>
+                    <DomainBadge domain={evt.domain} />
+                    <div style={{ fontSize: "11px", color: "var(--fg-3)", marginTop: "5px" }}>
+                      {formatEventType(evt.eventType)}
+                    </div>
+                  </td>
+
+                  {/* Actor */}
+                  <td style={{ padding: "12px", minWidth: "130px" }}>
+                    <div style={{ fontWeight: 600, color: "var(--fg-1)", fontSize: "13px" }}>{evt.actorName}</div>
+                    <div style={{ fontSize: "11px", color: "var(--fg-3)", marginTop: "2px" }}>{evt.actorRole}</div>
+                  </td>
+
+                  {/* Action */}
+                  <td style={{ padding: "12px", maxWidth: "320px", color: "var(--fg-2)", lineHeight: "1.5" }}>
+                    {evt.action}
+                  </td>
+
+                  {/* CAPA / Finding */}
+                  <td style={{ padding: "12px", minWidth: "130px" }}>
+                    {evt.capaId ? (
+                      <Link
+                        to={`/capa/${evt.capaId}`}
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: "12px",
+                          color: "var(--accent)",
+                          textDecoration: "none",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                      >
+                        {evt.capaId}
+                      </Link>
+                    ) : (
+                      <span style={{ fontSize: "11px", color: "var(--fg-3)" }}>No CAPA</span>
+                    )}
+                    {evt.findingId && (
+                      <div style={{ marginTop: "4px" }}>
+                        <Link
+                          to={`/findings/${evt.findingId}`}
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            fontSize: "12px",
+                            color: "var(--accent)",
+                            textDecoration: "none",
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+                          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                        >
+                          {evt.findingId}
                         </Link>
-                      ) : (
-                        <div className="text-xs text-muted-foreground">No CAPA</div>
-                      )}
-                      {event.findingId && (
-                        <div className="mt-2">
-                          <Link className="font-mono text-xs text-primary hover:underline" to={`/findings/${event.findingId}`}>
-                            {event.findingId}
-                          </Link>
-                        </div>
-                      )}
-                    </td>
-                    <td className="max-w-sm px-3 py-3">
-                      {event.before || event.after ? (
-                        <div className="space-y-2 text-xs">
-                          {event.before && (
-                            <div className="rounded border bg-muted/30 p-2">
-                              <div className="mb-1 font-medium text-muted-foreground">Before</div>
-                              {event.before}
-                            </div>
-                          )}
-                          {event.after && (
-                            <div className="rounded border bg-muted/30 p-2">
-                              <div className="mb-1 font-medium text-muted-foreground">After</div>
-                              {event.after}
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">No field diff</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      {event.novaMetadata ? (
-                        <div className="rounded border border-nova/20 bg-nova/5 p-2 text-xs">
-                          <div className="font-medium text-nova">{event.novaMetadata.modelName}</div>
-                          <div className="mt-1 text-muted-foreground">{event.novaMetadata.modelVersion}</div>
-                          <div className="mt-1 text-muted-foreground">
-                            Confidence: {event.novaMetadata.confidenceScore}%
+                      </div>
+                    )}
+                  </td>
+
+                  {/* Before / After */}
+                  <td style={{ padding: "12px", maxWidth: "240px" }}>
+                    {evt.before || evt.after ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        {evt.before && (
+                          <div
+                            style={{
+                              background: "var(--bg-4)",
+                              borderRadius: "6px",
+                              padding: "6px 8px",
+                              fontSize: "11px",
+                              color: "var(--fg-3)",
+                              lineHeight: "1.4",
+                            }}
+                          >
+                            <span style={{ fontWeight: 600, color: "var(--fg-3)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.18em" }}>
+                              Before
+                            </span>
+                            <div style={{ marginTop: "2px" }}>{evt.before}</div>
                           </div>
+                        )}
+                        {evt.after && (
+                          <div
+                            style={{
+                              background: "var(--bg-4)",
+                              borderRadius: "6px",
+                              padding: "6px 8px",
+                              fontSize: "11px",
+                              color: "var(--fg-2)",
+                              lineHeight: "1.4",
+                            }}
+                          >
+                            <span style={{ fontWeight: 600, color: "var(--fg-3)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.18em" }}>
+                              After
+                            </span>
+                            <div style={{ marginTop: "2px" }}>{evt.after}</div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: "11px", color: "var(--fg-3)" }}>No field diff</span>
+                    )}
+                  </td>
+
+                  {/* Nova metadata */}
+                  <td style={{ padding: "12px", minWidth: "140px" }}>
+                    {evt.novaMetadata ? (
+                      <div
+                        style={{
+                          background: "var(--accent-soft)",
+                          border: "1px solid var(--accent-line)",
+                          borderRadius: "var(--r-sm)",
+                          padding: "8px 10px",
+                          fontSize: "11px",
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, color: "var(--accent)" }}>{evt.novaMetadata.modelName}</div>
+                        <div style={{ color: "var(--fg-3)", marginTop: "2px" }}>{evt.novaMetadata.modelVersion}</div>
+                        <div style={{ color: "var(--fg-2)", marginTop: "2px" }}>
+                          Confidence: {evt.novaMetadata.confidenceScore}%
                         </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Not AI-generated</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: "11px", color: "var(--fg-3)" }}>Not AI-generated</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

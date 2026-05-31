@@ -40,7 +40,7 @@ export const SplitOption = ({
         </div>
         <h4 className="text-2xl font-bold text-foreground">{title}</h4>
         {isRecommended && (
-          <div className="rounded-[9px] bg-[#EAD6FF] px-2 py-0.5">
+          <div className="rounded-[9px] bg-[var(--accent-soft)] px-2 py-0.5">
             <span className="text-xs font-bold text-primary-dark">
               Recomended
             </span>

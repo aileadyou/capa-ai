@@ -39,7 +39,7 @@ export const PipelineCompletionCelebration = ({
       checkAndPlaySound();
       
       // Generate colorful confetti particles
-      const colors = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--success))', 'hsl(var(--info))'];
+      const colors = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--tw-accent))', 'hsl(var(--tw-success))', 'hsl(var(--tw-info))'];
       const particles = Array.from({ length: 100 }, (_, i) => ({
         id: i,
         left: Math.random() * 100,

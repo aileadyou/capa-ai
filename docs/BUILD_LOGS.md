@@ -4,6 +4,452 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-01, 03:10 AM — Findings Detail page rewrite
+
+### Prompt
+"Aku butuh ada halaman Findings Detail. Tolong buatkan ya. rancang dan langsung buatkan aja"
+
+### Completed
+- Rewrote `FindingDetailPage.tsx` (was shadcn `Button`/`Card`/`Separator` + shared badge components + `text-muted-foreground` utility classes) to the inline-style + design-system token approach, consistent with `FindingsListPage.tsx` and the rewritten 8D pages.
+- Page layout: back link to `/findings`; header with eyebrow, mono finding ID, Type/Severity/Status badge row, short description, and gradient primary action (`Open linked CAPA` vs `Create CAPA with Nova`).
+- 4-card stat strip (Type, Department, Reported, Linked CAPA).
+- Two-column body — left: adaptive "Imported source data" grid per source variant (`Bizzmine` / `Q100+` / `Bizzmine-Complaint`) from `capa.preFill`, plus Nova classification block (accent border + Sparkles); right: Linked CAPA card (id, title, status, ScorePill, View CAPA), Finding summary, and Timeline (reported → linked → investigation → Audit Ready closure).
+- Reused local badge/pill components (Severity/Status/Type/Score) matching the list page for visual parity; preserved store access (`findings` + `capas` matched via `linkedCapaId` or `findingId`) and `NotFound` fallback.
+
+### Validation
+- `npx tsc --noEmit` ✅ passes.
+- Router named import `{ FindingDetailPage }` still resolves; route `/findings/:id` unchanged.
+
+### Files Touched
+- `src/pages/nova/FindingDetailPage.tsx`
+
+---
+
+## 2026-06-01, 02:29 AM — Nova Suggestion Discuss Flow
+
+### Prompt
+"Di Nova suggestion, hilangin tombol Edit First. Tombol Skip ilangin, tapi diganti dengan Discuss with Nova yang ngelempar ke Ask Nova tentang konteks yang ditekan. User tetap bisa masukin pertanyaannya. Di 5 Whys, setelah Use this suggestion show textnya apa."
+
+### Completed
+- Removed visible `Edit first` and `Skip` actions from Nova suggestion components.
+- Added `Discuss with Nova` action to both `NovaSuggestionBlock` and `NovaBlock`.
+- `Discuss with Nova` now opens the Ask Nova side panel with a suggestion context card and an editable prefilled draft question, so user can revise the question before sending.
+- Extended `novaChatContext` with suggestion metadata: source, suggestion id, context label, suggestion text, and initial draft.
+- Updated accepted suggestion state to show the applied text, so 5 Whys still displays the answer after `Use this suggestion`.
+
+### Validation
+- `npm run build` ✅ passes.
+- `git diff --check` ✅ passes.
+- Nova suggestion scan ✅ no visible `Edit first`, `Skip`, skipped state, or old skip handlers remain; `Discuss with Nova` and `Suggestion context` are present.
+
+### Files Touched
+- `src/components/nova/NovaSuggestionBlock.tsx`
+- `src/components/nova/NovaBlock.tsx`
+- `src/components/nova/NovaChatPanel.tsx`
+- `src/store/useUIStore.ts`
+
+---
+
+## 2026-06-01, 02:17 AM — Soft-Gate 8D Continue Warnings
+
+### Prompt
+"Bikin aku tetep bisa continue ke step 8D selanjutnya, tapi kasih warning."
+
+### Completed
+- Changed D1-D3 Continue behavior from hard blocker to soft warning: incomplete problem statement, containment, or RCA now shows `toast.warning(...)` and still advances to the next 8D step.
+- Changed D4-D5 Continue behavior so missing/incomplete action forms warn and still advance; valid draft actions are still added before advancing.
+- Changed D6 Continue behavior so incomplete verification warns and still advances to D7; complete verification still saves evidence/result and score as before.
+- Kept Save Draft / Add Action validation stricter, so manual save/add still protects data quality while workflow navigation stays flexible.
+
+### Validation
+- `npm run build` ✅ passes.
+- `git diff --check` ✅ passes.
+- Soft-gate scan ✅ D1-D6 Continue paths now use `toast.warning(...)` for incomplete steps.
+
+### Files Touched
+- `src/pages/nova/eight-d/D1ProblemPage.tsx`
+- `src/pages/nova/eight-d/D2ContainmentPage.tsx`
+- `src/pages/nova/eight-d/D3RCAPage.tsx`
+- `src/pages/nova/eight-d/D4CorrectiveActionPage.tsx`
+- `src/pages/nova/eight-d/D5PreventiveActionPage.tsx`
+- `src/pages/nova/eight-d/D6VerificationPage.tsx`
+
+---
+
+## 2026-06-01, 02:11 AM — CAPA Hub Editable Inline 8D Forms
+
+### Prompt
+"Aku bisa pindah-pindah 8D Progress, tapi saat ini nggak bisa ngisi 8D progress karena nggak ada inputannya. Cek lagi view-view 8D sebelumnya."
+
+### Completed
+- Reconnected the CAPA hub inline 8D Progress panel to the existing editable 8D step pages instead of the read-only summary cards.
+- Added `EightDEmbedProvider` / `useEightDEmbed()` so the old 8D pages can render inside `/capa/{id}` without duplicating the standalone `EightDShell` sidebar.
+- Preserved read-only summary mode for closed CAPAs, so the previous “finished CAPA” view still works when everything is done.
+- Updated D1-D6 Continue actions: when embedded, they switch the local CAPA hub selected step instead of navigating to `/capa/{id}/8d/{step}`; standalone routes still navigate as before.
+- Updated sign-off notification URLs to point back to `/capa/{id}`.
+
+### Validation
+- `npm run build` ✅ passes.
+- `git diff --check` ✅ passes.
+- CAPA detail smoke check ✅ `http://127.0.0.1:8081/capa/CAPA-2026-0341` returns `200 OK`.
+- `npx tsc -p tsconfig.app.json --noEmit` ❌ still fails on existing strict-mode debt, especially nullable `capa` in the legacy 8D pages; no production build failure.
+
+### Files Touched
+- `src/components/layout/EightDShell.tsx`
+- `src/pages/nova/CapaDetailPage.tsx`
+- `src/pages/nova/eight-d/D1ProblemPage.tsx`
+- `src/pages/nova/eight-d/D2ContainmentPage.tsx`
+- `src/pages/nova/eight-d/D3RCAPage.tsx`
+- `src/pages/nova/eight-d/D4CorrectiveActionPage.tsx`
+- `src/pages/nova/eight-d/D5PreventiveActionPage.tsx`
+- `src/pages/nova/eight-d/D6VerificationPage.tsx`
+- `src/pages/nova/eight-d/D7SignOffPage.tsx`
+
+---
+
+## 2026-06-01, 02:07 AM — Dark/Light Theme Toggle Foundation
+
+### Prompt
+"Siap jalan full untuk bikin toggle dark mode / light mode, toggle tersedia di sidebar sudut kiri bawah."
+
+### Completed
+- Added persistent theme initialization through `src/lib/theme.ts`, using fail-safe `localStorage` persistence with OS preference fallback.
+- Replaced forced dark boot in `src/main.tsx` with `applyTheme(getInitialTheme())`, so the app can start in either `dark` or `light`.
+- Added full direct design-system theme tokens for `.dark` and `.light` in `src/index.css`, covering backgrounds, foregrounds, borders, accent, semantics, glass, scrims, and shadows.
+- Split shadcn/Tailwind HSL tokens into `--tw-*` names to avoid collisions with direct CSS tokens like `--accent`, `--success`, and `--warning`.
+- Updated HSL-only usages to `--tw-*` so chart/confetti/status code keeps rendering valid colors.
+- Added a bottom-left sidebar theme toggle with Sun/Moon icon styling and persistent switching.
+
+### Validation
+- `npm run build` ✅ passes.
+- Dev server ✅ running at `http://127.0.0.1:8081/`; local HTTP smoke check returned `200 OK`.
+- Theme scan ✅ no remaining forced `classList.add("dark")` boot path and no stale `hsl(var(--accent/success/warning/info))` usages.
+- `npx tsc -p tsconfig.app.json --noEmit` ❌ still fails on existing strict-mode debt already logged earlier; no new errors from the theme/sidebar files.
+- `npm run lint` ❌ still fails on existing lint debt (`any` usage, hook deps, fast-refresh warnings) across legacy/touched surfaces.
+
+### Files Touched
+- `src/lib/theme.ts`
+- `src/main.tsx`
+- `src/index.css`
+- `tailwind.config.ts`
+- `src/components/layout/Sidebar.tsx`
+- `src/pages/QualityDashboard.tsx`
+- `src/components/SimilarityChart.tsx`
+- `src/components/PipelineCompletionCelebration.tsx`
+- `src/components/DataQualityReport.tsx`
+
+---
+
+## 2026-06-01, 12:42 AM — CAPA Hub Overview Shortcut
+
+### Prompt
+"Di atas 8D Progress, tambahin tombol kecil Overview."
+
+### Completed
+- Added a small `Overview` button above the `8D Progress` list in the CAPA detail left rail.
+- The button clears the inline selected 8D step and returns the right column to the original CAPA overview view without changing the URL.
+- Added active styling when the overview is selected, matching the existing accent-soft/accent selected state.
+
+### Validation
+- `npm run build` ✅ passes.
+
+### Files Touched
+- `src/pages/nova/CapaDetailPage.tsx`
+
+---
+
+## 2026-06-01, 12:37 AM — CAPA Hub Inline 8D Step Views
+
+### Prompt
+"On `/capa/CAPA-2026-0341`, clicking 8D Progress entries should keep the URL on the CAPA hub and swap the right-side content area into each 8D view instead of navigating to `/capa/{id}/8d/{step}`."
+
+### Completed
+- Converted `CapaDetailPage` 8D Progress entries from route links into local in-page selectors.
+- Added `selectedStep` state on the CAPA hub so the URL remains `/capa/{id}` while the right content column changes context.
+- Added inline 8D step views for D1-D7 inside the existing right column: problem statement, containment, RCA, corrective actions, preventive actions, verification, and sign-off chain.
+- Kept a CAPA Overview breadcrumb/back control inside the inline step view.
+- Changed the overview "Continue working on D*" CTA to open the inline step view instead of routing away.
+
+### Validation
+- `npm run build` ✅ passes.
+- `CapaDetailPage` scan ✅ no remaining `/8d/` route links or `window.location` navigation in the CAPA hub.
+- `CapaDetailPage` visual-token scan ✅ clean for hardcoded hex, `rgba(...)`, black/white utility colors, zoom/bounce classes, and old motion names.
+- `npx tsc -p tsconfig.app.json --noEmit` ❌ still fails on existing strict-mode debt already logged earlier.
+
+### Files Touched
+- `src/pages/nova/CapaDetailPage.tsx`
+
+---
+
+## 2026-06-01, 12:33 AM — Dashboard Dot, Findings Sheet, CAPA Detail Fixes
+
+### Prompt
+"Dashboard trend dots jadi hitam; Findings table sheet keluar dari main div bukan top layer; klik /capa/{id} dari /capa flashing; score breakdown di /capa/{id} harus kelihatan semua."
+
+### Completed
+- Fixed `FindingTrendChart` SVG token rendering by moving accent/grid/text colors into SVG `style` props, preventing chart dots/line from falling back to black.
+- Portaled `FindingSlideOver` to `document.body` and raised its z-index so it behaves like the global Ask Nova sheet instead of being constrained by the animated main content container.
+- Replaced CAPA row navigation from `window.location.href` to React Router `navigate()`, removing the full-page reload flash when opening `/capa/{id}` from `/capa`.
+- Replaced the clickable/toast-only Quality Score block in `/capa/{id}` with a permanently visible full breakdown: total score, audit-ready state, four `/25` category bars, and score lift tips.
+
+### Validation
+- `npm run build` ✅ passes.
+- Active routed surface visual-token scan ✅ still clean for hardcoded hex, `rgba(...)`, black/white utility colors, zoom/bounce classes, and old motion names.
+- `npx tsc -p tsconfig.app.json --noEmit` ❌ still fails on existing strict-mode debt already logged earlier: nullable `capa` in 8D pages, legacy `ParticleBackground` canvas nullability, legacy unknown `error`, `NovaPlaceholderPage` route type, and `PersonaManagementPage` dialog props.
+- Existing Vite dev server picked up HMR updates at `http://127.0.0.1:8081/`.
+
+### Files Touched
+- `src/pages/nova/DashboardPage.tsx`
+- `src/pages/nova/FindingsListPage.tsx`
+- `src/pages/nova/CapaListPage.tsx`
+- `src/pages/nova/CapaDetailPage.tsx`
+
+---
+
+## 2026-06-01, 12:20 AM — All Active Views Visual Polish + shadcn Token Bridge
+
+### Prompt
+"Do a visual polish pass on ALL VIEWS: text colors, card borders, button states, heading tracking, no hardcoded hex, eyebrow/kicker labels. Also remap shadcn HSL variables to the design-system colors and add a gradient button override."
+
+### Completed
+- Remapped `.dark` shadcn HSL variables in `src/index.css` to the Lead.AI dark design-system palette and forced dark mode at boot in `src/main.tsx`.
+- Added shared polish utilities: `.btn-brand`, `.lead-card`, `.lead-popover`, `.lead-overlay`, `.eyebrow`, `.kicker`, `.mono-label`, plus heading negative tracking.
+- Updated shared shadcn primitives (`Button`, `Card`, `Input`, `Textarea`, `Select`, `Badge`, `Dialog`, `Sheet`, `Popover`, `DropdownMenu`, `Tooltip`, etc.) to use design-system tokens, `--grad-brand` primary buttons, `brightness(1.1)` hover, `scale(0.99)` active, and no zoom/bounce animation classes.
+- Tokenized hardcoded active-view status colors across Nova pages and 8D pages; active routed surfaces now scan clean for hardcoded hex, `rgba(...)`, `bg-black/bg-white/text-white`, shadcn zoom classes, and old motion names.
+- Normalized inline mono/uppercase label tracking in active Nova surfaces to `0.18em`.
+- Removed the stale `jsx-a11y/no-autofocus` lint-disable comment and cleaned two empty-interface lint issues in shared UI helpers.
+
+### Validation
+- `npm run build` ✅ passes.
+- Active routed surface scan ✅ no matches for hardcoded hex, `rgba(...)`, `bg-black/bg-white/text-white`, `zoom-in/zoom-out`, `animate-bounce`, `duration-[...]`, `ease-[...]`, `fadeInUp`, or `slideInRight`.
+- Repo-wide hex scan only reports text IDs in legacy copy: `Audit Trail #99281`, `Audit Trail #99282`.
+- `npx tsc -p tsconfig.app.json --noEmit` ❌ still fails on existing strict-mode debt: nullable `capa` in 8D pages, legacy `ParticleBackground` canvas nullability, legacy unknown `error`, `NovaPlaceholderPage` `To`, and `PersonaManagementPage` `ConfirmDialog` props.
+- `npm run lint` ❌ still fails on existing lint debt, mostly `no-explicit-any` in legacy pages/components plus `CapaDetailPage`, with fast-refresh warnings.
+
+### Files Touched
+- `src/index.css`, `src/main.tsx`
+- `src/components/ui/*` shared primitives
+- `src/components/layout/*`, `src/components/nova/*`, `src/components/shared/*`
+- Active Nova pages under `src/pages/nova/**`
+- Small legacy static hex cleanup in `src/App.css`, `src/components/SplitOption.tsx`, `src/components/TutorialOverlay.tsx`, `src/pages/CapaDashboard.tsx`, `src/pages/QualityDashboard.tsx`
+
+---
+
+## 2026-05-31, 11:19 PM — D2, D4, D6, D7: Rewrite to EightDShell pattern
+
+### Prompt
+"Make sure all 8D workflow page looks good. Now, D1 and D3 is already good, But D2, D4, D6, and D7 still looking like the old layout"
+
+### Completed
+- **D2 ContainmentPage** — full rewrite. `EightDShell` (`activeStep="containment"`), `NovaSuggestionBlock` with containment suggestion + reasoning, native `<textarea>`/`<select>`/`<input type="date">` with accent focus glow, 4-check quality signals grid, containment score preview, Save Draft + Continue footer.
+- **D4 CorrectiveActionPage** — full rewrite. `EightDShell` (`activeStep="ca"`), inline `ActionList` with Trash2 remove, `NovaSuggestionBlock`, full add-CA form (description, PIC, due date, linked root cause from D3 confirmed causes, verification method), 5-check quality signals grid, Add CA + Continue footer.
+- **D6 VerificationPage** — full rewrite. `EightDShell` (`activeStep="verification"`), method select, result textarea, mock evidence input + Upload button with green confirmation chip, 3-column quality signals grid, Save Draft + Continue to Sign-Off footer.
+- **D7 SignOffPage** — full rewrite. `EightDShell` (`activeStep="signoff"`), custom `ESignatureModal` (fixed overlay, blur backdrop — no shadcn Dialog), 3-column quality gate card, approval chain list with CheckCircle2/XCircle/Circle icons + timestamps, per-approver action buttons. `confetti()` retained on full closure.
+- All four: zero `@/components/ui/*` imports, `npx tsc --noEmit` clean.
+
+### Files Touched
+- `src/pages/nova/eight-d/D2ContainmentPage.tsx` — full rewrite
+- `src/pages/nova/eight-d/D4CorrectiveActionPage.tsx` — full rewrite
+- `src/pages/nova/eight-d/D6VerificationPage.tsx` — full rewrite
+- `src/pages/nova/eight-d/D7SignOffPage.tsx` — full rewrite
+
+---
+
+## 2026-05-31, 11:16 PM — CapaListPage visual polish pass
+
+### Prompt
+"Do a visual polish pass on /capa: fix text colors, card borders, button states, heading letter-spacing, no hardcoded hex, eyebrow labels"
+
+### Completed
+- Replaced all shadcn imports with local inline-styled `SeverityBadge`, `StatusBadge`, `TypePill`, `ScorePill` components using CSS vars.
+- h1: `letterSpacing: "-0.025em"`, `color: var(--fg-1)`.
+- TH eyebrows: `--font-mono`, uppercase, `letterSpacing: "0.08em"`, `--fg-3`.
+- New CAPA button: `--grad-brand` + `brightness(1.1)` hover.
+- Open button: `--accent-soft` bg + `--accent` text.
+- Overdue dates rendered in `--danger`.
+- Row click navigates to CAPA hub.
+
+### Files Touched
+- `src/pages/nova/CapaListPage.tsx` — visual polish pass
+
+---
+
+## 2026-05-31, 11:11 PM — Section 19: Consolidated Action Plan page
+
+### Prompt
+"Oke lanjut dulu section 19 ya. make sure you didnt forgot @design_system/CLAUDE_CONTEXT.md for the context"
+
+### Completed
+- Full rewrite of `ConsolidatedActionPlanPage.tsx` (wireframe section 19). No shadcn.
+- `ProgressBar` color-coded (≥80 success, ≥50 warning, <50 accent).
+- `KindBadge` (CA = accent-soft/accent, PA = success tint), `StatusBadge` per `ActionStatus`.
+- Group cards: header with progress bar + PIC list + count badge, then inline CA/PA table.
+- AI Clustering button: `--grad-brand`, 2.2s mock delay, groups reorganize on completion.
+- Footer link to All CAPAs.
+
+### Files Touched
+- `src/pages/nova/ConsolidatedActionPlanPage.tsx` — full rewrite
+
+---
+
+## 2026-05-31, 11:08 PM — Section 18: Similarity Explorer page
+
+### Prompt
+"make sure you didnt forgot @design_system/CLAUDE_CONTEXT.md for the context. oke. lanjut ke section 18 ya"
+
+### Completed
+- Full rewrite of `SimilarityExplorerPage.tsx` (wireframe section 18). No shadcn.
+- Search card with grad-brand AI Search button + Loader2 spinner.
+- Native range slider with `accentColor: "#A94DCC"` (intentional hex exception — CSS vars don't work in `accentColor` property).
+- 2-col result cards: `OutcomeBadge`, `TypeBadge`, year badge.
+- `DetailModal`: fixed centered overlay, blur backdrop, `fadeInUp` animation, accent left-border disclaimer. Outcome colors: Effective=success, Recurred=danger, Ongoing=blue.
+
+### Files Touched
+- `src/pages/nova/SimilarityExplorerPage.tsx` — full rewrite
+
+---
+
+## 2026-05-31, 11:03 PM — Section 17: Audit Trail page
+
+### Prompt
+"make sure you didnt forgot @design_system/CLAUDE_CONTEXT.md for the context. Terus bisa ga kita lanjut kerjakan revampnya? kerjakan halaman di section 17 itu"
+
+### Completed
+- Full rewrite of `AuditTrailPage.tsx` (wireframe section 17). No shadcn.
+- `KpiCard`: `--bg-2`, `--r-lg`, mono metrics.
+- `DomainBadge`: color-coded per domain (system=blue, ai_decision=accent, integration=success).
+- `StyledSelect`: native `<select>` with appearance:none + SVG chevron.
+- Filter bar: 6 dropdowns + search input with accent focus glow.
+- Table: `--bg-3` header, mono uppercase TH, hover `--bg-3`, CAPA links in `--accent`.
+- Nova metadata cell: `--accent-soft` background.
+- Before/After diff: `--bg-4` code blocks.
+
+### Files Touched
+- `src/pages/nova/AuditTrailPage.tsx` — full rewrite
+
+---
+
+## 2026-05-31, 11:06 PM — Sidebar: add Management nav section
+
+### Prompt
+"make sure si sidebarnya di update untuk munculin navigations. soalnya sekarang cuma sisa 5."
+
+### Completed
+- Added `navManagement` group to `Sidebar.tsx` with 3 items: Action Plan (`/actions/consolidated`, ClipboardList), Similarity (`/similarity`, Search), Audit Trail (`/audit-trail`, ScrollText).
+- New "Management" eyebrow section rendered between primary nav and System section.
+- Updated `isActive()` helper: `/actions/consolidated` now matches all `/actions/*` routes.
+- Total nav: 4 primary + 3 management + 2 system = 9 items.
+
+### Files Touched
+- `src/components/layout/Sidebar.tsx` — Management section added
+
+---
+
+## 2026-05-31, 10:52 PM — Wireframe: sections 17–19 + section 08 Actions tab
+
+### Prompt
+"gue tuh udah ngelakuin revamp lah ya soal layout di branch refactor/revamp-layout. Tapi... proses revampnya tuh ngilangin beberapa halaman... Lu tambahin dah tuh insighnya dalam bentuk wireframe, sesuai dengan yang ada di folder design_system/wireframe.html"
+
+### Completed
+- Analysed missing pages: Audit Trail, Similarity Explorer, Corrective Actions, Preventive Actions. Decided CA/PA merge into CAPA Hub Actions tab (user confirmed "Tab di CAPA Hub").
+- Updated TOC in wireframe (sections 17–19 added).
+- **Section 08 update** — new Actions tab showing CA+PA table inside CAPA Hub; callout explaining merge decision.
+- **Section 17** — Global Audit Trail: KPI row (total events, Nova decisions, integrations, data corrections), filter bar, 7-column event table.
+- **Section 18** — Similarity Explorer: search input, threshold slider, 2-col result card grid, detail modal with outcome + CA summary.
+- **Section 19** — Consolidated Action Plan: KPI row, group mode selector, AI Clustering section, group cards with CA+PA sub-tables.
+
+### Files Touched
+- `design_system/wireframe.html` — sections 17–19 added, section 08 updated
+- `docs/wireframe.html` — mirrored
+
+---
+
+## 2026-05-31, 06:10 PM — NovaBlock unified AI suggestion component + intakeHelpers fix
+
+### Prompt
+"make sure you didnt forgot @design_system/CLAUDE_CONTEXT.md for the context. Build the unified NovaBlock component used across all 8D step screens and the CAPA intake wizard. Wireframe: section 16."
+
+### Completed
+- **`src/utils/intakeHelpers.ts`** — new file, fixed broken import in `CapaIntakePage.tsx`. Exports `getSuggestedTitle`, `getPrefillSummary`, `computeIntakeScore`. Score function uses `computeProblemSpecificity` then estimates root cause depth, effectiveness, containment from gate answers.
+- **`src/index.css`** — added `@keyframes spin` (required for `animation: "spin 1s linear infinite"` inline style; Tailwind's `animate-spin` class doesn't work with inline `animation` property).
+- **`src/components/nova/NovaBlock.tsx`** — new canonical unified AI suggestion component (wireframe section 16). 4-state machine (`idle → editing → accepted → skipped`), confidence badge (≥85 success, ≥65 warning, <65 danger), loading skeleton with `animate-shimmer`, reasoning expand/collapse via `max-height` CSS transition, 380ms accept flash via `isFlashing`, primary button uses `--grad-brand`.
+
+### Files Touched
+- `src/utils/intakeHelpers.ts` — new file
+- `src/index.css` — `@keyframes spin` added
+- `src/components/nova/NovaBlock.tsx` — new file
+
+---
+
+## 2026-05-31, 12:59 PM — My Work / Inbox screen (Revamp Phase 1)
+
+### Prompt
+"Continue on this: Build the My Work / Inbox screen. Wireframe reference: section 03."
+
+### Completed
+- **My Work / Inbox page** (`src/pages/nova/MyWorkPage.tsx`) — fully persona-aware, 5 distinct views:
+  - `initiator`: Findings from their area + CAPA tracking, no approval actions
+  - `qa_deviation`: Full operational view — overdue/active/closed CAPAs
+  - `head_of_dept`: Overdue escalations + active investigations + pending approval queue
+  - `head_of_qa`: Approval queue (primary) + org-wide overdue + assigned CAPAs
+  - `sme`: CAPAs needing RCA consultation + role explanation panel
+- **4-stage CAPA lifecycle** model — visible on every card via `LifecyclePill`: Finding open → In progress → Pending approval → Closed
+- **Badge system** — SeverityBadge (Major=danger, Minor=warning), StepBadge (D1–D7, accent), DueBadge (colour-coded by urgency), LifecyclePill (4-segment bar)
+- **Router** updated: `/` → `MyWorkPage`, `/my-work` → redirect
+- **CSS** — `.sidebar-nav-item` hover/active rules added to `index.css`
+
+### Files Touched
+- `src/pages/nova/MyWorkPage.tsx` — new file
+- `src/router.tsx` — `/` route updated
+- `src/index.css` — sidebar nav CSS
+
+---
+
+## 2026-05-31, 12:54 PM — App Shell (Sidebar + TopBar) (Revamp Phase 1)
+
+### Prompt
+"read @design_system/CLAUDE_CONTEXT.md first for the context then start revamp by doing this: Build the app shell component (sidebar + topbar)..."
+
+### Completed
+- **Sidebar rewrite** — 240px, `--bg-1`, logo-real.png, 5 nav items + system section, CSS-driven hover/active states, user block with gradient avatar, persona switcher.
+- **TopBar rewrite** — 60px glass sticky, page title per route, search bar with ⌘K pill, bell badge with unread count, "Ask Nova" button, avatar.
+- **PageWrapper** simplified.
+- `src/assets/logo-real.png` copied from `design_system/assets`.
+
+### Files Touched
+- `src/components/layout/Sidebar.tsx` — full rewrite
+- `src/components/layout/TopBar.tsx` — full rewrite
+- `src/components/layout/PageWrapper.tsx` — simplified
+- `src/assets/logo-real.png` — added
+
+## 2026-05-31, 04:15 AM — Structural HTML Wireframe (Corrected)
+
+### Completed
+- **Rewrote `docs/wireframe.html`**: Grayscale structural wireframe document (1140 lines, single long-scroll HTML)
+  - Follows kitchain-full-wireframes.html reference style: `.section` cards, `.wf-screen` layouts, `.box` placeholders, `.note`/`.callout` annotations, `.flow` diagrams
+  - No JavaScript, no colors, no interactivity — pure structure & layout documentation
+  - 16 sections covering all screens:
+    - **Foundation**: 01 App Structure & Navigation (sitemap), 02 User Flow Diagrams (4 role-based flows)
+    - **Core Screens**: 03 My Work/Inbox, 04 Dashboard, 05 Findings List + slide-over, 06 CAPA List, 07 ★ New CAPA Intake (4-step wizard)
+    - **8D Workflow**: 08 ★ CAPA Hub, 09 ★ D1 Problem Statement, 10 D3 RCA (5-Whys + Similar CAPAs), 11 D4 Corrective Action, 12 D6 Verification, 13 D7 Sign-Off
+    - **Supporting**: 14 Quality Score Breakdown, 15 Audit Trail, 16 Nova AI Unified Pattern
+  - Yellow callout annotations explain key design decisions and changes from current app
+  - ★-marked sections have the most detailed wireframes (highest-leverage screens)
+- **Verified in browser**: All 16 sections render correctly at localhost:9999
+
+## 2026-05-31, 03:28 AM — System Analysis, RFI Gap Analysis & Wireframe Spec
+
+### Completed
+- **Read entire RFI**: Bio Farma TOR 03710/TOR/02/2026 (76 pages) — understood AS-IS process, TO-BE architecture, all 30 system requirements, 3 implementation phases, deliverables, and timeline.
+- **Live app screenshots**: Navigated running app at localhost:8080 and captured Dashboard, Findings List, CAPA List, CAPA Detail, New CAPA Intake, and D1 Problem Statement pages.
+- **Created `docs/WIREFRAME_SPEC.md`**: Comprehensive 16-screen wireframe specification including:
+  - Section 1: Plain-language explanation of CAPA/8D for non-industry readers
+  - Section 2: Current app user flow documented screen-by-screen
+  - Section 3: 9 identified UX problems (no sidebar nav, unclear Finding→CAPA relationship, redundant entry points, scattered Nova AI patterns, etc.)
+  - Section 4: Full gap analysis — 13/30 req fully covered, 9/30 partial, 8/30 missing
+  - Section 5: Recommended new architecture (persistent sidebar, My Work inbox, CAPA Hub with 8D left panel, unified Nova AI)
+  - Section 6: Wireframe specs for 16 screens with layout, components, and interactions
+
 ## 2026-05-30, 06:04 PM — Infinite Loop Fix (Zustand Selector Stability)
 
 ### Completed

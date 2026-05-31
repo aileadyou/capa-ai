@@ -1,31 +1,16 @@
 import { useMemo, useState } from "react";
-import { fireConfetti } from "@/utils/confetti";
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Circle, MessageSquareText, PenLine, ShieldCheck, XCircle } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { AlertTriangle, CheckCircle2, Circle, PenLine, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { BlockerBanner } from "@/components/shared/BlockerBanner";
-import { SeverityBadge } from "@/components/shared/SeverityBadge";
-import { StatusBadge } from "@/components/shared/StatusBadge";
+import { EightDShell } from "@/components/layout/EightDShell";
 import { ScorePill } from "@/components/shared/ScorePill";
-import { ScoreSidebar } from "@/components/score/ScoreSidebar";
 import NotFound from "@/pages/NotFound";
-import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore, useNotificationStore, useUIStore } from "@/store";
+import { useAuditTrailStore, useCapaStore, useNotificationStore } from "@/store";
 import type { ApprovalEvent, CAPACase } from "@/types";
 import type { PersonaID } from "@/types/persona";
-import { formatCAPAType, formatDateTime } from "@/utils/formatters";
+import { formatDateTime } from "@/utils/formatters";
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface Approver {
   personaId: PersonaID;
@@ -34,26 +19,11 @@ interface Approver {
 }
 
 const approvers: Record<PersonaID, Omit<Approver, "personaId">> = {
-  initiator: {
-    name: "Andi Wijaya",
-    role: "Initiator",
-  },
-  qa_deviation: {
-    name: "Siti Rahmawati",
-    role: "QA Deviation / QA Compliance / QA Complaint",
-  },
-  head_of_dept: {
-    name: "Bambang Saputra",
-    role: "Department Head",
-  },
-  head_of_qa: {
-    name: "Dewi Anggraini",
-    role: "Head of QA",
-  },
-  sme: {
-    name: "Dr. Ahmad Pratomo",
-    role: "SME Microbiology",
-  },
+  initiator: { name: "Andi Wijaya", role: "Initiator" },
+  qa_deviation: { name: "Siti Rahmawati", role: "QA Deviation / QA Compliance / QA Complaint" },
+  head_of_dept: { name: "Bambang Saputra", role: "Department Head" },
+  head_of_qa: { name: "Dewi Anggraini", role: "Head of QA" },
+  sme: { name: "Dr. Ahmad Pratomo", role: "SME Microbiology" },
 };
 
 function getApprovalChain(capa: CAPACase): Approver[] {
@@ -66,45 +36,143 @@ function getApprovalChain(capa: CAPACase): Approver[] {
     chain.splice(chain.length - 1, 0, "sme");
   }
 
-  return chain.map((personaId) => ({
-    personaId,
-    ...approvers[personaId],
-  }));
-}
-
-function WorkflowSteps({ capaId }: { capaId: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">8D Workflow</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-2 md:grid-cols-7">
-          {eightDSteps.map((step, index) => {
-            const isCurrent = step === "signoff";
-            return (
-              <Link
-                key={step}
-                to={`/capa/${capaId}/8d/${step}`}
-                className={`rounded border px-3 py-2 text-xs font-medium transition ${
-                  isCurrent
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card hover:border-primary/50"
-                }`}
-              >
-                D{index + 1} {step === "ca" ? "CA" : step === "pa" ? "PA" : step}
-              </Link>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
+  return chain.map((personaId) => ({ personaId, ...approvers[personaId] }));
 }
 
 function getApprovalFor(approvals: ApprovalEvent[], personaId: PersonaID) {
-  return approvals.find((approval) => approval.approverPersonaId === personaId);
+  return approvals.find((a) => a.approverPersonaId === personaId);
 }
+
+// ── E-Signature Modal ────────────────────────────────────────────────────────
+
+function ESignatureModal({
+  approver,
+  onApprove,
+  onReject,
+  onClose,
+}: {
+  approver: Approver;
+  onApprove: (notes: string) => void;
+  onReject: (notes: string) => void;
+  onClose: () => void;
+}) {
+  const [notes, setNotes] = useState("");
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "var(--glass-dark)",
+        backdropFilter: "blur(4px)",
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "440px",
+          background: "var(--bg-2)",
+          border: "1px solid var(--line-2)",
+          borderRadius: "var(--r-xl)",
+          padding: "24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+          animation: "leadReveal var(--dur-tab) var(--ease-out)",
+        }}
+      >
+        {/* Header */}
+        <div>
+          <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 6px" }}>
+            E-Signature
+          </p>
+          <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--fg-1)", margin: "0 0 4px", fontFamily: "var(--font-sans)" }}>
+            Approval Decision
+          </h2>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0 }}>
+            {approver.name} will sign this CAPA with a mocked electronic signature and timestamp.
+          </p>
+        </div>
+
+        {/* Approver info */}
+        <div
+          style={{
+            padding: "12px 14px",
+            background: "var(--bg-3)",
+            border: "1px solid var(--line-1)",
+            borderRadius: "var(--r-md)",
+          }}
+        >
+          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg-1)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+            {approver.name}
+          </p>
+          <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: "0 0 6px", fontFamily: "var(--font-sans)" }}>
+            {approver.role}
+          </p>
+          <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--fg-4)", margin: 0 }}>
+            {new Date().toLocaleString()}
+          </p>
+        </div>
+
+        {/* Notes */}
+        <div>
+          <label
+            htmlFor="esig-notes"
+            style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}
+          >
+            Notes (optional)
+          </label>
+          <textarea
+            id="esig-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={4}
+            placeholder="Approval or rejection notes…"
+            style={{
+              width: "100%",
+              background: "var(--bg-4)",
+              border: "1px solid var(--line-2)",
+              borderRadius: "var(--r-sm)",
+              padding: "10px 12px",
+              fontSize: "13px",
+              lineHeight: "1.6",
+              color: "var(--fg-1)",
+              fontFamily: "var(--font-sans)",
+              resize: "vertical",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+          />
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
+          <button
+            onClick={() => onReject(notes)}
+            style={{ background: "var(--danger-soft)", color: "var(--danger)", border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)", borderRadius: "var(--r-sm)", padding: "8px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+          >
+            Reject
+          </button>
+          <button
+            onClick={() => onApprove(notes)}
+            style={{ background: "var(--grad-brand)", color: "var(--on-accent)", border: "none", borderRadius: "var(--r-sm)", padding: "8px 20px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+          >
+            Approve
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 export function D7SignOffPage() {
   const { id } = useParams();
@@ -113,15 +181,18 @@ export function D7SignOffPage() {
   const allPAs = useCapaStore((state) => state.preventiveActions);
   const capa = useMemo(() => {
     if (!rawCapa) return undefined;
-    return { ...rawCapa, correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id), preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id) };
+    return {
+      ...rawCapa,
+      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
+      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
+    };
   }, [rawCapa, allCAs, allPAs]);
+
   const approveSignOff = useCapaStore((state) => state.approveSignOff);
   const closeCAPA = useCapaStore((state) => state.closeCAPA);
   const addNotification = useNotificationStore((state) => state.addNotification);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
-  const openNovaChat = useUIStore((state) => state.openNovaChat);
   const [selectedApprover, setSelectedApprover] = useState<Approver | undefined>();
-  const [notes, setNotes] = useState("");
   const [hasTriedApproval, setHasTriedApproval] = useState(false);
 
   const approvalChain = useMemo(() => (capa ? getApprovalChain(capa) : []), [capa]);
@@ -133,12 +204,10 @@ export function D7SignOffPage() {
   const isAuditReady = capa.score.total >= 80;
   const isClosed = capa.status === "closed";
   const approvedIds = new Set(
-    capa.approvals
-      .filter((approval) => approval.decision === "approved")
-      .map((approval) => approval.approverPersonaId),
+    capa.approvals.filter((a) => a.decision === "approved").map((a) => a.approverPersonaId),
   );
-  const nextApprover = approvalChain.find((approver) => !approvedIds.has(approver.personaId));
-  const allApproved = approvalChain.every((approver) => approvedIds.has(approver.personaId));
+  const nextApprover = approvalChain.find((a) => !approvedIds.has(a.personaId));
+  const allApproved = approvalChain.every((a) => approvedIds.has(a.personaId));
   const showScoreBlocker = hasTriedApproval && !isAuditReady;
 
   function openESignature(approver: Approver) {
@@ -152,10 +221,9 @@ export function D7SignOffPage() {
     }
 
     setSelectedApprover(approver);
-    setNotes("");
   }
 
-  function submitDecision(decision: "approved" | "rejected") {
+  function submitDecision(decision: "approved" | "rejected", notes: string) {
     if (!selectedApprover) return;
 
     const approval: ApprovalEvent = {
@@ -184,10 +252,8 @@ export function D7SignOffPage() {
     });
 
     const nextApprovedIds = new Set(approvedIds);
-    if (decision === "approved") {
-      nextApprovedIds.add(selectedApprover.personaId);
-    }
-    const upcomingApprover = approvalChain.find((approver) => !nextApprovedIds.has(approver.personaId));
+    if (decision === "approved") nextApprovedIds.add(selectedApprover.personaId);
+    const upcomingApprover = approvalChain.find((a) => !nextApprovedIds.has(a.personaId));
 
     if (decision === "rejected") {
       addNotification({
@@ -196,11 +262,9 @@ export function D7SignOffPage() {
         title: "CAPA sign-off rejected",
         description: `${selectedApprover.name} rejected ${capa.id}. Review notes and resubmit.`,
         capaId: capa.id,
-        actionUrl: `/capa/${capa.id}/8d/signoff`,
+        actionUrl: `/capa/${capa.id}`,
       });
-      toast.error("CAPA rejected", {
-        description: `${selectedApprover.name} rejected ${capa.id}.`,
-      });
+      toast.error("CAPA rejected", { description: `${selectedApprover.name} rejected ${capa.id}.` });
     } else if (upcomingApprover) {
       addNotification({
         recipientPersonaId: upcomingApprover.personaId,
@@ -208,7 +272,7 @@ export function D7SignOffPage() {
         title: "CAPA awaiting your approval",
         description: `${capa.id} is ready for ${upcomingApprover.name} to approve.`,
         capaId: capa.id,
-        actionUrl: `/capa/${capa.id}/8d/signoff`,
+        actionUrl: `/capa/${capa.id}`,
       });
       addAuditEvent({
         actorName: "System",
@@ -219,9 +283,7 @@ export function D7SignOffPage() {
         capaId: capa.id,
         findingId: capa.findingId,
       });
-      toast.success("Approval recorded", {
-        description: `Notification sent to ${upcomingApprover.name}.`,
-      });
+      toast.success("Approval recorded", { description: `Notification sent to ${upcomingApprover.name}.` });
     } else {
       closeCAPA(capa.id);
       approvalChain.forEach((approver) => {
@@ -237,90 +299,137 @@ export function D7SignOffPage() {
       toast.success(`${capa.id} closed as Audit Ready`, {
         description: "All approvers signed off. CAPA is now Audit Ready.",
       });
-      fireConfetti();
     }
 
     setSelectedApprover(undefined);
-    setNotes("");
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <div className="mb-3 flex flex-wrap gap-2">
-            <SeverityBadge severity={capa.impact.severity} />
-            <StatusBadge status={capa.status} />
-            <span className="rounded border bg-muted px-2.5 py-0.5 text-xs font-medium">
-              {formatCAPAType(capa.type)}
-            </span>
-            {isAuditReady && (
-              <Badge variant="outline" className="gap-1.5 border-status-ready/30 bg-status-ready/10 text-status-ready">
-                <ShieldCheck className="h-3 w-3" />
-                Audit Ready
-              </Badge>
-            )}
+    <>
+      <EightDShell capaId={capa.id} activeStep="signoff">
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+
+          {/* ── Page header ───────────────────────────────────────────── */}
+          <div>
+            <p style={{ fontSize: "12px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", margin: "0 0 6px", letterSpacing: "0.18em" }}>
+              {capa.id} · D7
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+              <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--fg-1)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                Sign-Off
+              </h1>
+              {isAuditReady && (
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    fontSize: "11px",
+                    fontWeight: 600,
+                    fontFamily: "var(--font-mono)",
+                    color: "var(--success)",
+                    background: "var(--success-soft)",
+                    border: "1px solid color-mix(in srgb, var(--success) 38%, transparent)",
+                    borderRadius: "var(--r-full)",
+                    padding: "3px 10px",
+                  }}
+                >
+                  <ShieldCheck size={11} />
+                  Audit Ready
+                </span>
+              )}
+            </div>
+            <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, lineHeight: "1.55", maxWidth: "600px" }}>
+              Complete the e-signature approval chain for {capa.id}. Final closure requires quality score 80 or higher and all required approvals.
+            </p>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">D7 Sign-Off</h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6 text-muted-foreground">
-            Complete the e-signature approval chain for {capa.id}. Final closure requires quality score 80 or higher and all required approvals.
-          </p>
-        </div>
-        <Button asChild variant="outline">
-          <Link to={`/capa/${capa.id}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to CAPA
-          </Link>
-        </Button>
-      </div>
 
-      <WorkflowSteps capaId={capa.id} />
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="space-y-4">
-          {!isAuditReady && (
-            <BlockerBanner
-              title="Sign-off blocked by quality score"
-              message="Quality score must reach 80 before this CAPA can be approved and closed as Audit Ready."
-            />
-          )}
-          {showScoreBlocker && (
-            <BlockerBanner
-              title="Approval attempt blocked"
-              message="Improve the CAPA score through D1-D6 before attempting electronic sign-off."
-            />
+          {/* ── Score blocker ─────────────────────────────────────────── */}
+          {(!isAuditReady || showScoreBlocker) && (
+            <div style={{ display: "flex", gap: "10px", padding: "12px 14px", background: "var(--danger-soft)", border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)", borderRadius: "var(--r-sm)" }}>
+              <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
+              <div>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+                  {showScoreBlocker ? "Approval attempt blocked" : "Sign-off blocked by quality score"}
+                </p>
+                <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                  {showScoreBlocker
+                    ? "Improve the CAPA score through D1–D6 before attempting electronic sign-off."
+                    : "Quality score must reach 80 before this CAPA can be approved and closed as Audit Ready."}
+                </p>
+              </div>
+            </div>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <ShieldCheck className="h-4 w-4 text-primary" />
+          {/* ── Final quality gate ────────────────────────────────────── */}
+          <div
+            style={{
+              background: "var(--bg-2)",
+              border: "1px solid var(--line-2)",
+              borderRadius: "var(--r-lg)",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--line-1)", background: "var(--bg-3)", display: "flex", alignItems: "center", gap: "8px" }}>
+              <ShieldCheck size={14} style={{ color: "var(--accent)", flexShrink: 0 }} />
+              <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: 0 }}>
                 Final Quality Gate
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
-              <div className="rounded border p-3">
-                <div className="text-xs font-medium uppercase text-muted-foreground">Final Score</div>
-                <div className="mt-2">
-                  <ScorePill score={capa.score.total} />
+              </p>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0" }}>
+              {[
+                {
+                  label: "Final Score",
+                  value: <ScorePill score={capa.score.total} />,
+                },
+                {
+                  label: "Required Status",
+                  value: (
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: isAuditReady ? "var(--success)" : "var(--warning)", fontFamily: "var(--font-sans)" }}>
+                      {isAuditReady ? "Audit Ready" : "Needs Improvement"}
+                    </span>
+                  ),
+                },
+                {
+                  label: "Closure State",
+                  value: (
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg-2)", fontFamily: "var(--font-sans)" }}>
+                      {isClosed ? "Closed" : allApproved ? "Ready to Close" : "Approval Pending"}
+                    </span>
+                  ),
+                },
+              ].map((cell, i) => (
+                <div
+                  key={cell.label}
+                  style={{
+                    padding: "14px 16px",
+                    borderRight: i < 2 ? "1px solid var(--line-1)" : "none",
+                  }}
+                >
+                  <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: "0 0 8px" }}>
+                    {cell.label}
+                  </p>
+                  {cell.value}
                 </div>
-              </div>
-              <div className="rounded border p-3">
-                <div className="text-xs font-medium uppercase text-muted-foreground">Required Status</div>
-                <div className="mt-2 text-sm font-medium">{isAuditReady ? "Audit Ready" : "Needs Improvement"}</div>
-              </div>
-              <div className="rounded border p-3">
-                <div className="text-xs font-medium uppercase text-muted-foreground">Closure State</div>
-                <div className="mt-2 text-sm font-medium">{isClosed ? "Closed" : allApproved ? "Ready to Close" : "Approval Pending"}</div>
-              </div>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Approval Chain</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+          {/* ── Approval chain ────────────────────────────────────────── */}
+          <div
+            style={{
+              background: "var(--bg-2)",
+              border: "1px solid var(--line-2)",
+              borderRadius: "var(--r-lg)",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--line-1)", background: "var(--bg-3)" }}>
+              <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: 0 }}>
+                Approval Chain
+              </p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column" }}>
               {approvalChain.map((approver, index) => {
                 const approval = getApprovalFor(capa.approvals, approver.personaId);
                 const isApproved = approval?.decision === "approved";
@@ -328,99 +437,128 @@ export function D7SignOffPage() {
                 const canAct = isAuditReady && !isClosed && nextApprover?.personaId === approver.personaId;
 
                 return (
-                  <div key={approver.personaId} className="rounded border p-4">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="flex gap-3">
-                        <div className="pt-0.5">
+                  <div
+                    key={approver.personaId}
+                    style={{
+                      padding: "16px",
+                      borderBottom: index < approvalChain.length - 1 ? "1px solid var(--line-1)" : "none",
+                      background: isApproved ? "color-mix(in srgb, var(--success) 3%, transparent)" : isRejected ? "color-mix(in srgb, var(--danger) 3%, transparent)" : "transparent",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
+                      <div style={{ display: "flex", gap: "12px", flex: 1, minWidth: 0 }}>
+                        {/* Status icon */}
+                        <div style={{ paddingTop: "2px", flexShrink: 0 }}>
                           {isApproved ? (
-                            <CheckCircle2 className="h-5 w-5 text-status-ready" />
+                            <CheckCircle2 size={18} style={{ color: "var(--success)" }} />
                           ) : isRejected ? (
-                            <XCircle className="h-5 w-5 text-destructive" />
+                            <XCircle size={18} style={{ color: "var(--danger)" }} />
                           ) : (
-                            <Circle className="h-5 w-5 text-muted-foreground" />
+                            <Circle size={18} style={{ color: "var(--fg-4)" }} />
                           )}
                         </div>
-                        <div>
-                          <div className="text-sm font-semibold">
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg-1)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
                             {index + 1}. {approver.name}
-                          </div>
-                          <div className="mt-1 text-xs text-muted-foreground">{approver.role}</div>
+                          </p>
+                          <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>{approver.role}</p>
                           {approval?.signedAt && (
-                            <div className="mt-2 text-xs text-muted-foreground">
+                            <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--fg-4)", margin: "6px 0 0" }}>
                               Signed {formatDateTime(approval.signedAt)}
-                            </div>
+                            </p>
                           )}
                           {approval?.notes && (
-                            <p className="mt-2 rounded bg-muted/40 p-2 text-xs text-muted-foreground">
+                            <p style={{ fontSize: "12px", color: "var(--fg-3)", background: "var(--bg-3)", border: "1px solid var(--line-1)", borderRadius: "var(--r-sm)", padding: "6px 10px", margin: "8px 0 0", fontStyle: "italic" }}>
                               {approval.notes}
                             </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {isApproved && <StatusBadge status="completed" />}
-                        {isRejected && (
-                          <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-destructive">
-                            Rejected
-                          </Badge>
+
+                      {/* Right: status badge + action */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                        {isApproved && (
+                          <span style={{ fontSize: "11px", fontWeight: 600, fontFamily: "var(--font-mono)", color: "var(--success)", background: "var(--success-soft)", border: "1px solid color-mix(in srgb, var(--success) 38%, transparent)", borderRadius: "var(--r-full)", padding: "2px 8px" }}>
+                            Approved
+                          </span>
                         )}
-                        {!approval && <StatusBadge status={canAct ? "in_progress" : "open"} />}
-                        <Button
+                        {isRejected && (
+                          <span style={{ fontSize: "11px", fontWeight: 600, fontFamily: "var(--font-mono)", color: "var(--danger)", background: "var(--danger-soft)", border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)", borderRadius: "var(--r-full)", padding: "2px 8px" }}>
+                            Rejected
+                          </span>
+                        )}
+                        {!approval && (
+                          <span style={{ fontSize: "11px", fontWeight: 600, fontFamily: "var(--font-mono)", color: canAct ? "var(--warning)" : "var(--fg-4)", background: canAct ? "var(--warning-soft)" : "var(--bg-3)", border: `1px solid ${canAct ? "color-mix(in srgb, var(--warning) 38%, transparent)" : "var(--line-1)"}`, borderRadius: "var(--r-full)", padding: "2px 8px" }}>
+                            {canAct ? "Awaiting" : "Pending"}
+                          </span>
+                        )}
+                        <button
                           type="button"
-                          size="sm"
                           disabled={!canAct}
                           onClick={() => openESignature(approver)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            background: canAct ? "var(--grad-brand)" : "var(--bg-4)",
+                            color: canAct ? "var(--on-accent)" : "var(--fg-4)",
+                            border: canAct ? "none" : "1px solid var(--line-2)",
+                            borderRadius: "var(--r-sm)",
+                            padding: "7px 14px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: canAct ? "pointer" : "not-allowed",
+                            fontFamily: "var(--font-sans)",
+                            opacity: canAct ? 1 : 0.5,
+                          }}
                         >
-                          <PenLine className="mr-2 h-4 w-4" />
-                          Approve with E-Signature
-                        </Button>
+                          <PenLine size={13} />
+                          Approve with E-Sig
+                        </button>
                       </div>
                     </div>
                   </div>
                 );
               })}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-4">
-          <ScoreSidebar score={capa.score} />
-          <Button variant="outline" className="w-full" onClick={() => openNovaChat({ step: "signoff", capaId: capa.id })}>
-            <MessageSquareText className="mr-2 h-4 w-4" />
-            Ask Nova
-          </Button>
-        </div>
-      </div>
-
-      <Dialog open={Boolean(selectedApprover)} onOpenChange={(open) => !open && setSelectedApprover(undefined)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>E-Signature</DialogTitle>
-            <DialogDescription>
-              {selectedApprover?.name} will sign this CAPA decision with a mocked electronic signature and timestamp.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="rounded border bg-muted/30 p-3 text-sm">
-              <div className="font-medium">{selectedApprover?.name}</div>
-              <div className="text-muted-foreground">{selectedApprover?.role}</div>
-              <div className="mt-2 text-xs text-muted-foreground">{new Date().toLocaleString()}</div>
             </div>
-            <Textarea
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Approval or rejection notes"
-              rows={4}
-            />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => submitDecision("rejected")}>
-              Reject
-            </Button>
-            <Button onClick={() => submitDecision("approved")}>Approve</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+
+          {/* ── Closed state banner ───────────────────────────────────── */}
+          {isClosed && (
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                padding: "14px 16px",
+                background: "color-mix(in srgb, var(--success) 6%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)",
+                borderRadius: "var(--r-md)",
+              }}
+            >
+              <ShieldCheck size={18} style={{ color: "var(--success)", flexShrink: 0, marginTop: "1px" }} />
+              <div>
+                <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--success)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+                  CAPA Closed as Audit Ready
+                </p>
+                <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>
+                  All required approvers have signed off. {capa.id} is now marked Audit Ready and closed.
+                </p>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </EightDShell>
+
+      {/* ── E-signature modal ───────────────────────────────────────────── */}
+      {selectedApprover && (
+        <ESignatureModal
+          approver={selectedApprover}
+          onApprove={(notes) => submitDecision("approved", notes)}
+          onReject={(notes) => submitDecision("rejected", notes)}
+          onClose={() => setSelectedApprover(undefined)}
+        />
+      )}
+    </>
   );
 }
