@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAPA AI — Full App Wireframes (Structure & Flows)</title>
+  <style>
+    /* ==========================================
+       WIREFRAME STYLES — Grayscale, structure-only
+       Intentionally plain. Focus on layout and flow.
+    ========================================== */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 32px 16px;
+    }
+    .page { max-width: 1400px; margin: 0 auto; }
+
+    /* Section */
+    .section { margin-bottom: 80px; background: #fff; border: 1px solid #ccc; padding: 24px; }
+    .section-num {
+      display: inline-block; background: #333; color: #fff; padding: 4px 10px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+    }
+    h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    h2 { font-size: 18px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #333; }
+    h3 { font-size: 14px; font-weight: 700; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    p { margin-bottom: 10px; }
+    .sub { color: #666; font-size: 12px; margin-bottom: 24px; }
+
+    /* Wireframe boxes */
+    .wf { border: 2px solid #333; background: #fff; margin: 16px 0; }
+    .wf-screen { display: flex; min-height: 500px; }
+    .wf-sidebar { width: 180px; border-right: 2px solid #333; background: #f0f0f0; padding: 12px; }
+    .wf-sidebar-item { padding: 8px; border: 1px dashed #999; background: #fff; margin-bottom: 6px; font-size: 11px; }
+    .wf-sidebar-item.active { background: #333; color: #fff; border-color: #333; }
+    .wf-sidebar-section { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #666; margin: 12px 4px 4px; }
+    .wf-main { flex: 1; padding: 16px; background: #fafafa; }
+    .wf-topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; border-bottom: 2px solid #333; background: #f0f0f0; font-size: 11px;
+    }
+
+    /* Generic elements */
+    .box { border: 1px dashed #999; background: #fff; padding: 12px; margin-bottom: 10px; font-size: 11px; }
+    .box-filled { background: #e0e0e0; border: 1px solid #999; }
+    .box-dark { background: #333; color: #fff; border: 1px solid #333; }
+    .row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .col { flex: 1; }
+    .col-2 { flex: 2; }
+    .col-3 { flex: 3; }
+
+    .input { border: 1px solid #999; background: #fff; padding: 8px 10px; font-size: 11px; color: #666; height: 34px; display: flex; align-items: center; }
+    .label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #333; margin-bottom: 4px; display: block; }
+    .label .req { color: #c00; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; padding: 8px 14px;
+      border: 2px solid #333; background: #fff; font-weight: 600; font-size: 11px; cursor: pointer;
+    }
+    .btn-primary { background: #333; color: #fff; }
+    .btn-ghost { border: none; background: transparent; }
+
+    .wf-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .wf-subtitle { color: #666; font-size: 11px; margin-bottom: 12px; }
+
+    /* Table */
+    table.wf-table { width: 100%; border-collapse: collapse; font-size: 11px; background: #fff; border: 1px solid #999; }
+    .wf-table th { text-align: left; padding: 6px 8px; background: #e0e0e0; border-bottom: 1px solid #999; font-size: 10px; text-transform: uppercase; }
+    .wf-table td { padding: 6px 8px; border-bottom: 1px dashed #ccc; }
+
+    /* Annotations */
+    .note { background: #fffbcc; border-left: 4px solid #d4a017; padding: 12px 16px; margin: 12px 0; font-size: 12px; line-height: 1.6; }
+    .note strong { color: #7a5c00; }
+    .note ul { margin-left: 18px; margin-top: 6px; }
+    .note li { margin-bottom: 4px; }
+    .callout { background: #e8f0ff; border-left: 4px solid #3366cc; padding: 12px 16px; margin: 12px 0; font-size: 12px; line-height: 1.6; }
+    .callout strong { color: #1a4080; }
+
+    /* Flow diagram */
+    .flow { display: flex; align-items: center; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+    .flow-step { border: 2px solid #333; background: #fff; padding: 10px 14px; font-size: 11px; font-weight: 600; min-width: 120px; text-align: center; }
+    .flow-step.alt { background: #e0e0e0; }
+    .flow-step.primary { background: #333; color: #fff; }
+    .flow-arrow { font-size: 18px; color: #666; }
+    .flow-branch { display: flex; flex-direction: column; gap: 6px; }
+
+    /* Sitemap */
+    .sitemap { font-family: monospace; font-size: 12px; background: #fafafa; border: 1px solid #999; padding: 16px; white-space: pre; overflow-x: auto; }
+
+    /* Splits */
+    .split-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .split-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .split-7030 { display: grid; grid-template-columns: 7fr 3fr; gap: 12px; }
+
+    /* Stepper */
+    .stepper { display: flex; align-items: center; margin-bottom: 16px; padding: 12px; background: #f0f0f0; border: 1px solid #999; }
+    .step { flex: 1; text-align: center; font-size: 11px; position: relative; }
+    .step-num { display: inline-block; width: 24px; height: 24px; line-height: 24px; border: 2px solid #999; border-radius: 50%; background: #fff; font-weight: 700; margin-bottom: 4px; }
+    .step.active .step-num { background: #333; color: #fff; border-color: #333; }
+    .step.done .step-num { background: #666; color: #fff; border-color: #666; }
+
+    ul.clean { list-style: none; padding: 0; }
+    ul.clean li { padding: 6px 0; border-bottom: 1px dashed #ccc; font-size: 11px; }
+    ul.clean li:last-child { border-bottom: none; }
+
+    hr { border: none; border-top: 2px dashed #ccc; margin: 32px 0; }
+
+    /* Progress tracker (for 8D sidebar) */
+    .progress-item { padding: 6px 8px; border: 1px dashed #999; background: #fff; margin-bottom: 4px; font-size: 11px; display: flex; align-items: center; gap: 6px; }
+    .progress-item.done { background: #e0e0e0; }
+    .progress-item.active { background: #333; color: #fff; border-color: #333; }
+    .progress-item.locked { color: #999; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- INTRO                                         -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">Wireframe Document</div>
+    <h1>CAPA AI — Full App Wireframes</h1>
+    <p class="sub">
+      Structure and flow wireframes for the reworked CAPA AI application.
+      Grayscale, structure-only. Focus on layout, information architecture, and UX flows
+      for the 8D CAPA workflow — the core user journey.
+    </p>
+
+    <div class="callout">
+      <strong>Core UX challenge:</strong> CAPA is a compliance-critical 7-step workflow (8D)
+      used by pharmaceutical QA teams. The current app has no sidebar navigation, confusing
+      redundant entry points, and an AI assistant (Nova) that appears in 4 inconsistent
+      patterns. This wireframe reworks the app around a <strong>persistent sidebar</strong>,
+      a <strong>CAPA Hub with 8D progress panel</strong>, and a <strong>unified Nova AI
+      pattern</strong>.
+    </div>
+
+    <h3>Table of contents</h3>
+    <div class="split-2" style="font-size:11px;">
+      <div>
+        <div style="font-weight:700;text-transform:uppercase;font-size:10px;color:#666;margin-bottom:6px;">Foundation</div>
+        <ul class="clean">
+          <li>01 &middot; App Structure &amp; Navigation</li>
+          <li>02 &middot; User Flow Diagrams</li>
+        </ul>
+        <div style="font-weight:700;text-transform:uppercase;font-size:10px;color:#666;margin:12px 0 6px;">Core screens</div>
+        <ul class="clean">
+          <li>03 &middot; My Work / Inbox (new landing page)</li>
+          <li>04 &middot; Dashboard (analytics)</li>
+          <li>05 &middot; Findings List + Detail slide-over</li>
+          <li>06 &middot; CAPA List</li>
+          <li>07 &#9733; &middot; New CAPA Intake (4-step wizard)</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight:700;text-transform:uppercase;font-size:10px;color:#666;margin-bottom:6px;">8D Workflow</div>
+        <ul class="clean">
+          <li>08 &#9733; &middot; CAPA Hub (reworked detail page)</li>
+          <li>09 &#9733; &middot; D1 Problem Statement (pattern for all 8D steps)</li>
+          <li>10 &middot; D3 Root Cause Analysis (5-Whys + Similar CAPAs)</li>
+          <li>11 &middot; D4 Corrective Action (action cards)</li>
+          <li>12 &middot; D6 Verification (evidence upload)</li>
+          <li>13 &middot; D7 Sign-Off &amp; Closure</li>
+        </ul>
+        <div style="font-weight:700;text-transform:uppercase;font-size:10px;color:#666;margin:12px 0 6px;">Supporting</div>
+        <ul class="clean">
+          <li>14 &middot; Quality Score Breakdown</li>
+          <li>15 &middot; Audit Trail</li>
+          <li>16 &middot; Nova AI — Unified Pattern</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Sections marked &#9733;</strong> are the three highest-leverage screens &mdash;
+      they get the most detailed wireframes because they define how users interact with
+      the 8D workflow and AI suggestions daily.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 01. APP STRUCTURE                              -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">01</div>
+    <h1>App Structure &amp; Navigation</h1>
+    <p class="sub">Full sitemap with primary surfaces and their sub-routes.</p>
+
+    <div class="sitemap">/dashboard                          &larr; Authenticated shell (sidebar + topbar)
+&boxv;
+&boxvr;&boxh;&boxh; /                               &larr; My Work / Inbox (default landing)
+&boxv;
+&boxvr;&boxh;&boxh; /analytics                      &larr; Dashboard (KPIs, charts, heatmap)
+&boxv;
+&boxvr;&boxh;&boxh; /findings                       &larr; Findings list
+&boxv;   &boxvr;&boxh;&boxh; /                          &larr; Table + filters + slide-over detail
+&boxv;   &boxur;&boxh;&boxh; /[id]                      &larr; Finding full page (optional)
+&boxv;
+&boxvr;&boxh;&boxh; /capa                            &larr; CAPA management
+&boxv;   &boxvr;&boxh;&boxh; /                          &larr; CAPA List (all CAPAs, filterable)
+&boxv;   &boxvr;&boxh;&boxh; /new                       &larr; &#9733; New CAPA Intake wizard (4 steps)
+&boxv;   &boxvr;&boxh;&boxh; /[id]                      &larr; &#9733; CAPA Hub (overview + 8D progress panel)
+&boxv;   &boxur;&boxh;&boxh; /[id]/8d
+&boxv;       &boxvr;&boxh;&boxh; /problem               &larr; D1 Problem Statement
+&boxv;       &boxvr;&boxh;&boxh; /containment           &larr; D2 Containment
+&boxv;       &boxvr;&boxh;&boxh; /rca                   &larr; D3 Root Cause Analysis
+&boxv;       &boxvr;&boxh;&boxh; /ca                    &larr; D4 Corrective Action
+&boxv;       &boxvr;&boxh;&boxh; /pa                    &larr; D5 Preventive Action
+&boxv;       &boxvr;&boxh;&boxh; /verification          &larr; D6 Verification
+&boxv;       &boxur;&boxh;&boxh; /signoff               &larr; D7 Sign-Off &amp; Closure
+&boxv;
+&boxvr;&boxh;&boxh; /reports                         &larr; Reports &amp; Analytics (future)
+&boxv;
+&boxur;&boxh;&boxh; /settings                        &larr; Settings (future)
+    &boxvr;&boxh;&boxh; /profile                    &larr; Personal profile
+    &boxvr;&boxh;&boxh; /users                      &larr; User &amp; role management (RBAC)
+    &boxur;&boxh;&boxh; /integrations               &larr; EQMS / API config</div>
+
+    <h3>Navigation Principles</h3>
+    <ul class="clean">
+      <li><strong>Sidebar (persistent)</strong> &mdash; primary nav on desktop. 6 items: My Work, Dashboard, Findings, CAPAs, Reports, Settings. Always visible.</li>
+      <li><strong>Top bar</strong> &mdash; breadcrumb + notification bell + Nova AI button + user avatar. No primary actions here.</li>
+      <li><strong>My Work is the default landing</strong> &mdash; not Dashboard. QA Analysts need "what do I work on today", not charts. Dashboard is for Managers.</li>
+      <li><strong>8D steps live inside CAPA Hub</strong> &mdash; left progress panel always shows D1&ndash;D7 with current step highlighted. Click any step to navigate. No need to go back to CAPA detail first.</li>
+    </ul>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 02. USER FLOWS                                 -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">02</div>
+    <h1>User Flow Diagrams</h1>
+    <p class="sub">The three primary user journeys through the application.</p>
+
+    <h3>Flow A &mdash; QA Analyst (daily work)</h3>
+    <div class="flow">
+      <div class="flow-step">Login</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step primary">My Work (inbox)</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Click CAPA</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step primary">CAPA Hub</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Continue 8D step</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Fill form + AI suggest</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Save &amp; Next</div>
+    </div>
+
+    <h3>Flow B &mdash; New CAPA from Finding</h3>
+    <div class="flow">
+      <div class="flow-step">Findings List</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">View Finding (slide-over)</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step primary">Create CAPA</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Intake Wizard (4 steps)</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step primary">CAPA Hub (D1)</div>
+    </div>
+
+    <h3>Flow C &mdash; QA Manager (review &amp; sign-off)</h3>
+    <div class="flow">
+      <div class="flow-step">My Work (inbox)</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">"Pending Review" section</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step primary">D7 Sign-Off</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-branch">
+        <div class="flow-step primary">Approve &rarr; CAPA Closed</div>
+        <div class="flow-step alt">Reject &rarr; Return to analyst</div>
+      </div>
+    </div>
+
+    <h3>Flow D &mdash; QA Manager (monitoring)</h3>
+    <div class="flow">
+      <div class="flow-step">Dashboard</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Click KPI / dept</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Filtered CAPA List</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step primary">CAPA Hub</div>
+    </div>
+
+    <div class="note">
+      <strong>Single entry point for new CAPAs:</strong> The "Create CAPA" button only exists on the Findings page. It was removed from the CAPA List to eliminate the confusing dual-entry-point problem in the current app.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 03. MY WORK / INBOX                            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">03</div>
+    <h1>My Work / Inbox</h1>
+    <p class="sub">Default landing page after login. Shows CAPAs assigned to the logged-in user, sorted by urgency.</p>
+
+    <div class="wf">
+      <div class="wf-topbar">
+        <span>My Work</span>
+        <span>[Bell icon &middot; 2] &nbsp; [Nova AI] &nbsp; [Avatar: Andi W.]</span>
+      </div>
+      <div class="wf-screen">
+        <div class="wf-sidebar">
+          <div style="font-weight:700;font-size:12px;margin-bottom:12px;">&bull; CAPA AI</div>
+          <div class="wf-sidebar-item active">My Work (3)</div>
+          <div class="wf-sidebar-item">Dashboard</div>
+          <div class="wf-sidebar-item">Findings</div>
+          <div class="wf-sidebar-item">All CAPAs</div>
+          <div class="wf-sidebar-item">Reports</div>
+          <div class="wf-sidebar-section">System</div>
+          <div class="wf-sidebar-item">Settings</div>
+          <div class="wf-sidebar-item">Help</div>
+          <div style="margin-top:auto;padding-top:24px;font-size:10px;color:#666;">
+            <strong>Andi Wijaya</strong><br>QA Analyst &middot; Fill-Finish
+          </div>
+        </div>
+        <div class="wf-main">
+          <div class="wf-title">Good morning, Andi</div>
+          <div class="wf-subtitle">Saturday, 31 May 2026 &middot; You have 3 active CAPAs</div>
+
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin:16px 0 6px;">&#9888; Needs Attention (1)</div>
+          <div class="box" style="border-left:4px solid #333;background:#f0f0f0;">
+            <strong>CAPA-2026-0089</strong> &middot; GMP Documentation Gap<br>
+            <span style="color:#666;">Overdue by 3 days &middot; D5 PA pending</span>
+            <span style="float:right;">[Open &rarr;]</span>
+          </div>
+
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin:16px 0 6px;">My Active CAPAs (3)</div>
+          <div class="box">
+            <strong>CAPA-2026-0341</strong> &middot; EM Excursion Fill Suite<br>
+            <span style="color:#666;">[Major] [D4 CA] [Due in 6 days]</span>
+            <span style="float:right;">[Open &rarr;]</span>
+          </div>
+          <div class="box">
+            <strong>CAPA-2026-0089</strong> &middot; GMP Documentation Gap<br>
+            <span style="color:#666;">[Major] [D5 PA] [Overdue]</span>
+            <span style="float:right;">[Open &rarr;]</span>
+          </div>
+          <div class="box">
+            <strong>CAPA-2026-0112</strong> &middot; Particulate in Vaccine Vial<br>
+            <span style="color:#666;">[Major] [D3 RCA] [Due in 12 days]</span>
+            <span style="float:right;">[Open &rarr;]</span>
+          </div>
+
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin:16px 0 6px;">Pending My Review (1)</div>
+          <div class="box" style="border-left:4px solid #999;">
+            <strong>CAPA-2026-0312</strong> &middot; Autoclave Printout Incomplete<br>
+            <span style="color:#666;">[Minor] [D7 Sign-Off]</span>
+            <span style="float:right;">[Review &rarr;]</span>
+          </div>
+
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#666;margin:16px 0 6px;">Recently Closed (1)</div>
+          <div class="box" style="opacity:.5;">
+            <strong>CAPA-2026-0205</strong> &middot; Cleaning Validation Protocol Deviation
+            <span style="color:#666;">[Closed] [Score: 92]</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Why Inbox instead of Dashboard?</strong> QA Analysts don't start their day looking at charts. They start with "what do I need to do?" The inbox sorts by urgency: overdue first, then due soon, then pending review. Dashboard is one sidebar click away for Managers.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 04. DASHBOARD                                  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">04</div>
+    <h1>Dashboard (Analytics)</h1>
+    <p class="sub">High-level monitoring for QA Manager/Supervisor. KPI cards + charts + department heatmap.</p>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>Dashboard</span><span>[Date range: This Month ▼]</span></div>
+      <div class="wf-screen">
+        <div class="wf-sidebar">
+          <div style="font-weight:700;font-size:12px;margin-bottom:12px;">&bull; CAPA AI</div>
+          <div class="wf-sidebar-item">My Work (3)</div>
+          <div class="wf-sidebar-item active">Dashboard</div>
+          <div class="wf-sidebar-item">Findings</div>
+          <div class="wf-sidebar-item">All CAPAs</div>
+          <div class="wf-sidebar-item">Reports</div>
+        </div>
+        <div class="wf-main">
+          <div class="wf-title">Analytics Dashboard</div>
+          <div class="wf-subtitle">Month to date &middot; May 2026</div>
+
+          <div class="row">
+            <div class="col"><div class="box"><strong>6</strong><br>Total Findings<br><span style="color:#666;">Month to date</span></div></div>
+            <div class="col"><div class="box"><strong>6</strong><br>Open CAPAs<br><span style="color:#666;">All statuses</span></div></div>
+            <div class="col"><div class="box" style="border-left:4px solid #333;"><strong>2</strong><br>Overdue CAPAs<br><span style="color:#666;">Needs attention</span></div></div>
+            <div class="col"><div class="box"><strong>87%</strong><br>Effectiveness Rate<br><span style="color:#666;">Verified CAPAs</span></div></div>
+          </div>
+
+          <div class="row">
+            <div class="col"><div class="box box-filled" style="height:160px;display:flex;align-items:center;justify-content:center;">[Finding Trend &mdash; line chart, 12 months]</div></div>
+            <div class="col"><div class="box box-filled" style="height:160px;display:flex;align-items:center;justify-content:center;">[Breakdown by Type &mdash; donut chart]</div></div>
+          </div>
+          <div class="row">
+            <div class="col"><div class="box box-filled" style="height:160px;display:flex;align-items:center;justify-content:center;">[Top Root Cause Categories &mdash; bar chart]</div></div>
+            <div class="col"><div class="box" style="height:160px;">
+              <strong style="font-size:11px;">Dept Completion Heatmap</strong><br><br>
+              Fill-Finish &nbsp;&nbsp;&nbsp; [████████░░] 78% &nbsp; 1 open<br>
+              Warehouse &nbsp;&nbsp;&nbsp; [██████░░░░] 64% &nbsp; 2 open &middot; 1 overdue<br>
+              QA Compliance [████████░░] 86% &nbsp; 1 open<br>
+              Production &nbsp;&nbsp; [███████░░░] 72% &nbsp; 1 open
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Drill-down:</strong> Clicking any KPI card or department row navigates to the CAPA List pre-filtered by that metric. E.g. clicking "Overdue CAPAs: 2" &rarr; CAPA List filtered to overdue only.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 05. FINDINGS LIST                               -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">05</div>
+    <h1>Findings List + Detail Slide-over</h1>
+    <p class="sub">All imported findings (Deviation, Audit Finding, Complaint). This is where new CAPAs are created. Only entry point.</p>
+
+    <h3>Screen A &mdash; Findings list</h3>
+    <div class="wf">
+      <div class="wf-topbar"><span>Findings</span><span>[+ New CAPA]</span></div>
+      <div class="wf-screen" style="min-height:400px;">
+        <div class="wf-sidebar">
+          <div style="font-weight:700;font-size:12px;margin-bottom:12px;">&bull; CAPA AI</div>
+          <div class="wf-sidebar-item">My Work</div>
+          <div class="wf-sidebar-item">Dashboard</div>
+          <div class="wf-sidebar-item active">Findings</div>
+          <div class="wf-sidebar-item">All CAPAs</div>
+        </div>
+        <div class="wf-main">
+          <div class="row">
+            <div class="col-3"><div class="input">[Search ID, description, source...]</div></div>
+            <div class="col"><div class="input">[Type ▼]</div></div>
+            <div class="col"><div class="input">[Severity ▼]</div></div>
+            <div class="col"><div class="input">[Status ▼]</div></div>
+          </div>
+          <div style="font-weight:700;font-size:11px;margin-bottom:8px;">15 Findings</div>
+          <table class="wf-table">
+            <thead><tr><th>ID</th><th>Type</th><th>Description</th><th>Severity</th><th>Dept</th><th>Reported</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td>DEV-2026-0341<br><span style="font-size:9px;color:#666">[Bizzmine]</span></td><td>Deviation</td><td>EM excursion in Grade A fill suite</td><td>[Major]</td><td>Fill-Finish</td><td>18 May</td><td>[CAPA In Progress]</td><td>[View] [Open CAPA &rarr;]</td></tr>
+              <tr><td>AUD-2026-0089<br><span style="font-size:9px;color:#666">[Q100+]</span></td><td>Audit Finding</td><td>GMP doc gap, material transfer records</td><td>[Major]</td><td>Warehouse</td><td>15 May</td><td>[CAPA In Progress]</td><td>[View] [Open CAPA &rarr;]</td></tr>
+              <tr><td>CMP-2026-0112<br><span style="font-size:9px;color:#666">[Bizzmine]</span></td><td>Complaint</td><td>Visible particulate in returned vaccine vial</td><td>[Major]</td><td>QA / Prod</td><td>12 May</td><td>[CAPA In Progress]</td><td>[View] [Open CAPA &rarr;]</td></tr>
+              <tr style="color:#999"><td>DEV-2026-0456</td><td>Deviation</td><td>Temperature excursion in cold storage</td><td>[Minor]</td><td>Supply Chain</td><td>10 May</td><td>[No CAPA]</td><td>[View] [Create CAPA]</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <h3>Screen B &mdash; Finding detail (slide-over from right)</h3>
+    <div class="wf" style="max-width:440px;margin-left:auto;">
+      <div class="wf-topbar"><span><strong>Finding Detail</strong></span><span>[&times; Close]</span></div>
+      <div style="padding:16px;">
+        <div style="margin-bottom:8px;">[Deviation] [Major] [CAPA In Progress]</div>
+        <div class="label">Finding ID</div><div class="box">DEV-2026-0341</div>
+        <div class="label">Reported</div><div class="box">18 May 2026, 09:42</div>
+        <div class="label">Area / Equipment</div><div class="box">Grade A Fill Suite &middot; HEPA-FF-L2-07</div>
+        <div class="label">Affected Batches</div><div class="box">VAC-26-0518-A, VAC-26-0518-B</div>
+        <div class="label">Initial Observation</div>
+        <div class="box">Particle count exceeded Grade A alert threshold for 12 minutes during routine EM on shift A.</div>
+        <div class="box box-filled" style="margin-top:12px;">
+          <strong>Nova Classification</strong><br>
+          Major deviation in critical aseptic area. Recommends full 8D CAPA workflow.
+        </div>
+        <div style="margin-top:12px;">
+          <div class="btn btn-primary">[Open CAPA &rarr;]</div>
+          <div class="btn">[Close]</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Slide-over, not full page.</strong> Finding detail opens as a panel from the right (400px), keeping the list visible behind. User can scan the list and open details without losing context. Full-page view available via a small "expand" icon for detailed cases.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 06. CAPA LIST                                   -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">06</div>
+    <h1>CAPA List</h1>
+    <p class="sub">All CAPA cases. No "New CAPA" button here (single entry via Findings). Added "Step" column to show 8D progress at a glance.</p>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>All CAPAs</span><span>[Export list]</span></div>
+      <div class="wf-screen" style="min-height:350px;">
+        <div class="wf-sidebar">
+          <div style="font-weight:700;font-size:12px;margin-bottom:12px;">&bull; CAPA AI</div>
+          <div class="wf-sidebar-item">My Work</div>
+          <div class="wf-sidebar-item">Dashboard</div>
+          <div class="wf-sidebar-item">Findings</div>
+          <div class="wf-sidebar-item active">All CAPAs</div>
+        </div>
+        <div class="wf-main">
+          <div style="display:flex;gap:4px;margin-bottom:12px;">
+            <div class="btn btn-primary" style="padding:4px 10px;">[All (8)]</div>
+            <div class="btn" style="padding:4px 10px;">[In Progress (5)]</div>
+            <div class="btn" style="padding:4px 10px;">[Overdue (2)]</div>
+            <div class="btn" style="padding:4px 10px;">[Closed (1)]</div>
+          </div>
+          <table class="wf-table">
+            <thead><tr><th>CAPA</th><th>Type</th><th>Severity</th><th>Status</th><th>Step</th><th>Score</th><th>PIC</th><th>Due</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>CAPA-2026-0341<br><span style="font-size:9px;color:#666">EM Excursion Fill Suite</span></td><td>Deviation</td><td>[Major]</td><td>[In Progress]</td><td>[D4 CA]</td><td>[77]</td><td>Siti R.</td><td>24 May<br><span style="font-size:9px">6 days</span></td><td>[Open &rarr;]</td></tr>
+              <tr><td>CAPA-2026-0089<br><span style="font-size:9px;color:#666">GMP Doc Gap</span></td><td>Audit</td><td>[Major]</td><td>[Overdue]</td><td>[D5 PA]</td><td>[62]</td><td>Andi W.</td><td style="font-weight:700">Overdue 3d</td><td>[Open &rarr;]</td></tr>
+              <tr><td>CAPA-2026-0312<br><span style="font-size:9px;color:#666">Autoclave Printout</span></td><td>Deviation</td><td>[Minor]</td><td>[Sign-Off]</td><td>[D7]</td><td>[91]</td><td>Budi S.</td><td>02 Jun</td><td>[Open &rarr;]</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 07. NEW CAPA INTAKE                             -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">07 &#9733;</div>
+    <h1>New CAPA Intake (4-Step Wizard)</h1>
+    <p class="sub">Replaces the single-page form. Progressive disclosure &mdash; one concern at a time.</p>
+
+    <h3>Wizard steps</h3>
+    <div class="flow">
+      <div class="flow-step alt">1. Source Import</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step primary">2. Gate Questions</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">3. Impact Assessment</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">4. Review &amp; Submit</div>
+    </div>
+
+    <h3>Screen &mdash; Step 2: Gate Questions (example)</h3>
+    <div class="wf">
+      <div class="wf-topbar"><span>CAPAs / New CAPA</span><span></span></div>
+      <div class="wf-screen" style="min-height:450px;">
+        <div class="wf-sidebar">
+          <div style="font-weight:700;font-size:12px;margin-bottom:12px;">&bull; CAPA AI</div>
+          <div class="wf-sidebar-item">My Work</div>
+          <div class="wf-sidebar-item">Findings</div>
+          <div class="wf-sidebar-item active">All CAPAs</div>
+        </div>
+        <div class="wf-main" style="max-width:680px;margin:0 auto;">
+          <div class="wf-title">New CAPA Intake</div>
+          <div class="wf-subtitle">Import from source system or fill manually</div>
+
+          <div class="stepper">
+            <div class="step done"><div class="step-num">1</div><br>Source Import</div>
+            <div class="step active"><div class="step-num">2</div><br>Gate Questions</div>
+            <div class="step"><div class="step-num">3</div><br>Impact</div>
+            <div class="step"><div class="step-num">4</div><br>Review</div>
+          </div>
+
+          <div class="box box-filled" style="margin-bottom:16px;">
+            <strong>Nova Tip:</strong> Answer gate questions to help Nova assess severity. Be specific: include dates, batch numbers, measurable observations.
+          </div>
+
+          <div class="label">Q1: What happened and when was it observed? <span class="req">*</span></div>
+          <div class="input" style="height:60px;margin-bottom:12px;">[Textarea &mdash; placeholder: "Include date, shift, area, measurable observation..."]</div>
+
+          <div class="label">Q2: What is the potential product/patient impact? <span class="req">*</span></div>
+          <div class="input" style="height:60px;margin-bottom:12px;">[Textarea]</div>
+
+          <div class="label">Q3: What immediate containment was taken?</div>
+          <div class="input" style="height:60px;margin-bottom:12px;">[Textarea]</div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:16px;">
+            <div class="btn">[&larr; Back]</div>
+            <div class="btn btn-primary">[Continue to Impact Assessment &rarr;]</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Progressive disclosure.</strong> The old single-page form showed Source Import, CAPA Draft, Gate Questions, and Submit all at once &mdash; overwhelming for new users. The wizard breaks it into 4 digestible steps. Each step validates before allowing "Continue".
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 08. CAPA HUB                                    -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">08 &#9733;</div>
+    <h1>CAPA Hub (Reworked Detail Page)</h1>
+    <p class="sub">Central page for one CAPA. Replaces the 4-tab layout. Left panel always shows 8D progress.</p>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>CAPAs / CAPA-2026-0341</span><span>[Export PDF] [Audit Trail]</span></div>
+      <div class="wf-screen" style="min-height:600px;">
+        <div class="wf-sidebar">
+          <div style="font-weight:700;font-size:12px;margin-bottom:12px;">&bull; CAPA AI</div>
+          <div class="wf-sidebar-item">My Work</div>
+          <div class="wf-sidebar-item active">All CAPAs</div>
+        </div>
+        <div class="wf-main" style="display:flex;gap:16px;">
+          <!-- Left: 8D Progress panel -->
+          <div style="width:220px;flex-shrink:0;">
+            <div style="font-weight:700;font-size:11px;margin-bottom:8px;">8D PROGRESS</div>
+            <div class="progress-item done">[&#10003;] D1 Problem Statement</div>
+            <div class="progress-item done">[&#10003;] D2 Containment</div>
+            <div class="progress-item done">[&#10003;] D3 Root Cause</div>
+            <div class="progress-item active">[&bull;] D4 Corrective Action</div>
+            <div class="progress-item locked">[&nbsp;] D5 Preventive Action</div>
+            <div class="progress-item locked">[&nbsp;] D6 Verification</div>
+            <div class="progress-item locked">[&nbsp;] D7 Sign-Off</div>
+
+            <div style="font-weight:700;font-size:11px;margin:16px 0 8px;">CAPA INFO</div>
+            <div class="box" style="font-size:10px;">
+              PIC: Siti Rahmawati<br>
+              Dept: Fill-Finish<br>
+              Due: 24 May 2026 (6 days)<br>
+              Source: DEV-2026-0341
+            </div>
+
+            <div style="font-weight:700;font-size:11px;margin:16px 0 8px;">QUALITY SCORE</div>
+            <div class="box" style="text-align:center;font-size:24px;font-weight:700;">77<br><span style="font-size:10px;color:#666;font-weight:400;">Click for breakdown</span></div>
+          </div>
+
+          <!-- Right: Content -->
+          <div style="flex:1;min-width:0;">
+            <div style="margin-bottom:8px;">[Bizzmine] [Deviation] [Major] [Investigation] [77 &middot; Improve Score]</div>
+            <div class="wf-title">CAPA-2026-0341</div>
+            <div class="wf-subtitle">Environmental Monitoring Excursion in Grade A Fill Suite</div>
+
+            <div class="box">
+              <strong>Source Data</strong><br>
+              <div class="row" style="margin-top:6px;">
+                <div class="col">Deviation ID: DEV-2026-0341</div>
+                <div class="col">Reported: 18 May 2026, 09:42</div>
+              </div>
+              <div class="row">
+                <div class="col">Area: Grade A Fill Suite</div>
+                <div class="col">Equipment: HEPA-FF-L2-07</div>
+              </div>
+              <div class="row">
+                <div class="col">Batches: VAC-26-0518-A, -B</div>
+                <div class="col">Initiator: Andi Wijaya</div>
+              </div>
+              Observation: Particle count exceeded Grade A alert threshold for 12 min during shift A.
+            </div>
+
+            <div class="box">
+              <strong>QA Disposition</strong><br>
+              Reviewed by: Siti Rahmawati &middot; Assigned to: Andi Wijaya &middot; Severity: Major<br>
+              <div class="box box-filled" style="margin-top:6px;">Excursion in critical aseptic area involving active vaccine batches warrants full 8D investigation.</div>
+            </div>
+
+            <div class="box box-filled">
+              <strong>Nova Summary</strong><br>
+              Nova detected a Major deviation in a controlled filling area. Confirmed root cause: HEPA filter replacement interval remained at 18 months despite trend evidence supporting 12 months.
+            </div>
+
+            <div style="text-align:right;margin-top:12px;">
+              <div class="btn btn-primary">[Continue Working on D4 &rarr;]</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Key change from current app:</strong> The old design used 4 tabs (Overview, 8D Workflow, Audit Trail, Actions). The "8D Workflow" tab was misleading &mdash; it only showed links, not content. Now:
+      <ul>
+        <li><strong>8D progress panel</strong> is always visible on the left. Click any step to jump directly.</li>
+        <li><strong>Overview content</strong> (Source Data, QA Disposition, Nova Summary) is always visible on the right.</li>
+        <li><strong>Score and CAPA info</strong> live in the left panel &mdash; no hidden tabs.</li>
+        <li><strong>Audit Trail</strong> is accessible from the top bar, not buried in a tab.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 09. D1 PROBLEM STATEMENT                        -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">09 &#9733;</div>
+    <h1>D1 Problem Statement</h1>
+    <p class="sub">Representative pattern for all 8D step screens. Three zones: left progress panel, main form, Nova AI panel.</p>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>CAPA-2026-0341 / D1 Problem Statement</span><span></span></div>
+      <div class="wf-screen">
+        <div class="wf-sidebar">
+          <div style="font-weight:700;font-size:12px;margin-bottom:12px;">&bull; CAPA AI</div>
+          <div class="wf-sidebar-item">My Work</div>
+          <div class="wf-sidebar-item active">All CAPAs</div>
+        </div>
+        <div class="wf-main" style="display:flex;gap:16px;">
+          <!-- Left: 8D nav -->
+          <div style="width:180px;flex-shrink:0;">
+            <div style="font-size:11px;color:#666;margin-bottom:8px;">[&larr; CAPA-2026-0341]</div>
+            <div class="progress-item active">[&bull;] D1 Problem</div>
+            <div class="progress-item locked">[&nbsp;] D2 Containment</div>
+            <div class="progress-item locked">[&nbsp;] D3 RCA</div>
+            <div class="progress-item locked">[&nbsp;] D4 CA</div>
+            <div class="progress-item locked">[&nbsp;] D5 PA</div>
+            <div class="progress-item locked">[&nbsp;] D6 Verify</div>
+            <div class="progress-item locked">[&nbsp;] D7 Sign-Off</div>
+          </div>
+
+          <!-- Main -->
+          <div style="flex:1;min-width:0;">
+            <div class="wf-title">D1 &mdash; Problem Statement</div>
+            <div class="wf-subtitle">Step 1 of 7 &middot; Define the problem with specific, measurable details</div>
+
+            <!-- Nova panel -->
+            <div class="box box-filled" style="border-left:4px solid #333;">
+              <strong>Nova's Suggestion</strong><br>
+              On 18 May 2026 during vaccine filling operation in Grade A Fill Suite Line FILL-02, environmental monitoring detected particle count excursion for batch VAC-26-0518-A. The excursion lasted approximately 12 minutes and was associated with HEPA unit HEPA-FILL-02.<br><br>
+              [&#10003; Use this suggestion] &nbsp; [&#9998; Edit first] &nbsp; [Skip]<br>
+              <details style="margin-top:6px;font-size:10px;color:#666;"><summary>[Show reasoning]</summary>Nova composed this from source finding data using the IS/IS NOT framework.</details>
+            </div>
+
+            <div style="font-weight:700;font-size:11px;margin:16px 0 6px;">PROBLEM STATEMENT EDITOR</div>
+            <div class="label">Problem statement <span class="req">*</span></div>
+            <div class="input" style="height:80px;">[Textarea &mdash; pre-filled if Nova suggestion accepted]</div>
+
+            <div style="display:flex;gap:8px;margin:12px 0;">
+              <div class="box" style="flex:1;text-align:center;">[&#10003;] Contains date/time</div>
+              <div class="box" style="flex:1;text-align:center;">[&#10003;] Measurable observation</div>
+              <div class="box" style="flex:1;text-align:center;">[&#10003;] Affected area</div>
+              <div class="box" style="flex:1;text-align:center;color:#999;">[&nbsp;] Min 50 chars</div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;margin-top:16px;">
+              <div class="btn">[&larr; Back to CAPA Hub]</div>
+              <div><span class="btn">[Save Draft]</span> &nbsp; <span class="btn btn-primary">[Continue to D2 &rarr;]</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>This is the pattern for all 8D step screens.</strong> Three-zone layout:
+      (1) Left progress panel showing all D-steps with current highlighted.
+      (2) Main content area with form/editor.
+      (3) Nova AI suggestion block at the top of the form area (not a sidebar &mdash; inline).
+      Steps D2&ndash;D6 follow the same shell; only the form fields and Nova suggestions change.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 10. D3 ROOT CAUSE ANALYSIS                      -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">10</div>
+    <h1>D3 Root Cause Analysis</h1>
+    <p class="sub">5-Whys chain + Similar Past CAPAs from AI. The deepest analytical step.</p>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>CAPA-2026-0341 / D3 Root Cause Analysis</span><span></span></div>
+      <div style="display:flex;">
+        <div style="width:180px;border-right:2px solid #333;background:#f0f0f0;padding:12px;">
+          <div class="progress-item done">[&#10003;] D1 Problem</div>
+          <div class="progress-item done">[&#10003;] D2 Containment</div>
+          <div class="progress-item active">[&bull;] D3 RCA</div>
+          <div class="progress-item locked">[&nbsp;] D4 CA</div>
+          <div class="progress-item locked">[&nbsp;] D5&ndash;D7</div>
+        </div>
+        <div style="flex:1;padding:16px;">
+          <div class="wf-title">D3 &mdash; Root Cause Analysis</div>
+          <div class="wf-subtitle">Step 3 of 7</div>
+
+          <div class="box box-filled" style="border-left:4px solid #333;">
+            <strong>Nova's Root Cause Suggestion</strong><br>
+            Root Cause: HEPA filter PM interval not updated from 18 to 12 months based on trend data.<br>
+            Method: 5-Whys<br>
+            [&#10003; Use this] &nbsp; [&#9998; Edit]
+          </div>
+
+          <div class="label" style="margin-top:16px;">RCA Method</div>
+          <div class="input">[5-Whys ▼] &nbsp; Fishbone &middot; FMEA &middot; Manual</div>
+
+          <div style="border-left:4px solid #333;padding-left:12px;margin:16px 0;">
+            <div class="label">Why 1</div><div class="input">[Particle count exceeded Grade A limit]</div>
+            <div class="label">Why 2</div><div class="input">[HEPA filter efficiency degraded]</div>
+            <div class="label">Why 3</div><div class="input">[Filter past effective service life]</div>
+            <div class="label">Why 4</div><div class="input">[Replacement schedule 18mo not 12]</div>
+            <div class="label" style="color:#333;font-weight:700;">Why 5 (Root Cause)</div>
+            <div class="input" style="border:2px solid #333;font-weight:700;">[PM interval not updated based on trend review]</div>
+          </div>
+
+          <div class="label">Confirmed Root Cause Summary</div>
+          <div class="input" style="height:50px;">[Textarea]</div>
+
+          <div style="font-weight:700;font-size:11px;margin:20px 0 8px;">SIMILAR PAST CAPAs (from Nova)</div>
+          <div class="row">
+            <div class="col"><div class="box">
+              <strong>CAPA-2025-0234</strong><br>
+              Same HEPA line &middot; Fill-Finish<br>
+              Root cause: Filter schedule<br>
+              Resolved in 14 days<br>
+              [92% similar]
+            </div></div>
+            <div class="col"><div class="box">
+              <strong>CAPA-2025-0187</strong><br>
+              Different area &middot; Sterile Prep<br>
+              Root cause: Airflow calibration<br>
+              21 days<br>
+              [67% similar]
+            </div></div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:16px;">
+            <div class="btn">[&larr; D2]</div>
+            <div class="btn btn-primary">[Continue to D4 &rarr;]</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 11. D4 CORRECTIVE ACTION                        -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">11</div>
+    <h1>D4 Corrective Action</h1>
+    <p class="sub">Action card list. Each action has owner, target date, status, and evidence tracking.</p>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>CAPA-2026-0341 / D4 Corrective Action</span><span></span></div>
+      <div style="display:flex;">
+        <div style="width:180px;border-right:2px solid #333;background:#f0f0f0;padding:12px;">
+          <div class="progress-item done">[&#10003;] D1&ndash;D3</div>
+          <div class="progress-item active">[&bull;] D4 CA</div>
+          <div class="progress-item locked">[&nbsp;] D5&ndash;D7</div>
+        </div>
+        <div style="flex:1;padding:16px;">
+          <div class="wf-title">D4 &mdash; Corrective Action</div>
+          <div class="wf-subtitle">Step 4 of 7 &middot; Define permanent corrective actions</div>
+
+          <div class="box box-filled" style="border-left:4px solid #333;">
+            <strong>Nova's Suggested Actions</strong><br>
+            1. Replace HEPA filter unit HEPA-FILL-02 immediately<br>
+            2. Update PM schedule from 18 to 12 months for all Grade A HEPA units<br>
+            [&#10003; Add all] &nbsp; [Pick individually]
+          </div>
+
+          <div style="font-weight:700;font-size:11px;margin:16px 0 8px;">CORRECTIVE ACTIONS &nbsp; [+ Add Action]</div>
+
+          <div class="box" style="background:#f0f0f0;">
+            <div style="display:flex;justify-content:space-between;">
+              <strong>CA-1: Replace HEPA filter HEPA-FILL-02</strong>
+              <span>[Done]</span>
+            </div>
+            Owner: Maintenance Team &middot; Target: 20 May 2026 &middot; Evidence: &#10003;
+          </div>
+          <div class="box">
+            <div style="display:flex;justify-content:space-between;">
+              <strong>CA-2: Update PM schedule to 12-month interval</strong>
+              <span>[In Progress]</span>
+            </div>
+            Owner: Andi Wijaya &middot; Target: 28 May 2026 &middot; Evidence: pending
+          </div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:16px;">
+            <div class="btn">[&larr; D3]</div>
+            <div class="btn btn-primary">[Continue to D5 &rarr;]</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 12. D6 VERIFICATION                             -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">12</div>
+    <h1>D6 Verification</h1>
+    <p class="sub">Proof that CA and PA actually worked. Method + result + evidence file.</p>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>CAPA-2026-0341 / D6 Verification</span><span></span></div>
+      <div style="display:flex;">
+        <div style="width:180px;border-right:2px solid #333;background:#f0f0f0;padding:12px;">
+          <div class="progress-item done">[&#10003;] D1&ndash;D5</div>
+          <div class="progress-item active">[&bull;] D6 Verify</div>
+          <div class="progress-item locked">[&nbsp;] D7 Sign-Off</div>
+        </div>
+        <div style="flex:1;padding:16px;">
+          <div class="wf-title">D6 &mdash; Verification</div>
+          <div class="wf-subtitle">Step 6 of 7 &middot; Prove that actions were effective</div>
+
+          <div class="label">Verification Method <span class="req">*</span></div>
+          <div class="input">[EM re-test &amp; airflow requalification ▼]</div>
+
+          <div class="label" style="margin-top:12px;">Verification Result <span class="req">*</span></div>
+          <div class="input" style="height:80px;">[Textarea &mdash; min 30 chars]</div>
+
+          <div class="label" style="margin-top:12px;">Evidence Upload</div>
+          <div class="row">
+            <div class="col-3"><div class="input">[HEPA-FILL-02-Requalification.pdf]</div></div>
+            <div class="col"><div class="btn">[Upload]</div></div>
+          </div>
+          <div class="box box-filled" style="font-size:10px;margin-top:4px;">&#128206; Uploaded: HEPA-FILL-02-Requalification.pdf</div>
+
+          <div style="display:flex;gap:8px;margin:16px 0;">
+            <div class="box" style="flex:1;text-align:center;">[&#10003;] Method selected</div>
+            <div class="box" style="flex:1;text-align:center;">[&#10003;] Result documented</div>
+            <div class="box" style="flex:1;text-align:center;">[&#10003;] Evidence uploaded</div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;margin-top:16px;">
+            <div class="btn">[&larr; D5]</div>
+            <div class="btn btn-primary">[Continue to D7 &rarr;]</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 13. D7 SIGN-OFF                                 -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">13</div>
+    <h1>D7 Sign-Off &amp; Closure</h1>
+    <p class="sub">Final step. QA Manager reviews all 8D evidence in collapsible summary, then approves or returns.</p>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>CAPA-2026-0341 / D7 Sign-Off</span><span></span></div>
+      <div style="display:flex;">
+        <div style="width:180px;border-right:2px solid #333;background:#f0f0f0;padding:12px;">
+          <div class="progress-item done">[&#10003;] D1 Problem</div>
+          <div class="progress-item done">[&#10003;] D2 Containment</div>
+          <div class="progress-item done">[&#10003;] D3 RCA</div>
+          <div class="progress-item done">[&#10003;] D4 CA</div>
+          <div class="progress-item done">[&#10003;] D5 PA</div>
+          <div class="progress-item done">[&#10003;] D6 Verify</div>
+          <div class="progress-item active">[&bull;] D7 Sign-Off</div>
+          <div style="text-align:center;margin-top:16px;font-size:24px;font-weight:700;border:2px solid #333;padding:12px;">91<br><span style="font-size:10px;font-weight:400;">Final Score</span></div>
+        </div>
+        <div style="flex:1;padding:16px;">
+          <div class="wf-title">D7 &mdash; Sign-Off &amp; Closure</div>
+          <div class="wf-subtitle">Review all evidence and approve or return</div>
+
+          <div style="font-weight:700;font-size:11px;margin-bottom:8px;">8D SUMMARY REVIEW</div>
+          <div class="box" style="background:#f0f0f0;"><strong>D1 &mdash; Problem Statement</strong> [&#10003;]<br><span style="color:#666;">Particle count exceeded Grade A alert threshold for 12 minutes during shift A.</span></div>
+          <div class="box" style="background:#f0f0f0;"><strong>D2 &mdash; Containment</strong> [&#10003;]<br><span style="color:#666;">Batch quarantined, area isolated, backup HEPA activated.</span></div>
+          <div class="box" style="background:#f0f0f0;"><strong>D3 &mdash; Root Cause</strong> [&#10003;]<br><span style="color:#666;">HEPA filter PM interval not updated from 18 to 12 months.</span></div>
+          <div class="box" style="background:#f0f0f0;"><strong>D4 &mdash; Corrective Actions</strong> [&#10003;]<br><span style="color:#666;">2 actions: Filter replaced + PM schedule updated.</span></div>
+          <div class="box" style="background:#f0f0f0;"><strong>D5 &mdash; Preventive Actions</strong> [&#10003;]<br><span style="color:#666;">Trend-based PM review SOP established.</span></div>
+          <div class="box" style="background:#f0f0f0;"><strong>D6 &mdash; Verification</strong> [&#10003;]<br><span style="color:#666;">3 consecutive checks passed. Evidence: HEPA-FILL-02-Requalification.pdf</span></div>
+
+          <hr>
+
+          <div style="font-weight:700;font-size:11px;margin-bottom:8px;">SIGN-OFF FORM</div>
+          <div class="row">
+            <div class="col"><div class="label">Reviewing QA</div><div class="input">[Siti Rahmawati]</div></div>
+            <div class="col"><div class="label">Role</div><div class="input">[QA Manager]</div></div>
+          </div>
+          <div class="label">Comments</div>
+          <div class="input" style="height:50px;">[Textarea]</div>
+
+          <div class="box box-filled" style="font-size:10px;margin-top:12px;">
+            By approving, I confirm this CAPA record is complete, accurate, and meets GMP/ALCOA+ requirements.
+          </div>
+
+          <div class="row" style="margin-top:12px;">
+            <div class="col"><div class="btn btn-primary" style="width:100%;justify-content:center;">[&#10003; Approve &amp; Close CAPA]</div></div>
+            <div class="col" style="flex:0 0 auto;"><div class="btn">[&#10007; Return for Revision]</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Collapsible summary is critical.</strong> The QA Manager must be able to review all 8D evidence on one screen without navigating to each step individually. Each D-section is collapsible (click to expand for full detail). This mimics how paper CAPA forms work &mdash; all on one sheet for the reviewer's signature.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 14. QUALITY SCORE                               -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">14</div>
+    <h1>Quality Score Breakdown</h1>
+    <p class="sub">Modal or dedicated page. Explains score dimensions and how to improve. Transparency for compliance.</p>
+
+    <div class="wf" style="max-width:560px;margin:0 auto;">
+      <div class="wf-topbar"><span><strong>Quality Score &mdash; CAPA-2026-0341</strong></span><span>[&times;]</span></div>
+      <div style="padding:20px;">
+        <div style="text-align:center;font-size:36px;font-weight:700;margin-bottom:4px;">77</div>
+        <div style="text-align:center;font-size:11px;color:#666;margin-bottom:20px;">out of 100</div>
+
+        <table class="wf-table">
+          <thead><tr><th>Dimension</th><th>Score</th><th>Max</th><th>Bar</th></tr></thead>
+          <tbody>
+            <tr><td>Problem clarity (D1)</td><td>18</td><td>20</td><td>[█████████░]</td></tr>
+            <tr><td>Containment (D2)</td><td>15</td><td>15</td><td>[██████████]</td></tr>
+            <tr><td>RCA depth (D3)</td><td>12</td><td>20</td><td>[██████░░░░]</td></tr>
+            <tr><td>CA/PA specificity (D4/D5)</td><td>10</td><td>20</td><td>[█████░░░░░]</td></tr>
+            <tr><td>Verification (D6)</td><td>12</td><td>15</td><td>[████████░░]</td></tr>
+            <tr><td>Timeliness</td><td>10</td><td>10</td><td>[██████████]</td></tr>
+          </tbody>
+        </table>
+
+        <div class="box box-filled" style="margin-top:16px;">
+          <strong>How to reach 90+:</strong><br>
+          &bull; Add more detail to 5-Whys chain in D3 &nbsp; [+5 pts]<br>
+          &bull; Add training record evidence in D5 &nbsp; [+5 pts]<br>
+          &bull; Add second evidence file to D6 &nbsp; [+3 pts]
+        </div>
+
+        <div style="margin-top:16px;text-align:right;">
+          <div class="btn">[Close]</div>
+          <div class="btn btn-primary">[Go to D3 &rarr;]</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 15. AUDIT TRAIL                                 -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">15</div>
+    <h1>Audit Trail</h1>
+    <p class="sub">Full traceable history. Required for BPOM audit and ALCOA+ compliance. Exportable to PDF.</p>
+
+    <div class="wf">
+      <div class="wf-topbar"><span>CAPA-2026-0341 / Audit Trail</span><span>[Export PDF]</span></div>
+      <div style="padding:16px;">
+        <div class="wf-title">Audit Trail</div>
+        <div class="wf-subtitle">CAPA-2026-0341 &middot; 7 events</div>
+
+        <table class="wf-table">
+          <thead><tr><th>Timestamp</th><th>Actor</th><th>Event</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td>31 May, 10:35</td><td>Siti Rahmawati</td><td>[D7 Approved]</td><td>CAPA approved and closed.</td></tr>
+            <tr><td>30 May, 14:22</td><td>Andi Wijaya</td><td>[D6 Completed]</td><td>Verification method: EM re-test. Evidence uploaded.</td></tr>
+            <tr><td>28 May, 09:15</td><td>Andi Wijaya</td><td>[D5 Completed]</td><td>1 preventive action documented.</td></tr>
+            <tr><td>25 May, 11:30</td><td>Andi Wijaya</td><td>[D4 Completed]</td><td>2 corrective actions defined.</td></tr>
+            <tr><td>22 May, 16:45</td><td>Andi Wijaya</td><td>[AI Suggestion Used]</td><td>Nova suggestion accepted for D3 root cause.</td></tr>
+            <tr><td>20 May, 10:05</td><td>Siti Rahmawati</td><td>[QA Disposition]</td><td>Major severity assigned. Andi Wijaya as PIC.</td></tr>
+            <tr><td>18 May, 09:42</td><td>System</td><td>[CAPA Created]</td><td>Created from DEV-2026-0341 (Bizzmine import).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 16. NOVA AI PATTERN                             -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-num">16</div>
+    <h1>Nova AI &mdash; Unified Pattern</h1>
+    <p class="sub">One consistent pattern for AI assistance across the entire app. Replaces the current 4 inconsistent patterns.</p>
+
+    <div class="callout">
+      <strong>Problem in current app:</strong> Nova appears as (1) header branding, (2) inline suggestion blocks, (3) sidebar coach tips, and (4) a chat modal button. Users don't know when Nova can help or how to interact with it. The new design uses <strong>one pattern</strong> everywhere.
+    </div>
+
+    <h3>The Nova Panel (inline, not floating)</h3>
+    <div class="wf" style="max-width:680px;">
+      <div style="padding:16px;border-left:4px solid #333;background:#f0f0f0;">
+        <div style="font-weight:700;margin-bottom:6px;">Nova's Suggestion</div>
+        <div style="font-size:12px;color:#555;margin-bottom:10px;">
+          [AI-generated content relevant to the current step. Could be a problem statement, root cause, corrective action, etc.]
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <div class="btn btn-primary" style="padding:4px 10px;">[&#10003; Use this]</div>
+          <div class="btn" style="padding:4px 10px;">[&#9998; Edit first]</div>
+          <div class="btn btn-ghost" style="padding:4px 10px;">[Skip]</div>
+        </div>
+        <details style="font-size:10px;color:#666;">
+          <summary>[Show reasoning]</summary>
+          Expandable section explaining why Nova made this suggestion.
+        </details>
+      </div>
+    </div>
+
+    <h3>When Nova appears</h3>
+    <table class="wf-table" style="max-width:680px;">
+      <thead><tr><th>Screen</th><th>Nova shows</th><th>Interaction</th></tr></thead>
+      <tbody>
+        <tr><td>D1 Problem</td><td>Suggested problem statement</td><td>Accept / Edit / Skip</td></tr>
+        <tr><td>D3 RCA</td><td>Suggested root cause + method</td><td>Accept / Edit</td></tr>
+        <tr><td>D3 RCA</td><td>Similar Past CAPAs</td><td>View details (read-only)</td></tr>
+        <tr><td>D4 CA</td><td>Suggested corrective actions</td><td>Add all / Pick individually</td></tr>
+        <tr><td>D5 PA</td><td>Suggested preventive actions</td><td>Add all / Pick individually</td></tr>
+        <tr><td>Finding detail</td><td>Severity classification</td><td>Read-only</td></tr>
+        <tr><td>CAPA Hub</td><td>Summary insight</td><td>Read-only</td></tr>
+        <tr><td>Intake wizard step 3</td><td>Impact assessment</td><td>Confirm / Change</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Nova Chat (secondary)</h3>
+    <div class="wf" style="max-width:380px;margin-left:auto;">
+      <div style="padding:12px;background:#f0f0f0;border-bottom:2px solid #333;">
+        <strong>Nova Chat</strong> &nbsp; [&times;]<br>
+        <span style="font-size:10px;color:#666;">Context: D4 Corrective Action &middot; CAPA-2026-0341</span>
+      </div>
+      <div style="padding:12px;min-height:140px;">
+        <div class="box" style="background:#f0f0f0;max-width:80%;">How should I phrase a corrective action for a HEPA filter issue?</div>
+        <div class="box box-filled" style="max-width:80%;margin-left:auto;margin-top:8px;">
+          [Nova response with contextual guidance...]
+        </div>
+      </div>
+      <div style="padding:8px;border-top:2px solid #333;display:flex;gap:4px;">
+        <div class="input" style="flex:1;">[Ask Nova anything...]</div>
+        <div class="btn btn-primary">[Send]</div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Chat is secondary, not primary.</strong> The inline suggestion panel handles 90% of AI interactions. The chat is a fallback for freeform questions. It opens as a slide-over from the right (same as Finding detail), context-aware of the current CAPA and step.
+    </div>
+  </div>
+
+</div><!-- /.page -->
+</body>
+</html>

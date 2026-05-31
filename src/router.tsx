@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { MyWorkPage } from "@/pages/nova/MyWorkPage";
 import { PersonaManagementPage } from "@/pages/nova/PersonaManagementPage";
 import { AuditTrailPage } from "@/pages/nova/AuditTrailPage";
 import { CapaDetailPage } from "@/pages/nova/CapaDetailPage";
@@ -26,7 +27,8 @@ import { eightDSteps } from "@/routes";
 export function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<MyWorkPage />} />
+      <Route path="/my-work" element={<Navigate to="/" replace />} />
       <Route
         path="/dashboard"
         element={<DashboardPage />}

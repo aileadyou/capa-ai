@@ -1,25 +1,18 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CheckCircle2, Circle, MessageSquareText, Save, Sparkles } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { AlertTriangle, CheckCircle2, Circle, Save } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { BlockerBanner } from "@/components/shared/BlockerBanner";
-import { SeverityBadge } from "@/components/shared/SeverityBadge";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { NovaCoachTip } from "@/components/nova/NovaCoachTip";
-import { ScoreSidebar } from "@/components/score/ScoreSidebar";
+import { EightDShell } from "@/components/layout/EightDShell";
+import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import NotFound from "@/pages/NotFound";
-import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore, useUIStore } from "@/store";
+import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { CAPACase } from "@/types";
 import {
   computeProblemSpecificity,
   computeTotalQualityScore,
 } from "@/utils/scoring";
-import { formatCAPAType } from "@/utils/formatters";
+
+// ── Mock suggestion data ─────────────────────────────────────────────────────
 
 const suggestedProblems: Record<string, string> = {
   "CAPA-2026-0341":
@@ -30,6 +23,17 @@ const suggestedProblems: Record<string, string> = {
     "On 12 June 2026, Hospital Sentosa reported visible particulate matter in one vial of Vaximmun 10-dose presentation, lot VX-2405-22, expiry May 2027. The complaint was received through Bizzmine Complaint module CMP-2026-0112 and requires investigation of visual inspection records, retained samples, and batch release documentation.",
 };
 
+const suggestionReasoning: Record<string, string> = {
+  "CAPA-2026-0341":
+    "Extracted from: Bizzmine deviation DEV-2026-0341 · Grade A Fill Suite FILL-02 · Batch VAX-2406-A17 · HEPA unit HEPA-FILL-02 · 8-minute excursion window · Environmental monitoring alert timestamp 2026-06-08.",
+  "CAPA-2026-0089":
+    "Extracted from: Q100+ audit AUD-2026-0089 · Audit date 2026-06-10 · WH-02 Warehouse Zone · Lots MAT-2406-11, MAT-2406-12, MAT-2406-13 · Regulation GMP documentation requirements · Missing second-person verification records.",
+  "CAPA-2026-0112":
+    "Extracted from: Bizzmine complaint CMP-2026-0112 · Product Vaximmun 10-dose · Lot VX-2405-22 · Expiry May 2027 · Hospital Sentosa · Report date 2026-06-12 · Visible particulate matter in complaint vial.",
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
 function getExistingProblemStatement(capa: CAPACase) {
   return capa.gateAnswers.find((answer) => answer.questionId === "observation")?.answer;
 }
@@ -38,11 +42,9 @@ function buildFallbackProblem(capa: CAPACase) {
   if (capa.preFill.source === "Bizzmine") {
     return `${capa.preFill.initialObservation} The issue was reported on ${capa.preFill.reportedAt} in ${capa.preFill.location.area}, ${capa.preFill.location.line}, involving ${capa.preFill.location.equipmentId} and batches ${capa.preFill.affectedBatches.join(", ")}.`;
   }
-
   if (capa.preFill.source === "Q100+") {
     return `${capa.preFill.findingDescription} The issue was reported during ${capa.preFill.auditId} on ${capa.preFill.auditDate} for ${capa.preFill.auditee.department} and references ${capa.preFill.regulationReference.join(", ")}.`;
   }
-
   return `${capa.preFill.description} The complaint was reported on ${capa.preFill.reportedAt} for lot ${capa.preFill.product.lotNumber}, product ${capa.preFill.product.name}, and complaint record ${capa.preFill.complaintId}.`;
 }
 
@@ -90,35 +92,7 @@ function evaluateProblemStatement(statement: string, capa: CAPACase) {
   };
 }
 
-function WorkflowSteps({ capaId }: { capaId: string }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">8D Workflow</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid gap-2 md:grid-cols-7">
-          {eightDSteps.map((step, index) => {
-            const isCurrent = step === "problem";
-            return (
-              <Link
-                key={step}
-                to={`/capa/${capaId}/8d/${step}`}
-                className={`rounded border px-3 py-2 text-xs font-medium transition ${
-                  isCurrent
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card hover:border-primary/50"
-                }`}
-              >
-                D{index + 1} {step === "ca" ? "CA" : step === "pa" ? "PA" : step}
-              </Link>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+// ── Component ────────────────────────────────────────────────────────────────
 
 export function D1ProblemPage() {
   const { id } = useParams();
@@ -128,12 +102,16 @@ export function D1ProblemPage() {
   const allPAs = useCapaStore((state) => state.preventiveActions);
   const capa = useMemo(() => {
     if (!rawCapa) return undefined;
-    return { ...rawCapa, correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id), preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id) };
+    return {
+      ...rawCapa,
+      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
+      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
+    };
   }, [rawCapa, allCAs, allPAs]);
+
   const updateProblemStatement = useCapaStore((state) => state.updateProblemStatement);
   const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
-  const openNovaChat = useUIStore((state) => state.openNovaChat);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const initialStatement = useMemo(() => {
@@ -148,19 +126,18 @@ export function D1ProblemPage() {
   }
 
   const problemSpecificity = computeProblemSpecificity(statement);
-  const previewScore = computeTotalQualityScore({
-    ...capa.score,
-    problemSpecificity,
-  });
+  const previewScore = computeTotalQualityScore({ ...capa.score, problemSpecificity });
   const validation = evaluateProblemStatement(statement, capa);
   const shouldShowBlocker = hasSubmitted && !validation.isValid;
+  const passedCount = validation.checks.filter((c) => c.passed).length;
 
   function saveProblem(advance: boolean) {
     setHasSubmitted(true);
 
     if (!validation.isValid) {
       toast.error("Problem statement blocked", {
-        description: "Add date, location, equipment/system reference, batch or lot, and measurable observation.",
+        description:
+          "Add date, location, equipment/system reference, batch or lot, and measurable observation.",
       });
       return;
     }
@@ -197,120 +174,248 @@ export function D1ProblemPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <EightDShell capaId={capa.id} activeStep="problem">
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+
+        {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <div className="mb-3 flex flex-wrap gap-2">
-            <SeverityBadge severity={capa.impact.severity} />
-            <StatusBadge status={capa.status} />
-            <span className="rounded border bg-muted px-2.5 py-0.5 text-xs font-medium">
-              {formatCAPAType(capa.type)}
-            </span>
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">D1 Problem Statement</h1>
-          <p className="mt-2 max-w-4xl text-sm leading-6 text-muted-foreground">
-            Build a specific, measurable problem statement for {capa.id}. Nova checks whether the statement is strong enough for audit review before the workflow can continue.
+          {/* CAPA ID breadcrumb */}
+          <p
+            style={{
+              fontSize: "12px",
+              fontFamily: "var(--font-mono)",
+              color: "var(--fg-3)",
+              margin: "0 0 6px",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {capa.id} · D1
+          </p>
+          <h1
+            style={{
+              fontSize: "22px",
+              fontWeight: 700,
+              color: "var(--fg-1)",
+              margin: "0 0 8px",
+              fontFamily: "var(--font-sans)",
+            }}
+          >
+            Problem Statement
+          </h1>
+          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, lineHeight: "1.55", maxWidth: "600px" }}>
+            Build a specific, measurable problem statement. Nova checks for six quality signals before the workflow can continue to D2 Containment.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link to={`/capa/${capa.id}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to CAPA
-          </Link>
-        </Button>
-      </div>
 
-      <WorkflowSteps capaId={capa.id} />
+        {/* ── Nova suggestion block ────────────────────────────────────── */}
+        <NovaSuggestionBlock
+          context="problem statement"
+          suggestion={suggestedProblems[capa.id] ?? buildFallbackProblem(capa)}
+          reasoning={suggestionReasoning[capa.id]}
+          capaId={capa.id}
+          suggestionId="d1-problem"
+          onAccept={(content) => setStatement(content)}
+        />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Sparkles className="h-4 w-4 text-primary" />
-                Nova Suggested Problem
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="rounded border bg-muted/30 p-3 text-sm leading-6">
-                {suggestedProblems[capa.id] ?? buildFallbackProblem(capa)}
+        {/* ── Statement editor ─────────────────────────────────────────── */}
+        <div>
+          <label
+            htmlFor="problem-statement"
+            style={{
+              display: "block",
+              fontSize: "12px",
+              fontWeight: 600,
+              color: "var(--fg-2)",
+              marginBottom: "8px",
+              fontFamily: "var(--font-sans)",
+              letterSpacing: "0.02em",
+            }}
+          >
+            Problem statement
+          </label>
+          <textarea
+            id="problem-statement"
+            value={statement}
+            onChange={(e) => setStatement(e.target.value)}
+            rows={7}
+            placeholder="Describe what happened, when, where, which system or product was affected, and the measurable issue."
+            style={{
+              width: "100%",
+              background: "var(--bg-4)",
+              border: `1px solid ${shouldShowBlocker ? "var(--error, #E05252)" : "var(--line-2)"}`,
+              borderRadius: "var(--r-sm)",
+              padding: "12px 14px",
+              fontSize: "13px",
+              lineHeight: "1.65",
+              color: "var(--fg-1)",
+              fontFamily: "var(--font-sans)",
+              resize: "vertical",
+              outline: "none",
+              boxSizing: "border-box",
+              transition: "border-color 0.15s",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "var(--accent)";
+              e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = shouldShowBlocker ? "var(--error, #E05252)" : "var(--line-2)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "6px",
+            }}
+          >
+            <span style={{ fontSize: "11px", color: "var(--fg-4)", fontFamily: "var(--font-mono)" }}>
+              {statement.length} chars
+            </span>
+            <span style={{ fontSize: "11px", color: passedCount === 6 ? "var(--accent)" : "var(--fg-4)", fontFamily: "var(--font-mono)" }}>
+              {passedCount}/6 checks passing
+            </span>
+          </div>
+        </div>
+
+        {/* ── Blocker banner ───────────────────────────────────────────── */}
+        {shouldShowBlocker && (
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              padding: "12px 14px",
+              background: "rgba(224, 82, 82, 0.08)",
+              border: "1px solid rgba(224, 82, 82, 0.3)",
+              borderRadius: "var(--r-sm)",
+            }}
+          >
+            <AlertTriangle size={15} style={{ color: "#E05252", flexShrink: 0, marginTop: "1px" }} />
+            <div>
+              <p style={{ fontSize: "13px", fontWeight: 600, color: "#E05252", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+                Problem statement is not specific enough
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStatement(suggestedProblems[capa.id] ?? buildFallbackProblem(capa))}
+              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                Add date, area/location, equipment or system reference, affected batch/lot or record scope, and measurable observation before continuing.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Quality checklist ────────────────────────────────────────── */}
+        <div>
+          <p
+            style={{
+              fontSize: "11px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: "var(--fg-4)",
+              margin: "0 0 10px",
+            }}
+          >
+            Quality Signals
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "8px",
+            }}
+          >
+            {validation.checks.map((check) => (
+              <div
+                key={check.label}
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  padding: "10px 12px",
+                  borderRadius: "var(--r-sm)",
+                  background: check.passed ? "rgba(52, 211, 153, 0.06)" : "var(--bg-3)",
+                  border: `1px solid ${check.passed ? "rgba(52, 211, 153, 0.2)" : "var(--line-1)"}`,
+                }}
               >
-                Use Nova Suggestion
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Problem Statement Editor</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="problem-statement">Problem statement</Label>
-                <Textarea
-                  id="problem-statement"
-                  value={statement}
-                  onChange={(event) => setStatement(event.target.value)}
-                  rows={8}
-                  placeholder="Describe what happened, when, where, which system/product was affected, and the measurable issue."
-                />
+                {check.passed ? (
+                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "#34D399", marginTop: "1px" }} />
+                ) : (
+                  <Circle size={14} style={{ flexShrink: 0, color: "var(--fg-4)", marginTop: "1px" }} />
+                )}
+                <div style={{ minWidth: 0 }}>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: check.passed ? 500 : 400,
+                      color: check.passed ? "var(--fg-2)" : "var(--fg-3)",
+                      margin: "0 0 2px",
+                      fontFamily: "var(--font-sans)",
+                    }}
+                  >
+                    {check.label}
+                  </p>
+                  {!check.passed && (
+                    <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                      {check.hint}
+                    </p>
+                  )}
+                </div>
               </div>
-
-              {shouldShowBlocker && (
-                <BlockerBanner
-                  title="Problem statement is not specific enough"
-                  message="Add date, area/location, equipment or system reference, affected batch/lot or record scope, and measurable observation before continuing."
-                />
-              )}
-
-              <div className="grid gap-3 md:grid-cols-2">
-                {validation.checks.map((check) => (
-                  <div key={check.label} className="flex gap-2 rounded border p-3 text-sm">
-                    {check.passed ? (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-status-ready" />
-                    ) : (
-                      <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                    )}
-                    <div className="min-w-0">
-                      <div className={check.passed ? "" : "text-muted-foreground"}>{check.label}</div>
-                      {!check.passed && (
-                        <div className="mt-0.5 text-xs text-nova/80">{check.hint}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-col gap-3 md:flex-row md:justify-end">
-                <Button type="button" variant="outline" onClick={() => openNovaChat({ step: "problem", capaId: id })}>
-                  <MessageSquareText className="mr-2 h-4 w-4" />
-                  Ask Nova
-                </Button>
-                <Button type="button" variant="outline" onClick={() => saveProblem(false)}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Draft
-                </Button>
-                <Button type="button" onClick={() => saveProblem(true)}>
-                  Continue to Containment
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-4">
-          <ScoreSidebar score={previewScore} />
-          <NovaCoachTip>
-            Add exact date or shift, the area or customer location, equipment or system reference, affected batch/lot or record scope, and a measurable observation. A strong D1 statement should make the investigation scope obvious without reading attachments.
-          </NovaCoachTip>
+        {/* ── Footer actions ───────────────────────────────────────────── */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: "10px",
+            paddingTop: "8px",
+            borderTop: "1px solid var(--line-1)",
+          }}
+        >
+          <button
+            onClick={() => saveProblem(false)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "var(--bg-4)",
+              color: "var(--fg-2)",
+              border: "1px solid var(--line-2)",
+              borderRadius: "var(--r-sm)",
+              padding: "8px 16px",
+              fontSize: "13px",
+              cursor: "pointer",
+              fontFamily: "var(--font-sans)",
+              fontWeight: 500,
+            }}
+          >
+            <Save size={14} />
+            Save Draft
+          </button>
+          <button
+            onClick={() => saveProblem(true)}
+            style={{
+              background: "var(--grad-brand)",
+              color: "var(--on-accent)",
+              border: "none",
+              borderRadius: "var(--r-sm)",
+              padding: "8px 20px",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "var(--font-sans)",
+              letterSpacing: "0.01em",
+            }}
+          >
+            Continue to D2 Containment →
+          </button>
         </div>
+
       </div>
-    </div>
+    </EightDShell>
   );
 }

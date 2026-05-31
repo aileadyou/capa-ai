@@ -4,6 +4,58 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-05-31 — App Shell + My Work / Inbox (Revamp Phase 1)
+
+### Completed
+- **App shell rewrite** — new `Sidebar.tsx` (240px, `--bg-1`, logo-real.png, 5 nav items + system section, CSS-driven hover/active, user block with gradient avatar), new `TopBar.tsx` (60px glass sticky, page title per route, search bar with ⌘K pill, bell badge, "Ask Nova" button, avatar), `PageWrapper.tsx` simplified
+- **My Work / Inbox page** (`src/pages/nova/MyWorkPage.tsx`) — fully persona-aware, 5 distinct views:
+  - `initiator`: Findings from their area + CAPA tracking, no approval actions
+  - `qa_deviation`: Full operational view — overdue/active/closed CAPAs
+  - `head_of_dept`: Overdue escalations + active investigations + pending approval queue
+  - `head_of_qa`: Approval queue (primary) + org-wide overdue + assigned CAPAs
+  - `sme`: CAPAs needing RCA consultation + role explanation panel
+- **4-stage CAPA lifecycle** model — visible on every card via `LifecyclePill`: Finding open → In progress → Pending approval → Closed
+- **Badge system** — SeverityBadge (Major=danger, Minor=warning), StepBadge (D1–D7, accent), DueBadge (colour-coded by urgency), LifecyclePill (4-segment bar)
+- **Router** updated: `/` → `MyWorkPage`, `/my-work` → redirect
+- **CSS** — `.sidebar-nav-item` hover/active rules added to `index.css`
+
+### Files Touched
+- `src/components/layout/Sidebar.tsx` — full rewrite
+- `src/components/layout/TopBar.tsx` — full rewrite
+- `src/components/layout/PageWrapper.tsx` — simplified
+- `src/pages/nova/MyWorkPage.tsx` — new file
+- `src/router.tsx` — `/` route updated
+- `src/index.css` — sidebar nav CSS
+- `src/assets/logo-real.png` — copied from design_system/assets
+
+## 2026-05-31, 04:15 AM — Structural HTML Wireframe (Corrected)
+
+### Completed
+- **Rewrote `docs/wireframe.html`**: Grayscale structural wireframe document (1140 lines, single long-scroll HTML)
+  - Follows kitchain-full-wireframes.html reference style: `.section` cards, `.wf-screen` layouts, `.box` placeholders, `.note`/`.callout` annotations, `.flow` diagrams
+  - No JavaScript, no colors, no interactivity — pure structure & layout documentation
+  - 16 sections covering all screens:
+    - **Foundation**: 01 App Structure & Navigation (sitemap), 02 User Flow Diagrams (4 role-based flows)
+    - **Core Screens**: 03 My Work/Inbox, 04 Dashboard, 05 Findings List + slide-over, 06 CAPA List, 07 ★ New CAPA Intake (4-step wizard)
+    - **8D Workflow**: 08 ★ CAPA Hub, 09 ★ D1 Problem Statement, 10 D3 RCA (5-Whys + Similar CAPAs), 11 D4 Corrective Action, 12 D6 Verification, 13 D7 Sign-Off
+    - **Supporting**: 14 Quality Score Breakdown, 15 Audit Trail, 16 Nova AI Unified Pattern
+  - Yellow callout annotations explain key design decisions and changes from current app
+  - ★-marked sections have the most detailed wireframes (highest-leverage screens)
+- **Verified in browser**: All 16 sections render correctly at localhost:9999
+
+## 2026-05-31, 03:28 AM — System Analysis, RFI Gap Analysis & Wireframe Spec
+
+### Completed
+- **Read entire RFI**: Bio Farma TOR 03710/TOR/02/2026 (76 pages) — understood AS-IS process, TO-BE architecture, all 30 system requirements, 3 implementation phases, deliverables, and timeline.
+- **Live app screenshots**: Navigated running app at localhost:8080 and captured Dashboard, Findings List, CAPA List, CAPA Detail, New CAPA Intake, and D1 Problem Statement pages.
+- **Created `docs/WIREFRAME_SPEC.md`**: Comprehensive 16-screen wireframe specification including:
+  - Section 1: Plain-language explanation of CAPA/8D for non-industry readers
+  - Section 2: Current app user flow documented screen-by-screen
+  - Section 3: 9 identified UX problems (no sidebar nav, unclear Finding→CAPA relationship, redundant entry points, scattered Nova AI patterns, etc.)
+  - Section 4: Full gap analysis — 13/30 req fully covered, 9/30 partial, 8/30 missing
+  - Section 5: Recommended new architecture (persistent sidebar, My Work inbox, CAPA Hub with 8D left panel, unified Nova AI)
+  - Section 6: Wireframe specs for 16 screens with layout, components, and interactions
+
 ## 2026-05-30, 06:04 PM — Infinite Loop Fix (Zustand Selector Stability)
 
 ### Completed
