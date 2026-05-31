@@ -268,9 +268,9 @@ export function Sidebar() {
         </div>
 
         {/* Persona switcher */}
-        <div style={{ padding: "0 4px" }}>
+        {/* <div style={{ padding: "0 4px" }}>
           <PersonaSwitcher />
-        </div>
+        </div> */}
 
         {/* Active user block */}
         <div
