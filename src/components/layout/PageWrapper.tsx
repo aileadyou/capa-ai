@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { CompactNav, Sidebar } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 
 export function PageWrapper({ children }: { children: ReactNode }) {
@@ -16,10 +16,10 @@ export function PageWrapper({ children }: { children: ReactNode }) {
       {/* Content: shifted right of sidebar on xl */}
       <div className="xl:pl-[240px]">
         <TopBar />
+        <CompactNav />
         <main
           key={location.pathname}
-          className="animate-page-enter lead-motion-scope mx-auto max-w-[1500px]"
-          style={{ padding: "24px 20px" }}
+          className="app-main animate-page-enter lead-motion-scope mx-auto max-w-[1500px]"
         >
           {children}
         </main>

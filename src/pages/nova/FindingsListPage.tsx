@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { ArrowRight, Plus, Search, X } from "lucide-react";
+import { ArrowRight, Plus, X } from "lucide-react";
 import { useCapaStore } from "@/store";
-import type { CAPAType, Severity } from "@/types";
-import type { Finding, FindingStatus } from "@/types/finding";
-import { formatCAPAType, formatDate, formatDateTime } from "@/utils/formatters";
+import type { CAPAType } from "@/types";
+import type { Finding } from "@/types/finding";
+import { formatDate, formatDateTime } from "@/utils/formatters";
+import { useDialog } from "@/hooks/use-dialog";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { FilterCard, FilterSearchInput, FilterSelect } from "@/components/shared/FilterControls";
+import { SeverityBadge } from "@/components/shared/SeverityBadge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { TypePill } from "@/components/shared/TypePill";
 
 // ── Static Nova classification copy ──────────────────────────────────────────
 
@@ -31,105 +37,8 @@ function novaText(finding: Finding) {
   return NOVA_BY_ID[finding.id] ?? NOVA_BY_TYPE[finding.type];
 }
 
-// ── Badge components ──────────────────────────────────────────────────────────
-
-function SeverityBadge({ severity }: { severity: Severity }) {
-  const map: Record<Severity, { bg: string; color: string; label: string }> = {
-    Critical: { bg: "var(--danger-soft)", color: "var(--danger)", label: "Critical" },
-    Major: { bg: "var(--danger-soft)", color: "var(--danger)", label: "Major" },
-    Minor: { bg: "var(--warning-soft)", color: "var(--warning)", label: "Minor" },
-  };
-  const s = map[severity] ?? map.Minor;
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-        fontSize: "11px",
-        fontWeight: severity === "Critical" ? 700 : 600,
-        fontFamily: "var(--font-mono)",
-        background: s.bg,
-        color: s.color,
-        letterSpacing: "0.18em",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {s.label}
-    </span>
-  );
-}
-
-function StatusBadge({ status }: { status: FindingStatus }) {
-  const map: Record<FindingStatus, { bg: string; color: string; label: string }> = {
-    capa_in_progress: {
-      bg: "var(--accent-soft)",
-      color: "var(--accent)",
-      label: "CAPA in progress",
-    },
-    pending_capa: {
-      bg: "var(--bg-4)",
-      color: "var(--fg-3)",
-      label: "No CAPA",
-    },
-    capa_closed: {
-      bg: "var(--success-soft)",
-      color: "var(--success)",
-      label: "CAPA closed",
-    },
-    overdue: {
-      bg: "var(--danger-soft)",
-      color: "var(--danger)",
-      label: "Overdue",
-    },
-  };
-  const s = map[status];
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-        fontSize: "11px",
-        fontWeight: 600,
-        fontFamily: "var(--font-mono)",
-        background: s.bg,
-        color: s.color,
-        letterSpacing: "0.18em",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {s.label}
-    </span>
-  );
-}
-
-function TypePill({ type }: { type: CAPAType }) {
-  const map: Record<CAPAType, { color: string }> = {
-    deviation: { color: "var(--accent)" },
-    audit: { color: "var(--success)" },
-    complaint: { color: "var(--warning)" },
-  };
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-        fontSize: "11px",
-        fontWeight: 600,
-        fontFamily: "var(--font-mono)",
-        background: "var(--bg-4)",
-        color: map[type]?.color ?? "var(--fg-3)",
-        border: "1px solid var(--line-2)",
-        letterSpacing: "0.18em",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {formatCAPAType(type)}
-    </span>
-  );
-}
+// ── Badge components: SeverityBadge / StatusBadge / TypePill now live in
+//    src/components/shared/* (single tokenized source of truth).
 
 function SourceChip({ source }: { source: string }) {
   return (
@@ -147,63 +56,6 @@ function SourceChip({ source }: { source: string }) {
     >
       {source}
     </span>
-  );
-}
-
-// ── Styled native select ──────────────────────────────────────────────────────
-
-function StyledSelect({
-  value,
-  onChange,
-  children,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          appearance: "none",
-          WebkitAppearance: "none",
-          background: "var(--bg-4)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-sm)",
-          padding: "8px 32px 8px 12px",
-          fontSize: "13px",
-          color: "var(--fg-2)",
-          fontFamily: "var(--font-sans)",
-          cursor: "pointer",
-          outline: "none",
-          height: "36px",
-          minWidth: "130px",
-        }}
-      >
-        {children}
-      </select>
-      {/* Chevron icon */}
-      <svg
-        width="12"
-        height="12"
-        viewBox="0 0 12 12"
-        style={{
-          position: "absolute",
-          right: "10px",
-          pointerEvents: "none",
-          color: "var(--fg-3)",
-        }}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polyline points="2,4 6,8 10,4" />
-      </svg>
-    </div>
   );
 }
 
@@ -274,15 +126,8 @@ function FindingSlideOver({
     }
   }
 
-  // trap focus / close on Escape
-  const panelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  // focus trap + Escape + scroll lock
+  const { ref: panelRef } = useDialog<HTMLDivElement>(true, onClose);
 
   if (typeof document === "undefined") return null;
 
@@ -307,6 +152,7 @@ function FindingSlideOver({
         role="dialog"
         aria-modal="true"
         aria-label="Finding detail"
+        tabIndex={-1}
         style={{
           position: "fixed",
           top: 0,
@@ -314,8 +160,10 @@ function FindingSlideOver({
           bottom: 0,
           width: "400px",
           maxWidth: "100vw",
+          overscrollBehavior: "contain",
           background: "var(--bg-2)",
           borderLeft: "1px solid var(--line-2)",
+          boxShadow: "var(--shadow-lg)",
           zIndex: 61,
           display: "flex",
           flexDirection: "column",
@@ -673,81 +521,48 @@ export function FindingsListPage() {
         </div>
 
         {/* ── Filter bar ─────────────────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          {/* Search */}
-          <div style={{ position: "relative", flex: "1 1 260px" }}>
-            <Search
-              size={14}
-              style={{
-                position: "absolute",
-                left: "12px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--fg-4)",
-                pointerEvents: "none",
-              }}
-            />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search finding, description, source, department…"
-              style={{
-                width: "100%",
-                background: "var(--bg-3)",
-                border: "1px solid var(--line-2)",
-                borderRadius: "var(--r-sm)",
-                padding: "8px 12px 8px 34px",
-                fontSize: "13px",
-                color: "var(--fg-1)",
-                fontFamily: "var(--font-sans)",
-                outline: "none",
-                height: "36px",
-                boxSizing: "border-box",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--accent)";
-                e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--line-2)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            />
-          </div>
-
-          {/* Type filter */}
-          <StyledSelect value={typeFilter} onChange={setTypeFilter}>
-            <option value="all">All types</option>
-            <option value="deviation">Deviation</option>
-            <option value="audit">Audit finding</option>
-            <option value="complaint">Complaint</option>
-          </StyledSelect>
-
-          {/* Severity filter */}
-          <StyledSelect value={severityFilter} onChange={setSeverityFilter}>
-            <option value="all">All severities</option>
-            <option value="Critical">Critical</option>
-            <option value="Major">Major</option>
-            <option value="Minor">Minor</option>
-          </StyledSelect>
-
-          {/* Status filter */}
-          <StyledSelect value={statusFilter} onChange={setStatusFilter}>
-            <option value="all">All statuses</option>
-            <option value="capa_in_progress">CAPA in progress</option>
-            <option value="pending_capa">No CAPA</option>
-            <option value="overdue">Overdue</option>
-            <option value="capa_closed">CAPA closed</option>
-          </StyledSelect>
-        </div>
+        <FilterCard>
+          <FilterSearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="Search finding, description, source, department…"
+            ariaLabel="Search findings"
+          />
+          <FilterSelect
+            value={typeFilter}
+            onChange={setTypeFilter}
+            ariaLabel="Filter by type"
+            options={[
+              { value: "all", label: "All types" },
+              { value: "deviation", label: "Deviation" },
+              { value: "audit", label: "Audit finding" },
+              { value: "complaint", label: "Complaint" },
+            ]}
+          />
+          <FilterSelect
+            value={severityFilter}
+            onChange={setSeverityFilter}
+            ariaLabel="Filter by severity"
+            options={[
+              { value: "all", label: "All severities" },
+              { value: "Critical", label: "Critical" },
+              { value: "Major", label: "Major" },
+              { value: "Minor", label: "Minor" },
+            ]}
+          />
+          <FilterSelect
+            value={statusFilter}
+            onChange={setStatusFilter}
+            ariaLabel="Filter by status"
+            options={[
+              { value: "all", label: "All statuses" },
+              { value: "capa_in_progress", label: "CAPA in progress" },
+              { value: "pending_capa", label: "No CAPA" },
+              { value: "overdue", label: "Overdue" },
+              { value: "capa_closed", label: "CAPA closed" },
+            ]}
+          />
+        </FilterCard>
 
         {/* ── Results count ───────────────────────────────────────────────── */}
         <p
@@ -770,20 +585,24 @@ export function FindingsListPage() {
             background: "var(--bg-2)",
             border: "1px solid var(--line-2)",
             borderRadius: "var(--r-lg)",
+            boxShadow: "var(--shadow-sm)",
             overflow: "hidden",
+            maxWidth: "100%",
           }}
         >
-          <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontFamily: "var(--font-sans)",
+              }}
+            >
             {/* Table head */}
             <thead>
               <tr
                 style={{
+                  background: "var(--table-head-bg)",
                   borderBottom: "1px solid var(--line-2)",
                 }}
               >
@@ -799,8 +618,8 @@ export function FindingsListPage() {
                         fontWeight: 600,
                         letterSpacing: "0.18em",
                         textTransform: "uppercase",
-                        color: "var(--fg-4)",
-                        background: "var(--bg-3)",
+                        color: "var(--fg-2)",
+                        background: "transparent",
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -818,14 +637,13 @@ export function FindingsListPage() {
                   <td
                     colSpan={8}
                     style={{
-                      padding: "40px",
-                      textAlign: "center",
-                      fontSize: "13px",
-                      color: "var(--fg-4)",
-                      fontFamily: "var(--font-sans)",
+                      padding: "24px",
                     }}
                   >
-                    No findings match the current filters.
+                    <EmptyState
+                      title="No findings"
+                      description="No findings match the current filters."
+                    />
                   </td>
                 </tr>
               )}
@@ -834,6 +652,9 @@ export function FindingsListPage() {
                 return (
                   <tr
                     key={finding.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`View finding ${finding.id}`}
                     style={{
                       borderTop: "1px solid var(--line-1)",
                       cursor: "pointer",
@@ -848,6 +669,12 @@ export function FindingsListPage() {
                       ((e.currentTarget as HTMLTableRowElement).style.background = "transparent")
                     }
                     onClick={() => setSelectedId(finding.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedId(finding.id);
+                      }
+                    }}
                   >
                     {/* ID + source */}
                     <td
@@ -1020,7 +847,8 @@ export function FindingsListPage() {
                 );
               })}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </div>
 

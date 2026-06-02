@@ -12,7 +12,9 @@ import { ArrowRight, BrainCircuit, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCapaStore } from "@/store";
 import type { ActionStatus, CorrectiveAction, PreventiveAction } from "@/types";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { formatDate } from "@/utils/formatters";
+import { FilterSelect } from "@/components/shared/FilterControls";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -76,25 +78,6 @@ function groupActions(actions: UnifiedAction[], mode: GroupMode): ActionGroup[] 
     .sort((a, b) => b.actions.length - a.actions.length);
 }
 
-function statusColor(status: ActionStatus): { bg: string; border: string; text: string } {
-  switch (status) {
-    case "completed": case "verified": return { bg: "var(--success-soft)", border: "color-mix(in srgb, var(--success) 38%, transparent)", text: "var(--success)" };
-    case "overdue": return { bg: "var(--danger-soft)", border: "color-mix(in srgb, var(--danger) 38%, transparent)", text: "var(--danger)" };
-    case "in_progress": return { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" };
-    default: return { bg: "var(--bg-4)", border: "var(--line-2)", text: "var(--fg-3)" };
-  }
-}
-
-function statusLabel(status: ActionStatus): string {
-  switch (status) {
-    case "open": return "Open";
-    case "in_progress": return "In progress";
-    case "completed": return "Completed";
-    case "overdue": return "Overdue";
-    case "verified": return "Verified";
-  }
-}
-
 function riskColor(priority: RiskPriority): string {
   if (priority === "High") return "var(--danger)";
   if (priority === "Medium") return "var(--warning)";
@@ -110,6 +93,7 @@ function KpiCard({ label, value, sub }: { label: string; value: number | string;
         background: "var(--bg-2)",
         border: "1px solid var(--line-2)",
         borderRadius: "var(--r-lg)",
+        boxShadow: "var(--shadow-sm)",
         padding: "16px 20px",
       }}
     >
@@ -139,70 +123,6 @@ function KpiCard({ label, value, sub }: { label: string; value: number | string;
       </div>
       {sub}
     </div>
-  );
-}
-
-function StyledSelect({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
-  return (
-    <div style={{ position: "relative" }}>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          width: "100%",
-          height: "36px",
-          background: "var(--bg-4)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-sm)",
-          color: "var(--fg-2)",
-          fontSize: "13px",
-          fontFamily: "var(--font-sans)",
-          padding: "0 32px 0 10px",
-          appearance: "none",
-          cursor: "pointer",
-          outline: "none",
-        }}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-      <svg
-        width="12" height="12" viewBox="0 0 12 12" fill="none"
-        style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
-      >
-        <path d="M3 5l3 3 3-3" stroke="var(--fg-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: ActionStatus }) {
-  const c = statusColor(status);
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "3px 8px",
-        borderRadius: "20px",
-        fontSize: "11px",
-        fontWeight: 600,
-        fontFamily: "var(--font-mono)",
-        background: c.bg,
-        border: `1px solid ${c.border}`,
-        color: c.text,
-      }}
-    >
-      {statusLabel(status)}
-    </span>
   );
 }
 
@@ -384,13 +304,13 @@ export function ConsolidatedActionPlanPage() {
             ) : (
               <BrainCircuit size={14} strokeWidth={1.75} />
             )}
-            {isClustering ? "Clustering..." : "AI Clustering"}
+            {isClustering ? "Clustering…" : "AI Clustering"}
           </button>
         </div>
       </div>
 
       {/* ── KPI row ───────────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "20px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: "12px", marginBottom: "20px" }}>
         <KpiCard label="Total actions" value={unifiedActions.length} />
         <KpiCard label="Corrective" value={correctiveActions.length} />
         <KpiCard label="Preventive" value={preventiveActions.length} />
@@ -407,17 +327,19 @@ export function ConsolidatedActionPlanPage() {
           background: "var(--bg-2)",
           border: "1px solid var(--line-2)",
           borderRadius: "var(--r-lg)",
+          boxShadow: "var(--shadow-sm)",
           padding: "16px 20px",
           marginBottom: "20px",
           display: "grid",
-          gridTemplateColumns: "240px 1fr",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
           gap: "16px",
           alignItems: "center",
         }}
       >
-        <StyledSelect
+        <FilterSelect
           value={groupMode}
           onChange={(v) => setGroupMode(v as GroupMode)}
+          ariaLabel="Group actions by"
           options={[
             { value: "rootCause", label: "Root cause cluster" },
             { value: "department", label: "Department" },
@@ -457,7 +379,7 @@ export function ConsolidatedActionPlanPage() {
           }}
         >
           <Loader2 size={14} strokeWidth={1.75} style={{ animation: "spin 1s linear infinite" }} />
-          Nova is clustering CA and PA records by recurring quality signals...
+          Nova is clustering CA and PA records by recurring quality signals…
         </div>
       )}
 
@@ -474,6 +396,7 @@ export function ConsolidatedActionPlanPage() {
                 background: "var(--bg-2)",
                 border: "1px solid var(--line-2)",
                 borderRadius: "var(--r-lg)",
+                boxShadow: "var(--shadow-sm)",
                 overflow: "hidden",
               }}
             >
@@ -515,7 +438,7 @@ export function ConsolidatedActionPlanPage() {
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "var(--font-sans)" }}>
                   <thead>
-                    <tr style={{ background: "var(--bg-3)" }}>
+                    <tr style={{ background: "var(--table-head-bg)" }}>
                       {["Type", "Action", "CAPA", "PIC", "Due / Target", "Status"].map((h) => (
                         <th
                           key={h}

@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUIStore } from "@/store";
 import { getChatPrompts, getChatResponse } from "@/services/novaService";
 import { NovaThinkingDots } from "@/components/nova/NovaThinkingDots";
+import { useDialog } from "@/hooks/use-dialog";
 
 interface Message {
   role: "user" | "nova";
@@ -35,6 +36,7 @@ export function NovaChatPanel() {
   const [isThinking, setIsThinking] = useState(false);
 
   const quickPrompts = useMemo(() => getChatPrompts(step), [step]);
+  const { ref: panelRef } = useDialog<HTMLElement>(isOpen, closeNovaChat);
 
   useEffect(() => {
     if (!isOpen || !contextKey || lastContextKeyRef.current === contextKey) return;
@@ -57,18 +59,26 @@ export function NovaChatPanel() {
   };
 
   return (
-    <aside className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg">
+    <aside
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="nova-chat-title"
+      tabIndex={-1}
+      style={{ overscrollBehavior: "contain" }}
+      className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg"
+    >
       <div className="flex items-center justify-between border-b p-4">
-        <div className="flex items-center gap-2 font-semibold text-nova">
+        <div id="nova-chat-title" className="flex items-center gap-2 font-semibold text-nova">
           <Sparkles className="h-4 w-4" />
           Ask Nova
         </div>
-        <Button variant="ghost" size="icon" onClick={closeNovaChat}>
+        <Button variant="ghost" size="icon" aria-label="Close Nova chat" onClick={closeNovaChat}>
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite" aria-busy={isThinking}>
         {messages.map((message, index) => (
           <div
             key={`${message.role}-${index}`}
@@ -81,7 +91,7 @@ export function NovaChatPanel() {
         ))}
         {isThinking && (
           <div className="rounded border border-nova/20 bg-nova/5 p-3 text-sm text-nova">
-            Nova is analyzing... <NovaThinkingDots />
+            Nova is analyzing… <NovaThinkingDots />
           </div>
         )}
       </div>
@@ -141,7 +151,7 @@ export function NovaChatPanel() {
               void sendMessage();
             }
           }}
-          placeholder="Ask Nova about this step..."
+          placeholder="Ask Nova about this step…"
           rows={3}
         />
         <Button className="w-full" onClick={() => sendMessage()}>

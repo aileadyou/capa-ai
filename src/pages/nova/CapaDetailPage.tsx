@@ -305,6 +305,7 @@ function LeftColumn({
             background: "var(--bg-2)",
             border: "1px solid var(--line-2)",
             borderRadius: "var(--r-md)",
+            boxShadow: "var(--shadow-sm)",
             padding: "12px",
             display: "flex",
             flexDirection: "column",
@@ -360,6 +361,7 @@ function LeftColumn({
             background: "var(--bg-2)",
             border: "1px solid var(--line-2)",
             borderRadius: "var(--r-md)",
+            boxShadow: "var(--shadow-sm)",
             padding: "14px 12px",
           }}
         >
@@ -589,6 +591,7 @@ function Card({
         border: "1px solid var(--line-2)",
         borderRadius: "var(--r-md)",
         borderLeft: accentLeft ? `3px solid ${accentLeft}` : undefined,
+        boxShadow: "var(--shadow-sm)",
         padding: "16px 20px",
       }}
     >

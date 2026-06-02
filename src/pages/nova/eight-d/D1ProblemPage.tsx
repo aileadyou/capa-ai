@@ -253,7 +253,7 @@ export function D1ProblemPage() {
             placeholder="Describe what happened, when, where, which system or product was affected, and the measurable issue."
             style={{
               width: "100%",
-              background: "var(--bg-4)",
+              background: "var(--field-bg)",
               border: `1px solid ${shouldShowBlocker ? "var(--danger)" : "var(--line-2)"}`,
               borderRadius: "var(--r-sm)",
               padding: "12px 14px",
@@ -394,7 +394,7 @@ export function D1ProblemPage() {
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              background: "var(--bg-4)",
+              background: "var(--field-bg)",
               color: "var(--fg-2)",
               border: "1px solid var(--line-2)",
               borderRadius: "var(--r-sm)",

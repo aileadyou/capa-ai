@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   AlertCircle,
   BarChart2,
+  Bell,
   ClipboardList,
   FolderOpen,
   HelpCircle,
@@ -15,7 +16,6 @@ import {
   Sun,
 } from "lucide-react";
 import { useAuthStore, useNotificationStore, usePersonaStore } from "@/store";
-import { PersonaSwitcher } from "@/components/shared/PersonaSwitcher";
 import { applyTheme, getInitialTheme, type ThemeMode } from "@/lib/theme";
 import logoReal from "@/assets/logo-real.png";
 
@@ -35,6 +35,13 @@ const navManagement = [
 const navSystem = [
   { title: "Settings", url: "/settings", icon: Settings },
   { title: "Help", url: "/help", icon: HelpCircle },
+] as const;
+
+const navCompact = [
+  ...navMain,
+  ...navManagement,
+  { title: "Notifications", url: "/notifications", icon: Bell, badge: true },
+  { title: "Personas", url: "/settings/personas", icon: Settings },
 ] as const;
 
 function isActive(pathname: string, url: string) {
@@ -78,7 +85,7 @@ function NavItem({
           textDecoration: "none",
         }}
       >
-        <Icon size={18} strokeWidth={1.75} style={{ flexShrink: 0 }} />
+        <Icon size={18} strokeWidth={1.75} aria-hidden="true" style={{ flexShrink: 0 }} />
         <span style={{ flex: 1 }}>{title}</span>
         {badge !== undefined && badge > 0 && (
           <span
@@ -100,6 +107,49 @@ function NavItem({
         )}
       </Link>
     </li>
+  );
+}
+
+export function CompactNav() {
+  const location = useLocation();
+  const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+  const unreadCount = useNotificationStore((state) =>
+    state.notifications.filter(
+      (n) => n.recipientPersonaId === activePersonaId && !n.read,
+    ).length,
+  );
+
+  return (
+    <nav className="compact-nav xl:hidden" aria-label="Primary navigation">
+      <ul className="compact-nav-list">
+        {navCompact.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(location.pathname, item.url);
+          const badge = "badge" in item && item.badge ? unreadCount : undefined;
+
+          return (
+            <li key={item.url} className="compact-nav-list-item">
+              <Link
+                to={item.url}
+                className="compact-nav-item"
+                data-active={active ? "true" : undefined}
+                aria-current={active ? "page" : undefined}
+              >
+                <span className="compact-nav-icon-wrap">
+                  <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
+                  {badge !== undefined && badge > 0 && (
+                    <span className="compact-nav-badge" aria-label={`${badge} unread`}>
+                      {badge}
+                    </span>
+                  )}
+                </span>
+                <span className="compact-nav-label">{item.title}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
 
@@ -129,8 +179,8 @@ export function Sidebar() {
       className="fixed inset-y-0 left-0 z-30 hidden xl:flex xl:flex-col"
       style={{
         width: "240px",
-        background: "var(--bg-1)",
-        borderRight: "1px solid var(--line-1)",
+        background: "var(--bg-0)",
+        borderRight: "1px solid var(--line-2)",
         fontFamily: "var(--font-sans)",
       }}
     >

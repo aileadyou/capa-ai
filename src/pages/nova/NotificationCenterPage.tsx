@@ -3,14 +3,12 @@ import { Link } from "react-router-dom";
 import {
   AlertTriangle,
   Bell,
-  BellOff,
   CheckCheck,
   ChevronRight,
   Clock,
   FileCheck2,
   Mail,
   MailOpen,
-  Search,
   Settings,
   ShieldCheck,
   XCircle,
@@ -19,14 +17,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { FilterSearchInput } from "@/components/shared/FilterControls";
 import { useNotificationStore, usePersonaStore } from "@/store";
 import type { Notification, NotificationType } from "@/types/notification";
 import { formatDateTime } from "@/utils/formatters";
@@ -167,8 +159,9 @@ export function NotificationCenterPage() {
             variant="outline"
             size="sm"
             onClick={() => setShowSettings((prev) => !prev)}
+            aria-expanded={showSettings}
           >
-            <Settings className="mr-2 h-4 w-4" />
+            <Settings className="mr-2 h-4 w-4" aria-hidden="true" />
             Settings
           </Button>
           <Button
@@ -177,7 +170,7 @@ export function NotificationCenterPage() {
             onClick={handleMarkAllRead}
             disabled={unreadCount === 0}
           >
-            <CheckCheck className="mr-2 h-4 w-4" />
+            <CheckCheck className="mr-2 h-4 w-4" aria-hidden="true" />
             Mark All as Read
           </Button>
         </div>
@@ -296,6 +289,7 @@ export function NotificationCenterPage() {
           <button
             key={tab.value}
             onClick={() => setTabFilter(tab.value)}
+            aria-pressed={tabFilter === tab.value}
             className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
               tabFilter === tab.value
                 ? "border-primary bg-primary/10 text-primary"
@@ -318,29 +312,29 @@ export function NotificationCenterPage() {
         ))}
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
+      <div>
+        <FilterSearchInput
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-9"
+          onChange={setQuery}
+          ariaLabel="Search notifications"
           placeholder="Search notifications by title, description, or CAPA ID"
         />
       </div>
 
-      <div className="space-y-2">
+      <div
+        className="space-y-2"
+        aria-live="polite"
+        aria-label={`${filteredNotifications.length} notifications shown`}
+      >
         {filteredNotifications.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <BellOff className="mb-4 h-12 w-12 text-muted-foreground/40" />
-              <h3 className="text-lg font-medium">No notifications</h3>
-              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                {tabFilter === "unread"
-                  ? "All notifications have been read. Nice work!"
-                  : `No ${tabFilter === "all" ? "" : typeLabel(tabFilter as NotificationType).toLowerCase() + " "}notifications for ${activePersona().displayName}.`}
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            title="No notifications"
+            description={
+              tabFilter === "unread"
+                ? "All notifications have been read. Nice work!"
+                : `No ${tabFilter === "all" ? "" : typeLabel(tabFilter as NotificationType).toLowerCase() + " "}notifications for ${activePersona().displayName}.`
+            }
+          />
         ) : (
           filteredNotifications.map((notification: Notification) => (
             <Card
@@ -348,9 +342,9 @@ export function NotificationCenterPage() {
               className={`transition-colors ${!notification.read ? "border-l-4 border-l-primary bg-primary/[0.02]" : ""}`}
             >
               <CardContent className="flex items-start gap-4 p-4">
-                <div className="mt-1 flex-shrink-0">
-                  {typeIcon(notification.type)}
-                </div>
+                    <div className="mt-1 flex-shrink-0" aria-hidden="true">
+                      {typeIcon(notification.type)}
+                    </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -366,7 +360,7 @@ export function NotificationCenterPage() {
                       {typeLabel(notification.type)}
                     </Badge>
                     {!notification.read && (
-                      <span className="h-2 w-2 rounded-full bg-primary" />
+                      <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
                     )}
                   </div>
 
@@ -376,7 +370,7 @@ export function NotificationCenterPage() {
 
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
+                      <Clock className="h-3 w-3" aria-hidden="true" />
                       {formatDateTime(notification.createdAt)}
                     </span>
                     {notification.capaId && (
@@ -385,7 +379,7 @@ export function NotificationCenterPage() {
                         className="inline-flex items-center gap-1 font-mono text-primary hover:underline"
                       >
                         {notification.capaId}
-                        <ChevronRight className="h-3 w-3" />
+                        <ChevronRight className="h-3 w-3" aria-hidden="true" />
                       </Link>
                     )}
                   </div>
@@ -398,12 +392,13 @@ export function NotificationCenterPage() {
                       size="sm"
                       onClick={() => handleMarkRead(notification.id)}
                       title="Mark as read"
+                      aria-label={`Mark ${notification.title} as read`}
                     >
-                      <MailOpen className="h-4 w-4" />
+                      <MailOpen className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   )}
                   {notification.read && (
-                    <Mail className="h-4 w-4 text-muted-foreground/40" />
+                    <Mail className="h-4 w-4 text-muted-foreground/40" aria-hidden="true" />
                   )}
                   {notification.capaId && (
                     <Button variant="ghost" size="sm" asChild>
@@ -412,8 +407,9 @@ export function NotificationCenterPage() {
                           notification.actionUrl ??
                           `/capa/${notification.capaId}`
                         }
+                        aria-label={`Open ${notification.capaId}`}
                       >
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
                       </Link>
                     </Button>
                   )}

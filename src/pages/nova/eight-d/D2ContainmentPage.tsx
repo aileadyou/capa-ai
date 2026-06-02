@@ -236,6 +236,7 @@ export function D2ContainmentPage() {
             background: "var(--bg-2)",
             border: "1px solid var(--line-2)",
             borderRadius: "var(--r-lg)",
+            boxShadow: "var(--shadow-sm)",
             padding: "20px",
             display: "flex",
             flexDirection: "column",
@@ -281,7 +282,7 @@ export function D2ContainmentPage() {
               placeholder="Describe the immediate hold, quarantine, restriction, review, or assessment action."
               style={{
                 width: "100%",
-                background: "var(--bg-4)",
+                background: "var(--field-bg)",
                 border: `1px solid ${shouldShowBlocker ? "var(--danger)" : "var(--line-2)"}`,
                 borderRadius: "var(--r-sm)",
                 padding: "12px 14px",
@@ -337,7 +338,7 @@ export function D2ContainmentPage() {
                   style={{
                     width: "100%",
                     appearance: "none",
-                    background: "var(--bg-4)",
+                    background: "var(--field-bg)",
                     border: "1px solid var(--line-2)",
                     borderRadius: "var(--r-sm)",
                     padding: "9px 36px 9px 12px",
@@ -393,7 +394,7 @@ export function D2ContainmentPage() {
                 onChange={(e) => setDueDate(e.target.value)}
                 style={{
                   width: "100%",
-                  background: "var(--bg-4)",
+                  background: "var(--field-bg)",
                   border: "1px solid var(--line-2)",
                   borderRadius: "var(--r-sm)",
                   padding: "9px 12px",
@@ -535,7 +536,7 @@ export function D2ContainmentPage() {
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              background: "var(--bg-4)",
+              background: "var(--field-bg)",
               color: "var(--fg-2)",
               border: "1px solid var(--line-2)",
               borderRadius: "var(--r-sm)",

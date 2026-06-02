@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useCapaStore, usePersonaStore } from "@/store";
 import type { CAPACase, Finding, PersonaID } from "@/types";
+import { SeverityBadge } from "@/components/shared/SeverityBadge";
 
 /* ════════════════════════════════════════════════════════════
    LIFECYCLE MODEL
@@ -94,6 +95,7 @@ const T = {
     background: "var(--bg-2)",
     border: "1px solid var(--line-2)",
     borderRadius: "var(--r-md)",
+    boxShadow: "var(--shadow-sm)",
     padding: "14px 16px",
     display: "flex",
     alignItems: "flex-start",
@@ -138,25 +140,6 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
     >
       {children}
     </p>
-  );
-}
-
-function SeverityBadge({ s }: { s: string }) {
-  const isMajor = s === "Major" || s === "Critical";
-  return (
-    <span
-      style={{
-        background: isMajor ? "var(--danger-soft)" : "var(--warning-soft)",
-        color: isMajor ? "var(--danger)" : "var(--warning)",
-        fontFamily: "var(--font-mono)",
-        fontSize: "11px",
-        fontWeight: 500,
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-      }}
-    >
-      {s}
-    </span>
   );
 }
 
@@ -333,7 +316,7 @@ function ActiveCard({ capa, accentLeft }: { capa: CAPACase; accentLeft?: string 
         </div>
         <p style={T.title}>{capa.title}</p>
         <div style={T.badgeRow}>
-          <SeverityBadge s={capa.impact.severity} />
+          <SeverityBadge severity={capa.impact.severity} />
           <StepBadge step={capa.currentStep} />
           <DueBadge id={capa.id} />
         </div>
@@ -365,7 +348,7 @@ function ReviewCard({ capa }: { capa: CAPACase }) {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
           <span style={T.monoId}>{capa.id}</span>
-          <SeverityBadge s={capa.impact.severity} />
+          <SeverityBadge severity={capa.impact.severity} />
         </div>
         <p style={T.title}>{capa.title}</p>
         <div style={T.badgeRow}>

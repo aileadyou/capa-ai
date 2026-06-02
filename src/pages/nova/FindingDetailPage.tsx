@@ -9,14 +9,18 @@ import {
 } from "lucide-react";
 import NotFound from "@/pages/NotFound";
 import { useCapaStore } from "@/store";
-import type { CAPACase, PreFillContext, Severity } from "@/types";
-import type { Finding, FindingStatus } from "@/types/finding";
+import type { CAPACase, PreFillContext } from "@/types";
+import type { Finding } from "@/types/finding";
 import type { CAPAType, EightDStep } from "@/types";
 import {
   formatCAPAStatus,
   formatCAPAType,
   formatDateTime,
 } from "@/utils/formatters";
+import { SeverityBadge } from "@/components/shared/SeverityBadge";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { TypePill } from "@/components/shared/TypePill";
+import { ScorePill } from "@/components/shared/ScorePill";
 
 // ── Nova classification copy (mirrors FindingsListPage) ───────────────────────
 
@@ -52,112 +56,8 @@ const STEP_LABELS: Record<EightDStep, string> = {
   signoff: "D7 Sign-Off",
 };
 
-// ── Badge components ──────────────────────────────────────────────────────────
-
-function SeverityBadge({ severity }: { severity: Severity }) {
-  const map: Record<Severity, { bg: string; color: string }> = {
-    Critical: { bg: "var(--danger-soft)", color: "var(--danger)" },
-    Major: { bg: "var(--danger-soft)", color: "var(--danger)" },
-    Minor: { bg: "var(--warning-soft)", color: "var(--warning)" },
-  };
-  const s = map[severity] ?? map.Minor;
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-        fontSize: "11px",
-        fontWeight: severity === "Critical" ? 700 : 600,
-        fontFamily: "var(--font-mono)",
-        background: s.bg,
-        color: s.color,
-        letterSpacing: "0.18em",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {severity}
-    </span>
-  );
-}
-
-function StatusBadge({ status }: { status: FindingStatus }) {
-  const map: Record<FindingStatus, { bg: string; color: string; label: string }> = {
-    capa_in_progress: { bg: "var(--accent-soft)", color: "var(--accent)", label: "CAPA in progress" },
-    pending_capa: { bg: "var(--bg-4)", color: "var(--fg-3)", label: "No CAPA" },
-    capa_closed: { bg: "var(--success-soft)", color: "var(--success)", label: "CAPA closed" },
-    overdue: { bg: "var(--danger-soft)", color: "var(--danger)", label: "Overdue" },
-  };
-  const s = map[status];
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-        fontSize: "11px",
-        fontWeight: 600,
-        fontFamily: "var(--font-mono)",
-        background: s.bg,
-        color: s.color,
-        letterSpacing: "0.18em",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {s.label}
-    </span>
-  );
-}
-
-function TypePill({ type }: { type: CAPAType }) {
-  const map: Record<CAPAType, string> = {
-    deviation: "var(--accent)",
-    audit: "var(--success)",
-    complaint: "var(--warning)",
-  };
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-        fontSize: "11px",
-        fontWeight: 600,
-        fontFamily: "var(--font-mono)",
-        background: "var(--bg-4)",
-        color: map[type] ?? "var(--fg-3)",
-        border: "1px solid var(--line-2)",
-        letterSpacing: "0.18em",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {formatCAPAType(type)}
-    </span>
-  );
-}
-
-function ScorePill({ score }: { score: number }) {
-  const color =
-    score >= 80 ? "var(--success)" : score >= 60 ? "var(--warning)" : "var(--danger)";
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "baseline",
-        gap: "3px",
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-        background: "var(--bg-4)",
-        border: "1px solid var(--line-2)",
-        fontFamily: "var(--font-mono)",
-        whiteSpace: "nowrap",
-      }}
-    >
-      <span style={{ fontSize: "12px", fontWeight: 700, color }}>{score}</span>
-      <span style={{ fontSize: "10px", color: "var(--fg-4)" }}>/100</span>
-    </span>
-  );
-}
+// ── Badge components: SeverityBadge / StatusBadge / TypePill / ScorePill now
+//    live in src/components/shared/* (single tokenized source of truth).
 
 // ── Shared building blocks ────────────────────────────────────────────────────
 
@@ -186,6 +86,7 @@ function SectionCard({
         background: "var(--bg-2)",
         border: "1px solid var(--line-2)",
         borderRadius: "var(--r-lg)",
+        boxShadow: "var(--shadow-sm)",
         overflow: "hidden",
       }}
     >
@@ -245,6 +146,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
         background: "var(--bg-2)",
         border: "1px solid var(--line-2)",
         borderRadius: "var(--r-lg)",
+        boxShadow: "var(--shadow-sm)",
         padding: "14px 16px",
       }}
     >
@@ -556,7 +458,7 @@ export function FindingDetailPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) 320px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
           gap: "20px",
           alignItems: "start",
         }}
@@ -574,6 +476,7 @@ export function FindingDetailPage() {
               border: "1px solid var(--line-2)",
               borderLeft: "3px solid var(--accent)",
               borderRadius: "var(--r-lg)",
+              boxShadow: "var(--shadow-sm)",
               padding: "18px",
             }}
           >
@@ -653,7 +556,7 @@ export function FindingDetailPage() {
                   >
                     {formatCAPAStatus(capa.status)}
                   </span>
-                  <ScorePill score={capa.score.total} />
+                  <ScorePill score={capa.score.total} compact />
                 </div>
                 <Link
                   to={`/capa/${capa.id}`}

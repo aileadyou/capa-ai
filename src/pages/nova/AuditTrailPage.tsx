@@ -7,11 +7,13 @@
 
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Download, FileText, Search } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuditTrailStore } from "@/store";
 import type { AuditDomain, AuditEvent, AuditEventType } from "@/types";
 import { formatDateTime } from "@/utils/formatters";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { FilterCard, FilterSearchInput, FilterSelect } from "@/components/shared/FilterControls";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -61,54 +63,6 @@ function isInDateFilter(timestamp: string, filter: DateFilter): boolean {
 
 // ── Styled sub-components ─────────────────────────────────────────────────────
 
-function StyledSelect({
-  value,
-  onChange,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
-  return (
-    <div style={{ position: "relative" }}>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          width: "100%",
-          height: "36px",
-          background: "var(--bg-4)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-sm)",
-          color: "var(--fg-2)",
-          fontSize: "13px",
-          fontFamily: "var(--font-sans)",
-          padding: "0 32px 0 10px",
-          appearance: "none",
-          cursor: "pointer",
-          outline: "none",
-        }}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      <svg
-        width="12"
-        height="12"
-        viewBox="0 0 12 12"
-        fill="none"
-        style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
-      >
-        <path d="M3 5l3 3 3-3" stroke="var(--fg-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
-  );
-}
-
 function DomainBadge({ domain }: { domain: AuditDomain }) {
   const colors = DOMAIN_COLORS[domain];
   return (
@@ -138,6 +92,7 @@ function KpiCard({ label, value }: { label: string; value: number | string }) {
         background: "var(--bg-2)",
         border: "1px solid var(--line-2)",
         borderRadius: "var(--r-lg)",
+        boxShadow: "var(--shadow-sm)",
         padding: "16px 20px",
       }}
     >
@@ -302,57 +257,18 @@ export function AuditTrailPage() {
       </div>
 
       {/* ── Filter bar ────────────────────────────────────────────────── */}
-      <div
-        style={{
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-lg)",
-          padding: "16px",
-          marginBottom: "20px",
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(240px, 1.5fr) repeat(5, minmax(130px, 1fr))",
-            gap: "10px",
-            alignItems: "end",
-          }}
-        >
-          {/* Search */}
-          <div style={{ position: "relative" }}>
-            <Search
-              size={14}
-              strokeWidth={1.75}
-              style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--fg-3)" }}
-            />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search actor, event, CAPA, before/after"
-              style={{
-                width: "100%",
-                height: "36px",
-                background: "var(--bg-4)",
-                border: "1px solid var(--line-2)",
-                borderRadius: "var(--r-sm)",
-                color: "var(--fg-1)",
-                fontSize: "13px",
-                fontFamily: "var(--font-sans)",
-                padding: "0 12px 0 32px",
-                outline: "none",
-                transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
-            />
-          </div>
-
-          {/* Domain */}
-          <StyledSelect
+      <div style={{ marginBottom: "20px" }}>
+        <FilterCard>
+          <FilterSearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="Search actor, event, CAPA, before/after"
+            ariaLabel="Search audit events"
+          />
+          <FilterSelect
             value={domainFilter}
             onChange={setDomainFilter}
+            ariaLabel="Filter by domain"
             options={[
               { value: ALL, label: "All domains" },
               { value: "system", label: "System" },
@@ -361,35 +277,31 @@ export function AuditTrailPage() {
               { value: "clear_labeling", label: "Clear Labeling" },
             ]}
           />
-
-          {/* CAPA ID */}
-          <StyledSelect
+          <FilterSelect
             value={capaFilter}
             onChange={setCapaFilter}
+            ariaLabel="Filter by CAPA"
             options={[{ value: ALL, label: "All CAPAs" }, ...capaIds.map((id) => ({ value: id, label: id }))]}
           />
-
-          {/* Finding ID */}
-          <StyledSelect
+          <FilterSelect
             value={findingFilter}
             onChange={setFindingFilter}
+            ariaLabel="Filter by finding"
             options={[{ value: ALL, label: "All findings" }, ...findingIds.map((id) => ({ value: id, label: id }))]}
           />
-
-          {/* Actor */}
-          <StyledSelect
+          <FilterSelect
             value={actorFilter}
             onChange={setActorFilter}
+            ariaLabel="Filter by actor"
             options={[{ value: ALL, label: "All actors" }, ...actors.map((a) => ({ value: a, label: a }))]}
           />
-
-          {/* Date range */}
-          <StyledSelect
+          <FilterSelect
             value={dateFilter}
             onChange={(v) => setDateFilter(v as DateFilter)}
+            ariaLabel="Filter by date"
             options={DATE_FILTERS.map((f) => ({ value: f, label: DATE_FILTER_LABELS[f] }))}
           />
-        </div>
+        </FilterCard>
       </div>
 
       {/* ── Results count ─────────────────────────────────────────────── */}
@@ -413,6 +325,7 @@ export function AuditTrailPage() {
           background: "var(--bg-2)",
           border: "1px solid var(--line-2)",
           borderRadius: "var(--r-lg)",
+          boxShadow: "var(--shadow-sm)",
           overflow: "hidden",
         }}
       >
@@ -428,8 +341,8 @@ export function AuditTrailPage() {
             <thead>
               <tr
                 style={{
-                  background: "var(--bg-3)",
-                  borderBottom: "1px solid var(--line-1)",
+                  background: "var(--table-head-bg)",
+                  borderBottom: "1px solid var(--line-2)",
                 }}
               >
                 {["Timestamp", "Domain", "Actor", "Action", "CAPA / Finding", "Before / After", "Nova metadata"].map((h) => (
@@ -457,9 +370,12 @@ export function AuditTrailPage() {
                 <tr>
                   <td
                     colSpan={7}
-                    style={{ padding: "40px 16px", textAlign: "center", color: "var(--fg-3)", fontSize: "13px" }}
+                    style={{ padding: "24px" }}
                   >
-                    No audit events match the current filters.
+                    <EmptyState
+                      title="No audit events"
+                      description="No audit events match the current filters."
+                    />
                   </td>
                 </tr>
               )}

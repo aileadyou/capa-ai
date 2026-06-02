@@ -113,7 +113,7 @@ export function TopicsGroupingPage() {
       {isAnalyzing && (
         <Card>
           <CardContent className="p-4">
-            <AILoadingSpinner label="Nova is clustering findings by recurring quality topics..." />
+            <AILoadingSpinner label="Nova is clustering findings by recurring quality topics…" />
           </CardContent>
         </Card>
       )}

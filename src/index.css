@@ -17,35 +17,111 @@
 }
 
 /* ============================================================
-   THEME TOKENS - direct design-system colors used by inline UI
+   CANONICAL PALETTE — single source of truth (DARK = default)
+   ------------------------------------------------------------
+   To retheme the whole app, edit ONLY the HSL triples here and in
+   the matching `.light` block below. Every shadcn component AND
+   every hand-styled `var(--bg-N), var(--fg-N), var(--accent)` alias reads from
+   these tokens. HSL is space-separated so Tailwind opacity
+   modifiers (e.g. `bg-card/50`) and `hsl(... / a)` softs work.
    ============================================================ */
 :root,
 .dark {
   color-scheme: dark;
-  --bg-0: #060709;
-  --bg-1: #0A0C0F;
-  --bg-2: #101318;
-  --bg-3: #161A20;
-  --bg-4: #1D222A;
-  --fg-1: #F3F5F7;
-  --fg-2: #A2A9B4;
-  --fg-3: #6A7280;
-  --fg-4: #444B56;
+
+  /* ---- Surfaces (low → high elevation) ---- */
+  --void: 220 20% 3%;          /* bg-0 — page void / sidebar trough */
+  --background: 218 20% 5%;    /* bg-1 — base page */
+  --card: 218 20% 8%;          /* bg-2 — surface / card */
+  --elevated: 216 19% 11%;     /* bg-3 — popover / raised panel */
+  --field: 217 18% 14%;        /* bg-4 — input fill / deep hover */
+
+  /* ---- Text (high → low emphasis) ---- */
+  --foreground: 210 20% 96%;            /* fg-1 */
+  --foreground-secondary: 217 11% 67%;  /* fg-2 */
+  --foreground-tertiary: 218 9% 46%;    /* fg-3 */
+  --foreground-faint: 217 12% 30%;      /* fg-4 */
+
+  /* ---- Brand accent (purple) ---- */
+  --primary: 284 55% 55%;              /* accent */
+  --primary-foreground: 280 100% 97%;  /* on-accent */
+  --primary-light: 284 63% 63%;        /* accent-hover */
+  --primary-dark: 282 55% 46%;         /* accent-press */
+
+  /* ---- Semantic ---- */
+  --tw-success: 154 49% 49%;
+  --tw-warning: 37 72% 56%;
+  --destructive: 358 73% 62%;          /* danger */
+  --destructive-foreground: 280 100% 97%;
+
+  /* ---- Borders (opaque triples for Tailwind `border-*`) ---- */
+  --border-subtle: 220 12% 15%;        /* line-1 */
+  --border: 222 13% 20%;               /* line-2 */
+  --border-strong: 222 13% 27%;        /* line-3 */
+
+  /* ---- shadcn-only tokens, retuned to the palette above ---- */
+  --card-foreground: 210 20% 96%;
+  --popover: 216 19% 11%;
+  --popover-foreground: 210 20% 96%;
+  --secondary: 220 10% 14%;
+  --secondary-foreground: 210 11% 96%;
+  --panel: 220 10% 14%;
+  --panel-foreground: 210 11% 96%;
+  --muted: 220 10% 14%;
+  --muted-foreground: 218 8% 56%;
+  --tw-accent: 284 55% 55%;
+  --tw-accent-foreground: 280 100% 97%;
+  --tw-accent-light: 284 63% 63%;
+  --nova: 285 57% 55%;
+  --nova-foreground: 280 100% 97%;
+  --nova-soft: 285 57% 16%;
+  --severity-minor: 199 89% 58%;
+  --severity-major: 38 92% 56%;
+  --severity-critical: 358 73% 59%;
+  --status-draft: 218 8% 56%;
+  --status-investigation: 285 57% 62%;
+  --status-approval: 38 92% 56%;
+  --status-closed: 153 48% 49%;
+  --status-ready: 153 48% 49%;
+  --surface: 218 20% 8%;
+  --surface-subtle: 216 19% 11%;
+  --tw-success-foreground: 210 11% 96%;
+  --tw-warning-foreground: 220 11% 7%;
+  --tw-info: 284 55% 55%;
+  --border-light: 222 13% 27%;
+  --input: 220 11% 20%;
+  --ring: 284 55% 55%;
+  --radius: 4px;
+  --chart-1: 285 57% 55%;
+  --chart-2: 245 58% 51%;
+  --chart-3: 153 48% 49%;
+  --chart-4: 38 92% 56%;
+  --chart-5: 358 73% 59%;
+  --sidebar-background: 220 11% 7%;
+  --sidebar-foreground: 210 11% 96%;
+  --sidebar-primary: 284 55% 55%;
+  --sidebar-primary-foreground: 280 100% 97%;
+  --sidebar-accent: 220 10% 14%;
+  --sidebar-accent-foreground: 210 11% 96%;
+  --sidebar-border: 222 13% 20%;
+  --sidebar-ring: 284 55% 55%;
+
+  /* ---- Decorative / alpha / gradient tokens (theme-specific) ---- */
   --line-1: rgba(255, 255, 255, 0.07);
   --line-2: rgba(255, 255, 255, 0.11);
   --line-3: rgba(255, 255, 255, 0.18);
+  --field-bg: hsl(var(--field));
+  --field-bg-hover: color-mix(in srgb, hsl(var(--field)) 82%, hsl(var(--card)));
+  --table-head-bg: hsl(var(--elevated));
   --grad-start: #9B3AC5;
   --grad-mid: #C4688C;
   --grad-end: #E07D60;
   --grad-brand: linear-gradient(135deg, #9B3AC5 0%, #C4688C 52%, #E07D60 100%);
-  --accent: #A94DCC;
-  --accent-hover: #BC63DC;
-  --accent-press: #8F35B5;
-  --accent-soft: rgba(169, 77, 204, 0.13);
-  --accent-line: rgba(169, 77, 204, 0.38);
-  --accent-glow: rgba(155, 58, 197, 0.50);
+  --accent-soft: hsl(var(--primary) / 0.13);
+  --accent-line: hsl(var(--primary) / 0.38);
+  --accent-glow: hsl(var(--primary) / 0.50);
   --coral-glow: rgba(224, 125, 96, 0.35);
-  --on-accent: #F8F0FF;
+  --on-accent: hsl(var(--primary-foreground));
   --glass-dark: rgba(14, 17, 23, 0.55);
   --glass-light: rgba(255, 255, 255, 0.07);
   --glass-border: rgba(255, 255, 255, 0.14);
@@ -54,13 +130,9 @@
   --glass-blur-strong: 40px;
   --scrim-bottom: linear-gradient(to top, rgba(6, 8, 12, 0.88) 0%, rgba(6, 8, 12, 0.45) 45%, transparent 100%);
   --scrim-full: linear-gradient(to top, rgba(6, 8, 12, 0.85), rgba(6, 8, 12, 0.25));
-  --success: #3FB984;
-  --success-soft: rgba(63, 185, 132, 0.14);
-  --warning: #E0A33E;
-  --warning-soft: rgba(224, 163, 62, 0.14);
-  --danger: #E5575C;
-  --danger-soft: rgba(229, 87, 92, 0.14);
-  --info: var(--accent);
+  --success-soft: hsl(var(--tw-success) / 0.14);
+  --warning-soft: hsl(var(--tw-warning) / 0.14);
+  --danger-soft: hsl(var(--destructive) / 0.14);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
   --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.60);
   --shadow-lg: 0 24px 60px -16px rgba(0, 0, 0, 0.70);
@@ -69,47 +141,140 @@
   --shadow-inset-line: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
+/* ============================================================
+   CANONICAL PALETTE — LIGHT overrides
+   Mirrors every token in the dark block above (radius is shared).
+   ============================================================ */
 .light {
   color-scheme: light;
-  --bg-0: #FFFFFF;
-  --bg-1: #F6F8FB;
-  --bg-2: #FFFFFF;
-  --bg-3: #F1F4F8;
-  --bg-4: #E8EDF3;
-  --fg-1: #141820;
-  --fg-2: #4F5A68;
-  --fg-3: #788391;
-  --fg-4: #A6AFBA;
-  --line-1: rgba(20, 24, 32, 0.08);
-  --line-2: rgba(20, 24, 32, 0.12);
-  --line-3: rgba(20, 24, 32, 0.20);
-  --accent: #8F35B5;
-  --accent-hover: #A94DCC;
-  --accent-press: #76289C;
-  --accent-soft: rgba(143, 53, 181, 0.11);
-  --accent-line: rgba(143, 53, 181, 0.34);
-  --accent-glow: rgba(143, 53, 181, 0.24);
-  --coral-glow: rgba(224, 125, 96, 0.22);
-  --on-accent: #FFFFFF;
-  --glass-dark: rgba(255, 255, 255, 0.78);
-  --glass-light: rgba(20, 24, 32, 0.05);
-  --glass-border: rgba(20, 24, 32, 0.12);
-  --glass-border-top: rgba(255, 255, 255, 0.85);
-  --scrim-bottom: linear-gradient(to top, rgba(246, 248, 251, 0.94) 0%, rgba(246, 248, 251, 0.60) 45%, transparent 100%);
-  --scrim-full: linear-gradient(to top, rgba(246, 248, 251, 0.92), rgba(246, 248, 251, 0.36));
-  --success: #27865E;
-  --success-soft: rgba(39, 134, 94, 0.12);
-  --warning: #B7791F;
-  --warning-soft: rgba(183, 121, 31, 0.13);
-  --danger: #C9343A;
-  --danger-soft: rgba(201, 52, 58, 0.12);
-  --info: var(--accent);
-  --shadow-sm: 0 1px 2px rgba(20, 24, 32, 0.08);
-  --shadow-md: 0 10px 28px -14px rgba(20, 24, 32, 0.22);
-  --shadow-lg: 0 24px 70px -28px rgba(20, 24, 32, 0.30);
-  --shadow-glow: 0 0 0 1px var(--accent-line), 0 12px 44px -18px var(--accent-glow);
-  --shadow-grad-glow: 0 0 0 1px rgba(196, 104, 140, 0.24), 0 16px 46px -22px rgba(143, 53, 181, 0.26);
-  --shadow-inset-line: inset 0 1px 0 0 rgba(255, 255, 255, 0.65);
+
+  /* ---- Surfaces ---- */
+  --void: 217 40% 93%;
+  --background: 220 47% 96%;
+  --card: 0 0% 100%;
+  --elevated: 220 40% 94%;
+  --field: 221 38% 92%;
+
+  /* ---- Text ---- */
+  --foreground: 216 28% 7%;
+  --foreground-secondary: 223 25% 30%;
+  --foreground-tertiary: 225 15% 50%;
+  --foreground-faint: 218 26% 69%;
+
+  /* ---- Brand accent ---- */
+  --primary: 275 61% 41%;
+  --primary-foreground: 0 0% 100%;
+  --primary-light: 275 58% 50%;
+  --primary-dark: 275 64% 34%;
+
+  /* ---- Semantic ---- */
+  --tw-success: 150 65% 29%;
+  --tw-warning: 31 79% 34%;
+  --destructive: 357 66% 46%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* ---- Borders ---- */
+  --border-subtle: 216 24% 93%;
+  --border: 215 20% 88%;
+  --border-strong: 216 16% 80%;
+
+  /* ---- shadcn-only ---- */
+  --card-foreground: 216 28% 7%;
+  --popover: 220 40% 94%;
+  --popover-foreground: 216 28% 7%;
+  --secondary: 222 47% 11%;
+  --secondary-foreground: 210 20% 98%;
+  --panel: 210 20% 98%;
+  --panel-foreground: 222 47% 11%;
+  --muted: 215 20% 94%;
+  --muted-foreground: 215 16% 47%;
+  --tw-accent: 245 58% 51%;
+  --tw-accent-foreground: 0 0% 100%;
+  --tw-accent-light: 245 58% 65%;
+  --nova: 263 70% 52%;
+  --nova-foreground: 0 0% 100%;
+  --nova-soft: 263 70% 96%;
+  --severity-minor: 199 89% 48%;
+  --severity-major: 38 92% 45%;
+  --severity-critical: 0 72% 51%;
+  --status-draft: 215 16% 47%;
+  --status-investigation: 221 83% 53%;
+  --status-approval: 38 92% 45%;
+  --status-closed: 142 71% 35%;
+  --status-ready: 142 71% 35%;
+  --surface: 0 0% 100%;
+  --surface-subtle: 210 20% 98%;
+  --tw-success-foreground: 0 0% 100%;
+  --tw-warning-foreground: 0 0% 100%;
+  --tw-info: 275 61% 41%;
+  --border-light: 215 20% 93%;
+  --input: 215 20% 88%;
+  --ring: 275 61% 41%;
+  --chart-1: 221 83% 53%;
+  --chart-2: 245 58% 51%;
+  --chart-3: 142 71% 35%;
+  --chart-4: 38 92% 45%;
+  --chart-5: 0 72% 51%;
+  --sidebar-background: 222 47% 6%;
+  --sidebar-foreground: 210 20% 98%;
+  --sidebar-primary: 221 83% 53%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 222 47% 12%;
+  --sidebar-accent-foreground: 210 20% 98%;
+  --sidebar-border: 222 47% 15%;
+  --sidebar-ring: 221 83% 53%;
+
+  /* ---- Decorative / alpha / gradient (theme-specific) ---- */
+  --line-1: rgba(13, 17, 48, 0.06);
+  --line-2: rgba(13, 17, 48, 0.10);
+  --line-3: rgba(13, 17, 48, 0.18);
+  --field-bg: #F8FAFE;
+  --field-bg-hover: #FFFFFF;
+  --table-head-bg: #DDE5F2;
+  --accent-soft: hsl(var(--primary) / 0.09);
+  --accent-line: hsl(var(--primary) / 0.28);
+  --accent-glow: hsl(var(--primary) / 0.20);
+  --coral-glow: rgba(224, 125, 96, 0.18);
+  --glass-dark: rgba(255, 255, 255, 0.82);
+  --glass-light: rgba(13, 17, 48, 0.04);
+  --glass-border: rgba(13, 17, 48, 0.10);
+  --glass-border-top: rgba(255, 255, 255, 0.90);
+  --scrim-bottom: linear-gradient(to top, rgba(241, 244, 250, 0.95) 0%, rgba(241, 244, 250, 0.55) 45%, transparent 100%);
+  --scrim-full: linear-gradient(to top, rgba(241, 244, 250, 0.92), rgba(241, 244, 250, 0.30));
+  --success-soft: hsl(var(--tw-success) / 0.10);
+  --warning-soft: hsl(var(--tw-warning) / 0.10);
+  --danger-soft: hsl(var(--destructive) / 0.10);
+  --shadow-sm: 0 1px 2px rgba(13, 17, 48, 0.06), 0 1px 3px rgba(13, 17, 48, 0.04);
+  --shadow-md: 0 4px 16px -4px rgba(13, 17, 48, 0.12), 0 2px 6px rgba(13, 17, 48, 0.06);
+  --shadow-lg: 0 12px 40px -12px rgba(13, 17, 48, 0.18);
+  --shadow-glow: 0 0 0 1px hsl(var(--primary) / 0.28), 0 8px 32px -8px hsl(var(--primary) / 0.20);
+  --shadow-grad-glow: 0 0 0 1px rgba(196, 104, 140, 0.20), 0 12px 40px -10px rgba(116, 41, 170, 0.18);
+  --shadow-inset-line: inset 0 1px 0 0 rgba(255, 255, 255, 0.80);
+}
+
+/* ============================================================
+   INLINE-UI ALIASES — bridge legacy `var(--bg-N), var(--fg-N), var(--accent)`
+   names onto the canonical palette so hand-styled pages auto-theme.
+   Defined ONCE: each resolves per-theme through its canonical token.
+   These are removed page-by-page as components migrate to Tailwind.
+   ============================================================ */
+:root {
+  --bg-0: hsl(var(--void));
+  --bg-1: hsl(var(--background));
+  --bg-2: hsl(var(--card));
+  --bg-3: hsl(var(--elevated));
+  --bg-4: hsl(var(--field));
+  --fg-1: hsl(var(--foreground));
+  --fg-2: hsl(var(--foreground-secondary));
+  --fg-3: hsl(var(--foreground-tertiary));
+  --fg-4: hsl(var(--foreground-faint));
+  --accent: hsl(var(--primary));
+  --accent-hover: hsl(var(--primary-light));
+  --accent-press: hsl(var(--primary-dark));
+  --success: hsl(var(--tw-success));
+  --warning: hsl(var(--tw-warning));
+  --danger: hsl(var(--destructive));
+  --info: hsl(var(--primary));
 }
 
 .sidebar-nav-item {
@@ -162,6 +327,113 @@
 .theme-toggle-button svg {
   color: var(--accent);
   flex-shrink: 0;
+}
+
+.app-main {
+  padding: 20px 16px 32px;
+}
+
+@media (min-width: 1280px) {
+  .app-main {
+    padding: 24px 20px;
+  }
+}
+
+.compact-nav {
+  background: var(--glass-dark);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--line-2);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-sans);
+  padding: 8px 10px;
+  position: sticky;
+  top: 60px;
+  z-index: 30;
+}
+
+.compact-nav-list {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  margin: 0 auto;
+  max-width: 980px;
+  overflow-x: auto;
+  padding: 0;
+  scrollbar-width: none;
+}
+
+.compact-nav-list::-webkit-scrollbar {
+  display: none;
+}
+
+.compact-nav-list-item {
+  flex: 0 0 auto;
+}
+
+.compact-nav-item {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  color: var(--fg-3);
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  font-weight: 600;
+  gap: 4px;
+  min-height: 56px;
+  min-width: 72px;
+  padding: 7px 10px;
+  text-decoration: none;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.compact-nav-item:hover {
+  background: var(--bg-3);
+  border-color: var(--line-2);
+  color: var(--fg-1);
+}
+
+.compact-nav-item[data-active] {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.compact-nav-icon-wrap {
+  align-items: center;
+  display: flex;
+  height: 20px;
+  justify-content: center;
+  position: relative;
+}
+
+.compact-nav-badge {
+  align-items: center;
+  background: var(--accent);
+  border: 1px solid var(--bg-1);
+  border-radius: var(--r-full);
+  color: var(--on-accent);
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  height: 16px;
+  justify-content: center;
+  min-width: 16px;
+  padding: 0 4px;
+  position: absolute;
+  right: -12px;
+  top: -7px;
+}
+
+.compact-nav-label {
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ============================================================
@@ -356,160 +628,9 @@ a,
   }
 }
 
-/* Enterprise Pharmaceutical Design System - IBM Carbon / Salesforce Lightning Inspired */
-
-@layer base {
-  :root {
-    /* Strict 4px border radius for enterprise look */
-    --radius: 4px;
-
-    /* Slate-based neutral palette */
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    /* Enterprise Blue - Blue-700 primary */
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 221 83% 63%;
-    --primary-dark: 221 83% 43%;
-
-    /* Slate-950 for sidebar/secondary */
-    --secondary: 222 47% 11%;
-    --secondary-foreground: 210 20% 98%;
-
-    /* Slate-50 for AI panels */
-    --panel: 210 20% 98%;
-    --panel-foreground: 222 47% 11%;
-
-    --muted: 215 20% 94%;
-    --muted-foreground: 215 16% 47%;
-
-    /* AI accent - subtle blue-violet */
-    --tw-accent: 245 58% 51%;
-    --tw-accent-foreground: 0 0% 100%;
-    --tw-accent-light: 245 58% 65%;
-
-    /* Nova accent */
-    --nova: 263 70% 52%;
-    --nova-foreground: 0 0% 100%;
-    --nova-soft: 263 70% 96%;
-
-    /* Shared severity colors */
-    --severity-minor: 199 89% 48%;
-    --severity-major: 38 92% 45%;
-    --severity-critical: 0 72% 51%;
-
-    /* Shared status colors */
-    --status-draft: 215 16% 47%;
-    --status-investigation: 221 83% 53%;
-    --status-approval: 38 92% 45%;
-    --status-closed: 142 71% 35%;
-    --status-ready: 142 71% 35%;
-
-    --surface: 0 0% 100%;
-    --surface-subtle: 210 20% 98%;
-
-    /* Status colors - muted for enterprise */
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-
-    --tw-success: 142 71% 35%;
-    --tw-success-foreground: 0 0% 100%;
-
-    --tw-warning: 38 92% 45%;
-    --tw-warning-foreground: 0 0% 100%;
-
-    --tw-info: 199 89% 48%;
-
-    --border: 215 20% 88%;
-    --border-light: 215 20% 93%;
-    --input: 215 20% 88%;
-    --ring: 221 83% 53%;
-
-    /* Shadows - minimal for flat enterprise look */
-    --tw-shadow-sm: 0 1px 2px hsla(222, 47%, 11%, 0.04);
-    --tw-shadow-md: 0 2px 4px -1px hsla(222, 47%, 11%, 0.06);
-    --tw-shadow-lg: 0 4px 6px -2px hsla(222, 47%, 11%, 0.08);
-    --tw-shadow-glow: none;
-
-    /* Charts */
-    --chart-1: 221 83% 53%;
-    --chart-2: 245 58% 51%;
-    --chart-3: 142 71% 35%;
-    --chart-4: 38 92% 45%;
-    --chart-5: 0 72% 51%;
-
-    /* Sidebar - Slate-950 */
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 221 83% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 12%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 222 47% 15%;
-    --sidebar-ring: 221 83% 53%;
-  }
-
-  .dark {
-    --background: 220 11% 7%;
-    --foreground: 210 11% 96%;
-    --card: 220 10% 11%;
-    --card-foreground: 210 11% 96%;
-    --popover: 220 10% 14%;
-    --popover-foreground: 210 11% 96%;
-    --primary: 285 57% 55%;
-    --primary-foreground: 280 100% 97%;
-    --primary-light: 285 57% 62%;
-    --primary-dark: 285 57% 46%;
-    --secondary: 220 10% 14%;
-    --secondary-foreground: 210 11% 96%;
-    --panel: 220 10% 14%;
-    --panel-foreground: 210 11% 96%;
-    --muted: 220 10% 14%;
-    --muted-foreground: 218 8% 56%;
-    --tw-accent: 285 57% 55%;
-    --tw-accent-foreground: 280 100% 97%;
-    --tw-accent-light: 285 57% 62%;
-    --nova: 285 57% 55%;
-    --nova-foreground: 280 100% 97%;
-    --nova-soft: 285 57% 16%;
-    --severity-minor: 199 89% 58%;
-    --severity-major: 38 92% 56%;
-    --severity-critical: 358 73% 59%;
-    --status-draft: 218 8% 56%;
-    --status-investigation: 285 57% 62%;
-    --status-approval: 38 92% 56%;
-    --status-closed: 153 48% 49%;
-    --status-ready: 153 48% 49%;
-    --surface: 220 10% 11%;
-    --surface-subtle: 220 10% 14%;
-    --destructive: 358 73% 59%;
-    --destructive-foreground: 280 100% 97%;
-    --tw-success: 153 48% 49%;
-    --tw-success-foreground: 210 11% 96%;
-    --tw-warning: 38 72% 56%;
-    --tw-warning-foreground: 220 11% 7%;
-    --tw-info: 285 57% 55%;
-    --border: 222 13% 20%;
-    --border-light: 222 13% 26%;
-    --input: 220 11% 20%;
-    --ring: 285 57% 55%;
-    --sidebar-background: 220 11% 7%;
-    --sidebar-foreground: 210 11% 96%;
-    --sidebar-primary: 285 57% 55%;
-    --sidebar-primary-foreground: 280 100% 97%;
-    --sidebar-accent: 220 10% 14%;
-    --sidebar-accent-foreground: 210 11% 96%;
-    --sidebar-border: 222 13% 20%;
-    --sidebar-ring: 285 57% 55%;
-  }
-}
+/* shadcn HSL tokens now live in the CANONICAL PALETTE blocks at the
+   top of this file (single source of truth). This block intentionally
+   removed to eliminate the old duplicate/conflicting definitions. */
 
 @layer base {
   * {
@@ -536,7 +657,7 @@ a,
   input,
   textarea,
   select {
-    background: var(--bg-4);
+    background: var(--field-bg);
     border-color: var(--line-2);
     color: var(--fg-1);
     transition:
@@ -557,6 +678,32 @@ a,
     box-shadow: 0 0 0 3px var(--accent-soft);
     outline: none;
   }
+
+  table,
+  time,
+  code,
+  kbd,
+  .font-mono,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Keyboard focus ring for interactive non-form elements:
+     buttons, links, and ARIA-role widgets (table rows, tabs, etc.).
+     Pointer clicks won't trigger :focus-visible, so this is keyboard-only. */
+  button:focus-visible,
+  a:focus-visible,
+  summary:focus-visible,
+  [role="button"]:focus-visible,
+  [role="link"]:focus-visible,
+  [role="tab"]:focus-visible,
+  [role="menuitem"]:focus-visible,
+  [role="option"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--r-sm);
+  }
 }
 
 @layer utilities {
@@ -575,6 +722,33 @@ a,
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+  }
+
+  /* ---- Depth surfaces: consistent elevation language ----
+     surface-card    resting card on the page (bg-2 + sm shadow)
+     surface-raised  hover / pulled-forward card (md shadow)
+     surface-overlay modals, slide-overs, popovers (lg shadow)
+     In light mode bg-2 is pure white and pops off the page only with
+     a shadow, so depth = surface color + shadow, never color alone. */
+  .surface-card {
+    background: var(--bg-2);
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .surface-raised {
+    background: var(--bg-2);
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-md);
+  }
+
+  .surface-overlay {
+    background: var(--bg-2);
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-lg);
   }
 
   /* Enterprise panel background */

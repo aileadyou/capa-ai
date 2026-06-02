@@ -1,18 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2, Search } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { FilterCard, FilterSearchInput, FilterSelect } from "@/components/shared/FilterControls";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useCapaStore } from "@/store";
 import type { ActionStatus, CorrectiveAction } from "@/types";
@@ -118,74 +111,50 @@ export function CorrectiveActionsPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 xl:grid-cols-[minmax(260px,1.5fr)_repeat(4,minmax(150px,1fr))]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="pl-9"
-                placeholder="Search CA, CAPA, PIC, root cause, or verification"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ActionStatus | typeof allValue)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Statuses</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-                <SelectItem value="verified">Verified</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={picFilter} onValueChange={setPicFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="PIC" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All PICs</SelectItem>
-                {pics.map((pic) => (
-                  <SelectItem key={pic} value={pic}>
-                    {pic}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Departments</SelectItem>
-                {departments.map((department) => (
-                  <SelectItem key={department} value={department}>
-                    {department}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={dueDateFilter} onValueChange={(value) => setDueDateFilter(value as DueDateFilter)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Due date" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={allValue}>All Due Dates</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-                <SelectItem value="next_7_days">Due Next 7 Days</SelectItem>
-                <SelectItem value="completed">Completed / Verified</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      <FilterCard>
+        <FilterSearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search CA, CAPA, PIC, root cause, or verification"
+          ariaLabel="Search corrective actions"
+        />
+        <FilterSelect
+          value={statusFilter}
+          onChange={(value) => setStatusFilter(value as ActionStatus | typeof allValue)}
+          ariaLabel="Filter by status"
+          options={[
+            { value: allValue, label: "All statuses" },
+            { value: "open", label: "Open" },
+            { value: "in_progress", label: "In Progress" },
+            { value: "completed", label: "Completed" },
+            { value: "overdue", label: "Overdue" },
+            { value: "verified", label: "Verified" },
+          ]}
+        />
+        <FilterSelect
+          value={picFilter}
+          onChange={setPicFilter}
+          ariaLabel="Filter by PIC"
+          options={[{ value: allValue, label: "All PICs" }, ...pics.map((pic) => ({ value: pic, label: pic }))]}
+        />
+        <FilterSelect
+          value={departmentFilter}
+          onChange={setDepartmentFilter}
+          ariaLabel="Filter by department"
+          options={[{ value: allValue, label: "All departments" }, ...departments.map((department) => ({ value: department, label: department }))]}
+        />
+        <FilterSelect
+          value={dueDateFilter}
+          onChange={(value) => setDueDateFilter(value as DueDateFilter)}
+          ariaLabel="Filter by due date"
+          options={[
+            { value: allValue, label: "All due dates" },
+            { value: "overdue", label: "Overdue" },
+            { value: "next_7_days", label: "Due Next 7 Days" },
+            { value: "completed", label: "Completed / Verified" },
+          ]}
+        />
+      </FilterCard>
 
       <Card>
         <CardHeader>
@@ -194,7 +163,7 @@ export function CorrectiveActionsPage() {
         <CardContent>
           <div className="overflow-hidden rounded border">
             <table className="w-full text-left text-sm">
-              <thead className="bg-muted text-xs uppercase text-muted-foreground">
+              <thead className="bg-[var(--table-head-bg)] text-xs uppercase text-[var(--fg-2)]">
                 <tr>
                   <th className="px-3 py-2">CA ID</th>
                   <th className="px-3 py-2">Description</th>

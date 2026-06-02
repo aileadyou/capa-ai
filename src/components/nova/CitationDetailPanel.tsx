@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useUIStore } from "@/store";
 import { kgCitations } from "@/mock-data";
+import { useDialog } from "@/hooks/use-dialog";
 import type { KGCitation } from "@/types";
 
 function outcomeClass(outcome: KGCitation["outcome"]) {
@@ -25,6 +26,7 @@ export function CitationDetailPanel() {
   const isOpen = useUIStore((state) => state.isCitationPanelOpen);
   const activeCitationId = useUIStore((state) => state.activeCitationId);
   const closeCitationPanel = useUIStore((state) => state.closeCitationPanel);
+  const { ref: panelRef } = useDialog<HTMLElement>(isOpen, closeCitationPanel);
 
   if (!isOpen) return null;
 
@@ -38,10 +40,18 @@ export function CitationDetailPanel() {
         className="motion-backdrop lead-overlay fixed inset-0 z-30"
         onClick={closeCitationPanel}
       />
-      <aside className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg">
+      <aside
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="citation-panel-title"
+        tabIndex={-1}
+        style={{ overscrollBehavior: "contain" }}
+        className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg"
+      >
         <div className="flex items-center justify-between border-b p-4">
-          <div className="text-sm font-semibold">Historical CAPA Reference</div>
-          <Button variant="ghost" size="icon" onClick={closeCitationPanel}>
+          <div id="citation-panel-title" className="text-sm font-semibold">Historical CAPA Reference</div>
+          <Button variant="ghost" size="icon" aria-label="Close reference panel" onClick={closeCitationPanel}>
             <X className="h-4 w-4" />
           </Button>
         </div>

@@ -127,18 +127,21 @@ function KpiCard({
           background: "var(--bg-2)",
           border: "1px solid var(--line-2)",
           borderRadius: "var(--r-lg)",
+          boxShadow: "var(--shadow-sm)",
           padding: "20px 20px 20px 24px",
           overflow: "hidden",
           cursor: "pointer",
-          transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
+          transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLDivElement).style.borderColor = "var(--line-3)";
-          (e.currentTarget as HTMLDivElement).style.background = "var(--bg-3)";
+          (e.currentTarget as HTMLDivElement).style.background = "var(--bg-2)";
+          (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-md)";
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLDivElement).style.borderColor = "var(--line-2)";
           (e.currentTarget as HTMLDivElement).style.background = "var(--bg-2)";
+          (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-sm)";
         }}
       >
         {/* Gradient left border */}
@@ -226,6 +229,7 @@ function Card({
         background: "var(--bg-2)",
         border: "1px solid var(--line-2)",
         borderRadius: "var(--r-lg)",
+        boxShadow: "var(--shadow-sm)",
         padding: "20px 22px",
         display: "flex",
         flexDirection: "column",
@@ -835,7 +839,7 @@ export function DashboardPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
           gap: "14px",
         }}
       >
@@ -870,7 +874,7 @@ export function DashboardPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 380px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
           gap: "14px",
         }}
       >
@@ -895,7 +899,7 @@ export function DashboardPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 380px",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
           gap: "14px",
         }}
       >

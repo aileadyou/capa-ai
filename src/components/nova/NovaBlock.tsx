@@ -354,7 +354,7 @@ export function NovaBlock({
             rows={4}
             style={{
               width: "100%",
-              background: "var(--bg-4)",
+              background: "var(--field-bg)",
               border: "1px solid var(--accent)",
               borderRadius: "var(--r-sm)",
               padding: "10px 12px",
@@ -429,7 +429,7 @@ export function NovaBlock({
               style={{
                 marginTop: "8px",
                 padding: "10px 12px",
-                background: "var(--bg-4)",
+                background: "var(--field-bg)",
                 borderRadius: "var(--r-sm)",
                 fontFamily: "var(--font-mono)",
                 fontSize: "11px",
@@ -479,7 +479,7 @@ export function NovaBlock({
             <button
               onClick={handleCancelEdit}
               style={{
-                background: "var(--bg-4)",
+                background: "var(--field-bg)",
                 color: "var(--fg-2)",
                 border: "1px solid var(--line-2)",
                 borderRadius: "var(--r-sm)",

@@ -169,7 +169,7 @@ export function NovaSuggestionBlock({
       {showReasoning && reasoning && (
         <div
           style={{
-            background: "var(--bg-4)",
+            background: "var(--field-bg)",
             borderRadius: "var(--r-sm)",
             padding: "10px 12px",
             marginBottom: "10px",
@@ -191,7 +191,7 @@ export function NovaSuggestionBlock({
           rows={4}
           style={{
             width: "100%",
-            background: "var(--bg-4)",
+            background: "var(--field-bg)",
             border: "1px solid var(--accent-line)",
             borderRadius: "var(--r-sm)",
             padding: "10px 12px",
@@ -278,7 +278,7 @@ export function NovaSuggestionBlock({
             <button
               onClick={handleDiscussWithNova}
               style={{
-                background: "var(--bg-4)",
+                background: "var(--field-bg)",
                 color: "var(--fg-2)",
                 border: "1px solid var(--line-2)",
                 borderRadius: "var(--r-sm)",

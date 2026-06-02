@@ -22,62 +22,12 @@
 }
 
 :root {
-  /* ============ COLOR — Base ============ */
-  /* Backgrounds: cool near-black, layered by elevation */
-  --bg-0: #060709;   /* deepest / page void */
-  --bg-1: #0A0C0F;   /* base page */
-  --bg-2: #101318;   /* surface / card */
-  --bg-3: #161A20;   /* elevated surface / popover */
-  --bg-4: #1D222A;   /* hover surface / input */
-
-  /* Text */
-  --fg-1: #F3F5F7;   /* primary — near white, not pure */
-  --fg-2: #A2A9B4;   /* secondary — muted gray copy */
-  --fg-3: #6A7280;   /* tertiary — captions, placeholders */
-  --fg-4: #444B56;   /* disabled / faint */
-
-  /* Borders & lines — subtle, low contrast */
-  --line-1: rgba(255, 255, 255, 0.07);  /* hairline divider */
-  --line-2: rgba(255, 255, 255, 0.11);  /* card border */
-  --line-3: rgba(255, 255, 255, 0.18);  /* strong / focus ring base */
-
-  /* ============ COLOR — Accent (Brand) ============ */
-  /* Lead.AI brand: deep purple → magenta → coral gradient */
-  --grad-start:  #9B3AC5;   /* deep violet-purple */
-  --grad-mid:    #C4688C;   /* magenta-pink */
-  --grad-end:    #E07D60;   /* coral-salmon */
-  --grad-brand:  linear-gradient(135deg, #9B3AC5 0%, #C4688C 52%, #E07D60 100%);
-
-  /* Single interactive accent — lifted purple (readable on dark) */
-  --accent:       #A94DCC;
-  --accent-hover: #BC63DC;
-  --accent-press: #8F35B5;
-  --accent-soft:  rgba(169, 77, 204, 0.13);
-  --accent-line:  rgba(169, 77, 204, 0.38);
-  --accent-glow:  rgba(155, 58, 197, 0.50);   /* purple bloom */
-  --coral-glow:   rgba(224, 125, 96, 0.35);   /* warm secondary bloom */
-  --on-accent:    #F8F0FF;                     /* near-white on purple fill */
-
-  /* ============ GLASS / FROSTED SURFACES ============ */
-  /* Layered over imagery/media. Two films: smoked (dark) and frosted (light). */
-  --glass-dark: rgba(14, 17, 23, 0.55);     /* smoked — over bright/busy media */
-  --glass-light: rgba(255, 255, 255, 0.07);  /* frosted film — over dark media */
-  --glass-border: rgba(255, 255, 255, 0.14);
-  --glass-border-top: rgba(255, 255, 255, 0.28); /* brighter top edge highlight */
-  --glass-blur: 22px;
-  --glass-blur-strong: 40px;
-  /* Protection scrim — guarantees text legibility over any image */
-  --scrim-bottom: linear-gradient(to top, rgba(6,8,12,0.88) 0%, rgba(6,8,12,0.45) 45%, transparent 100%);
-  --scrim-full: linear-gradient(to top, rgba(6,8,12,0.85), rgba(6,8,12,0.25));
-
-  /* ============ COLOR — Semantic ============ */
-  --success: #3FB984;
-  --success-soft: rgba(63, 185, 132, 0.14);
-  --warning: #E0A33E;
-  --warning-soft: rgba(224, 163, 62, 0.14);
-  --danger: #E5575C;
-  --danger-soft: rgba(229, 87, 92, 0.14);
-  --info: var(--accent);
+  /* ------------------------------------------------------------
+     Color, accent, glass, scrim, semantic + shadow tokens have
+     moved to src/index.css → CANONICAL PALETTE (single source of
+     truth, light + dark aware). This file now owns only type,
+     spacing, radii, and motion primitives.
+     ------------------------------------------------------------ */
 
   /* ============ TYPE — Families ============ */
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -109,15 +59,6 @@
   --r-lg: 20px;
   --r-xl: 28px;
   --r-full: 999px;
-
-  /* ============ SHADOWS / ELEVATION ============ */
-  /* On dark, elevation = subtle border + soft ambient shadow */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
-  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.60);
-  --shadow-lg: 0 24px 60px -16px rgba(0, 0, 0, 0.70);
-  --shadow-glow: 0 0 0 1px var(--accent-line), 0 8px 40px -8px var(--accent-glow);
-  --shadow-grad-glow: 0 0 0 1px rgba(196,104,140,0.3), 0 12px 50px -10px rgba(155,58,197,0.40);
-  --shadow-inset-line: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
 
   /* ============ MOTION ============ */
   /* Slow, confident, smooth. Never springy. */

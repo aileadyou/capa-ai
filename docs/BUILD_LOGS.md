@@ -4,6 +4,208 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-02, 03:13 PM — Shared themed badge primitives (Phase 2 of UI overhaul)
+
+### Prompt
+"Continue full migration" — proceed from the Phase 1 token foundation into consolidating the duplicated, drifting inline badges/pills into well-tokenized shadcn shared components (single source of truth), preserving the look.
+
+### Completed
+- Found the badge logic was copy-pasted with DRIFT across 6 pages: e.g. `SeverityBadge` rendered 3 different colour schemes (Minor=purple vs amber vs cyan), `StatusBadge` carried hand-written labels ("No CAPA"), and `ScorePill`/`TypePill` each had per-page variants — while 5 OTHER pages already imported the canonical shared components. Phase 2 makes all 11 pages share one tokenized set.
+- Created `src/components/shared/TypePill.tsx` (the only missing primitive): shadcn `Badge variant="outline"` reading canonical tokens — `deviation→primary`, `audit→success`, `complaint→warning`, plus a `tone="neutral"` variant for the Similarity citation tag. Replaces 4 inline `TypePill`/`TypeBadge` copies.
+- Added a `compact` prop to `src/components/shared/ScorePill.tsx`: renders just the animated number (no icon/label) so the dense CAPA-list and Linked-CAPA contexts keep their tight look while still flowing through the same token + count-up logic.
+- Added `whitespace-nowrap` to the shadcn `Badge` base so pills never wrap inside narrow table columns (restores the old inline `white-space:nowrap`; fixed "Audit Finding" wrapping in the Type column).
+- Migrated 6 pages to import the shared primitives and deleted their inline definitions + colour maps + helper fns (`SEVERITY_COLORS`/`STATUS_COLORS`/`TYPE_COLORS`, `statusColor`/`statusLabel`, etc.): CapaListPage, FindingDetailPage, FindingsListPage, MyWorkPage, ConsolidatedActionPlanPage, SimilarityExplorerPage.
+- Net effect: ~12 duplicated badge/pill components removed; status labels normalized to the formatter output ("CAPA In Progress", "Pending CAPA"); severity now consistently Minor=cyan / Major=amber / Critical=red everywhere; trimmed the now-unused imports each page left behind.
+
+### Changed Files
+- `src/components/shared/TypePill.tsx` (added)
+- `src/components/shared/ScorePill.tsx` (compact mode)
+- `src/components/ui/badge.tsx` (whitespace-nowrap)
+- `src/pages/nova/CapaListPage.tsx`
+- `src/pages/nova/FindingDetailPage.tsx`
+- `src/pages/nova/FindingsListPage.tsx`
+- `src/pages/nova/MyWorkPage.tsx`
+- `src/pages/nova/ConsolidatedActionPlanPage.tsx`
+- `src/pages/nova/SimilarityExplorerPage.tsx`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit` ✅ passes (no errors).
+- `npm run build` ✅ passes (1761 modules).
+- In-browser sweep on the dev server ✅ — My Work, CAPA list, Findings list, and Finding detail all render the shared badges correctly in BOTH dark and light themes (verified `--primary` = `275 61% 41%` and `--severity-minor` = `199 89% 48%` resolve under `.light`). Compact ScorePill shows the bare number; TypePill stays single-line.
+
+### Notes
+- The look is intentionally NORMALIZED, not pixel-frozen: the inline copies disagreed with each other, so consolidating onto the already-canonical shared look (used by 5 prior pages) is the "unify" half of "unify but keep the look."
+- ScorePill `compact` keeps tables tight; the verbose "{n} · Audit Ready/Improve Score" default still serves hero/detail slots (e.g. D7 Sign-Off).
+
+### Next Recommended Task
+- Phase 3: migrate the remaining inline `style={{var(--…)}}` blocks across the ~33 pages to Tailwind/shadcn in batches (layout shell → lists → details → 8D steps), build-checking each batch. Then Phase 4: remove the alias bridge from `src/index.css` and final both-theme sweep.
+
+---
+
+## 2026-06-02, 02:49 PM — Unified design-token foundation (Phase 1 of UI overhaul)
+
+### Prompt
+"Aku pengen rombak ulang UI. UI sekarang ga acceptable. Coba deh kita pake 2 set of Font aja. Dan untuk warna, aku pengen kamu tokenize dengan benar, sama make sure pakai ShadCN yang udah well-tokenized juga. Fungsinya simple, aku pengen kemudahan nantinya untuk ubah2 warna dan font. Clientku ga suka sama UI-nya, jadi aku akan butuh utk bisa gonta ganti secepat dan semudah mungkin." (Decisions: Full shadcn rewrite · Unify but keep current look · Keep Plus Jakarta Sans + IBM Plex Mono.)
+
+### Completed
+- Collapsed the THREE drifting token systems (design_system color block, the inline `--bg-*/--fg-*/--accent` block, and the shadcn HSL block) into ONE canonical HSL palette in `src/index.css`: a dark `:root,.dark` block + a `.light` override block, authored as space-separated HSL (shadcn convention). A single edit now retints every shadcn component AND every hand-styled surface.
+- Added a thin, theme-independent alias layer mapping legacy inline names (`--bg-0..4`, `--fg-1..4`, `--accent/-hover/-press`, `--success/--warning/--danger`, `--info`) onto canonical tokens via `hsl(var(--token))`. The 33 un-migrated pages keep rendering unchanged; this bridge gets removed page-by-page in later phases.
+- Fixed the light/dark brand drift: light-mode primary, accent, and focus ring were Blue-700 while the brand is purple — all now resolve to the canonical purple in BOTH themes.
+- Converted current hex values to HSL while preserving the existing look (verified in-browser, both themes).
+- Wired the two fonts into Tailwind `fontFamily` (`sans` = Plus Jakarta Sans, `mono` = IBM Plex Mono) and added migration-ready Tailwind tokens (`void/elevated/field`, `foreground-secondary/tertiary/faint`, `border-subtle/strong`).
+- Fixed fonts in `index.html`: removed the unused Inter `<link>` and added IBM Plex Mono — it was referenced by `--font-mono` but had NEVER been loaded (silently falling back to system mono). Both families now confirmed loaded.
+- Stripped duplicate color + shadow tokens from `design_system/colors_and_type.css`; it now owns only type/spacing/radii/motion primitives + type-role classes.
+- Removed dead `--tw-shadow-*` tokens (never referenced).
+
+### Changed Files
+- `src/index.css`
+- `tailwind.config.ts`
+- `index.html`
+- `design_system/colors_and_type.css`
+- `.claude/launch.json` (added — preview dev-server config)
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit` ✅ passes.
+- `npm run build` ✅ passes (1760 modules; caught + fixed a CSS bug where a comment string contained `*/` and closed the comment early).
+- Manual in-browser check on the running dev server ✅ — Login + My Work dashboard render correctly in BOTH dark and light; aliases resolve through the canonical palette; `document.fonts` confirms IBM Plex Mono (400/500/600) + Plus Jakarta Sans both loaded.
+
+### Notes
+- Default theme stays dark (`getInitialTheme()` → dark, applied pre-paint in `main.tsx`), so keeping `:root,.dark` as the canonical default is flash-safe.
+- Semantic data tokens (`--severity-*`, `--status-*`, `--chart-*`, `--nova`) were intentionally left at their current values to preserve data semantics; only brand/surface/text/border tokens were unified.
+- To retheme now: edit ONLY the two canonical blocks at the top of `src/index.css`.
+
+### Next Recommended Task
+- Phase 2: consolidate duplicated inline badges/pills/cards/selects into shadcn-based shared components under `src/components/shared/`.
+
+---
+
+## 2026-06-01, 11:28 AM — Findings filter card and table contrast polish
+
+### Prompt
+"Aku pengen semua bagian filter diseragamin. inputan dimasukin ke dalam sebuah card dulu... belum di /findings. Next aku pengen header table tuh warnanya ga nyaru sama background... background warna inputan tuh jujur ga suka aku warnanya di light mode"
+
+### Completed
+- Matched `/findings` filter layout to `/capa`: filters now sit inside a raised `--bg-2` card with `--line-2` border, `--shadow-sm`, and responsive grid spacing.
+- Added design tokens for cleaner form/table treatment: `--field-bg`, `--field-bg-hover`, and `--table-head-bg`.
+- Updated global native inputs/selects plus shadcn `Input`/`SelectTrigger` to use the new field background tokens. Light mode fields are now a cleaner near-white surface instead of the previous gray-blue fill.
+- Updated `/capa` and `/findings` native search/select fields to use `--field-bg`.
+- Strengthened `/capa` and `/findings` table headers with a dedicated `--table-head-bg`, stronger bottom divider, and `--fg-2` header labels so the header band no longer blends into the page/card background.
+- Added Playwright visual coverage for `/capa` and `/findings` list pages across desktop and mobile; added a short settle wait so screenshots happen after page reveal animation.
+- Fixed responsive overflow in `/capa` and `/findings` filter grids after mobile screenshots showed the filters forcing page-wide horizontal overflow.
+
+### Validation
+- `npm run test:visual` ✅ passes (6/6).
+- `npx tsc --noEmit` ✅ passes.
+- `npm run build` ✅ passes.
+- `git diff --check` ✅ passes.
+
+---
+
+## 2026-06-01, 11:18 AM — Playwright visual smoke setup
+
+### Prompt
+"install aja playwright biar bisa confirm lebih baik"
+
+### Completed
+- Installed `@playwright/test` as a dev dependency and added `npm run test:visual`.
+- Added `playwright.config.ts` configured to use system Chrome at `/usr/bin/google-chrome`, because Playwright browser download does not support this environment's `ubuntu26.04-x64` target.
+- Added visual smoke coverage for Dashboard and CAPA Detail across desktop Chrome and mobile Chrome, including screenshot artifacts.
+- Fixed a semantic heading issue caught by Playwright: TopBar page title no longer renders as a competing heading beside each page's real `<h1>`.
+- Adjusted compact navigation from fixed-bottom overlay to a sticky horizontal rail below TopBar after visual screenshot showed it covering chart content.
+- Ignored Playwright output folders (`playwright-report`, `test-results`) in `.gitignore`.
+
+### Validation
+- `npm run test:visual` ✅ passes (4/4).
+- `npx tsc --noEmit` ✅ passes.
+- `npm run build` ✅ passes.
+- `git diff --check` ✅ passes.
+
+### Notes
+- `npx playwright install chromium` failed with `Playwright does not support chromium on ubuntu26.04-x64`; the configured workaround is system Chrome. Override with `PLAYWRIGHT_CHROME_PATH=/path/to/chrome npm run test:visual` if needed.
+
+---
+
+## 2026-06-01, 11:13 AM — P1 responsive nav and empty state sweep
+
+### Prompt
+"lanjutin lagi"
+
+### Completed
+- Added a compact fixed-bottom navigation for tablet/mobile (`< xl`) so primary app navigation remains available when the desktop sidebar is hidden.
+- Moved main content padding into `.app-main` and added mobile bottom safe-area spacing so the compact nav does not cover page content.
+- Made the TopBar notification bell navigate to `/notifications` instead of being a labelled-but-inert button.
+- Upgraded the shared `EmptyState` component to use the design-system surface tokens, `surface-card`, `btn-brand`, and polite status announcement.
+- Replaced ad-hoc empty states with the shared `EmptyState` in Notifications, CAPA list, Findings list, Audit Trail, and Similarity Explorer.
+- Started responsive grid reflow on high-impact views: Dashboard KPI/chart rows, Consolidated Action Plan KPI/group selector, Similarity filters/results, and Finding Detail body now use `auto-fit/minmax` instead of fixed desktop columns.
+
+### Validation
+- `npx tsc --noEmit` ✅ passes.
+- `npm run build` ✅ passes.
+- `git diff --check` ✅ passes.
+- Playwright visual screenshot was not run because Playwright is not installed in this repo.
+
+### Notes
+- Remaining P1: continue responsive reflow through the 8D form grids and CAPA detail hub, then extract more shared primitives if we want to reduce inline-style drift further.
+
+---
+
+## 2026-06-01, 11:09 AM — P1 audit pass: legacy cleanup, form a11y, motion copy
+
+### Prompt
+"cek UI_UX_AUDIT.md dan DESIGN_DEPTH_AUDIT.md. P0 udah dikerjain claude, next kerjain yang P1"
+
+### Completed
+- Removed the verified-dead legacy app cluster: 19 old top-level pages, 26 old root components, plus the unused legacy `components/capa/CapaSidebar.tsx`. Router/live Nova pages remain unchanged.
+- TopBar P1 polish: stronger sticky separation (`--line-2` + `--shadow-sm`), `aria-label`s for icon buttons, decorative icons hidden from AT, and ellipsis copy fixed.
+- LoginPage form a11y: associated labels with inputs, added `name`/`autoComplete`, replaced password-dot placeholder, added `--shadow-lg`, and aligned the mono divider tracking to the eyebrow/kicker spec.
+- Motion/copy cleanup: removed the remaining `transition: all` spots found in the live tree and replaced loading `...` with `…` in Nova search/clustering/chat/loading states.
+- Notification Center a11y: added settings expanded state, tab pressed state, search label, list live region, and labels for icon-only notification actions.
+- Depth/token cleanup: upgraded `.surface-card` edge from `--line-1` to `--line-2` and added default tabular numeric rendering for tables/time/mono contexts.
+
+### Validation
+- `npx tsc --noEmit` ✅ passes.
+- `npm run build` ✅ passes.
+- `git diff --check` ✅ passes.
+- Targeted grep confirms no remaining live-tree matches for `transition: all` or the old loading-copy strings covered in this pass.
+
+### Notes
+- P1 items still intentionally deferred: full responsive reflow/sub-xl nav, EmptyState standardization across every view, and deeper shared primitive extraction.
+
+---
+
+## 2026-06-01, 11:00 AM — P0 fixes from UI/UX audit (depth, focus, a11y, dialogs)
+
+### Prompt
+"Boleh tolong handle ya sekaliann" → scope confirmed via question: "P0 dulu" — commit the 2 audit docs, then execute all P0: depth (card shadows + sidebar bg-0), focus ring buttons/links, keyboard access table rows, and dialog semantics for modals.
+
+### Completed
+- Committed `docs/UI_UX_AUDIT.md` + `docs/DESIGN_DEPTH_AUDIT.md` to main (commit `7ef8ca4`).
+- **Depth (global):** added `.surface-card` / `.surface-raised` / `.surface-overlay` utility classes (bg-2 + sm/md/lg shadow) to `index.css`; moved Sidebar onto `--bg-0` with a `--line-2` right border so it reads as a distinct trough behind the page.
+- **Depth (cards):** applied `boxShadow: var(--shadow-sm)` to primary card/panel containers across Dashboard, My Work, All CAPAs (filter + table), Findings list (table) + slide-over, CAPA Detail (Card/info/score primitives), Consolidated Action Plan (KPI/group-mode/group cards), Audit Trail (KPI/filter/table), Finding Detail (section/stat/Nova cards), CAPA Intake wizard, Similarity Explorer (search/filter/result cards, with hover bump to `--shadow-md`), and the 8D step pages D2/D4/D5/D6/D7. Recessive info banners were intentionally left flat.
+- **Focus ring (a11y):** added a keyboard-only `:focus-visible` ring (`outline: 2px solid var(--accent)` + offset) for `button`, `a`, `summary`, `[role="button"|"link"|"tab"|"menuitem"|"option"]`, and `[tabindex]` — closing the gap where only form inputs had a visible focus state.
+- **Keyboard access (a11y):** clickable `<tr>` rows in Findings list and All CAPAs now have `role`, `tabIndex={0}`, `aria-label`, and Enter/Space `onKeyDown` handlers.
+- **Dialog semantics (a11y):** added shared `useDialog` hook (Escape close, focus-trap, focus restore, body-scroll lock) and wired it into the D7 e-signature modal, Similarity detail modal, Findings slide-over, Nova chat panel, and Citation detail panel — each now carries `role="dialog"`, `aria-modal`, `aria-labelledby`/`aria-label`, `overscroll-behavior: contain`, and an overlay shadow. Fixed a buggy `useState`-based Escape handler in Similarity. Added `aria-label`s to the Nova/Citation close buttons and `aria-live="polite"` to the Nova message list.
+
+### Validation
+- `npx tsc --noEmit` ✅ passes.
+- `npm run build` ✅ passes (767 kB bundle, existing chunk-size warning only).
+
+### Files Touched
+- `src/hooks/use-dialog.ts` (new)
+- `src/index.css`
+- `src/components/layout/Sidebar.tsx`
+- `src/components/nova/NovaChatPanel.tsx`, `src/components/nova/CitationDetailPanel.tsx`
+- `src/pages/nova/DashboardPage.tsx`, `MyWorkPage.tsx`, `CapaListPage.tsx`, `FindingsListPage.tsx`, `CapaDetailPage.tsx`, `ConsolidatedActionPlanPage.tsx`, `AuditTrailPage.tsx`, `FindingDetailPage.tsx`, `CapaIntakePage.tsx`, `SimilarityExplorerPage.tsx`
+- `src/pages/nova/eight-d/D2ContainmentPage.tsx`, `D4CorrectiveActionPage.tsx`, `D5PreventiveActionPage.tsx`, `D6VerificationPage.tsx`, `D7SignOffPage.tsx`
+- `docs/UI_UX_AUDIT.md`, `docs/DESIGN_DEPTH_AUDIT.md`, `docs/BUILD_LOGS.md`
+
+### Notes
+- P1/P2 items remain deferred (dead-code deletion, remaining aria-labels, LoginPage form a11y, `transition: all`, tabular-nums/ellipsis, EmptyState adoption, responsive, shared primitives, Title Case, shadcn migration).
+
+---
+
 ## 2026-06-01, 03:05 AM — Login page + auth guard + persona picker + logout
 
 ### Prompt

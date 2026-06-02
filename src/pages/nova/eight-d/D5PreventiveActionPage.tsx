@@ -118,6 +118,7 @@ function ActionList({ actions, onRemove }: { actions: PreventiveAction[]; onRemo
         background: "var(--bg-2)",
         border: "1px solid var(--line-2)",
         borderRadius: "var(--r-lg)",
+        boxShadow: "var(--shadow-sm)",
         overflow: "hidden",
       }}
     >
@@ -389,7 +390,7 @@ export function D5PreventiveActionPage() {
               rows={5}
               style={{
                 width: "100%",
-                background: "var(--bg-4)",
+                background: "var(--field-bg)",
                 border: `1px solid ${shouldShowBlocker && description.trim().length < 30 ? "var(--danger)" : "var(--line-2)"}`,
                 borderRadius: "var(--r-sm)",
                 padding: "12px 14px",
@@ -417,7 +418,7 @@ export function D5PreventiveActionPage() {
                 <select
                   value={pic}
                   onChange={(e) => setPic(e.target.value)}
-                  style={{ width: "100%", appearance: "none", background: "var(--bg-4)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "9px 36px 9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", cursor: "pointer" }}
+                  style={{ width: "100%", appearance: "none", background: "var(--field-bg)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "9px 36px 9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", cursor: "pointer" }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
                 >
@@ -435,7 +436,7 @@ export function D5PreventiveActionPage() {
                 type="date"
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
-                style={{ width: "100%", background: "var(--bg-4)", border: `1px solid ${shouldShowBlocker && !new Date(`${targetDate}T00:00:00`).getTime() ? "var(--danger)" : "var(--line-2)"}`, borderRadius: "var(--r-sm)", padding: "9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", boxSizing: "border-box" }}
+                style={{ width: "100%", background: "var(--field-bg)", border: `1px solid ${shouldShowBlocker && !new Date(`${targetDate}T00:00:00`).getTime() ? "var(--danger)" : "var(--line-2)"}`, borderRadius: "var(--r-sm)", padding: "9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", boxSizing: "border-box" }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
               />
@@ -488,7 +489,7 @@ export function D5PreventiveActionPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "10px", paddingTop: "8px", borderTop: "1px solid var(--line-1)" }}>
           <button
             onClick={addPreventiveAction}
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--bg-4)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "8px 16px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500 }}
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--field-bg)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "8px 16px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500 }}
           >
             <Save size={14} />
             Add PA

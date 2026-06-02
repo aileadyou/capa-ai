@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useDialog } from "@/hooks/use-dialog";
 import { useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, PenLine, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -57,6 +58,7 @@ function ESignatureModal({
   onClose: () => void;
 }) {
   const [notes, setNotes] = useState("");
+  const { ref } = useDialog<HTMLDivElement>(true, onClose);
 
   return (
     <div
@@ -73,12 +75,21 @@ function ESignatureModal({
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="esig-title"
+        tabIndex={-1}
         style={{
           width: "100%",
           maxWidth: "440px",
+          maxHeight: "calc(100vh - 48px)",
+          overflowY: "auto",
+          overscrollBehavior: "contain",
           background: "var(--bg-2)",
           border: "1px solid var(--line-2)",
           borderRadius: "var(--r-xl)",
+          boxShadow: "var(--shadow-lg)",
           padding: "24px",
           display: "flex",
           flexDirection: "column",
@@ -91,7 +102,7 @@ function ESignatureModal({
           <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 6px" }}>
             E-Signature
           </p>
-          <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--fg-1)", margin: "0 0 4px", fontFamily: "var(--font-sans)" }}>
+          <h2 id="esig-title" style={{ fontSize: "18px", fontWeight: 700, color: "var(--fg-1)", margin: "0 0 4px", fontFamily: "var(--font-sans)" }}>
             Approval Decision
           </h2>
           <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0 }}>
@@ -135,7 +146,7 @@ function ESignatureModal({
             placeholder="Approval or rejection notes…"
             style={{
               width: "100%",
-              background: "var(--bg-4)",
+              background: "var(--field-bg)",
               border: "1px solid var(--line-2)",
               borderRadius: "var(--r-sm)",
               padding: "10px 12px",
@@ -367,6 +378,7 @@ export function D7SignOffPage() {
               background: "var(--bg-2)",
               border: "1px solid var(--line-2)",
               borderRadius: "var(--r-lg)",
+              boxShadow: "var(--shadow-sm)",
               overflow: "hidden",
             }}
           >
@@ -421,6 +433,7 @@ export function D7SignOffPage() {
               background: "var(--bg-2)",
               border: "1px solid var(--line-2)",
               borderRadius: "var(--r-lg)",
+              boxShadow: "var(--shadow-sm)",
               overflow: "hidden",
             }}
           >

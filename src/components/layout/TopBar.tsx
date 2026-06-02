@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Bell, RotateCcw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ function getPageTitle(pathname: string): string {
 
 export function TopBar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const persona = usePersonaStore((state) => state.activePersona());
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
   const unreadCount = useNotificationStore((state) =>
@@ -71,7 +72,8 @@ export function TopBar() {
         background: "var(--glass-dark)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid var(--line-1)",
+        borderBottom: "1px solid var(--line-2)",
+        boxShadow: "var(--shadow-sm)",
         padding: "0 20px",
         gap: "16px",
         fontFamily: "var(--font-sans)",
@@ -79,7 +81,8 @@ export function TopBar() {
     >
       {/* Left — page title */}
       <div className="hidden xl:block shrink-0" style={{ minWidth: 0 }}>
-        <h4
+        <div
+          aria-label={`Current page: ${pageTitle}`}
           style={{
             margin: 0,
             fontSize: "17px",
@@ -93,7 +96,7 @@ export function TopBar() {
           }}
         >
           {pageTitle}
-        </h4>
+        </div>
       </div>
 
       {/* Center — search */}
@@ -101,14 +104,14 @@ export function TopBar() {
         <div
           className="flex items-center gap-2 w-full"
           style={{
-            background: "var(--bg-3)",
+            background: "var(--field-bg)",
             border: "1px solid var(--line-2)",
             borderRadius: "var(--r-sm)",
             padding: "0 12px",
             height: "36px",
           }}
         >
-          <Search size={14} strokeWidth={1.75} style={{ color: "var(--fg-4)", flexShrink: 0 }} />
+          <Search size={14} strokeWidth={1.75} aria-hidden="true" style={{ color: "var(--fg-4)", flexShrink: 0 }} />
           <span
             style={{
               flex: 1,
@@ -118,14 +121,14 @@ export function TopBar() {
               letterSpacing: "-0.01em",
             }}
           >
-            Search CAPAs, findings, actions...
+            Search CAPAs, findings, actions…
           </span>
           <span
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: "10px",
               color: "var(--fg-4)",
-              background: "var(--bg-4)",
+              background: "var(--field-bg-hover)",
               border: "1px solid var(--line-2)",
               borderRadius: "var(--r-xs)",
               padding: "2px 6px",
@@ -142,6 +145,7 @@ export function TopBar() {
         {/* Reset demo — subtle icon button */}
         <button
           onClick={() => openModal("resetDemoData")}
+          aria-label="Reset demo data"
           title="Reset demo data"
           style={{
             display: "flex",
@@ -154,7 +158,7 @@ export function TopBar() {
             border: "1px solid var(--line-2)",
             color: "var(--fg-3)",
             cursor: "pointer",
-            transition: "background var(--dur-fast), color var(--dur-fast)",
+            transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out)",
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = "var(--bg-3)";
@@ -165,11 +169,14 @@ export function TopBar() {
             (e.currentTarget as HTMLElement).style.color = "var(--fg-3)";
           }}
         >
-          <RotateCcw size={14} strokeWidth={1.75} />
+          <RotateCcw size={14} strokeWidth={1.75} aria-hidden="true" />
         </button>
 
         {/* Notification bell */}
         <button
+          type="button"
+          onClick={() => navigate("/notifications")}
+          aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
           title="Notifications"
           style={{
             display: "flex",
@@ -183,7 +190,7 @@ export function TopBar() {
             color: "var(--fg-2)",
             cursor: "pointer",
             position: "relative",
-            transition: "background var(--dur-fast), color var(--dur-fast)",
+            transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out)",
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = "var(--bg-3)";
@@ -194,9 +201,10 @@ export function TopBar() {
             (e.currentTarget as HTMLElement).style.color = "var(--fg-2)";
           }}
         >
-          <Bell size={16} strokeWidth={1.75} />
+          <Bell size={16} strokeWidth={1.75} aria-hidden="true" />
           {unreadCount > 0 && (
             <span
+              aria-hidden="true"
               style={{
                 position: "absolute",
                 top: "4px",
@@ -214,6 +222,7 @@ export function TopBar() {
         {/* Ask Nova — secondary button */}
         <button
           onClick={() => openNovaChat({})}
+          aria-label="Ask Nova"
           style={{
             display: "flex",
             alignItems: "center",
@@ -228,7 +237,7 @@ export function TopBar() {
             fontWeight: 600,
             fontFamily: "var(--font-sans)",
             cursor: "pointer",
-            transition: "background var(--dur-fast)",
+            transition: "background var(--dur-fast) var(--ease-out)",
             whiteSpace: "nowrap",
           }}
           onMouseEnter={(e) => {

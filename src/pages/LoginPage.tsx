@@ -143,6 +143,7 @@ export function LoginPage() {
             background: "var(--bg-2)",
             border: "1px solid var(--line-2)",
             borderRadius: "var(--r-lg)",
+            boxShadow: "var(--shadow-lg)",
             padding: "24px",
             display: "flex",
             flexDirection: "column",
@@ -154,6 +155,7 @@ export function LoginPage() {
             {/* Email */}
             <div>
               <label
+                htmlFor="login-email"
                 style={{
                   display: "block",
                   fontSize: "12px",
@@ -178,7 +180,10 @@ export function LoginPage() {
                   }}
                 />
                 <input
+                  id="login-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@bifarma.co.id"
@@ -198,6 +203,7 @@ export function LoginPage() {
             {/* Password */}
             <div>
               <label
+                htmlFor="login-password"
                 style={{
                   display: "block",
                   fontSize: "12px",
@@ -222,10 +228,13 @@ export function LoginPage() {
                   }}
                 />
                 <input
+                  id="login-password"
+                  name="password"
                   type="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Enter password…"
                   style={inputStyle()}
                   onFocus={(e) => {
                     e.currentTarget.style.borderColor = "var(--accent)";
@@ -278,7 +287,7 @@ export function LoginPage() {
                 fontSize: "11px",
                 fontFamily: "var(--font-mono)",
                 fontWeight: 600,
-                letterSpacing: "0.14em",
+                letterSpacing: "0.18em",
                 color: "var(--fg-4)",
                 whiteSpace: "nowrap",
               }}

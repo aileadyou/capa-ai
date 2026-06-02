@@ -177,6 +177,7 @@ export function D6VerificationPage() {
             background: "var(--bg-2)",
             border: "1px solid var(--line-2)",
             borderRadius: "var(--r-lg)",
+            boxShadow: "var(--shadow-sm)",
             padding: "20px",
             display: "flex",
             flexDirection: "column",
@@ -199,7 +200,7 @@ export function D6VerificationPage() {
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value as VerificationMethod)}
-                style={{ width: "100%", appearance: "none", background: "var(--bg-4)", border: `1px solid ${shouldShowBlocker && !method ? "var(--danger)" : "var(--line-2)"}`, borderRadius: "var(--r-sm)", padding: "9px 36px 9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", cursor: "pointer" }}
+                style={{ width: "100%", appearance: "none", background: "var(--field-bg)", border: `1px solid ${shouldShowBlocker && !method ? "var(--danger)" : "var(--line-2)"}`, borderRadius: "var(--r-sm)", padding: "9px 36px 9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", cursor: "pointer" }}
                 onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
               >
@@ -226,7 +227,7 @@ export function D6VerificationPage() {
               placeholder="Describe the outcome of the verification — what was checked, what was found, and whether it confirms the corrective actions are effective."
               style={{
                 width: "100%",
-                background: "var(--bg-4)",
+                background: "var(--field-bg)",
                 border: `1px solid ${shouldShowBlocker && result.trim().length < 30 ? "var(--danger)" : "var(--line-2)"}`,
                 borderRadius: "var(--r-sm)",
                 padding: "12px 14px",
@@ -257,7 +258,7 @@ export function D6VerificationPage() {
                 placeholder="Evidence filename.pdf"
                 style={{
                   flex: 1,
-                  background: "var(--bg-4)",
+                  background: "var(--field-bg)",
                   border: `1px solid ${shouldShowBlocker && !evidenceFileName.trim() ? "var(--danger)" : "var(--line-2)"}`,
                   borderRadius: "var(--r-sm)",
                   padding: "9px 12px",
@@ -272,7 +273,7 @@ export function D6VerificationPage() {
               <button
                 type="button"
                 onClick={uploadEvidence}
-                style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--bg-4)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "9px 14px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500, whiteSpace: "nowrap" }}
+                style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--field-bg)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "9px 14px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500, whiteSpace: "nowrap" }}
               >
                 <Upload size={13} />
                 Upload
@@ -348,7 +349,7 @@ export function D6VerificationPage() {
               }
               toast.success("Verification saved as draft");
             }}
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--bg-4)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "8px 16px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500 }}
+            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--field-bg)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "8px 16px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500 }}
           >
             <Save size={14} />
             Save Draft

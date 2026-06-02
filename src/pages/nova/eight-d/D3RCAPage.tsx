@@ -772,7 +772,7 @@ export function D3RCAPage() {
                   color: method === m ? "var(--accent)" : "var(--fg-2)",
                   border: `1px solid ${method === m ? "var(--accent-line)" : "var(--line-2)"}`,
                   cursor: "pointer",
-                  transition: "all var(--dur-fast) var(--ease-out)",
+                  transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out)",
                 }}
               >
                 {methodLabel[m]}
@@ -920,7 +920,7 @@ export function D3RCAPage() {
             rows={4}
             style={{
               width: "100%",
-              background: "var(--bg-4)",
+              background: "var(--field-bg)",
               border: "1px solid var(--line-2)",
               borderRadius: "var(--r-sm)",
               padding: "12px 14px",
@@ -1033,7 +1033,7 @@ export function D3RCAPage() {
               display: "flex",
               alignItems: "center",
               gap: "6px",
-              background: "var(--bg-4)",
+              background: "var(--field-bg)",
               color: "var(--fg-2)",
               border: "1px solid var(--line-2)",
               borderRadius: "var(--r-sm)",

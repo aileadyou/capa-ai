@@ -261,7 +261,7 @@ function StyledTextarea({
       rows={rows}
       style={{
         width: "100%",
-        background: "var(--bg-4)",
+        background: "var(--field-bg)",
         border: "1px solid var(--line-2)",
         borderRadius: "var(--r-sm)",
         padding: "10px 12px",
@@ -327,6 +327,7 @@ function WizardCard({ children }: { children: React.ReactNode }) {
         background: "var(--bg-2)",
         border: "1px solid var(--line-2)",
         borderRadius: "var(--r-lg)",
+        boxShadow: "var(--shadow-sm)",
         padding: "32px",
       }}
     >
@@ -691,7 +692,7 @@ export function CapaIntakePage() {
                     fontFamily: "var(--font-mono)",
                     color: "var(--fg-3)",
                     margin: 0,
-                    background: "var(--bg-4)",
+                    background: "var(--field-bg)",
                     padding: "4px 8px",
                     borderRadius: "var(--r-sm)",
                     border: "1px solid var(--line-1)",
@@ -725,7 +726,7 @@ export function CapaIntakePage() {
                     fontFamily: "var(--font-sans)",
                     marginTop: "auto",
                     width: "100%",
-                    transition: "all var(--dur-fast) var(--ease-out)",
+                    transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out)",
                   }}
                 >
                   {isLoading && selectedType === card.type ? (
@@ -986,7 +987,7 @@ export function CapaIntakePage() {
                   <div
                     key={factor.factor}
                     style={{
-                      background: "var(--bg-4)",
+                      background: "var(--field-bg)",
                       borderRadius: "var(--r-sm)",
                       padding: "8px 10px",
                       border: "1px solid var(--line-1)",
@@ -1051,7 +1052,7 @@ export function CapaIntakePage() {
                     borderRadius: "var(--r-md)",
                     padding: "14px",
                     cursor: "pointer",
-                    transition: "all var(--dur-fast) var(--ease-out)",
+                    transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
                     position: "relative",
                   }}
                 >
@@ -1123,7 +1124,7 @@ export function CapaIntakePage() {
               placeholder="Enter a descriptive title for this CAPA"
               style={{
                 width: "100%",
-                background: "var(--bg-4)",
+                background: "var(--field-bg)",
                 border: "1px solid var(--line-2)",
                 borderRadius: "var(--r-sm)",
                 padding: "9px 12px",
