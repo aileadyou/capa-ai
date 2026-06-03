@@ -4,6 +4,8 @@ import { useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, PenLine, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell } from "@/components/layout/EightDShell";
+import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
+import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import { ScorePill } from "@/components/shared/ScorePill";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore, useNotificationStore } from "@/store";
@@ -326,6 +328,23 @@ function ComprehensiveReview({ capa }: { capa: CAPACase }) {
   );
 }
 
+function buildSignOffReadinessSuggestion(capa: CAPACase, approvalChain: Approver[], isAuditReady: boolean) {
+  const missingItems = [
+    capa.correctiveActions.length === 0 ? "corrective actions are not recorded" : "",
+    capa.preventiveActions.length === 0 ? "preventive actions are not recorded" : "",
+    !capa.verification.method ? "verification method is missing" : "",
+    !capa.verification.result ? "verification result narrative is missing" : "",
+    capa.verification.evidenceFileNames.length === 0 ? "verification evidence filename is missing" : "",
+    !isAuditReady ? `quality score is ${capa.score.total}, below the sign-off threshold of 80` : "",
+  ].filter(Boolean);
+
+  if (missingItems.length > 0) {
+    return `Do not proceed to final sign-off yet. Before approving ${capa.id}, resolve: ${missingItems.join("; ")}. After those items are closed, route the CAPA through ${approvalChain.map((approver) => approver.role).join(" → ")} for e-signature.`;
+  }
+
+  return `${capa.id} appears ready for D7 sign-off review. The CAPA has a quality score of ${capa.score.total}, recorded RCA, corrective/preventive actions, and verification evidence. Approvers should still confirm that the evidence file(s), action completion records, and D1-D6 narratives match the source finding before e-signature.`;
+}
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function D7SignOffPage() {
@@ -363,6 +382,7 @@ export function D7SignOffPage() {
   const nextApprover = approvalChain.find((a) => !approvedIds.has(a.personaId));
   const allApproved = approvalChain.every((a) => approvedIds.has(a.personaId));
   const showScoreBlocker = hasTriedApproval && !isAuditReady;
+  const signOffReadinessSuggestion = buildSignOffReadinessSuggestion(capa, approvalChain, isAuditReady);
 
   function openESignature(approver: Approver) {
     setHasTriedApproval(true);
@@ -503,6 +523,20 @@ export function D7SignOffPage() {
 
           {/* ── Comprehensive review ──────────────────────────────────── */}
           <ComprehensiveReview capa={capa} />
+
+          {/* ── Nova sign-off readiness assist ────────────────────────── */}
+          <NovaAssistPanel
+            title="Ask Nova to review sign-off readiness"
+            description="Use Nova as a final reviewer before e-signature. The draft focuses on D1-D6 completeness, score readiness, evidence, and approval-chain risk."
+          >
+            <NovaSuggestionBlock
+              context="D7 sign-off readiness"
+              suggestion={signOffReadinessSuggestion}
+              reasoning={`Based on ${capa.id} D1-D6 summary, score ${capa.score.total}/100, ${capa.correctiveActions.length} corrective actions, ${capa.preventiveActions.length} preventive actions, and ${capa.verification.evidenceFileNames.length} verification evidence file(s).`}
+              capaId={capa.id}
+              suggestionId="d7-signoff"
+            />
+          </NovaAssistPanel>
 
           {/* ── Final quality gate ────────────────────────────────────── */}
           <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">

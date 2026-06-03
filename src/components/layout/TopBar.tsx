@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { resetDemoData, useNotificationStore, usePersonaStore, useUIStore } from "@/store";
+import { getNovaRouteContext } from "@/utils/novaRouteContext";
 
 const routeTitles: Record<string, string> = {
   "/": "My work",
@@ -118,7 +119,7 @@ export function TopBar() {
 
         {/* Ask Nova — secondary button */}
         <button
-          onClick={() => openNovaChat({})}
+          onClick={() => openNovaChat(getNovaRouteContext(location.pathname))}
           aria-label="Ask Nova"
           className="flex h-[34px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3 font-sans text-sm font-semibold text-primary transition-[background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-primary/20"
         >

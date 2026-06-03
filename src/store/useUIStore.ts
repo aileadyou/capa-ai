@@ -13,6 +13,9 @@ interface NovaChatContext {
   capaId?: string;
   step?: string;
   source?: string;
+  routePath?: string;
+  stepLabel?: string;
+  pageTitle?: string;
   suggestionId?: string;
   suggestionContext?: string;
   suggestionText?: string;

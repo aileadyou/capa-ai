@@ -211,7 +211,7 @@ export const openRouterNovaProvider: NovaProvider = {
   async getChatResponse(step, message) {
     const capaIdMatch = step.match(/CAPA-\d{4}-\d{4}/)?.[0];
     const packet = capaIdMatch ? getAnalysisPacketByCapaId(capaIdMatch) : undefined;
-    const messages = buildNovaMessages("ask_nova_chat", { packet, step, message });
+    const messages = buildNovaMessages("ask_nova_chat", { packet, step: describeChatStep(step), message });
     return requestOpenRouter("ask_nova_chat", messages, 900);
   },
 };
@@ -222,6 +222,24 @@ function shouldUseOpenRouter() {
 
 function shouldFallbackToMock() {
   return import.meta.env.VITE_NOVA_AI_MODE !== "openrouter";
+}
+
+function describeChatStep(step: string) {
+  const [, rawStep = step] = step.split(":");
+  const labels: Record<string, string> = {
+    "capa-overview": "CAPA overview",
+    "d1-problem": "D1 Problem statement",
+    "d2-containment": "D2 Containment",
+    "d3-rca": "D3 Root cause analysis",
+    "d4-ca": "D4 Corrective action",
+    "d5-pa": "D5 Preventive action",
+    "d6-verification": "D6 Verification",
+    "d7-signoff": "D7 Sign-off",
+    "capa-intake": "CAPA intake",
+    findings: "Findings",
+    global: "Global workspace",
+  };
+  return labels[rawStep] ?? rawStep;
 }
 
 export function getNovaProvider(): NovaProvider {

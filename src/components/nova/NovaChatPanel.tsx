@@ -22,6 +22,7 @@ export function NovaChatPanel() {
     novaChatContext.capaId,
     novaChatContext.step,
     novaChatContext.suggestionId,
+    novaChatContext.routePath,
   ].filter(Boolean).join(":");
   const [draft, setDraft] = useState("");
   const lastContextKeyRef = useRef("");
@@ -37,6 +38,10 @@ export function NovaChatPanel() {
 
   const quickPrompts = useMemo(() => getChatPrompts(step), [step]);
   const { ref: panelRef } = useDialog<HTMLElement>(isOpen, closeNovaChat);
+  const contextLabel =
+    novaChatContext.source === "nova-suggestion"
+      ? novaChatContext.suggestionContext
+      : novaChatContext.pageTitle ?? novaChatContext.stepLabel;
 
   useEffect(() => {
     if (!isOpen || !contextKey || lastContextKeyRef.current === contextKey) return;
@@ -105,6 +110,17 @@ export function NovaChatPanel() {
             <p className="m-0 text-xs leading-[1.55] text-foreground-secondary">
               {novaChatContext.suggestionContext ? `${novaChatContext.suggestionContext}: ` : ""}
               {novaChatContext.suggestionText}
+            </p>
+          </div>
+        )}
+        {novaChatContext.source !== "nova-suggestion" && contextLabel && (
+          <div className="rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3 py-2.5">
+            <p className="mb-1.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+              Page context
+            </p>
+            <p className="m-0 text-xs leading-[1.55] text-foreground-secondary">
+              {novaChatContext.capaId ? `${novaChatContext.capaId}: ` : ""}
+              {contextLabel}
             </p>
           </div>
         )}
