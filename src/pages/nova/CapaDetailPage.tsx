@@ -21,9 +21,10 @@ import { D6VerificationPage } from "@/pages/nova/eight-d/D6VerificationPage";
 import { D7SignOffPage } from "@/pages/nova/eight-d/D7SignOffPage";
 import { eightDSteps } from "@/routes";
 import { useCapaStore, usePersonaStore } from "@/store";
-import type { CAPACase, EightDStep, IntakeReview, PreFillContext } from "@/types";
+import type { CAPACase, EightDStep, IntakeDecision, PersonaID, PreFillContext } from "@/types";
 import { formatCAPAType, formatDate, formatDateTime } from "@/utils/formatters";
 import { getScoreLiftTips } from "@/utils/scoring";
+import { canFillCAPA } from "@/utils/personaAccess";
 import { cn } from "@/lib/utils";
 
 /* ── Mock due dates (no dueDate field in data) ───────────────────── */
@@ -69,12 +70,18 @@ const EMBEDDED_STEP_COMPONENTS: Record<EightDStep, React.ComponentType> = {
 
 /* ── Helpers ─────────────────────────────────────────────────────── */
 
+// While a CAPA sits in the intake review gate, the 8D investigation is locked —
+// Andi cannot start filling steps until both reviewers approve.
+const INTAKE_BLOCKED_STATUSES = ["pending_review", "revision_requested", "rejected"];
+const isIntakeBlocked = (status: string) => INTAKE_BLOCKED_STATUSES.includes(status);
+
 function getStepState(
   step: EightDStep,
   currentStep: EightDStep,
   status: string,
 ): "done" | "active" | "locked" {
   if (status === "closed") return "done";
+  if (isIntakeBlocked(status)) return "locked";
   const ci = eightDSteps.indexOf(currentStep);
   const si = eightDSteps.indexOf(step);
   if (si < ci) return "done";
@@ -100,7 +107,7 @@ const MONO_EYEBROW_CLASS = "font-sans text-[10px] font-semibold uppercase tracki
 function EyebrowLeft({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="mb-2 mt-0 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
+      className="mb-2 mt-0 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-secondary font-semibold"
     >
       {children}
     </p>
@@ -118,11 +125,18 @@ function StepItem({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const visualState = isSelected ? "active" : state;
+  // "active"  = user is currently viewing this step
+  // "current" = workflow's in-progress checkpoint, but user is viewing something else
+  const visualState = isSelected
+    ? "active"
+    : state === "active"
+      ? "current"
+      : state;
 
   const icon = {
     done: <Check size={12} strokeWidth={2.5} />,
     active: <CircleDot size={12} strokeWidth={2} />,
+    current: <CircleDot size={12} strokeWidth={2} />,
     locked: <Lock size={11} strokeWidth={2} />,
   }[visualState];
 
@@ -132,6 +146,7 @@ function StepItem({
         "flex items-center gap-2 rounded-[var(--r-sm)] px-2.5 py-2 font-sans text-xs no-underline transition-[background] duration-200",
         visualState === "done" && "cursor-pointer border border-border-subtle bg-card text-foreground-tertiary",
         visualState === "active" && "cursor-pointer border border-l-[3px] border-[var(--accent-line)] border-l-primary bg-[var(--accent-soft)] font-semibold text-primary",
+        visualState === "current" && "cursor-pointer border border-border-subtle bg-card text-foreground-secondary",
         visualState === "locked" && "cursor-not-allowed border border-border-subtle bg-background text-foreground-faint",
       )}
     >
@@ -141,9 +156,16 @@ function StepItem({
       >
         {STEP_SHORT[step]}
       </span>
+      <div className="flex flex-col gap-1">
       <span className="flex-1 text-xs">
         {STEP_LABELS[step].replace(/^D\d+ /, "")}
       </span>
+      {visualState === "current" && (
+        <span className="shrink-0 rounded-[var(--r-full)] bg-warning/15 px-1.5 py-px font-sans text-[9px] font-semibold uppercase tracking-[0.08em] text-warning">
+          In progress
+        </span>
+      )}
+      </div>
     </div>
   );
 
@@ -173,24 +195,6 @@ function LeftColumn({
   onSelectStep: (step: EightDStep) => void;
   onOverview: () => void;
 }) {
-  const personas = usePersonaStore((s) => s.personas);
-  const pic = personas.find((p) => p.id === capa.assignedTo);
-  const scoreTips = getScoreLiftTips(capa.score);
-  const scoreRows = [
-    { label: "Problem", value: capa.score.problemSpecificity },
-    { label: "RCA", value: capa.score.rootCauseDepth },
-    { label: "Actions", value: capa.score.effectiveness },
-    { label: "Containment", value: capa.score.containment },
-  ];
-  const dueRaw = MOCK_DUE[capa.id];
-  const dueStr = dueRaw
-    ? new Date(dueRaw).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-    : "—";
-  const isDue = dueRaw ? new Date(dueRaw) < new Date("2026-05-31") : false;
-  const sourceId = capa.preFill.source === "Q100+"
-    ? (capa.preFill as any).findingId ?? capa.findingId
-    : (capa.preFill as any).deviationId ?? (capa.preFill as any).complaintId ?? capa.findingId;
-
   return (
     <div
       className="sticky top-[72px] flex h-[calc(100vh-96px)] w-[220px] shrink-0 flex-col gap-5 overflow-y-auto pr-1"
@@ -224,146 +228,12 @@ function LeftColumn({
           ))}
         </div>
       </div>
-
-      {/* Divider */}
-      <div className="border-t border-border-subtle" />
-
-      {/* CAPA Info */}
-      <div>
-        <EyebrowLeft>CAPA Info</EyebrowLeft>
-        <div
-          className="flex flex-col gap-2.5 rounded-[var(--r-md)] border border-[var(--line-2)] bg-card p-3 shadow-sm"
-        >
-          {[
-            { label: "PIC", value: pic?.displayName ?? capa.assignedTo ?? "—" },
-            { label: "Dept", value: capa.department },
-            {
-              label: "Due date",
-              value: dueStr,
-              isDanger: isDue,
-            },
-            { label: "Source", value: sourceId },
-          ].map(({ label, value, isDanger }) => (
-            <div key={label}>
-              <p
-                className="mb-0.5 mt-0 font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-faint"
-              >
-                {label}
-              </p>
-              <p
-                className={cn(
-                  "m-0 break-words font-sans text-xs [overflow-wrap:anywhere]",
-                  isDanger ? "font-semibold text-destructive" : "font-normal text-foreground-secondary",
-                )}
-              >
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Quality Score */}
-      <div>
-        <EyebrowLeft>Quality Score</EyebrowLeft>
-        <div
-          id="score"
-          className="rounded-[var(--r-md)] border border-[var(--line-2)] bg-card px-3 py-3.5 shadow-sm"
-        >
-          <div className="flex items-baseline justify-between gap-2">
-            <p
-              className={cn(
-                "m-0 font-sans text-[44px] font-semibold leading-none tracking-[-0.03em] tabular-nums",
-                capa.score.total >= 80
-                  ? "text-success"
-                  : capa.score.total >= 60
-                    ? "text-warning"
-                    : "text-destructive",
-              )}
-            >
-              {capa.score.total}
-            </p>
-            <span
-              className={cn(
-                "whitespace-nowrap rounded-[var(--r-full)] px-[7px] py-0.5 font-sans text-[10px]",
-                capa.score.isAuditReady
-                  ? "bg-[var(--success-soft)] text-success"
-                  : "bg-[var(--warning-soft)] text-warning",
-              )}
-            >
-              {capa.score.isAuditReady ? "Audit ready" : "Needs lift"}
-            </span>
-          </div>
-          <p
-            className="mb-3 mt-1.5 font-sans text-[10px] uppercase tracking-[0.18em] text-foreground-tertiary"
-          >
-            Total / 100
-          </p>
-
-          <div className="flex flex-col gap-2.5">
-            {scoreRows.map((row) => {
-              const pct = (row.value / 25) * 100;
-              const colorClass =
-                row.value >= 20
-                  ? "bg-success"
-                  : row.value >= 15
-                    ? "bg-warning"
-                    : "bg-destructive";
-              return (
-                <div key={row.label}>
-                  <div className="mb-1 flex justify-between gap-2">
-                    <span className="text-[11px] font-semibold text-foreground-secondary">{row.label}</span>
-                    <span className="font-sans text-[11px] text-foreground-tertiary">
-                      {row.value}/25
-                    </span>
-                  </div>
-                  <div
-                    className="h-1.5 overflow-hidden rounded-[var(--r-full)] bg-field"
-                  >
-                    <div
-                      className={cn("h-full rounded-[var(--r-full)] transition-[width] [transition-duration:var(--dur-tab)] [transition-timing-function:var(--ease-out)]", colorClass)}
-                      style={{
-                        width: `${pct}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {scoreTips.length > 0 && (
-            <div
-              className="mt-3 flex flex-col gap-2 border-t border-border-subtle pt-3"
-            >
-              <p
-                className="m-0 font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-tertiary"
-              >
-                Lift tips
-              </p>
-              {scoreTips.map((tip) => (
-                <div
-                  key={`${tip.field}-${tip.subScore}`}
-                  className="rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-[9px] py-2"
-                >
-                  <p className="mb-[3px] mt-0 text-[11px] font-semibold text-foreground-secondary">
-                    {tip.field} +{tip.scoreGain}
-                  </p>
-                  <p className="m-0 text-[11px] leading-6 text-foreground-tertiary">
-                    {tip.suggestion}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   RIGHT COLUMN — Content
+   MIDDLE COLUMN — Content
    ════════════════════════════════════════════════════════════════════ */
 
 function Pill({
@@ -394,7 +264,7 @@ function InfoGrid({ rows }: { rows: Array<{ label: string; value: string; span?:
         value ? (
           <div key={label} className={cn(span && "col-span-full")}>
             <p
-              className={cn(MONO_EYEBROW_CLASS, "mb-[3px] mt-0")}
+              className={cn(MONO_EYEBROW_CLASS, "mb-[3px] mt-0 ")}
             >
               {label}
             </p>
@@ -489,54 +359,168 @@ function SourceDataCard({ prefill }: { prefill: PreFillContext }) {
   );
 }
 
-function IntakeReviewCard({ reviews }: { reviews: IntakeReview[] }) {
-  const decisionStyle: Record<string, { pill: string; label: string }> = {
-    accepted: { pill: "bg-[var(--success-soft)] text-success", label: "Accepted" },
-    revision_requested: { pill: "bg-[var(--warning-soft)] text-warning", label: "Revision Requested" },
-    rejected: { pill: "bg-[var(--danger-soft)] text-destructive", label: "Rejected" },
-  };
+const INTAKE_DECISION_STYLE: Record<string, { pill: string; label: string }> = {
+  accepted: { pill: "bg-[var(--success-soft)] text-success", label: "Continue to CAPA" },
+  revision_requested: { pill: "bg-[var(--warning-soft)] text-warning", label: "Sent for Re-work" },
+  rejected: { pill: "bg-[var(--danger-soft)] text-destructive", label: "Rejected" },
+};
+
+/** One reviewer's decision controls — only shown for the active persona's own pending row. */
+function IntakeDecisionControls({
+  capaId,
+  reviewerPersonaId,
+}: {
+  capaId: string;
+  reviewerPersonaId: PersonaID;
+}) {
+  const recordIntakeDecision = useCapaStore((s) => s.recordIntakeDecision);
+  const [notes, setNotes] = useState("");
+
+  function decide(decision: IntakeDecision, label: string) {
+    recordIntakeDecision(capaId, reviewerPersonaId, decision, notes);
+    toast.success(`Decision recorded: ${label}`, {
+      description:
+        decision === "accepted"
+          ? "Once both reviewers continue, Andi can start the 8D investigation."
+          : decision === "revision_requested"
+            ? "Andi will be asked to revise the intake and resubmit."
+            : "The CAPA has been rejected at intake.",
+    });
+  }
+
+  return (
+    <div className="mt-3 border-t border-border-subtle pt-3">
+      <p className="mb-1.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+        Your intake decision
+      </p>
+      <textarea
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={2}
+        placeholder="Notes for Andi (optional) — what to fix, or why you're rejecting."
+        className="box-border mb-2.5 w-full resize-y rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3 py-2 font-sans text-[13px] leading-[1.5] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
+      />
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => decide("accepted", "Continue to CAPA")}
+          className="flex-1 cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-3 py-2 font-sans text-[13px] font-semibold text-primary-foreground"
+        >
+          Continue to CAPA
+        </button>
+        <button
+          type="button"
+          onClick={() => decide("revision_requested", "Send for Re-work")}
+          className="flex-1 cursor-pointer rounded-[var(--r-sm)] border border-warning/40 bg-[var(--warning-soft)] px-3 py-2 font-sans text-[13px] font-semibold text-warning"
+        >
+          Send for Re-work
+        </button>
+        <button
+          type="button"
+          onClick={() => decide("rejected", "Reject")}
+          className="flex-1 cursor-pointer rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3 py-2 font-sans text-[13px] font-semibold text-destructive"
+        >
+          Reject
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function IntakeReviewCard({ capa }: { capa: CAPACase }) {
+  const activePersonaId = usePersonaStore((s) => s.activePersonaId);
+  const reviews = capa.intakeReviews ?? [];
 
   return (
     <Card>
       <CardLabel>Intake Review</CardLabel>
       <div className="flex flex-col gap-3 pt-1">
         {reviews.map((r) => {
-          const ds = r.decision ? decisionStyle[r.decision] : null;
+          const ds = r.decision ? INTAKE_DECISION_STYLE[r.decision] : null;
+          const isActiveReviewer = r.reviewerPersonaId === activePersonaId;
+          const canDecide = isActiveReviewer && !r.decision && capa.status === "pending_review";
           return (
             <div
               key={r.reviewerPersonaId}
-              className="flex items-start justify-between gap-3 rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-3 py-2.5"
+              className={cn(
+                "rounded-[var(--r-sm)] border bg-elevated px-3 py-2.5",
+                canDecide ? "border-[var(--accent-line)]" : "border-border-subtle",
+              )}
             >
-              <div className="min-w-0">
-                <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-foreground">
-                  {r.reviewerName}
-                </p>
-                <p className="m-0 text-xs text-foreground-tertiary">{r.role}</p>
-                {r.notes && (
-                  <p className="mb-0 mt-1.5 text-xs italic text-foreground-tertiary">
-                    "{r.notes}"
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-foreground">
+                    {r.reviewerName}
+                    {isActiveReviewer && (
+                      <span className="ml-1.5 rounded-[var(--r-full)] bg-[var(--accent-soft)] px-1.5 py-px font-sans text-[10px] font-semibold text-primary">
+                        You
+                      </span>
+                    )}
                   </p>
-                )}
-                {r.reviewedAt && (
-                  <p className="mb-0 mt-1 font-sans text-[11px] text-foreground-faint">
-                    {formatDateTime(r.reviewedAt)}
-                  </p>
-                )}
+                  <p className="m-0 text-xs text-foreground-tertiary">{r.role}</p>
+                  {r.notes && (
+                    <p className="mb-0 mt-1.5 text-xs italic text-foreground-tertiary">
+                      "{r.notes}"
+                    </p>
+                  )}
+                  {r.reviewedAt && (
+                    <p className="mb-0 mt-1 font-sans text-[11px] text-foreground-faint">
+                      {formatDateTime(r.reviewedAt)}
+                    </p>
+                  )}
+                </div>
+                <div className="shrink-0">
+                  {ds ? (
+                    <span className={`rounded-[var(--r-full)] px-2.5 py-0.5 font-sans text-[11px] font-semibold ${ds.pill}`}>
+                      {ds.label}
+                    </span>
+                  ) : (
+                    <span className="rounded-[var(--r-full)] border border-border-subtle bg-field px-2.5 py-0.5 font-sans text-[11px] text-foreground-faint">
+                      Pending
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="shrink-0">
-                {ds ? (
-                  <span className={`rounded-[var(--r-full)] px-2.5 py-0.5 font-sans text-[11px] font-semibold ${ds.pill}`}>
-                    {ds.label}
-                  </span>
-                ) : (
-                  <span className="rounded-[var(--r-full)] border border-border-subtle bg-field px-2.5 py-0.5 font-sans text-[11px] text-foreground-faint">
-                    Pending
-                  </span>
-                )}
-              </div>
+              {canDecide && (
+                <IntakeDecisionControls capaId={capa.id} reviewerPersonaId={r.reviewerPersonaId} />
+              )}
             </div>
           );
         })}
+      </div>
+    </Card>
+  );
+}
+
+/** Read-only view of Andi's intake answers, so reviewers can judge gate quality + severity. */
+function IntakeSubmissionCard({ capa }: { capa: CAPACase }) {
+  if (capa.gateAnswers.length === 0) return null;
+  return (
+    <Card>
+      <CardLabel>Intake submission</CardLabel>
+      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+        <Pill>Title: {capa.title}</Pill>
+        <Pill
+          className={
+            capa.impact.severity === "Minor"
+              ? "bg-[var(--warning-soft)] text-warning"
+              : "bg-[var(--danger-soft)] text-destructive"
+          }
+        >
+          Severity: {capa.impact.severity}
+        </Pill>
+      </div>
+      <div className="flex flex-col gap-3">
+        {capa.gateAnswers.map((answer) => (
+          <div key={answer.questionId}>
+            <p className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground-faint">
+              {answer.question}
+            </p>
+            <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+              {answer.answer}
+            </p>
+          </div>
+        ))}
       </div>
     </Card>
   );
@@ -882,7 +866,65 @@ function EditableStepWorkspace({
   );
 }
 
-function RightColumn({
+/** Status banner shown on the overview while a CAPA is held in the intake gate. */
+function IntakeStatusBanner({ capa }: { capa: CAPACase }) {
+  const activePersonaId = usePersonaStore((s) => s.activePersonaId);
+  const myReview = capa.intakeReviews?.find((r) => r.reviewerPersonaId === activePersonaId);
+  const editIntakeUrl = `/capa/new?type=${capa.type}&sourceId=${capa.findingId}`;
+
+  if (capa.status === "pending_review") {
+    const isReviewer = Boolean(myReview);
+    const reviewerActed = Boolean(myReview?.decision);
+    const title = !isReviewer
+      ? "Submitted — awaiting intake review"
+      : reviewerActed
+        ? "Your decision is recorded — awaiting the second reviewer"
+        : "Action needed: record your intake decision";
+    const body = !isReviewer
+      ? "This CAPA is locked until Siti Rahmawati (QA) and Bambang Saputra (Department Head) both approve the intake. The 8D investigation can't start yet."
+      : reviewerActed
+        ? "Thanks — once the other reviewer also continues, Andi can begin the 8D investigation."
+        : "Review the intake submission and reviewer panel, then choose Continue to CAPA, Send for Re-work, or Reject in the Intake Review card above.";
+    return (
+      <div className="rounded-[var(--r-md)] border-l-[3px] border-l-warning bg-[var(--warning-soft)] px-5 py-4">
+        <p className="mb-1 mt-0 font-sans text-[13px] font-semibold text-warning">{title}</p>
+        <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">{body}</p>
+      </div>
+    );
+  }
+
+  if (capa.status === "revision_requested") {
+    return (
+      <div className="rounded-[var(--r-md)] border-l-[3px] border-l-warning bg-[var(--warning-soft)] px-5 py-4">
+        <p className="mb-1 mt-0 font-sans text-[13px] font-semibold text-warning">Re-work requested</p>
+        <p className="m-0 mb-3 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+          A reviewer asked for changes to the gate questions or impact classification. Read their notes in the Intake Review card, then revise and resubmit.
+        </p>
+        {activePersonaId === "initiator" && (
+          <Link
+            to={editIntakeUrl}
+            className="inline-flex items-center gap-2 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-2 font-sans text-[13px] font-semibold text-primary-foreground no-underline"
+          >
+            Revise &amp; resubmit intake
+            <ArrowRight size={14} />
+          </Link>
+        )}
+      </div>
+    );
+  }
+
+  // rejected
+  return (
+    <div className="rounded-[var(--r-md)] border-l-[3px] border-l-destructive bg-[var(--danger-soft)] px-5 py-4">
+      <p className="mb-1 mt-0 font-sans text-[13px] font-semibold text-destructive">Rejected at intake review</p>
+      <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+        A reviewer decided this finding does not warrant a full CAPA. See their notes in the Intake Review card. No 8D investigation will proceed.
+      </p>
+    </div>
+  );
+}
+
+function MiddleColumn({
   capa,
   selectedStep,
   onSelectStep,
@@ -893,8 +935,13 @@ function RightColumn({
   onSelectStep: (step: EightDStep) => void;
   onBackToOverview: () => void;
 }) {
-  if (selectedStep) {
-    if (capa.status === "closed") {
+  const activePersonaId = usePersonaStore((s) => s.activePersonaId);
+  const canEdit = canFillCAPA(activePersonaId);
+
+  if (selectedStep && !isIntakeBlocked(capa.status)) {
+    // Closed cases are read-only for everyone; for open cases, only the
+    // initiator gets the editable workspace — other personas view it read-only.
+    if (capa.status === "closed" || !canEdit) {
       return <StepDetailView capa={capa} step={selectedStep} onBackToOverview={onBackToOverview} />;
     }
 
@@ -938,18 +985,21 @@ function RightColumn({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4">
-      {/* Breadcrumb */}
-      <p
-        className="m-0 font-sans text-xs text-foreground-tertiary"
-      >
-        <Link to="/capa" className="text-foreground-faint no-underline hover:text-foreground-secondary">
-          All CAPAs
-        </Link>
-        {" / "}
-        <span className="text-foreground-secondary">{capa.id}</span>
-      </p>
 
-      {/* Badge row */}
+
+
+      {/* Title */}
+      <div className="flex flex-row w-full justify-between items-end">
+        <div className="flex flex-col gap-0">
+
+          <div className="flex flex-row gap-4">
+   <h1
+          className="font-sans text-[22px] font-semibold tracking-[-0.018em] text-foreground"
+        >
+          {capa.id}
+        </h1>
+
+                  {/* Badge row */}
       <div className="flex flex-wrap items-center gap-1.5">
         <Pill>{source}</Pill>
         <Pill>{formatCAPAType(capa.type)}</Pill>
@@ -960,42 +1010,238 @@ function RightColumn({
           {statusLabel[capa.status] ?? capa.status}
         </Pill>
       </div>
-
-      {/* Title */}
-      <div>
-        <h1
-          className="mb-1.5 mt-0 font-sans text-[22px] font-semibold tracking-[-0.018em] text-foreground"
-        >
-          {capa.id}
-        </h1>
+          </div>
+     
         <p
-          className="m-0 font-sans text-sm leading-[1.6] text-foreground-secondary"
+          className="font-sans text-sm leading-[1.6] text-foreground-secondary"
         >
           {capa.title}
         </p>
+        
+</div>
+              <div
+        className="mb-6 flex justify-end gap-2"
+      >
+        <button
+          onClick={() =>
+            toast.info("Export PDF", { description: "PDF export is mocked in this demo." })
+          }
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground"
+        >
+          <Download size={14} strokeWidth={1.75} />
+          Export PDF
+        </button>
+        <button
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground"
+        >
+          <ScrollText size={14} strokeWidth={1.75} />
+          Audit trail
+        </button>
+      </div>
+
       </div>
 
       {/* Source data */}
       <SourceDataCard prefill={capa.preFill} />
 
+      {/* Intake submission (gate answers + severity) for reviewers */}
+      {capa.intakeReviews && capa.intakeReviews.length > 0 && (
+        <IntakeSubmissionCard capa={capa} />
+      )}
+
       {/* Intake Review */}
       {capa.intakeReviews && capa.intakeReviews.length > 0 && (
-        <IntakeReviewCard reviews={capa.intakeReviews} />
+        <IntakeReviewCard capa={capa} />
       )}
 
       {/* Nova Summary */}
       <NovaSummaryCard capa={capa} />
 
-      {/* CTA */}
-      <div className="flex justify-end pb-8">
-        <button
-          type="button"
-          onClick={() => onSelectStep(capa.currentStep)}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2.5 font-sans text-sm font-semibold text-primary-foreground"
+      {/* CTA — gated behind intake review, then behind initiator-only editing */}
+      {isIntakeBlocked(capa.status) ? (
+        <div className="pb-8">
+          <IntakeStatusBanner capa={capa} />
+        </div>
+      ) : (
+        <div className="flex items-center justify-end gap-3 pb-8">
+          {!canEdit && (
+            <p className="m-0 font-sans text-xs text-foreground-tertiary">
+              Only the initiator can fill in this CAPA.
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => onSelectStep(capa.currentStep)}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2.5 font-sans text-sm font-semibold text-primary-foreground"
+          >
+            {canEdit ? getCtaLabel(capa.currentStep) : `View ${STEP_SHORT[capa.currentStep]}`}
+            <ArrowRight size={16} strokeWidth={2} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RightColumn({
+  capa,
+ 
+}: {
+  capa: CAPACase;
+
+}) {
+  const personas = usePersonaStore((s) => s.personas);
+  const pic = personas.find((p) => p.id === capa.assignedTo);
+  const scoreTips = getScoreLiftTips(capa.score);
+  const scoreRows = [
+    { label: "Problem", value: capa.score.problemSpecificity },
+    { label: "RCA", value: capa.score.rootCauseDepth },
+    { label: "Actions", value: capa.score.effectiveness },
+    { label: "Containment", value: capa.score.containment },
+  ];
+  const dueRaw = MOCK_DUE[capa.id];
+  const dueStr = dueRaw
+    ? new Date(dueRaw).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    : "—";
+  const isDue = dueRaw ? new Date(dueRaw) < new Date("2026-05-31") : false;
+  const sourceId = capa.preFill.source === "Q100+"
+    ? (capa.preFill as any).findingId ?? capa.findingId
+    : (capa.preFill as any).deviationId ?? (capa.preFill as any).complaintId ?? capa.findingId;
+
+  return (
+    <div
+      className="sticky top-[72px] flex h-[calc(100vh-96px)] w-[220px] shrink-0 flex-col gap-5 overflow-y-auto pr-1"
+    >
+
+      {/* CAPA Info */}
+      <div>
+        <EyebrowLeft>CAPA Info</EyebrowLeft>
+        <div
+          className="flex flex-col gap-2.5 rounded-[var(--r-md)] border border-[var(--line-2)] bg-card p-3 shadow-sm"
         >
-          {getCtaLabel(capa.currentStep)}
-          <ArrowRight size={16} strokeWidth={2} />
-        </button>
+          {[
+            { label: "PIC", value: pic?.displayName ?? capa.assignedTo ?? "—" },
+            { label: "Dept", value: capa.department },
+            {
+              label: "Due date",
+              value: dueStr,
+              isDanger: isDue,
+            },
+            { label: "Source", value: sourceId },
+          ].map(({ label, value, isDanger }) => (
+            <div key={label}>
+              <p
+                className="mb-0.5 mt-0 font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-secondary font-bold"
+              >
+                {label}
+              </p>
+              <p
+                className={cn(
+                  "m-0 break-words font-sans text-xs [overflow-wrap:anywhere] font-bold!",
+                  isDanger ? "font-semibold text-destructive" : "font-normal text-foreground-secondary",
+                )}
+              >
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quality Score */}
+      <div>
+        <EyebrowLeft>Quality Score</EyebrowLeft>
+        <div
+          id="score"
+          className="rounded-[var(--r-md)] border border-[var(--line-2)] bg-card px-3 py-3.5 shadow-sm"
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <p
+              className={cn(
+                "m-0 font-sans text-[44px] font-semibold leading-none tracking-[-0.03em] tabular-nums",
+                capa.score.total >= 80
+                  ? "text-success"
+                  : capa.score.total >= 60
+                    ? "text-warning"
+                    : "text-destructive",
+              )}
+            >
+              {capa.score.total}
+            </p>
+            <span
+              className={cn(
+                "whitespace-nowrap rounded-[var(--r-full)] px-[7px] py-0.5 font-sans text-[10px]",
+                capa.score.isAuditReady
+                  ? "bg-[var(--success-soft)] text-success"
+                  : "bg-[var(--warning-soft)] text-warning",
+              )}
+            >
+              {capa.score.isAuditReady ? "Audit ready" : "Needs lift"}
+            </span>
+          </div>
+          <p
+            className="mb-3 mt-1.5 font-sans text-[10px] uppercase tracking-[0.18em] text-foreground-tertiary"
+          >
+            Total / 100
+          </p>
+
+          <div className="flex flex-col gap-2.5">
+            {scoreRows.map((row) => {
+              const pct = (row.value / 25) * 100;
+              const colorClass =
+                row.value >= 20
+                  ? "bg-success"
+                  : row.value >= 15
+                    ? "bg-warning"
+                    : "bg-destructive";
+              return (
+                <div key={row.label}>
+                  <div className="mb-1 flex justify-between gap-2">
+                    <span className="text-[11px] font-semibold text-foreground-secondary">{row.label}</span>
+                    <span className="font-sans text-[11px] text-foreground-tertiary">
+                      {row.value}/25
+                    </span>
+                  </div>
+                  <div
+                    className="h-1.5 overflow-hidden rounded-[var(--r-full)] bg-field"
+                  >
+                    <div
+                      className={cn("h-full rounded-[var(--r-full)] transition-[width] [transition-duration:var(--dur-tab)] [transition-timing-function:var(--ease-out)]", colorClass)}
+                      style={{
+                        width: `${pct}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {scoreTips.length > 0 && (
+            <div
+              className="mt-3 flex flex-col gap-2 border-t border-border-subtle pt-3"
+            >
+              <p
+                className="m-0 font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-tertiary"
+              >
+                Lift tips
+              </p>
+              {scoreTips.map((tip) => (
+                <div
+                  key={`${tip.field}-${tip.subScore}`}
+                  className="rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-[9px] py-2"
+                >
+                  <p className="mb-[3px] mt-0 text-[11px] font-semibold text-foreground-secondary">
+                    {tip.field} +{tip.scoreGain}
+                  </p>
+                  <p className="m-0 text-[11px] leading-6 text-foreground-tertiary">
+                    {tip.suggestion}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1029,28 +1275,8 @@ export function CapaDetailPage() {
   return (
     <div className="font-sans">
       {/* ── Top action bar ────────────────────────────────────── */}
-      <div
-        className="mb-6 flex justify-end gap-2"
-      >
-        <button
-          onClick={() =>
-            toast.info("Export PDF", { description: "PDF export is mocked in this demo." })
-          }
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground"
-        >
-          <Download size={14} strokeWidth={1.75} />
-          Export PDF
-        </button>
-        <button
-          onClick={() => navigate(`/audit-trail`)}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground"
-        >
-          <ScrollText size={14} strokeWidth={1.75} />
-          Audit trail
-        </button>
-      </div>
 
-      {/* ── Two-column layout ─────────────────────────────────── */}
+      {/* ── Three-column layout ─────────────────────────────────── */}
       <div className="flex items-start gap-7">
         <LeftColumn
           capa={capa}
@@ -1058,12 +1284,16 @@ export function CapaDetailPage() {
           onSelectStep={setSelectedStep}
           onOverview={() => setSelectedStep(null)}
         />
-        <RightColumn
+        <MiddleColumn
           capa={capa}
           selectedStep={selectedStep}
           onSelectStep={setSelectedStep}
           onBackToOverview={() => setSelectedStep(null)}
         />
+        <RightColumn 
+          capa={capa}
+/>
+
       </div>
     </div>
   );

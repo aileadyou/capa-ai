@@ -370,7 +370,7 @@ export function CapaIntakePage() {
   // Step 4 — submit
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  const createCAPAFromFinding = useCapaStore((state) => state.createCAPAFromFinding);
+  const submitIntake = useCapaStore((state) => state.submitIntake);
   const existingFinding = useCapaStore((state) =>
     state.findings.find((f) => f.id === sourceId),
   );
@@ -430,16 +430,40 @@ export function CapaIntakePage() {
 
   function handleSubmit() {
     setSubmitAttempted(true);
-    const capa = createCAPAFromFinding(sourceId, selectedType);
+
+    const gateAnswerList = GATE_QUESTIONS.filter((q) => gateAnswers[q.id].trim()).map((q) => ({
+      questionId: q.id,
+      question: q.question,
+      answer: gateAnswers[q.id].trim(),
+      novaScoreContribution: 0,
+      needsImprovement: false,
+    }));
+
+    const capa = submitIntake({
+      findingId: sourceId,
+      type: selectedType,
+      title,
+      severity: selectedSeverity ?? "Major",
+      gateAnswers: gateAnswerList,
+      impact: impactClassification,
+    });
+
     if (!capa) {
-      toast.error("CAPA could not be created", {
+      toast.error("CAPA could not be submitted", {
         description: "The selected source finding is not available in the demo dataset.",
       });
       return;
     }
-    toast.success("CAPA created", {
-      description: `${capa.id} is ready for the 8D workflow.`,
-    });
+
+    if (capa.status === "pending_review") {
+      toast.success("Submitted for intake review", {
+        description: `${capa.id} now awaits approval from Siti Rahmawati (QA) and Bambang Saputra (Department Head).`,
+      });
+    } else {
+      toast.info("CAPA already in progress", {
+        description: `${capa.id} has already cleared intake review.`,
+      });
+    }
     navigate(`/capa/${capa.id}`);
   }
 
@@ -587,7 +611,7 @@ export function CapaIntakePage() {
               className="mt-4 rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3.5 py-2.5 font-sans text-xs text-primary"
             >
               <Sparkles size={12} className="mr-1.5 inline" />
-              This finding is already linked to {existingFinding.linkedCapaId}. Submitting will open the existing CAPA.
+              This finding is already linked to {existingFinding.linkedCapaId}. If it cleared intake review, submitting just reopens it; if it was sent back for re-work, your edits will be resubmitted to Siti and Bambang.
             </div>
           )}
         </WizardCard>
@@ -847,7 +871,7 @@ export function CapaIntakePage() {
             Review & submit
           </h2>
           <p className={cn(STEP_COPY_CLASS, "mb-6 mt-0")}>
-            Review the CAPA details before submitting. This will create the CAPA and open the 8D workflow.
+            Review the CAPA details before submitting. This sends the intake to Siti Rahmawati (QA) and Bambang Saputra (Department Head) for review — the 8D workflow unlocks only after both approve.
           </p>
 
           {/* Summary cards */}
@@ -943,7 +967,7 @@ export function CapaIntakePage() {
               onClick={handleSubmit}
               className="flex cursor-pointer items-center gap-2 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-7 py-2.5 font-sans text-sm font-bold tracking-[0.01em] text-primary-foreground"
             >
-              Submit CAPA
+              Submit for review
               <ArrowRight size={15} />
             </button>
           </div>

@@ -10,14 +10,21 @@ import {
 import type {
   ApprovalEvent,
   CAPACase,
+  CAPAStatus,
   CAPAType,
   CorrectiveAction,
   EightDStep,
+  GateAnswer,
+  ImpactClassification,
+  IntakeDecision,
+  IntakeReview,
   PreventiveAction,
   QualityScore,
   RCAData,
+  Severity,
   VerificationData,
 } from "@/types";
+import type { PersonaID } from "@/types/persona";
 import type { Finding } from "@/types/finding";
 import { useAuditTrailStore } from "@/store/useAuditTrailStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
@@ -28,6 +35,13 @@ interface CapaStore {
   correctiveActions: CorrectiveAction[];
   preventiveActions: PreventiveAction[];
   createCAPAFromFinding: (findingId: string, type: CAPAType) => CAPACase | undefined;
+  submitIntake: (payload: IntakeSubmission) => CAPACase | undefined;
+  recordIntakeDecision: (
+    capaId: string,
+    reviewerPersonaId: PersonaID,
+    decision: IntakeDecision,
+    notes?: string,
+  ) => void;
   updateProblemStatement: (capaId: string, statement: string, score: QualityScore) => void;
   updateContainmentAction: (
     capaId: string,
@@ -58,6 +72,36 @@ interface CapaStore {
   };
   resetCAPAStore: () => void;
 }
+
+interface IntakeSubmission {
+  findingId: string;
+  type: CAPAType;
+  title: string;
+  severity: Severity;
+  gateAnswers: GateAnswer[];
+  impact?: ImpactClassification;
+}
+
+// Andi's intake submission needs sign-off from BOTH the QA reviewer (Siti)
+// and the Department Head (Bambang) before the 8D investigation can begin.
+const INTAKE_REVIEWERS: Array<Pick<IntakeReview, "reviewerPersonaId" | "reviewerName" | "role">> = [
+  {
+    reviewerPersonaId: "qa_deviation",
+    reviewerName: "Siti Rahmawati",
+    role: "QA Deviation / QA Compliance / QA Complaint",
+  },
+  {
+    reviewerPersonaId: "head_of_dept",
+    reviewerName: "Bambang Saputra",
+    role: "Department Head",
+  },
+];
+
+const INTAKE_DECISION_LABEL: Record<IntakeDecision, string> = {
+  accepted: "Continue to CAPA",
+  revision_requested: "Send for Re-work",
+  rejected: "Reject",
+};
 
 function createInitialCAPA(finding: Finding, type: CAPAType): CAPACase {
   const now = new Date().toISOString();
@@ -167,6 +211,157 @@ export const useCapaStore = create<CapaStore>()(
         });
 
         return newCAPA;
+      },
+      submitIntake: (payload) => {
+        const { findingId, type, title, severity, gateAnswers, impact } = payload;
+        const finding = get().findings.find((record) => record.id === findingId);
+        if (!finding) return undefined;
+
+        const existing = get().capas.find((capa) => capa.findingId === findingId);
+
+        // Once a CAPA has cleared intake review, re-submitting from the wizard
+        // must NOT spawn a duplicate or reset progress — just hand back the
+        // live case so the caller can route the user to it.
+        if (existing && ["investigation", "approval", "closed"].includes(existing.status)) {
+          return existing;
+        }
+
+        const now = new Date().toISOString();
+        const base = existing ?? createInitialCAPA(finding, type);
+        const reviews: IntakeReview[] = INTAKE_REVIEWERS.map((reviewer) => ({ ...reviewer }));
+
+        const updated: CAPACase = {
+          ...base,
+          type,
+          title: title.trim() || base.title,
+          gateAnswers,
+          impact: { ...(impact ?? base.impact), severity },
+          intakeReviews: reviews,
+          status: "pending_review",
+          currentStep: "problem",
+          createdBy: "initiator",
+          assignedTo: "qa_deviation",
+          updatedAt: now,
+        };
+
+        set((state) => ({
+          capas: existing
+            ? state.capas.map((capa) => (capa.id === base.id ? updated : capa))
+            : [updated, ...state.capas],
+          findings: state.findings.map((record) =>
+            record.id === findingId
+              ? { ...record, linkedCapaId: updated.id, status: "pending_review" }
+              : record,
+          ),
+        }));
+
+        useAuditTrailStore.getState().addEvent({
+          actorPersonaId: "initiator",
+          actorName: "Andi Wijaya",
+          actorRole: "Initiator",
+          domain: "system",
+          eventType: "source_imported",
+          action: `${updated.id} submitted for intake review (Siti Rahmawati, Bambang Saputra).`,
+          capaId: updated.id,
+          findingId,
+        });
+
+        INTAKE_REVIEWERS.forEach((reviewer) => {
+          useNotificationStore.getState().addNotification({
+            recipientPersonaId: reviewer.reviewerPersonaId,
+            type: "capa_update",
+            title: "Intake review needed",
+            description: `${updated.id} was submitted by Andi Wijaya and needs your intake decision.`,
+            capaId: updated.id,
+            actionUrl: `/capa/${updated.id}`,
+          });
+        });
+
+        return updated;
+      },
+      recordIntakeDecision: (capaId, reviewerPersonaId, decision, notes) => {
+        const capa = get().capas.find((record) => record.id === capaId);
+        if (!capa || !capa.intakeReviews) return;
+
+        const now = new Date().toISOString();
+        const trimmedNotes = notes?.trim() ? notes.trim() : undefined;
+        const reviewer = INTAKE_REVIEWERS.find((r) => r.reviewerPersonaId === reviewerPersonaId);
+
+        const reviews = capa.intakeReviews.map((review) =>
+          review.reviewerPersonaId === reviewerPersonaId
+            ? { ...review, decision, notes: trimmedNotes, reviewedAt: now }
+            : review,
+        );
+
+        // Aggregate outcome: any rejection ends the case; any re-work request
+        // bounces it back to Andi; only when BOTH reviewers accept does the
+        // 8D investigation unlock.
+        let status: CAPAStatus;
+        if (reviews.some((r) => r.decision === "rejected")) {
+          status = "rejected";
+        } else if (reviews.some((r) => r.decision === "revision_requested")) {
+          status = "revision_requested";
+        } else if (reviews.every((r) => r.decision === "accepted")) {
+          status = "investigation";
+        } else {
+          status = "pending_review";
+        }
+
+        const findingStatus: Finding["status"] =
+          status === "investigation"
+            ? "capa_in_progress"
+            : status === "rejected"
+              ? "pending_capa"
+              : "pending_review";
+
+        set((state) => ({
+          capas: state.capas.map((record) =>
+            record.id === capaId
+              ? { ...record, intakeReviews: reviews, status, updatedAt: now }
+              : record,
+          ),
+          findings: state.findings.map((record) =>
+            record.id === capa.findingId ? { ...record, status: findingStatus } : record,
+          ),
+        }));
+
+        useAuditTrailStore.getState().addEvent({
+          actorPersonaId: reviewerPersonaId,
+          actorName: reviewer?.reviewerName ?? reviewerPersonaId,
+          actorRole: reviewer?.role ?? "Reviewer",
+          domain: "system",
+          eventType: "source_imported",
+          action: `Intake decision "${INTAKE_DECISION_LABEL[decision]}" recorded for ${capaId}.`,
+          capaId,
+          findingId: capa.findingId,
+          after: trimmedNotes,
+        });
+
+        const initiatorMessage: Record<CAPAStatus, string> = {
+          investigation: `${capaId} cleared intake review — you can now start the 8D investigation.`,
+          revision_requested: `${capaId} was sent back for re-work. Review the reviewer notes and resubmit.`,
+          rejected: `${capaId} was rejected at intake review.`,
+          pending_review: `${reviewer?.reviewerName ?? "A reviewer"} recorded a decision on ${capaId}. Awaiting the second reviewer.`,
+          draft: "",
+          approval: "",
+          closed: "",
+        };
+
+        useNotificationStore.getState().addNotification({
+          recipientPersonaId: "initiator",
+          type: "capa_update",
+          title:
+            status === "investigation"
+              ? "Intake approved"
+              : status === "rejected"
+                ? "Intake rejected"
+                : status === "revision_requested"
+                  ? "Re-work requested"
+                  : "Intake review update",
+          description: initiatorMessage[status],
+          capaId,
+          actionUrl: `/capa/${capaId}`,
+        });
       },
       updateProblemStatement: (capaId, statement, score) =>
         set((state) => ({

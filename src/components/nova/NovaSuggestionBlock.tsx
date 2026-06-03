@@ -103,7 +103,7 @@ export function NovaSuggestionBlock({
 
   // ── Idle / Editing state ─────────────────────────────────────────────────
   return (
-    <div className="rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3.5">
+    <div className="rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-primary/5 px-4 py-3.5">
       {/* Header row */}
       <div className="mb-2.5 flex items-center gap-2">
         <Sparkles size={14} className="shrink-0 text-primary" />
@@ -111,7 +111,7 @@ export function NovaSuggestionBlock({
           Nova Suggestion
         </span>
         {context && (
-          <span className="font-sans text-xs text-foreground-tertiary">
+          <span className="font-sans text-xs text-foreground">
             — {context}
           </span>
         )}

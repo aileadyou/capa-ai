@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useDialog } from "@/hooks/use-dialog";
 import { useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Circle, PenLine, ShieldCheck, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, PenLine, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell } from "@/components/layout/EightDShell";
 import { ScorePill } from "@/components/shared/ScorePill";
@@ -150,32 +150,26 @@ const GATE_QUESTION_LABELS: Record<string, string> = {
   effectiveness_criteria: "What are the effectiveness criteria?",
 };
 
-function ReviewSection({
+function ReviewBlock({
   title,
   tag,
-  defaultOpen = false,
+  isLast = false,
   children,
 }: {
   title: string;
   tag: string;
-  defaultOpen?: boolean;
+  isLast?: boolean;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full cursor-pointer items-center gap-3 border-b border-border-subtle bg-elevated px-4 py-3 text-left"
-      >
+    <div className={cn("px-4 py-4", !isLast && "border-b border-border-subtle")}>
+      <div className="mb-3 flex items-center gap-3">
         <span className="rounded-[var(--r-sm)] border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-sans text-[10px] font-bold text-primary">
           {tag}
         </span>
-        <span className="flex-1 font-sans text-[13px] font-semibold text-foreground">{title}</span>
-        {open ? <ChevronDown size={14} className="text-foreground-tertiary" /> : <ChevronRight size={14} className="text-foreground-tertiary" />}
-      </button>
-      {open && <div className="px-4 py-4">{children}</div>}
+        <span className="font-sans text-[13px] font-semibold text-foreground">{title}</span>
+      </div>
+      {children}
     </div>
   );
 }
@@ -224,7 +218,7 @@ function ComprehensiveReview({ capa }: { capa: CAPACase }) {
 
       <div className="flex flex-col gap-0">
         {/* D1 — Problem statement */}
-        <ReviewSection tag="D1" title="Problem Statement">
+        <ReviewBlock tag="D1" title="Problem Statement">
           <div className="mb-3 flex flex-wrap gap-2">
             <span className="rounded-[var(--r-full)] border border-border-subtle bg-elevated px-2.5 py-0.5 font-sans text-xs text-foreground-secondary">
               {formatCAPAType(capa.type)}
@@ -248,10 +242,10 @@ function ComprehensiveReview({ capa }: { capa: CAPACase }) {
           ) : (
             <p className="m-0 text-[13px] text-foreground-faint italic">No gate answers recorded.</p>
           )}
-        </ReviewSection>
+        </ReviewBlock>
 
         {/* D2 — Containment */}
-        <ReviewSection tag="D2" title="Containment">
+        <ReviewBlock tag="D2" title="Containment">
           {(() => {
             const containmentGate = gateAnswers.find((a) => a.questionId === "containment");
             return containmentGate ? (
@@ -265,10 +259,10 @@ function ComprehensiveReview({ capa }: { capa: CAPACase }) {
               <span className="font-semibold">Impact rationale:</span> {capa.impact.rationale}
             </p>
           )}
-        </ReviewSection>
+        </ReviewBlock>
 
         {/* D3 — Root cause */}
-        <ReviewSection tag="D3" title="Root Cause Analysis">
+        <ReviewBlock tag="D3" title="Root Cause Analysis">
           <p className="mb-2 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground-tertiary">
             Method: {rca.method?.replace("_", " ") ?? "—"}
           </p>
@@ -281,28 +275,28 @@ function ComprehensiveReview({ capa }: { capa: CAPACase }) {
           ) : (
             <p className="m-0 text-[13px] text-foreground-faint italic">No confirmed root causes recorded.</p>
           )}
-        </ReviewSection>
+        </ReviewBlock>
 
         {/* D4 — Corrective actions */}
-        <ReviewSection tag="D4" title={`Corrective Actions (${cas.length})`}>
+        <ReviewBlock tag="D4" title={`Corrective Actions (${cas.length})`}>
           {cas.length > 0 ? (
             <div>{cas.map((a) => <ActionRow key={a.id} action={a} />)}</div>
           ) : (
             <p className="m-0 text-[13px] text-foreground-faint italic">No corrective actions added.</p>
           )}
-        </ReviewSection>
+        </ReviewBlock>
 
         {/* D5 — Preventive actions */}
-        <ReviewSection tag="D5" title={`Preventive Actions (${pas.length})`}>
+        <ReviewBlock tag="D5" title={`Preventive Actions (${pas.length})`}>
           {pas.length > 0 ? (
             <div>{pas.map((a) => <ActionRow key={a.id} action={a} />)}</div>
           ) : (
             <p className="m-0 text-[13px] text-foreground-faint italic">No preventive actions added.</p>
           )}
-        </ReviewSection>
+        </ReviewBlock>
 
         {/* D6 — Verification */}
-        <ReviewSection tag="D6" title="Verification">
+        <ReviewBlock tag="D6" title="Verification" isLast>
           {verification.method ? (
             <div className="flex flex-col gap-2">
               <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground-tertiary">
@@ -326,7 +320,7 @@ function ComprehensiveReview({ capa }: { capa: CAPACase }) {
           ) : (
             <p className="m-0 text-[13px] text-foreground-faint italic">Verification not yet completed.</p>
           )}
-        </ReviewSection>
+        </ReviewBlock>
       </div>
     </div>
   );

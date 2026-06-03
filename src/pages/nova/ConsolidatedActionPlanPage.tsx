@@ -304,10 +304,10 @@ export function ConsolidatedActionPlanPage() {
           return (
             <div
               key={group.id}
-              className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm"
+              className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm p-4"
             >
               {/* Group header */}
-              <div className="border-b border-border-subtle px-5 py-4">
+              <div className="">
                 <div className="mb-2.5 flex items-start justify-between">
                   <div>
                     <div className="font-sans text-[15px] font-semibold text-foreground">{group.title}</div>
@@ -315,24 +315,31 @@ export function ConsolidatedActionPlanPage() {
                       PIC: {owners.join(", ") || "Unassigned"}
                     </div>
                   </div>
-                  <span
+
+                  <div className="w-40 flex flex-col items-end justify-end gap-2" >
+                     <span
                     className="rounded-[20px] border border-[var(--line-2)] bg-field px-2.5 py-[3px] font-sans text-[11px] font-semibold text-foreground-secondary"
                   >
                     {group.actions.length} action{group.actions.length !== 1 ? "s" : ""}
                   </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1">
+
+                   <div className="flex items-center gap-2 w-full">
+                  <div className="flex-1  w-full">
                     <ProgressBar value={progress} />
                   </div>
                   <span className="min-w-8 text-right font-sans text-xs font-semibold text-foreground-secondary">
                     {progress}%
                   </span>
                 </div>
+                  </div>
+                  
+                 
+                </div>
+               
               </div>
 
               {/* Group table */}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-xl mt-4">
                 <table className="w-full border-collapse font-sans text-[13px]">
                   <thead>
                     <tr className="bg-[var(--table-head-bg)]">

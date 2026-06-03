@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, FileCheck, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
+import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
+import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { VerificationData } from "@/types";
@@ -93,10 +95,13 @@ export function D6VerificationPage() {
     ? verificationDefaults[capa.id] ?? { method: "process_review" as VerificationMethod, result: "", evidence: "" }
     : { method: "process_review" as VerificationMethod, result: "", evidence: "" };
 
+  // Method keeps a sensible default selection, but the result narrative and
+  // evidence start blank so QA documents the outcome themselves. Nova's draft
+  // outcome is opt-in via the assist panel below the quality signals.
   const [method, setMethod] = useState<VerificationMethod | "">(capa?.verification.method ?? defaults.method);
-  const [result, setResult] = useState(capa?.verification.result ?? defaults.result);
+  const [result, setResult] = useState(capa?.verification.result ?? "");
   const [evidenceFileName, setEvidenceFileName] = useState(
-    capa?.verification.evidenceFileNames[0] ?? defaults.evidence,
+    capa?.verification.evidenceFileNames[0] ?? "",
   );
 
   if (!capa) {
@@ -168,7 +173,7 @@ export function D6VerificationPage() {
             Verification
           </h1>
           <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
-            Record verification method, outcome, and evidence before this CAPA can move into sign-off.
+            Record verification method, outcome, and evidence before this CAPA can move into sign-off. Nova can draft the result narrative below if you'd like a hand.
           </p>
         </div>
 
@@ -299,6 +304,23 @@ export function D6VerificationPage() {
             {passedCount}/3 checks passing · Quality score preview: {previewScore.total}/100
           </p>
         </div>
+
+        {/* ── Nova assist (opt-in, below the user's own work) ──────────── */}
+        {defaults.result && (
+          <NovaAssistPanel
+            title="Stuck? Let Nova draft the verification result"
+            description="Document what QA actually checked in your own words. Nova's draft outcome is here if you'd like a reference."
+          >
+            <NovaSuggestionBlock
+              context="verification result"
+              suggestion={defaults.result}
+              reasoning={`Based on the ${methodLabels[defaults.method]} approach for ${capa.id}. Edit to match the evidence you actually reviewed.`}
+              capaId={capa.id}
+              suggestionId="d6-verification"
+              onAccept={(content) => setResult(content)}
+            />
+          </NovaAssistPanel>
+        )}
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
         <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">

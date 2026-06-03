@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2, Circle, ListPlus, Save, Trash2 } from "luc
 import { toast } from "sonner";
 import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
+import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { CorrectiveAction } from "@/types";
@@ -197,8 +198,9 @@ export function D4CorrectiveActionPage() {
     [capa],
   );
 
-  const initialDescription = capa ? caSuggestions[capa.id] ?? "" : "";
-  const [description, setDescription] = useState(initialDescription);
+  // Blank to start — the owner describes the corrective action first; the Nova
+  // draft is opt-in via the assist panel below the quality signals.
+  const [description, setDescription] = useState("");
   const [pic, setPic] = useState("Siti Rahmawati");
   const [dueDate, setDueDate] = useState(getDefaultDueDate());
   const [linkedRootCause, setLinkedRootCause] = useState(confirmedRootCauses[0] ?? "");
@@ -310,22 +312,12 @@ export function D4CorrectiveActionPage() {
             Corrective Action
           </h1>
           <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
-            Define corrective actions that address the confirmed root cause, assign ownership, and specify how effectiveness will be verified.
+            Define corrective actions that address the confirmed root cause, assign ownership, and specify how effectiveness will be verified. Nova can draft one for you below if you'd like a hand.
           </p>
         </div>
 
         {/* ── Existing actions ──────────────────────────────────────────── */}
         <ActionList actions={currentActions} onRemove={handleRemoveCA} />
-
-        {/* ── Nova suggestion block ────────────────────────────────────── */}
-        <NovaSuggestionBlock
-          context="corrective action"
-          suggestion={caSuggestions[capa.id] ?? initialDescription}
-          reasoning={caReasoning[capa.id]}
-          capaId={capa.id}
-          suggestionId="d4-ca"
-          onAccept={(content) => setDescription(content)}
-        />
 
         {/* ── Add CA form ───────────────────────────────────────────────── */}
         <div className="flex flex-col gap-[18px] rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5">
@@ -468,6 +460,21 @@ export function D4CorrectiveActionPage() {
             {passedCount}/5 checks passing
           </p>
         </div>
+
+        {/* ── Nova assist (opt-in, below the user's own work) ──────────── */}
+        <NovaAssistPanel
+          title="Stuck? Let Nova draft a corrective action"
+          description="Describe the action that fixes the confirmed root cause your way. Nova's draft is here if you'd like a starting point."
+        >
+          <NovaSuggestionBlock
+            context="corrective action"
+            suggestion={caSuggestions[capa.id] ?? ""}
+            reasoning={caReasoning[capa.id]}
+            capaId={capa.id}
+            suggestionId="d4-ca"
+            onAccept={(content) => setDescription(content)}
+          />
+        </NovaAssistPanel>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
         <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">

@@ -4,6 +4,69 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-03, 3:56 PM — D7 case summary: one static card, no per-section collapsibles
+
+### Prompt
+- On D7, don't make each item collapsible — turn it into a single card containing all the information.
+
+### What changed
+- `src/pages/nova/eight-d/D7SignOffPage.tsx`: replaced the collapsible `ReviewSection` (button header + `useState` open/close + chevrons) with a static `ReviewBlock` — a plain header row (D-tag badge + title) followed by always-visible content, separated by `border-b` dividers. D1–D6 now live inside the single "Case Summary (D1–D6)" card with no toggles.
+- Removed the now-unused `ChevronDown` / `ChevronRight` imports.
+
+### Verification
+- `tsc --noEmit`: clean
+- Browser: Case Summary card contains 0 buttons (no collapsibles); all D1–D6 sections render statically in one card (~1.4k chars of content visible).
+
+## 2026-06-03, 3:53 PM — 8D step layout reorder: user input → Quality Signals → opt-in Nova assist
+
+### Prompt
+- For each 8D Progress step, change layout so Problem Statement (content) comes first, then Quality Signals, then Nova Suggestions last
+- Goal: shift the UX feel from "AI will answer everything for you" to "AI will guide you through, don't worry"
+- Ideate the approach myself
+
+### What changed
+- **New component `src/components/nova/NovaAssistPanel.tsx`** — collapsed-by-default, opt-in wrapper ("Stuck? Let Nova help" + reassurance line) that reveals the existing `NovaSuggestionBlock` when expanded. Reframes Nova as an assist you reach for, not an answer pushed at you.
+- **Reordered D1, D2, D4, D5, D6** to: user's own input form → blocker (if any) → Quality Signals → opt-in Nova assist panel → footer. Nova moved from the top of each page to the bottom.
+- **Fields now start blank** (preserving any already-saved answer): removed the "fall back to the AI suggestion" pre-fill on D1 problem statement, D2 containment description, D4 corrective-action description, D5 preventive-action description, and D6 verification result/evidence. The user writes first; Quality Signals act as the live guide.
+- **D6** had no Nova block before — added a consistent opt-in assist panel for the verification result narrative.
+- Updated each page's header copy to read as guidance ("write it your way… Nova is on hand below").
+
+### Verification
+- `tsc --noEmit`: clean
+- Browser: D1 order = Problem statement → Quality Signals → collapsed Nova assist (aria-expanded=false); expanding reveals Nova Suggestion + "Use this suggestion" / "Discuss with Nova". D4 order = form → Quality Signals → collapsed assist, description field empty (user writes first). Existing saved answers still load (D1 showed the saved 97-char statement).
+
+## 2026-06-03, 2:10 PM — D3 RCA: 5 Whys conversational flow, Fishbone SVG diagram, Decision Tree interactive click-through
+
+### Prompt
+- 5 Whys: reveal one question at a time; next question depends on previous answer
+- Fishbone: visual best representation
+- Decision Tree: visual best representation
+
+### Changes
+- `src/pages/nova/eight-d/D3RCAPage.tsx`:
+  - Added `ChevronRight` import
+  - **FiveWhysChain**: Replaced all-at-once layout with sequential conversational reveal — locked answers shown as a read-only chain with green confirmation style + hover Edit button; active question rendered in a focused card (purple ring, border) with textarea + Nova suggestion + "Next: Why N →" / "Confirm Root Cause" button; complete state shows success banner + Restart
+  - **FishboneVisual** (replaces FishboneGrid): SVG Ishikawa diagram with spine + arrowhead + 6 diagonal bones; top 3 bones (Man/Method/Measurement) use primary-tinted labels, bottom 3 (Environment/Material/Machine) use warning-tinted labels; cause text truncated and rendered on the bone; effect box shows CAPA title; below diagram: 2×3 editable cause cards with NovaSuggestionBlock
+  - **DecisionTreeVisual** (replaces DecisionTree): Interactive click-through — shows one question at a time with large Yes/No buttons; path trail builds above with step number + answer badge (green Yes / red No); conclusion state shown in primary-tinted card with conclusion text + Restart button; collapsible "View full tree structure" shows all nodes below
+
+## 2026-06-03, 12:55 PM — Left nav "viewing vs. in-progress" states fully separated
+
+### Prompt
+Navigating to D2 while D4 is the workflow checkpoint caused both to render with the same bold purple highlight. Need a way to clearly tell "this is the current and latest progress" separate from "this is what I'm currently viewing".
+
+### Changes
+- `src/pages/nova/CapaDetailPage.tsx` — removed `isViewingOverview` prop (was only solving the Overview case); `visualState` now uses `state === "active" && !isSelected ? "current" : state` so the workflow checkpoint always gets the distinct style regardless of which step the user is viewing; added an amber **IN PROGRESS** chip inside the row for `visualState === "current"`; the selected step keeps the full purple left-border highlight
+
+## 2026-06-03, 12:30 PM — Left nav single-active fix + D7 case summary all-open
+
+### Prompt
+1. Left nav: only one item should be active at a time — Overview and the current D-step were both highlighted simultaneously
+2. D7 Sign-Off: Case Summary (D1–D6) sections should all be open by default, no expand-one-by-one
+
+### Changes
+- `src/pages/nova/CapaDetailPage.tsx` — `StepItem` gains `isViewingOverview` prop; when Overview is active, the workflow's current step renders with a subtle `bg-primary/5 border-primary/20` "current" style instead of the full selected highlight; `LeftColumn` passes `isViewingOverview={selectedStep === null}` to each `StepItem`
+- `src/pages/nova/eight-d/D7SignOffPage.tsx` — `ReviewSection` default changed from `defaultOpen=false` to `defaultOpen=true`; all D1–D6 sections now render expanded on load
+
 ## 2026-06-03, 11:45 AM — CAPA intake dual-approval flow, Ungraded severity, D7 comprehensive review
 
 ### Prompt

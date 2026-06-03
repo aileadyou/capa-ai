@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2, Circle, Save } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
+import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore, useNotificationStore } from "@/store";
 import type { CAPACase } from "@/types";
@@ -112,13 +113,13 @@ export function D2ContainmentPage() {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
+  // Description starts from the user's own saved answer (or blank). PIC and due
+  // date keep sensible scaffolding defaults. The Nova draft lives in the assist
+  // panel below, so the user defines the action first.
   const initialContainment = useMemo(() => {
     if (!capa) return { description: "", pic: "", dueDate: getDefaultDueDate() };
     return {
-      description:
-        getExistingContainment(capa)?.description ??
-        containmentSuggestions[capa.id] ??
-        "Immediately contain the affected product, system, or record scope and notify QA for documented assessment.",
+      description: getExistingContainment(capa)?.description ?? "",
       pic: getExistingContainment(capa)?.pic ?? "Siti Rahmawati",
       dueDate: getExistingContainment(capa)?.dueDate ?? getDefaultDueDate(),
     };
@@ -201,19 +202,9 @@ export function D2ContainmentPage() {
             Containment Action
           </h1>
           <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
-            Define immediate containment for {capa.id}. Nova checks that the action is clear, accountable, and time-bound before RCA can begin.
+            Define immediate containment for {capa.id}. Nova checks that the action is clear, accountable, and time-bound — and can offer a draft below if you want one.
           </p>
         </div>
-
-        {/* ── Nova suggestion block ────────────────────────────────────── */}
-        <NovaSuggestionBlock
-          context="containment action"
-          suggestion={containmentSuggestions[capa.id] ?? initialContainment.description}
-          reasoning={containmentReasoning[capa.id]}
-          capaId={capa.id}
-          suggestionId="d2-containment"
-          onAccept={(content) => setDescription(content)}
-        />
 
         {/* ── Containment form ─────────────────────────────────────────── */}
         <div className="flex flex-col gap-[18px] rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5 shadow-sm">
@@ -370,6 +361,21 @@ export function D2ContainmentPage() {
             · Total quality score: {previewScore.total}/100
           </span>
         </div>
+
+        {/* ── Nova assist (opt-in, below the user's own work) ──────────── */}
+        <NovaAssistPanel
+          title="Stuck? Let Nova draft a containment action"
+          description="Write the immediate action your way. Nova's draft is here if you'd like a reference for the hold, quarantine, or review wording."
+        >
+          <NovaSuggestionBlock
+            context="containment action"
+            suggestion={containmentSuggestions[capa.id] ?? "Immediately contain the affected product, system, or record scope and notify QA for documented assessment."}
+            reasoning={containmentReasoning[capa.id]}
+            capaId={capa.id}
+            suggestionId="d2-containment"
+            onAccept={(content) => setDescription(content)}
+          />
+        </NovaAssistPanel>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
         <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">

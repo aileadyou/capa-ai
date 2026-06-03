@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { MyWorkPage } from "@/pages/nova/MyWorkPage";
 import { PersonaManagementPage } from "@/pages/nova/PersonaManagementPage";
 import { AuditTrailPage } from "@/pages/nova/AuditTrailPage";
@@ -24,7 +24,16 @@ import { NotificationCenterPage } from "@/pages/nova/NotificationCenterPage";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
 import { usePersonaStore } from "@/store";
-import { isMyWorkOnlyPersona } from "@/utils/personaAccess";
+import { canFillCAPA, isMyWorkOnlyPersona } from "@/utils/personaAccess";
+
+function FillGuard({ children }: { children: React.ReactNode }) {
+  const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+  const { id } = useParams();
+  if (!canFillCAPA(activePersonaId)) {
+    return <Navigate to={id ? `/capa/${id}` : "/capa"} replace />;
+  }
+  return <>{children}</>;
+}
 
 export function AppRouter() {
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
@@ -60,31 +69,31 @@ export function AppRouter() {
       />
       <Route
         path="/capa/:id/8d/problem"
-        element={<D1ProblemPage />}
+        element={<FillGuard><D1ProblemPage /></FillGuard>}
       />
       <Route
         path="/capa/:id/8d/containment"
-        element={<D2ContainmentPage />}
+        element={<FillGuard><D2ContainmentPage /></FillGuard>}
       />
       <Route
         path="/capa/:id/8d/rca"
-        element={<D3RCAPage />}
+        element={<FillGuard><D3RCAPage /></FillGuard>}
       />
       <Route
         path="/capa/:id/8d/ca"
-        element={<D4CorrectiveActionPage />}
+        element={<FillGuard><D4CorrectiveActionPage /></FillGuard>}
       />
       <Route
         path="/capa/:id/8d/pa"
-        element={<D5PreventiveActionPage />}
+        element={<FillGuard><D5PreventiveActionPage /></FillGuard>}
       />
       <Route
         path="/capa/:id/8d/verification"
-        element={<D6VerificationPage />}
+        element={<FillGuard><D6VerificationPage /></FillGuard>}
       />
       <Route
         path="/capa/:id/8d/signoff"
-        element={<D7SignOffPage />}
+        element={<FillGuard><D7SignOffPage /></FillGuard>}
       />
       <Route
         path="/actions/corrective"

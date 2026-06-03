@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, Circle, ExternalLink, Save } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronRight, Circle, ExternalLink, Save } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
@@ -287,7 +287,7 @@ function SimilarCapaCard({
   );
 }
 
-// ── 5-Whys chain ─────────────────────────────────────────────────────────────
+// ── 5-Whys conversational chain ──────────────────────────────────────────────
 
 function FiveWhysChain({
   capaId,
@@ -298,140 +298,450 @@ function FiveWhysChain({
   answers: string[];
   onAnswerChange: (index: number, content: string) => void;
 }) {
+  // How many levels have been confirmed (locked in)
+  const [lockedCount, setLockedCount] = useState(() => {
+    const firstEmpty = answers.findIndex((a) => !a || a.trim().length < 5);
+    return firstEmpty === -1 ? fiveWhysPlan.length : firstEmpty;
+  });
+  const activeIndex = Math.min(lockedCount, fiveWhysPlan.length - 1);
+  const [draft, setDraft] = useState(
+    answers[activeIndex] || fiveWhysPlan[activeIndex]?.suggestion || "",
+  );
+  const isDone = lockedCount >= fiveWhysPlan.length;
+
+  function confirmLevel() {
+    if (!draft.trim()) return;
+    onAnswerChange(activeIndex, draft);
+    const next = activeIndex + 1;
+    if (next < fiveWhysPlan.length) {
+      setLockedCount(next);
+      setDraft(answers[next] || fiveWhysPlan[next]?.suggestion || "");
+    } else {
+      setLockedCount(fiveWhysPlan.length);
+    }
+  }
+
+  function editAt(index: number) {
+    setLockedCount(index);
+    setDraft(answers[index] || "");
+  }
+
   return (
-    <div>
-      {fiveWhysPlan.map((item, index) => {
-        const isLast = index === fiveWhysPlan.length - 1;
-        const isRootCause = isLast;
-
-        return (
-          <div
-            key={item.level}
-            className="flex items-start gap-4"
-          >
-            {/* Left: level indicator + connector line */}
-            <div className="flex shrink-0 flex-col items-center pt-0.5">
-              {/* Level circle */}
-              <div
-                className={cn(
-                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border font-sans text-[11px] font-bold",
-                  isRootCause ? "border-primary bg-primary text-primary-foreground" : "border-[var(--line-2)] bg-field text-foreground-tertiary",
-                )}
-              >
-                {item.level}
-              </div>
-              {/* Connector line */}
-              {!isLast && (
-                <div className="my-1 min-h-6 w-px flex-1 bg-[var(--line-2)]" />
-              )}
+    <div className="flex flex-col gap-1">
+      {/* Locked / confirmed answers */}
+      {fiveWhysPlan.slice(0, lockedCount).map((item, index) => (
+        <div key={item.level} className="flex gap-3">
+          <div className="flex shrink-0 flex-col items-center">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success/15 font-sans text-[10px] font-bold text-success">
+              {item.level}
             </div>
-
-            {/* Right: content */}
-            <div
-              className={cn("min-w-0 flex-1", !isLast && "pb-5")}
-            >
-              {/* Why label + question */}
-              <div className="mb-2.5">
-                <span
-                  className={cn(
-                    "mb-1 inline-block font-sans text-[10px] font-semibold uppercase tracking-[0.18em]",
-                    isRootCause ? "text-primary" : "text-foreground-faint",
-                  )}
-                >
-                  {isRootCause ? "Root Cause · Why 5" : `Why ${item.level}`}
-                </span>
-                <p
-                  className={cn(
-                    "m-0 text-[13px] leading-[1.5]",
-                    isRootCause ? "border-l-2 border-[var(--line-3)] pl-2.5 font-semibold text-foreground" : "font-medium text-foreground-secondary",
-                  )}
-                >
-                  {item.question}
-                </p>
-              </div>
-
-              {/* NovaSuggestionBlock for this level */}
-              <NovaSuggestionBlock
-                context={`Why ${item.level} answer`}
-                suggestion={item.suggestion}
-                reasoning={item.reasoning}
-                capaId={capaId}
-                suggestionId={`why-${item.level}`}
-                onAccept={(content) => onAnswerChange(index, content)}
-              />
+            {(index < lockedCount - 1 || !isDone) && (
+              <div className="my-0.5 min-h-[16px] w-px flex-1 bg-border-subtle" />
+            )}
+          </div>
+          <div className="flex-1 pb-3">
+            <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground-faint">
+              {index === 4 ? "Root Cause · Why 5" : `Why ${item.level}`}
+            </p>
+            <p className="mb-1.5 mt-0 text-[12px] text-foreground-tertiary">{item.question}</p>
+            <div className="group flex items-start gap-2 rounded-[var(--r-sm)] border border-success/20 bg-success/5 px-3 py-2.5">
+              <p className="m-0 flex-1 text-[13px] leading-[1.55] text-foreground-secondary">
+                {answers[index]}
+              </p>
+              <button
+                type="button"
+                onClick={() => editAt(index)}
+                className="shrink-0 cursor-pointer rounded border-0 bg-transparent p-0 font-sans text-[10px] text-foreground-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground-secondary"
+              >
+                Edit
+              </button>
             </div>
           </div>
-        );
-      })}
+        </div>
+      ))}
+
+      {/* Active input */}
+      {!isDone && (
+        <div className="flex gap-3">
+          <div className="shrink-0 pt-0.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-primary/10 font-sans text-[11px] font-bold text-primary shadow-[0_0_0_4px_var(--accent-soft)]">
+              {activeIndex + 1}
+            </div>
+          </div>
+          <div className="flex-1 rounded-[var(--r-lg)] border border-primary/20 bg-primary/5 p-4">
+            <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-primary">
+              {activeIndex === 4 ? "Root Cause · Why 5" : `Why ${activeIndex + 1}`}
+            </p>
+            <p className="mb-3 mt-0 text-[13px] font-medium leading-[1.5] text-foreground">
+              {fiveWhysPlan[activeIndex].question}
+            </p>
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={3}
+              placeholder="Enter your answer…"
+              className="box-border w-full resize-none rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
+            />
+            <div className="mt-2">
+              <NovaSuggestionBlock
+                context={`Why ${activeIndex + 1} answer`}
+                suggestion={fiveWhysPlan[activeIndex].suggestion}
+                reasoning={fiveWhysPlan[activeIndex].reasoning}
+                capaId={capaId}
+                suggestionId={`why-${activeIndex + 1}`}
+                onAccept={(content) => setDraft(content)}
+              />
+            </div>
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={confirmLevel}
+                disabled={!draft.trim()}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-[var(--r-sm)] border-0 px-4 py-[9px] font-sans text-[13px] font-semibold",
+                  draft.trim()
+                    ? "cursor-pointer bg-[image:var(--grad-brand)] text-primary-foreground"
+                    : "cursor-not-allowed border border-[var(--line-2)] bg-field text-foreground-faint",
+                )}
+              >
+                {activeIndex === 4 ? "Confirm Root Cause" : `Next: Why ${activeIndex + 2} →`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Complete banner */}
+      {isDone && (
+        <div className="flex items-center gap-3 rounded-[var(--r-sm)] border border-success/30 bg-success/5 px-4 py-3">
+          <CheckCircle2 size={15} className="shrink-0 text-success" />
+          <p className="m-0 flex-1 font-sans text-[13px] font-medium text-success">
+            5 Whys complete — root cause chain established
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setLockedCount(0);
+              setDraft(fiveWhysPlan[0]?.suggestion || "");
+            }}
+            className="cursor-pointer rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-2.5 py-1 font-sans text-[11px] text-foreground-secondary"
+          >
+            Restart
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Fishbone grid ─────────────────────────────────────────────────────────────
+// ── Fishbone visual diagram ───────────────────────────────────────────────────
 
-function FishboneGrid({
+function FishboneVisual({
   capaId,
+  effect,
   answers,
   onAnswerChange,
 }: {
   capaId: string;
+  effect: string;
   answers: Record<FishboneName, string>;
   onAnswerChange: (category: FishboneName, content: string) => void;
 }) {
+  const topCats = fishbonePlan.slice(0, 3);  // Man, Method, Measurement
+  const botCats = fishbonePlan.slice(3, 6);  // Environment, Material, Machine
+
+  // SVG geometry
+  const W = 640, H = 220;
+  const spineY = 110;
+  const spineX1 = 30, spineX2 = 510;
+  const boneXs = [125, 250, 380];
+  const boneTopY = 22, boneBotY = H - 22;
+  const effectLabel = effect.length > 36 ? effect.slice(0, 34) + "…" : effect;
+
+  function causeLabel(cat: FishboneName) {
+    const v = answers[cat] || "";
+    return v.length > 24 ? v.slice(0, 22) + "…" : v;
+  }
+
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {fishbonePlan.map((item) => (
-        <div key={item.category}>
-          <p className="mb-2 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
-            {item.category}
-          </p>
-          <NovaSuggestionBlock
-            suggestion={item.suggestion}
-            capaId={capaId}
-            suggestionId={`fishbone-${item.category}`}
-            onAccept={(content) => onAnswerChange(item.category, content)}
+    <div className="flex flex-col gap-5">
+      {/* ── Diagram ── */}
+      <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-elevated px-4 py-3">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="w-full"
+          aria-label="Fishbone (Ishikawa) diagram"
+        >
+          {/* Spine */}
+          <line x1={spineX1} y1={spineY} x2={spineX2} y2={spineY}
+            stroke="var(--foreground-faint)" strokeWidth="2.5" strokeOpacity="0.45" />
+          {/* Arrowhead */}
+          <polygon
+            points={`${spineX2},${spineY - 7} ${spineX2 + 16},${spineY} ${spineX2},${spineY + 7}`}
+            fill="var(--foreground-faint)" fillOpacity="0.45"
           />
-        </div>
-      ))}
+
+          {/* Effect box */}
+          <rect x={spineX2 + 16} y={spineY - 24} width="108" height="48" rx="6"
+            fill="var(--accent-soft)" stroke="var(--accent-line)" strokeWidth="1.2" />
+          <text x={spineX2 + 70} y={spineY - 8} textAnchor="middle"
+            fontSize="8.5" fontWeight="700" fill="var(--primary)" letterSpacing="0.04em">
+            EFFECT
+          </text>
+          <text x={spineX2 + 70} y={spineY + 7} textAnchor="middle"
+            fontSize="8" fill="var(--primary)" opacity="0.8">
+            {effectLabel.slice(0, 18)}
+          </text>
+          {effectLabel.length > 18 && (
+            <text x={spineX2 + 70} y={spineY + 18} textAnchor="middle"
+              fontSize="8" fill="var(--primary)" opacity="0.8">
+              {effectLabel.slice(18)}
+            </text>
+          )}
+
+          {/* Top bones */}
+          {boneXs.map((bx, i) => {
+            const cat = topCats[i]?.category as FishboneName;
+            const cause = causeLabel(cat);
+            const bx0 = bx - 58;
+            return (
+              <g key={`top-${i}`}>
+                <line x1={bx0} y1={boneTopY + 14} x2={bx} y2={spineY}
+                  stroke="var(--foreground-faint)" strokeWidth="1.5" strokeOpacity="0.35" />
+                {/* Category badge */}
+                <rect x={bx0 - 44} y={boneTopY} width="44" height="16" rx="3"
+                  fill="var(--primary)" fillOpacity="0.12" />
+                <text x={bx0 - 22} y={boneTopY + 11} textAnchor="middle"
+                  fontSize="8.5" fontWeight="800" fill="var(--primary)" letterSpacing="0.06em">
+                  {topCats[i]?.category?.toUpperCase()}
+                </text>
+                {/* Cause text */}
+                {cause && (
+                  <text x={bx0 + 4} y={boneTopY + 30} fontSize="8.5"
+                    fill="var(--foreground-secondary)" opacity="0.85">
+                    {cause}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {/* Bottom bones */}
+          {boneXs.map((bx, i) => {
+            const cat = botCats[i]?.category as FishboneName;
+            const cause = causeLabel(cat);
+            const bx0 = bx - 58;
+            return (
+              <g key={`bot-${i}`}>
+                <line x1={bx0} y1={boneBotY - 14} x2={bx} y2={spineY}
+                  stroke="var(--foreground-faint)" strokeWidth="1.5" strokeOpacity="0.35" />
+                {/* Category badge */}
+                <rect x={bx0 - 44} y={boneBotY - 16} width="44" height="16" rx="3"
+                  fill="var(--warning)" fillOpacity="0.12" />
+                <text x={bx0 - 22} y={boneBotY - 5} textAnchor="middle"
+                  fontSize="8.5" fontWeight="800" fill="var(--warning)" letterSpacing="0.06em">
+                  {botCats[i]?.category?.toUpperCase()}
+                </text>
+                {/* Cause text */}
+                {cause && (
+                  <text x={bx0 + 4} y={boneBotY - 20} fontSize="8.5"
+                    fill="var(--foreground-secondary)" opacity="0.85">
+                    {cause}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* ── Editable cause cards ── */}
+      <div className="grid grid-cols-2 gap-3">
+        {fishbonePlan.map((item, i) => (
+          <div key={item.category}>
+            <div className="mb-2 flex items-center gap-1.5">
+              <div className={cn(
+                "h-2 w-2 rounded-full",
+                i < 3 ? "bg-primary/50" : "bg-warning/50",
+              )} />
+              <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+                {item.category}
+              </p>
+            </div>
+            <NovaSuggestionBlock
+              suggestion={item.suggestion}
+              capaId={capaId}
+              suggestionId={`fishbone-${item.category}`}
+              onAccept={(content) => onAnswerChange(item.category, content)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-// ── Decision tree ─────────────────────────────────────────────────────────────
+// ── Decision tree — interactive click-through ─────────────────────────────────
 
-function DecisionTree({ nodes }: { nodes: DecisionNode[] }) {
+function DecisionTreeVisual({ nodes }: { nodes: DecisionNode[] }) {
+  const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+
+  // path: array of { nodeId, answer } — last entry is the current node (answer still null)
+  const [path, setPath] = useState<Array<{ nodeId: string; answer: "yes" | "no" | null }>>(
+    () => [{ nodeId: nodes[0]?.id ?? "", answer: null }],
+  );
+
+  const current = path[path.length - 1];
+  const currentNode = nodeMap.get(current.nodeId);
+  const isDone = currentNode?.isLeaf ?? false;
+
+  function choose(choice: "yes" | "no") {
+    if (!currentNode || currentNode.isLeaf) return;
+    const nextId = choice === "yes" ? currentNode.yesNodeId : currentNode.noNodeId;
+    if (!nextId) return;
+    setPath((prev) => [
+      ...prev.slice(0, -1),
+      { ...prev[prev.length - 1], answer: choice },
+      { nodeId: nextId, answer: null },
+    ]);
+  }
+
+  function restart() {
+    setPath([{ nodeId: nodes[0]?.id ?? "", answer: null }]);
+  }
+
   return (
-    <div className="flex flex-col gap-2">
-      {nodes.map((node, index) => (
+    <div className="flex flex-col gap-4">
+      {/* Path trail */}
+      {path.length > 1 && (
+        <div className="flex flex-col gap-1.5">
+          {path.slice(0, -1).map(({ nodeId, answer }, i) => {
+            const node = nodeMap.get(nodeId);
+            return (
+              <div key={nodeId} className="flex gap-3">
+                <div className="flex shrink-0 flex-col items-center">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-field font-sans text-[9px] font-bold text-foreground-faint">
+                    {i + 1}
+                  </div>
+                  <div className="my-0.5 min-h-[12px] w-px flex-1 bg-border-subtle" />
+                </div>
+                <div className="flex-1 pb-1">
+                  <p className="m-0 text-[12px] text-foreground-tertiary">{node?.question}</p>
+                  <span
+                    className={cn(
+                      "mt-1 inline-flex items-center gap-1 rounded-[var(--r-full)] px-2 py-0.5 font-sans text-[10px] font-semibold",
+                      answer === "yes"
+                        ? "bg-success/10 text-success"
+                        : "bg-destructive/10 text-destructive",
+                    )}
+                  >
+                    {answer === "yes" ? "✓ Yes" : "✗ No"}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Current node */}
+      {currentNode && (
         <div
-          key={node.id}
-          className={cn("rounded-[var(--r-sm)] border bg-elevated px-3.5 py-3", node.isLeaf ? "border-[var(--line-2)]" : "border-border-subtle")}
-        >
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="font-sans text-[10px] tracking-[0.18em] text-foreground-faint">
-              Node {index + 1}
-            </span>
-            <span
-              className={cn("font-sans text-[10px]", node.isLeaf ? "font-semibold text-primary" : "font-normal text-foreground-tertiary")}
-            >
-              {node.isLeaf ? "Conclusion" : "Branch"}
-            </span>
-          </div>
-          <p className="mb-1 mt-0 font-sans text-[13px] font-medium text-foreground-secondary">
-            {node.question}
-          </p>
-          {node.yesNodeId && node.noNodeId && (
-            <p className="m-0 font-sans text-[11px] text-foreground-faint">
-              Yes → {node.yesNodeId} · No → {node.noNodeId}
-            </p>
+          className={cn(
+            "rounded-[var(--r-lg)] border-2 p-5",
+            isDone
+              ? "border-primary/30 bg-primary/5"
+              : "border-[var(--line-2)] bg-card shadow-sm",
           )}
-          {node.conclusion && (
-            <p className="mb-0 mt-1 font-sans text-xs leading-[1.5] text-foreground-tertiary">
-              {node.conclusion}
-            </p>
+        >
+          {isDone ? (
+            <>
+              <p className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-primary">
+                Conclusion Reached · Step {path.length}
+              </p>
+              <p className="mb-3 mt-0 text-[14px] font-semibold text-foreground">
+                {currentNode.question}
+              </p>
+              {currentNode.conclusion && (
+                <p className="mb-4 mt-0 rounded-[var(--r-sm)] bg-primary/10 px-3.5 py-3 text-[13px] leading-[1.6] text-foreground-secondary">
+                  {currentNode.conclusion}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={restart}
+                className="cursor-pointer rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-3.5 py-2 font-sans text-[13px] text-foreground-secondary transition-colors hover:bg-field"
+              >
+                ← Restart Decision Tree
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="mb-1.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground-faint">
+                Step {path.length}
+                {nodes.filter((n) => !n.isLeaf).length > 0
+                  ? ` of ${nodes.filter((n) => !n.isLeaf).length}`
+                  : ""}
+              </p>
+              <p className="mb-6 mt-0 text-[15px] font-semibold leading-[1.45] text-foreground">
+                {currentNode.question}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => choose("yes")}
+                  className="flex-1 cursor-pointer rounded-[var(--r-sm)] border border-success/40 bg-success/10 py-3 font-sans text-[13px] font-semibold text-success transition-colors hover:bg-success/20"
+                >
+                  ✓ Yes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => choose("no")}
+                  className="flex-1 cursor-pointer rounded-[var(--r-sm)] border border-destructive/40 bg-destructive/10 py-3 font-sans text-[13px] font-semibold text-destructive transition-colors hover:bg-destructive/20"
+                >
+                  ✗ No
+                </button>
+              </div>
+            </>
           )}
         </div>
-      ))}
+      )}
+
+      {/* Full tree overview (collapsible) */}
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 font-sans text-[11px] text-foreground-faint hover:text-foreground-tertiary">
+          <ChevronRight size={12} className="transition-transform group-open:rotate-90" />
+          View full tree structure
+        </summary>
+        <div className="mt-3 flex flex-col gap-2 border-l border-border-subtle pl-4">
+          {nodes.map((node, index) => (
+            <div
+              key={node.id}
+              className={cn(
+                "rounded-[var(--r-sm)] border px-3 py-2",
+                node.isLeaf
+                  ? "border-primary/20 bg-primary/5"
+                  : "border-border-subtle bg-elevated",
+              )}
+            >
+              <span
+                className={cn(
+                  "mb-1 inline-block font-sans text-[9px] font-semibold uppercase tracking-[0.15em]",
+                  node.isLeaf ? "text-primary" : "text-foreground-faint",
+                )}
+              >
+                {node.isLeaf ? "Conclusion" : `Branch ${index + 1}`}
+              </span>
+              <p className="m-0 text-[12px] text-foreground-secondary">{node.question}</p>
+              {node.conclusion && (
+                <p className="m-0 mt-1 text-[11px] leading-[1.5] text-foreground-tertiary">
+                  {node.conclusion}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </details>
     </div>
   );
 }
@@ -656,10 +966,11 @@ export function D3RCAPage() {
         {method === "fishbone" && (
           <div>
             <p className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
-              Fishbone Categories
+              Fishbone (Ishikawa) Diagram
             </p>
-            <FishboneGrid
+            <FishboneVisual
               capaId={capa.id}
+              effect={capa.title}
               answers={fishboneAnswers}
               onAnswerChange={(category, content) =>
                 setFishboneAnswers((current) => ({ ...current, [category]: content }))
@@ -673,7 +984,7 @@ export function D3RCAPage() {
             <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
               Decision Tree
             </p>
-            <DecisionTree nodes={decisionNodes} />
+            <DecisionTreeVisual nodes={decisionNodes} />
           </div>
         )}
 

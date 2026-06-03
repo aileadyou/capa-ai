@@ -4,6 +4,7 @@ import { AlertTriangle, CheckCircle2, Circle, Save } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
+import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { CAPACase } from "@/types";
@@ -116,9 +117,12 @@ export function D1ProblemPage() {
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
+  // Start from the user's own saved answer if it exists — otherwise blank, so
+  // the initiator writes the statement themselves and reaches for Nova only if
+  // they want a hand (see the assist panel below the quality signals).
   const initialStatement = useMemo(() => {
     if (!capa) return "";
-    return getExistingProblemStatement(capa) ?? suggestedProblems[capa.id] ?? buildFallbackProblem(capa);
+    return getExistingProblemStatement(capa) ?? "";
   }, [capa]);
 
   const [statement, setStatement] = useState(initialStatement);
@@ -200,19 +204,9 @@ export function D1ProblemPage() {
             Problem Statement
           </h1>
           <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
-            Build a specific, measurable problem statement. Nova checks for six quality signals before the workflow can continue to D2 Containment.
+            Write the problem in your own words. Nova tracks six quality signals as you type and is on hand below if you'd like a starting draft.
           </p>
         </div>
-
-        {/* ── Nova suggestion block ────────────────────────────────────── */}
-        <NovaSuggestionBlock
-          context="problem statement"
-          suggestion={suggestedProblems[capa.id] ?? buildFallbackProblem(capa)}
-          reasoning={suggestionReasoning[capa.id]}
-          capaId={capa.id}
-          suggestionId="d1-problem"
-          onAccept={(content) => setStatement(content)}
-        />
 
         {/* ── Statement editor ─────────────────────────────────────────── */}
         <div>
@@ -296,6 +290,21 @@ export function D1ProblemPage() {
             ))}
           </div>
         </div>
+
+        {/* ── Nova assist (opt-in, below the user's own work) ──────────── */}
+        <NovaAssistPanel
+          title="Stuck? Let Nova draft a starting point"
+          description="You know this case best — write it your way. Nova's draft is here only if you'd like a reference to build on."
+        >
+          <NovaSuggestionBlock
+            context="problem statement"
+            suggestion={suggestedProblems[capa.id] ?? buildFallbackProblem(capa)}
+            reasoning={suggestionReasoning[capa.id]}
+            capaId={capa.id}
+            suggestionId="d1-problem"
+            onAccept={(content) => setStatement(content)}
+          />
+        </NovaAssistPanel>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
         <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
