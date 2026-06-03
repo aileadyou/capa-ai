@@ -301,7 +301,7 @@ export function NotificationCenterPage() {
               <span
                 className={`ml-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold ${
                   tabFilter === tab.value
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-on"
                     : "bg-muted text-muted-foreground"
                 }`}
               >

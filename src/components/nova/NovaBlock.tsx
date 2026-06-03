@@ -244,6 +244,7 @@ export function NovaBlock({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             rows={4}
+            aria-label="Edit Nova suggestion"
             className="box-border block w-full resize-y rounded-[var(--r-sm)] border border-primary bg-[var(--field-bg)] px-3 py-2.5 font-sans text-sm leading-[1.6] text-foreground outline-none shadow-[0_0_0_3px_var(--accent-soft)]"
           />
         ) : (

@@ -397,6 +397,7 @@ function IntakeDecisionControls({
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
         rows={2}
+        aria-label="Intake decision notes for Andi"
         placeholder="Notes for Andi (optional) — what to fix, or why you're rejecting."
         className="box-border mb-2.5 w-full resize-y rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3 py-2 font-sans text-[13px] leading-[1.5] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
       />
@@ -495,21 +496,71 @@ function IntakeReviewCard({ capa }: { capa: CAPACase }) {
 /** Read-only view of Andi's intake answers, so reviewers can judge gate quality + severity. */
 function IntakeSubmissionCard({ capa }: { capa: CAPACase }) {
   if (capa.gateAnswers.length === 0) return null;
+  const impact = capa.impact;
+  const isMinor = impact.severity === "Minor";
+  const hasRationale =
+    Boolean(impact.rationale) &&
+    impact.rationale !== "Nova will classify this finding during intake.";
+  const hasFactors = impact.factors.length > 0;
   return (
     <Card>
       <CardLabel>Intake submission</CardLabel>
-      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+      <div className="mb-4 flex flex-wrap items-center gap-1.5">
         <Pill>Title: {capa.title}</Pill>
-        <Pill
-          className={
-            capa.impact.severity === "Minor"
-              ? "bg-[var(--warning-soft)] text-warning"
-              : "bg-[var(--danger-soft)] text-destructive"
-          }
-        >
-          Severity: {capa.impact.severity}
-        </Pill>
       </div>
+
+      {/* Severity assessment — the classification Andi set, with its justification so
+          reviewers can judge whether the severity level is appropriate. */}
+      <div className="mb-4 rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3.5">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+            Severity set by initiator
+          </span>
+          <span
+            className={cn(
+              "rounded-[var(--r-full)] px-2 py-px font-sans text-[11px] font-bold",
+              isMinor
+                ? "bg-[var(--warning-soft)] text-warning"
+                : "bg-[var(--danger-soft)] text-destructive",
+            )}
+          >
+            {impact.severity}
+          </span>
+          {impact.totalWeight > 0 && (
+            <span className="ml-auto font-sans text-[11px] text-foreground-tertiary">
+              {Math.round(impact.totalWeight)}% confidence
+            </span>
+          )}
+        </div>
+        {hasRationale && (
+          <p className="mb-2.5 mt-0 font-sans text-xs leading-[1.55] text-foreground-secondary">
+            {impact.rationale}
+          </p>
+        )}
+        {hasFactors && (
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(132px,1fr))] gap-2">
+            {impact.factors.map((factor) => (
+              <div
+                key={factor.factor}
+                className="rounded-[var(--r-sm)] border border-border-subtle bg-[var(--field-bg)] px-2.5 py-2"
+              >
+                <p className="mb-[3px] mt-0 font-sans text-[10px] uppercase tracking-[0.18em] text-foreground-tertiary">
+                  {factor.factor}
+                </p>
+                <p className="mb-1 mt-0 font-sans text-xs text-foreground-secondary">
+                  {factor.value}
+                </p>
+                <p className="m-0 font-sans text-[10px] text-primary">Weight {factor.weight}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Gate question answers filled by Andi */}
+      <p className="mb-2.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+        Gate questions
+      </p>
       <div className="flex flex-col gap-3">
         {capa.gateAnswers.map((answer) => (
           <div key={answer.questionId}>
@@ -1044,12 +1095,12 @@ function MiddleColumn({
       {/* Source data */}
       <SourceDataCard prefill={capa.preFill} />
 
-      {/* Intake submission (gate answers + severity) for reviewers */}
-      {capa.intakeReviews && capa.intakeReviews.length > 0 && (
-        <IntakeSubmissionCard capa={capa} />
-      )}
+      {/* Intake submission (initiator's gate answers + severity) — shown on any
+          CAPA that captured intake answers so reviewers and downstream owners
+          can read what was submitted. Self-gates to null when empty. */}
+      {capa.gateAnswers.length > 0 && <IntakeSubmissionCard capa={capa} />}
 
-      {/* Intake Review */}
+      {/* Intake review decisions — only while the case carries reviewer slots */}
       {capa.intakeReviews && capa.intakeReviews.length > 0 && (
         <IntakeReviewCard capa={capa} />
       )}

@@ -12,7 +12,7 @@ export function DeptHeatmap({ data }: { data: DepartmentHeatmapEntry[] }) {
           <div className="truncate font-medium">{entry.department}</div>
           <div className="h-7 overflow-hidden rounded bg-muted">
             <div
-              className="flex h-full items-center justify-end bg-primary/80 pr-2 text-xs font-medium text-primary-foreground"
+              className="flex h-full items-center justify-end bg-primary pr-2 text-xs font-medium text-primary-on"
               style={{ width: `${entry.completionRate}%` }}
             >
               {entry.completionRate}%

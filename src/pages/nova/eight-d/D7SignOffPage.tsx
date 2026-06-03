@@ -486,8 +486,8 @@ export function D7SignOffPage() {
 
           {/* ── Score blocker ─────────────────────────────────────────── */}
           {(!isAuditReady || showScoreBlocker) && (
-            <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
-              <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
+            <div role="alert" className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+              <AlertTriangle size={15} aria-hidden="true" className="mt-px shrink-0 text-destructive" />
               <div>
                 <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">
                   {showScoreBlocker ? "Approval attempt blocked" : "Sign-off blocked by quality score"}

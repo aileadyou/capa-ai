@@ -155,7 +155,7 @@ export function AuditTrailPage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1
-            className="m-0 font-sans text-[22px] font-semibold tracking-[-0.02em] text-foreground"
+            className="m-0 font-sans text-4xl font-bold tracking-[-0.025em] text-foreground"
           >
             Global audit trail
           </h1>

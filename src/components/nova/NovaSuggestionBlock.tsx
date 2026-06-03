@@ -139,6 +139,7 @@ export function NovaSuggestionBlock({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           rows={4}
+          aria-label="Edit Nova suggestion"
           className="mb-3 box-border w-full resize-y rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--field-bg)] px-3 py-2.5 font-sans text-[13px] leading-[1.65] text-foreground outline-none shadow-[0_0_0_3px_var(--accent-soft)]"
           autoFocus
         />
@@ -154,7 +155,7 @@ export function NovaSuggestionBlock({
           <>
             <button
               onClick={handleAccept}
-              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-foreground"
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-on"
             >
               Apply edit
             </button>
@@ -169,7 +170,7 @@ export function NovaSuggestionBlock({
           <>
             <button
               onClick={handleAccept}
-              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-foreground"
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-on"
             >
               Use this suggestion
             </button>

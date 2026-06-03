@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Loader2, Pencil, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { classifyImpact, importSourceData } from "@/services/novaService";
+import { classifyImpact, draftGateAnswers, importSourceData, type GateDraftSet } from "@/services/novaService";
 import { useCapaStore } from "@/store";
 import type { CAPAType, GateQuestionID, ImpactClassification, PreFillContext, Severity } from "@/types";
 import { computeIntakeScore, getPrefillSummary, getSuggestedTitle } from "@/utils/intakeHelpers";
@@ -142,6 +142,39 @@ function getPrefillSource(prefill: PreFillContext) {
   return prefill.source;
 }
 
+const EMPTY_GATE_ANSWERS: Record<GateQuestionID, string> = {
+  observation: "",
+  scope: "",
+  impact: "",
+  containment: "",
+  cause_confirmation: "",
+  effectiveness_criteria: "",
+};
+
+type GateProvenance = "drafted" | "edited" | "none";
+
+// ── Provenance chip (Nova draft vs. user-edited) ──────────────────────────────
+
+function GateProvenanceChip({ status }: { status: GateProvenance }) {
+  if (status === "none") return null;
+
+  if (status === "drafted") {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-[var(--r-full)] bg-[var(--accent-soft)] px-2 py-0.5 font-sans text-[10px] font-semibold tracking-[0.04em] text-primary">
+        <Sparkles size={10} aria-hidden="true" />
+        Nova draft
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-[var(--r-full)] border border-border-subtle bg-elevated px-2 py-0.5 font-sans text-[10px] font-semibold tracking-[0.04em] text-foreground-tertiary">
+      <Pencil size={10} aria-hidden="true" />
+      Edited
+    </span>
+  );
+}
+
 // ── Step indicator ────────────────────────────────────────────────────────────
 
 function StepIndicator({ current }: { current: number }) {
@@ -205,15 +238,25 @@ function StepIndicator({ current }: { current: number }) {
 
 // ── Reusable field components ─────────────────────────────────────────────────
 
-function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
+function FieldLabel({
+  children,
+  required,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  required?: boolean;
+  htmlFor?: string;
+}) {
   return (
     <label
+      htmlFor={htmlFor}
       className="mb-1.5 block font-sans text-xs font-semibold text-foreground-secondary"
     >
       {children}
       {required && (
-        <span className="ml-[3px] text-destructive">*</span>
+        <span className="ml-[3px] text-destructive" aria-hidden="true">*</span>
       )}
+      {required && <span className="sr-only"> (required)</span>}
     </label>
   );
 }
@@ -223,14 +266,17 @@ function StyledTextarea({
   onChange,
   placeholder,
   rows = 4,
+  id,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   rows?: number;
+  id?: string;
 }) {
   return (
     <textarea
+      id={id}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
@@ -354,13 +400,12 @@ export function CapaIntakePage() {
 
   // Step 2 — gate questions
   const [gateAnswers, setGateAnswers] = useState<Record<GateQuestionID, string>>({
-    observation: "",
-    scope: "",
-    impact: "",
-    containment: "",
-    cause_confirmation: "",
-    effectiveness_criteria: "",
+    ...EMPTY_GATE_ANSWERS,
   });
+  // The original answers Nova drafted from the source doc, kept so we can show
+  // per-field "Nova draft" vs "Edited" provenance and offer a restore action.
+  const [novaDraft, setNovaDraft] = useState<Record<GateQuestionID, string> | null>(null);
+  const [draftMeta, setDraftMeta] = useState<Pick<GateDraftSet, "sourceLabel" | "confidence"> | null>(null);
 
   // Step 3 — impact
   const [impactClassification, setImpactClassification] = useState<ImpactClassification | undefined>();
@@ -384,7 +429,30 @@ export function CapaIntakePage() {
     setPrefill(undefined);
     setImpactClassification(undefined);
     setTitle(getSuggestedTitle(selectedType));
+    setGateAnswers({ ...EMPTY_GATE_ANSWERS });
+    setNovaDraft(null);
+    setDraftMeta(null);
   }, [querySourceId, selectedType]);
+
+  // Per-field provenance: did the user keep Nova's draft, or revise it?
+  function gateProvenance(id: GateQuestionID): GateProvenance {
+    if (!novaDraft) return "none";
+    const draft = novaDraft[id];
+    if (!draft) return "none";
+    const current = gateAnswers[id];
+    if (current === draft) return "drafted";
+    if (current.trim().length > 0) return "edited";
+    return "none";
+  }
+
+  function restoreGateDraft(id: GateQuestionID) {
+    if (!novaDraft) return;
+    setGateAnswers((prev) => ({ ...prev, [id]: novaDraft[id] }));
+  }
+
+  const draftedFieldCount = novaDraft
+    ? Object.values(novaDraft).filter((value) => value.trim().length > 0).length
+    : 0;
 
   // Sync Nova severity to selector default
   useEffect(() => {
@@ -409,8 +477,16 @@ export function CapaIntakePage() {
       const classification = await classifyImpact(imported);
       setImpactClassification(classification);
       setSelectedSeverity(classification.severity);
-      toast("Source data imported", {
-        description: `Imported from ${getPrefillSource(imported)}.`,
+
+      // Nova reads the imported finding and drafts every gate answer so Andi
+      // reviews and refines instead of writing from a blank page.
+      const draft = await draftGateAnswers(type);
+      setGateAnswers({ ...EMPTY_GATE_ANSWERS, ...draft.answers });
+      setNovaDraft({ ...EMPTY_GATE_ANSWERS, ...draft.answers });
+      setDraftMeta({ sourceLabel: draft.sourceLabel, confidence: draft.confidence });
+
+      toast("Source imported · gate answers drafted", {
+        description: `Nova read ${getPrefillSource(imported)} and drafted the gate answers for your review.`,
       });
       setStep(2);
     } catch (err) {
@@ -425,6 +501,9 @@ export function CapaIntakePage() {
   function handleManualMode() {
     setManualMode(true);
     setPrefill(undefined);
+    setGateAnswers({ ...EMPTY_GATE_ANSWERS });
+    setNovaDraft(null);
+    setDraftMeta(null);
     setStep(2);
   }
 
@@ -471,6 +550,41 @@ export function CapaIntakePage() {
 
   const step2Valid = gateAnswers.observation.trim().length >= 20;
   const step3Valid = Boolean(selectedSeverity);
+
+  // ── Gate field renderer (shared by required + optional groups) ───────────────
+
+  function renderGateField(q: (typeof GATE_QUESTIONS)[number], rows: number) {
+    const status = gateProvenance(q.id);
+    return (
+      <div key={q.id}>
+        <div className="flex items-start justify-between gap-2">
+          <FieldLabel required={q.required} htmlFor={`gate-${q.id}`}>
+            {q.question}
+          </FieldLabel>
+          <div className="flex shrink-0 items-center gap-1.5 pt-px">
+            {status === "edited" && (
+              <button
+                type="button"
+                onClick={() => restoreGateDraft(q.id)}
+                className="inline-flex cursor-pointer items-center gap-1 rounded-[var(--r-full)] border border-border-subtle bg-transparent px-2 py-0.5 font-sans text-[10px] font-semibold text-foreground-tertiary transition-colors [transition-duration:var(--dur-fast)] hover:bg-elevated hover:text-foreground-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card"
+              >
+                <RotateCcw size={10} aria-hidden="true" />
+                Restore draft
+              </button>
+            )}
+            <GateProvenanceChip status={status} />
+          </div>
+        </div>
+        <StyledTextarea
+          id={`gate-${q.id}`}
+          value={gateAnswers[q.id]}
+          onChange={(v) => setGateAnswers((prev) => ({ ...prev, [q.id]: v }))}
+          placeholder={q.placeholder}
+          rows={rows}
+        />
+      </div>
+    );
+  }
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -634,34 +748,42 @@ export function CapaIntakePage() {
             Answer questions to help Nova assess severity and scope. Be specific: include dates, batch numbers, and measurable observations.
           </p>
 
-          {/* Nova tip */}
-          <div
-            className="mb-6 flex gap-2.5 rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3"
-          >
-            <Sparkles size={14} className="mt-px shrink-0 text-primary" />
-            <div>
-              <p className="mb-[3px] mt-0 font-sans text-xs font-semibold text-primary">
-                Nova tip
-              </p>
-              <p className="m-0 font-sans text-xs leading-[1.55] text-foreground-tertiary">
-                Be specific about dates, batch numbers, and measurable observations. Vague answers will lower your quality score and may delay CAPA approval.
-              </p>
+          {/* Nova draft banner (after import) or generic tip (manual mode) */}
+          {draftMeta ? (
+            <div className="mb-6 flex gap-2.5 rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-[var(--accent-soft)] px-4 py-3.5">
+              <Sparkles size={15} className="mt-px shrink-0 text-primary" aria-hidden="true" />
+              <div className="min-w-0">
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <p className="m-0 font-sans text-[13px] font-bold text-primary">
+                    Nova drafted your gate answers
+                  </p>
+                  <span className="rounded-[var(--r-full)] bg-card/70 px-2 py-px font-sans text-[10px] font-semibold tracking-[0.04em] text-primary">
+                    {draftMeta.confidence}% confidence
+                  </span>
+                </div>
+                <p className="m-0 font-sans text-xs leading-[1.55] text-foreground-secondary">
+                  Nova read <span className="font-semibold text-foreground">{draftMeta.sourceLabel}</span> and pre-filled {draftedFieldCount} {draftedFieldCount === 1 ? "answer" : "answers"} below.
+                  Review each one, add any detail Nova could not see, then continue. Fields you change are marked <span className="font-semibold text-foreground-secondary">Edited</span>.
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mb-6 flex gap-2.5 rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3">
+              <Sparkles size={14} className="mt-px shrink-0 text-primary" aria-hidden="true" />
+              <div>
+                <p className="mb-[3px] mt-0 font-sans text-xs font-semibold text-primary">
+                  Nova tip
+                </p>
+                <p className="m-0 font-sans text-xs leading-[1.55] text-foreground-tertiary">
+                  Be specific about dates, batch numbers, and measurable observations. Vague answers will lower your quality score and may delay CAPA approval.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Required questions */}
           <div className="flex flex-col gap-[18px]">
-            {GATE_QUESTIONS.filter((q) => q.required).map((q) => (
-              <div key={q.id}>
-                <FieldLabel required>{q.question}</FieldLabel>
-                <StyledTextarea
-                  value={gateAnswers[q.id]}
-                  onChange={(v) => setGateAnswers((prev) => ({ ...prev, [q.id]: v }))}
-                  placeholder={q.placeholder}
-                  rows={4}
-                />
-              </div>
-            ))}
+            {GATE_QUESTIONS.filter((q) => q.required).map((q) => renderGateField(q, 4))}
 
             {/* Additional context */}
             <div
@@ -673,17 +795,7 @@ export function CapaIntakePage() {
                 Additional context (recommended)
               </p>
               <div className="flex flex-col gap-3.5">
-                {GATE_QUESTIONS.filter((q) => !q.required).map((q) => (
-                  <div key={q.id}>
-                    <FieldLabel>{q.question}</FieldLabel>
-                    <StyledTextarea
-                      value={gateAnswers[q.id]}
-                      onChange={(v) => setGateAnswers((prev) => ({ ...prev, [q.id]: v }))}
-                      placeholder={q.placeholder}
-                      rows={3}
-                    />
-                  </div>
-                ))}
+                {GATE_QUESTIONS.filter((q) => !q.required).map((q) => renderGateField(q, 3))}
               </div>
             </div>
           </div>
@@ -834,8 +946,9 @@ export function CapaIntakePage() {
 
           {/* CAPA title */}
           <div>
-            <FieldLabel required>CAPA title</FieldLabel>
+            <FieldLabel required htmlFor="capa-title">CAPA title</FieldLabel>
             <input
+              id="capa-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}

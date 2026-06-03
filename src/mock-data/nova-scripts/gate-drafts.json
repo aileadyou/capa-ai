@@ -1,0 +1,38 @@
+{
+  "deviation": {
+    "sourceLabel": "Bizzmine · DEV-2026-0341",
+    "confidence": 88,
+    "answers": {
+      "observation": "On 18 May 2026 at 08:15 (Shift A), continuous environmental monitoring in the Grade A Fill Suite (Vaccine Filling Line 2) recorded ≥0.5 µm particle counts above the Grade A alert limit for 12 minutes during active vaccine filling. The excursion was flagged by the EM system at counter HEPA-FF-L2-07 and confirmed against the SOP-EM-014 trend.",
+      "impact": "Potential Major GMP impact. The excursion occurred in a classified Grade A aseptic zone during active vaccine filling, so sterility assurance for the units filled inside the exposure window must be assessed. No sterility failure is confirmed yet, which keeps this Major rather than Critical pending the batch impact review.",
+      "containment": "Vaccine Filling Line 2 was placed on immediate engineering hold and batches VAC-26-0518-A and VAC-26-0518-B were quarantined pending QA disposition. Environmental re-test was initiated and HEPA-FF-L2-07 was flagged for integrity inspection before the suite returns to routine operation.",
+      "scope": "Grade A Fill Suite, Vaccine Filling Line 2, HEPA filter HEPA-FF-L2-07. Product impact is limited to vaccine batches VAC-26-0518-A and VAC-26-0518-B filled during Shift A. Source records: EM trend report (SOP-EM-014) and the filling-line event log.",
+      "cause_confirmation": "Confirm via a HEPA integrity / DOP test on HEPA-FF-L2-07, a review of the SOP-PM-HEPA-001 preventive-maintenance interval and filter age, the EM trend history for repeat alerts, and the SOP-FF-009 line event log to correlate the excursion with filling activity.",
+      "effectiveness_criteria": "Effectiveness is verified when post-remediation EM monitoring shows no Grade A alert or action excursions across at least three consecutive filling campaigns, the requalified HEPA passes integrity testing, and the revised maintenance interval is reflected in the planner with no recurrence over 90 days."
+    }
+  },
+  "audit": {
+    "sourceLabel": "Q100+ · AUD-2026-0089",
+    "confidence": 84,
+    "answers": {
+      "observation": "During internal audit IA-2026-QA-042 on 14 May 2026, QA Compliance found that warehouse material transfer records for three lots were completed after shift handover and lacked documented second-person verification, contrary to SOP-WH-021 and SOP-DOC-004.",
+      "impact": "Major GMP and data-integrity impact. Contemporaneous recording and independent verification underpin record reliability under GMP Chapter 4 and the BPOM 2023 Data Integrity guidance; the gap weakens audit defensibility for the affected transfers even though no material mix-up has been identified.",
+      "containment": "The three affected material transfer records were segregated for a QA data-integrity review, and a temporary second-person verification check was reinstated at shift handover while the records are reconciled against physical stock.",
+      "scope": "Warehouse material transfer documentation for three lots recorded across the shift-handover window. Governing records: SOP-WH-021 (material transfer) and SOP-DOC-004 (documentation practices); finding logged in Q100+ as AUD-2026-0089.",
+      "cause_confirmation": "Confirm by reconciling the three transfer records against physical stock and ERP movements, interviewing the shift-handover personnel to map where verification ownership was lost, and reviewing whether SOP-WH-021 explicitly assigns real-time second-person verification.",
+      "effectiveness_criteria": "Effective when a follow-up record review over the next two months shows 100% contemporaneous completion with documented second-person verification, and the revised SOP plus retraining are confirmed in place with zero repeat observations at the next internal audit."
+    }
+  },
+  "complaint": {
+    "sourceLabel": "Bizzmine · CMP-2026-0112",
+    "confidence": 86,
+    "answers": {
+      "observation": "On 12 May 2026, RS Hasan Sadikin Bandung reported that a hospital pharmacist observed visible particulate matter in one returned Vaccine Multi-dose Vial (lot VAC-26-0419-C) prior to administration. The vial remained sealed and was quarantined by the customer.",
+      "impact": "Major product-quality impact. Visible particulate in a parenteral vaccine is a patient-facing quality defect raised by a hospital customer; until the returned vial and retained samples are assessed, batch-wide impact cannot be excluded, though current scope is bounded to a single reported vial.",
+      "containment": "The complaint vial is being recovered under a controlled return and retained samples for lot VAC-26-0419-C have been placed on QA review hold. Remaining distributed stock of the lot is monitored for further complaints pending the visual-inspection assessment.",
+      "scope": "Vaccine Multi-dose Vial, lot VAC-26-0419-C (expiry 30 Apr 2027), a single reported vial from RS Hasan Sadikin Bandung. Source records: customer photo, complaint intake form, and the batch visual-inspection reconciliation logged in Bizzmine as CMP-2026-0112.",
+      "cause_confirmation": "Confirm by assessing the returned vial and retained samples for particulate type (visual and microscopy), reviewing the lot's visual-inspection reconciliation and reject trend for borderline observations, and tracing whether any in-line inspection variance was escalated.",
+      "effectiveness_criteria": "Effective when the retained-sample assessment defines the particulate source, the strengthened visual-inspection reconciliation and escalation criteria are implemented, and no recurrence of particulate complaints is seen for the product over the following two production campaigns."
+    }
+  }
+}

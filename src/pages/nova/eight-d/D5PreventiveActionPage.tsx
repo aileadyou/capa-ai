@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, ListPlus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import type { PreventiveAction } from "@/types";
 import { cn } from "@/lib/utils";
 import { computeActionEffectiveness, computeTotalQualityScore } from "@/utils/scoring";
 import { formatDate } from "@/utils/formatters";
+import { getPreventiveActionSuggestions } from "@/services/novaService";
 
 // ── Mock suggestion data ─────────────────────────────────────────────────────
 
@@ -181,12 +182,34 @@ export function D5PreventiveActionPage() {
   const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [novaSuggestion, setNovaSuggestion] = useState("");
+  const [novaReasoning, setNovaReasoning] = useState<string | undefined>();
 
   // Blank to start — the owner describes the preventive action first; the Nova
   // draft is opt-in via the assist panel below the quality signals.
   const [description, setDescription] = useState("");
   const [pic, setPic] = useState("Siti Rahmawati");
   const [targetDate, setTargetDate] = useState(getDefaultTargetDate());
+
+  useEffect(() => {
+    if (!capa) return;
+    let cancelled = false;
+
+    void getPreventiveActionSuggestions(capa.id).then((suggestions) => {
+      if (cancelled) return;
+      const firstSuggestion = suggestions[0];
+      setNovaSuggestion(firstSuggestion ?? paSuggestions[capa.id] ?? "");
+      setNovaReasoning(
+        firstSuggestion
+          ? "Generated from the enriched finding packet as a forward-looking recurrence-control action."
+          : paReasoning[capa.id],
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [capa]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -322,6 +345,7 @@ export function D5PreventiveActionPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
+              aria-invalid={shouldShowBlocker && description.trim().length < 30}
               className={cn(
                 "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
                 shouldShowBlocker && description.trim().length < 30 ? "border-destructive" : "border-[var(--line-2)]",
@@ -332,11 +356,12 @@ export function D5PreventiveActionPage() {
           {/* PIC + Target date */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
+              <label htmlFor="pa-pic" className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
                 Person in Charge
               </label>
               <div className="relative">
                 <select
+                  id="pa-pic"
                   value={pic}
                   onChange={(e) => setPic(e.target.value)}
                   className="w-full cursor-pointer appearance-none rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] py-[9px] pl-3 pr-9 font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
@@ -355,6 +380,7 @@ export function D5PreventiveActionPage() {
                 type="date"
                 value={targetDate}
                 onChange={(e) => setTargetDate(e.target.value)}
+                aria-invalid={shouldShowBlocker && !new Date(`${targetDate}T00:00:00`).getTime()}
                 className={cn(
                   "box-border w-full rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3 py-[9px] font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
                   shouldShowBlocker && !new Date(`${targetDate}T00:00:00`).getTime() ? "border-destructive" : "border-[var(--line-2)]",
@@ -366,7 +392,7 @@ export function D5PreventiveActionPage() {
 
         {/* ── Blocker banner ───────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+          <div role="alert" className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
             <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
               <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">Preventive action is incomplete</p>
@@ -415,8 +441,8 @@ export function D5PreventiveActionPage() {
         >
           <NovaSuggestionBlock
             context="preventive action"
-            suggestion={paSuggestions[capa.id] ?? ""}
-            reasoning={paReasoning[capa.id]}
+            suggestion={novaSuggestion || paSuggestions[capa.id] || ""}
+            reasoning={novaReasoning ?? paReasoning[capa.id]}
             capaId={capa.id}
             suggestionId="d5-pa"
             onAccept={(content) => setDescription(content)}

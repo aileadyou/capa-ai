@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, ChevronRight, Circle, ExternalLink, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import type {
   RCAMethod,
 } from "@/types";
 import { computeRootCauseDepth, computeTotalQualityScore } from "@/utils/scoring";
+import { getRCASuggestions } from "@/services/novaService";
 
 // ── Static data ──────────────────────────────────────────────────────────────
 
@@ -293,10 +294,13 @@ function FiveWhysChain({
   capaId,
   answers,
   onAnswerChange,
+  onClearAfter,
 }: {
   capaId: string;
   answers: string[];
   onAnswerChange: (index: number, content: string) => void;
+  /** Called when the user edits an earlier Why — clears parent answers for every index > fromIndex */
+  onClearAfter?: (fromIndex: number) => void;
 }) {
   // How many levels have been confirmed (locked in)
   const [lockedCount, setLockedCount] = useState(() => {
@@ -322,8 +326,21 @@ function FiveWhysChain({
   }
 
   function editAt(index: number) {
+    // How many confirmed answers will be wiped (Why index+2 … Why lockedCount)
+    const willClearCount = lockedCount - 1 - index;
+    onClearAfter?.(index);           // clear parent answers for index+1 … N-1
     setLockedCount(index);
     setDraft(answers[index] || "");
+    if (willClearCount > 0) {
+      const firstReset = index + 2;
+      const lastReset  = lockedCount;
+      toast.info(
+        willClearCount === 1
+          ? `Why ${firstReset} reset`
+          : `Why ${firstReset}–${lastReset} reset`,
+        { description: "Downstream answers cleared — re-answer from here." },
+      );
+    }
   }
 
   return (
@@ -351,6 +368,11 @@ function FiveWhysChain({
               <button
                 type="button"
                 onClick={() => editAt(index)}
+                title={
+                  index < lockedCount - 1
+                    ? `Edit Why ${index + 1} — resets Why ${index + 2}${lockedCount - 1 > index + 1 ? `–${lockedCount}` : ""}`
+                    : `Edit Why ${index + 1}`
+                }
                 className="shrink-0 cursor-pointer rounded border-0 bg-transparent p-0 font-sans text-[10px] text-foreground-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground-secondary"
               >
                 Edit
@@ -380,10 +402,12 @@ function FiveWhysChain({
               onChange={(e) => setDraft(e.target.value)}
               rows={3}
               placeholder="Enter your answer…"
+              aria-label={activeIndex === 4 ? "Root cause answer (Why 5)" : `Answer for Why ${activeIndex + 1}`}
               className="box-border w-full resize-none rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
             />
             <div className="mt-2">
               <NovaSuggestionBlock
+                key={activeIndex}
                 context={`Why ${activeIndex + 1} answer`}
                 suggestion={fiveWhysPlan[activeIndex].suggestion}
                 reasoning={fiveWhysPlan[activeIndex].reasoning}
@@ -421,6 +445,7 @@ function FiveWhysChain({
           <button
             type="button"
             onClick={() => {
+              onClearAfter?.(-1);  // clear ALL parent answers (index > -1 = all)
               setLockedCount(0);
               setDraft(fiveWhysPlan[0]?.suggestion || "");
             }}
@@ -790,12 +815,59 @@ export function D3RCAPage() {
       {} as Record<FishboneName, string>,
     ),
   );
-  const [decisionNodes] = useState<DecisionNode[]>(
+  const [decisionNodes, setDecisionNodes] = useState<DecisionNode[]>(
     capa?.rca.decisionTree?.nodes?.length ? capa.rca.decisionTree.nodes : decisionTreePlan,
   );
   const [confirmedRootCause, setConfirmedRootCause] = useState(
     capa?.rca.confirmedRootCauses[0] ?? confirmedRootCauseByMethod[initialMethod],
   );
+
+  useEffect(() => {
+    if (!capa) return;
+    let cancelled = false;
+
+    void getRCASuggestions(capa.id, method).then((response) => {
+      if (cancelled || !response || typeof response !== "object") return;
+      const result = response as {
+        fiveWhys?: FiveWhysNode[];
+        fishbone?: FishboneCategory[];
+        decisionTree?: { nodes: DecisionNode[]; rootNodeId: string };
+        confirmedRootCauses?: string[];
+      };
+
+      if (method === "5whys" && result.fiveWhys?.length) {
+        setWhyAnswers(
+          fiveWhysPlan.map((item, index) => result.fiveWhys?.[index]?.novaSuggestion ?? item.suggestion),
+        );
+      }
+
+      if (method === "fishbone" && result.fishbone?.length) {
+        setFishboneAnswers(
+          fishbonePlan.reduce(
+            (current, item) => ({
+              ...current,
+              [item.category]:
+                result.fishbone?.find((cat) => cat.category === item.category)?.novaEntries.join("\n") ??
+                item.suggestion,
+            }),
+            {} as Record<FishboneName, string>,
+          ),
+        );
+      }
+
+      if (method === "decision_tree" && result.decisionTree?.nodes?.length) {
+        setDecisionNodes(result.decisionTree.nodes);
+      }
+
+      if (result.confirmedRootCauses?.[0]) {
+        setConfirmedRootCause(result.confirmedRootCauses[0]);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [capa, method]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -959,6 +1031,11 @@ export function D3RCAPage() {
                   current.map((a, i) => (i === index ? content : a)),
                 )
               }
+              onClearAfter={(fromIndex) =>
+                setWhyAnswers((prev) =>
+                  prev.map((a, i) => (i > fromIndex ? "" : a)),
+                )
+              }
             />
           </div>
         )}
@@ -1033,7 +1110,7 @@ export function D3RCAPage() {
 
         {/* ── Blocker ──────────────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+          <div role="alert" className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
             <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
               <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">

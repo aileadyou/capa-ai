@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, ListPlus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import type { CorrectiveAction } from "@/types";
 import { cn } from "@/lib/utils";
 import { computeActionEffectiveness, computeTotalQualityScore } from "@/utils/scoring";
 import { formatDate } from "@/utils/formatters";
+import { getCorrectiveActionSuggestions } from "@/services/novaService";
 
 // ── Mock suggestion data ─────────────────────────────────────────────────────
 
@@ -192,6 +193,8 @@ export function D4CorrectiveActionPage() {
   const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [novaSuggestion, setNovaSuggestion] = useState("");
+  const [novaReasoning, setNovaReasoning] = useState<string | undefined>();
 
   const confirmedRootCauses = useMemo(
     () => capa?.rca.confirmedRootCauses.filter(Boolean) ?? [],
@@ -207,6 +210,26 @@ export function D4CorrectiveActionPage() {
   const [verificationMethod, setVerificationMethod] = useState(
     "QA review of implementation evidence and documented effectiveness check.",
   );
+
+  useEffect(() => {
+    if (!capa) return;
+    let cancelled = false;
+
+    void getCorrectiveActionSuggestions(capa.id).then((suggestions) => {
+      if (cancelled) return;
+      const firstSuggestion = suggestions[0];
+      setNovaSuggestion(firstSuggestion ?? caSuggestions[capa.id] ?? "");
+      setNovaReasoning(
+        firstSuggestion
+          ? "Generated from the enriched finding packet and linked to the confirmed or candidate root cause."
+          : caReasoning[capa.id],
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [capa]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -338,6 +361,7 @@ export function D4CorrectiveActionPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
+              aria-invalid={shouldShowBlocker && description.trim().length < 30}
               className={cn(
                 "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
                 shouldShowBlocker && description.trim().length < 30 ? "border-destructive" : "border-[var(--line-2)]",
@@ -348,11 +372,12 @@ export function D4CorrectiveActionPage() {
           {/* PIC + Due date */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
+              <label htmlFor="ca-pic" className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
                 Person in Charge
               </label>
               <div className="relative">
                 <select
+                  id="ca-pic"
                   value={pic}
                   onChange={(e) => setPic(e.target.value)}
                   className="w-full cursor-pointer appearance-none rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] py-[9px] pl-3 pr-9 font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
@@ -378,13 +403,15 @@ export function D4CorrectiveActionPage() {
 
           {/* Linked root cause */}
           <div>
-            <label className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
+            <label htmlFor="ca-linked-rc" className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
               Linked root cause
             </label>
             <div className="relative">
               <select
+                id="ca-linked-rc"
                 value={linkedRootCause}
                 onChange={(e) => setLinkedRootCause(e.target.value)}
+                aria-invalid={shouldShowBlocker && linkedRootCause.trim().length < 20}
                 className={cn(
                   "w-full cursor-pointer appearance-none rounded-[var(--r-sm)] border bg-[var(--field-bg)] py-[9px] pl-3 pr-9 font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
                   shouldShowBlocker && linkedRootCause.trim().length < 20 ? "border-destructive" : "border-[var(--line-2)]",
@@ -409,6 +436,7 @@ export function D4CorrectiveActionPage() {
               value={verificationMethod}
               onChange={(e) => setVerificationMethod(e.target.value)}
               rows={3}
+              aria-invalid={shouldShowBlocker && verificationMethod.trim().length < 10}
               className={cn(
                 "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
                 shouldShowBlocker && verificationMethod.trim().length < 10 ? "border-destructive" : "border-[var(--line-2)]",
@@ -419,7 +447,7 @@ export function D4CorrectiveActionPage() {
 
         {/* ── Blocker banner ───────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+          <div role="alert" className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
             <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
               <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">Corrective action is incomplete</p>
@@ -468,8 +496,8 @@ export function D4CorrectiveActionPage() {
         >
           <NovaSuggestionBlock
             context="corrective action"
-            suggestion={caSuggestions[capa.id] ?? ""}
-            reasoning={caReasoning[capa.id]}
+            suggestion={novaSuggestion || caSuggestions[capa.id] || ""}
+            reasoning={novaReasoning ?? caReasoning[capa.id]}
             capaId={capa.id}
             suggestionId="d4-ca"
             onAccept={(content) => setDescription(content)}

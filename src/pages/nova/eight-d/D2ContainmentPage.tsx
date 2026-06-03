@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { useAuditTrailStore, useCapaStore, useNotificationStore } from "@/store"
 import type { CAPACase } from "@/types";
 import { cn } from "@/lib/utils";
 import { computeContainmentStrength, computeTotalQualityScore } from "@/utils/scoring";
+import { getContainmentSuggestion } from "@/services/novaService";
 
 // ── Mock suggestion data ─────────────────────────────────────────────────────
 
@@ -128,6 +129,32 @@ export function D2ContainmentPage() {
   const [description, setDescription] = useState(initialContainment.description);
   const [pic, setPic] = useState(initialContainment.pic);
   const [dueDate, setDueDate] = useState(initialContainment.dueDate);
+  const [novaSuggestion, setNovaSuggestion] = useState("");
+  const [novaReasoning, setNovaReasoning] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (!capa) return;
+    let cancelled = false;
+
+    void getContainmentSuggestion(capa.id).then((suggestions) => {
+      if (cancelled) return;
+      const firstSuggestion = suggestions[0]?.content;
+      setNovaSuggestion(
+        firstSuggestion ??
+          containmentSuggestions[capa.id] ??
+          "Immediately contain the affected product, system, or record scope and notify QA for documented assessment.",
+      );
+      setNovaReasoning(
+        firstSuggestion
+          ? "Generated from the enriched finding analysis packet and bounded to the affected source scope."
+          : containmentReasoning[capa.id],
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [capa]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -226,6 +253,7 @@ export function D2ContainmentPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={6}
+              aria-invalid={shouldShowBlocker}
               placeholder="Describe the immediate hold, quarantine, restriction, review, or assessment action."
               className={cn(
                 "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
@@ -247,12 +275,14 @@ export function D2ContainmentPage() {
             {/* PIC */}
             <div>
               <label
+                htmlFor="containment-pic"
                 className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary"
               >
                 Person in Charge
               </label>
               <div className="relative">
                 <select
+                  id="containment-pic"
                   value={pic}
                   onChange={(e) => setPic(e.target.value)}
                   className="w-full cursor-pointer appearance-none rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] py-[9px] pl-3 pr-9 font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
@@ -292,7 +322,7 @@ export function D2ContainmentPage() {
 
         {/* ── Blocker banner ───────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+          <div role="alert" className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
             <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
               <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">
@@ -369,8 +399,12 @@ export function D2ContainmentPage() {
         >
           <NovaSuggestionBlock
             context="containment action"
-            suggestion={containmentSuggestions[capa.id] ?? "Immediately contain the affected product, system, or record scope and notify QA for documented assessment."}
-            reasoning={containmentReasoning[capa.id]}
+            suggestion={
+              novaSuggestion ||
+              containmentSuggestions[capa.id] ||
+              "Immediately contain the affected product, system, or record scope and notify QA for documented assessment."
+            }
+            reasoning={novaReasoning ?? containmentReasoning[capa.id]}
             capaId={capa.id}
             suggestionId="d2-containment"
             onAccept={(content) => setDescription(content)}

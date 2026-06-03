@@ -71,12 +71,14 @@ function NavItem({
           active ? "font-semibold text-primary" : "font-normal text-foreground-secondary",
         )}
         data-active={active ? "true" : undefined}
+        aria-current={active ? "page" : undefined}
       >
         <Icon size={18} strokeWidth={1.75} aria-hidden="true" className="shrink-0" />
         <span className="flex-1">{title}</span>
         {badge !== undefined && badge > 0 && (
           <span
-            className="min-w-[18px] rounded-[var(--r-full)] bg-primary px-1.5 py-px text-center font-sans text-[10px] font-bold leading-4 text-primary-foreground"
+            className="min-w-[18px] rounded-[var(--r-full)] bg-primary px-1.5 py-px text-center font-sans text-[10px] font-bold leading-4 text-primary-on"
+            aria-label={`${badge} unread`}
           >
             {badge}
           </span>
@@ -177,7 +179,7 @@ export function Sidebar() {
       </div>
 
       {/* Primary nav */}
-      <nav className="flex-1 overflow-y-auto px-2 pt-2.5">
+      <nav className="flex-1 overflow-y-auto px-2 pt-2.5" aria-label="Main navigation">
         <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
           {primaryNav.map((item) => (
             <NavItem
@@ -193,11 +195,12 @@ export function Sidebar() {
         {/* Management section */}
         <div className="mt-5 border-t border-[var(--line-1)] pt-2.5">
           <p
+            id="nav-management-heading"
             className="m-0 px-3 pb-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
           >
             Management
           </p>
-          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+          <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-labelledby="nav-management-heading">
             {navManagement.map((item) => (
               <NavItem key={item.url} to={item.url} icon={item.icon} title={item.title} />
             ))}
@@ -207,11 +210,12 @@ export function Sidebar() {
         {/* System section */}
         <div className="mt-5 border-t border-[var(--line-1)] pt-2.5">
           <p
+            id="nav-system-heading"
             className="m-0 px-3 pb-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
           >
             System
           </p>
-          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+          <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-labelledby="nav-system-heading">
             {navSystem.map((item) => (
               <NavItem key={item.url} to={item.url} icon={item.icon} title={item.title} />
             ))}

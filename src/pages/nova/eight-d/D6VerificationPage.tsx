@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, FileCheck, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { VerificationData } from "@/types";
 import { cn } from "@/lib/utils";
 import { computeTotalQualityScore } from "@/utils/scoring";
+import { getVerificationCoaching } from "@/services/novaService";
 
 type VerificationMethod = NonNullable<VerificationData["method"]>;
 
@@ -90,6 +91,8 @@ export function D6VerificationPage() {
   const updateScore = useCapaStore((state) => state.updateScore);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [novaVerificationSuggestion, setNovaVerificationSuggestion] = useState("");
+  const [novaVerificationReasoning, setNovaVerificationReasoning] = useState("");
 
   const defaults = capa
     ? verificationDefaults[capa.id] ?? { method: "process_review" as VerificationMethod, result: "", evidence: "" }
@@ -103,6 +106,23 @@ export function D6VerificationPage() {
   const [evidenceFileName, setEvidenceFileName] = useState(
     capa?.verification.evidenceFileNames[0] ?? "",
   );
+
+  useEffect(() => {
+    if (!capa) return;
+    let cancelled = false;
+
+    void getVerificationCoaching(capa.id).then((coaching) => {
+      if (cancelled) return;
+      setNovaVerificationSuggestion(coaching.Recommendation || defaults.result);
+      setNovaVerificationReasoning(
+        `${coaching.Observation}\n\nAudit rationale: ${coaching["Audit Rationale"]}`,
+      );
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [capa, defaults.result]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -188,13 +208,15 @@ export function D6VerificationPage() {
 
           {/* Verification method */}
           <div>
-            <label className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
+            <label htmlFor="verification-method-select" className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
               Verification method
             </label>
             <div className="relative">
               <select
+                id="verification-method-select"
                 value={method}
                 onChange={(e) => setMethod(e.target.value as VerificationMethod)}
+                aria-invalid={shouldShowBlocker && !method}
                 className={cn(
                   "w-full cursor-pointer appearance-none rounded-[var(--r-sm)] border bg-[var(--field-bg)] py-[9px] pl-3 pr-9 font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
                   shouldShowBlocker && !method ? "border-destructive" : "border-[var(--line-2)]",
@@ -220,6 +242,7 @@ export function D6VerificationPage() {
               value={result}
               onChange={(e) => setResult(e.target.value)}
               rows={6}
+              aria-invalid={shouldShowBlocker && result.trim().length < 30}
               placeholder="Describe the outcome of the verification — what was checked, what was found, and whether it confirms the corrective actions are effective."
               className={cn(
                 "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
@@ -239,6 +262,7 @@ export function D6VerificationPage() {
                 value={evidenceFileName}
                 onChange={(e) => setEvidenceFileName(e.target.value)}
                 placeholder="Evidence filename.pdf"
+                aria-invalid={shouldShowBlocker && !evidenceFileName.trim()}
                 className={cn(
                   "flex-1 rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3 py-[9px] font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
                   shouldShowBlocker && !evidenceFileName.trim() ? "border-destructive" : "border-[var(--line-2)]",
@@ -263,7 +287,7 @@ export function D6VerificationPage() {
 
         {/* ── Blocker banner ───────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+          <div role="alert" className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
             <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
               <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">Verification is incomplete</p>
@@ -306,15 +330,18 @@ export function D6VerificationPage() {
         </div>
 
         {/* ── Nova assist (opt-in, below the user's own work) ──────────── */}
-        {defaults.result && (
+        {(novaVerificationSuggestion || defaults.result) && (
           <NovaAssistPanel
             title="Stuck? Let Nova draft the verification result"
             description="Document what QA actually checked in your own words. Nova's draft outcome is here if you'd like a reference."
           >
             <NovaSuggestionBlock
               context="verification result"
-              suggestion={defaults.result}
-              reasoning={`Based on the ${methodLabels[defaults.method]} approach for ${capa.id}. Edit to match the evidence you actually reviewed.`}
+              suggestion={novaVerificationSuggestion || defaults.result}
+              reasoning={
+                novaVerificationReasoning ||
+                `Based on the ${methodLabels[defaults.method]} approach for ${capa.id}. Edit to match the evidence you actually reviewed.`
+              }
               capaId={capa.id}
               suggestionId="d6-verification"
               onAccept={(content) => setResult(content)}

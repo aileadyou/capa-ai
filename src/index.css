@@ -37,30 +37,37 @@
   --elevated: 240 5% 16%;      /* bg-3 — popover / raised panel */
   --field: 240 5% 20%;         /* bg-4 — input fill / deep hover */
 
-  /* ---- Text (high → low emphasis) ---- */
+  /* ---- Text (high → low emphasis) ----
+     Lightness floors are tuned so every tier clears WCAG AA (4.5:1) on the
+     full surface stack (bg-1 → field). Hierarchy now comes from size/weight
+     as much as from contrast, since AA compresses the low-emphasis range. */
   --foreground: 240 8% 95%;             /* fg-1 */
-  --foreground-secondary: 240 6% 68%;   /* fg-2 */
-  --foreground-tertiary: 240 5% 48%;    /* fg-3 */
-  --foreground-faint: 240 5% 36%;       /* fg-4 */
+  --foreground-secondary: 240 6% 72%;   /* fg-2 — 7.9:1 on card */
+  --foreground-tertiary: 240 5% 66%;    /* fg-3 — 6.6:1 on card */
+  --foreground-faint: 240 6% 64%;       /* fg-4 — 6.1:1 on card, 4.9:1 on field */
 
-  /* ---- Brand accent (purple) ---- */
-  --primary: 284 55% 55%;              /* accent */
-  --primary-foreground: 280 100% 97%;  /* on-accent */
-  --primary-light: 284 63% 63%;        /* accent-hover */
+  /* ---- Brand accent (purple) ----
+     Accent doubles as link/active TEXT colour (~100 usages) far more than as a
+     solid fill, so it sits at 64% L to clear AA as text on dark surfaces.
+     Solid accent fills pair with --on-primary (dark) instead of white. */
+  --primary: 284 55% 64%;              /* accent — 5.0:1 as text on card */
+  --primary-foreground: 280 100% 97%;  /* on gradient/deep fills (white) */
+  --primary-light: 284 60% 72%;        /* accent-hover */
   --primary-dark: 282 55% 46%;         /* accent-press */
+  --on-primary: 285 35% 11%;           /* text/icon on SOLID light-purple fill */
 
   /* ---- Semantic ---- */
   --tw-success: 154 49% 49%;
   --tw-warning: 37 72% 56%;
-  --destructive: 358 73% 62%;          /* danger */
-  --destructive-foreground: 280 100% 97%;
+  --destructive: 358 73% 65%;          /* danger — text-safe on dark card + popover */
+  --destructive-foreground: 356 80% 13%;  /* dark text on the light-red solid fill (5.2:1) */
 
   /* ---- Borders (opaque triples for Tailwind `border-*`) ----
      Kept low-contrast and close to the surfaces so the UI reads as
      borderless; separation comes from elevation, not outlines. */
-  --border-subtle: 240 5% 13%;         /* line-1 — == card (invisible) */
-  --border: 240 5% 17%;                /* line-2 — barely-there hairline */
-  --border-strong: 240 5% 23%;         /* line-3 — only where truly needed */
+  --border-subtle: 240 5% 16%;         /* line-1 — faint separation off-card */
+  --border: 240 5% 24%;                /* line-2 — visible hairline (de-bland) */
+  --border-strong: 240 5% 32%;         /* line-3 — clear edge, ~3:1 vs card */
 
   /* ---- shadcn-only tokens, retuned to the palette above ---- */
   --card-foreground: 240 8% 95%;
@@ -71,18 +78,18 @@
   --panel: 240 5% 16%;
   --panel-foreground: 240 8% 95%;
   --muted: 240 5% 17%;
-  --muted-foreground: 240 5% 56%;
+  --muted-foreground: 240 5% 66%;
   --tw-accent: 284 55% 55%;
   --tw-accent-foreground: 280 100% 97%;
   --tw-accent-light: 284 63% 63%;
-  --nova: 285 57% 55%;
+  --nova: 285 57% 64%;
   --nova-foreground: 280 100% 97%;
   --nova-soft: 285 57% 16%;
   --severity-minor: 199 89% 58%;
   --severity-major: 38 92% 56%;
-  --severity-critical: 358 73% 59%;
-  --status-draft: 218 8% 56%;
-  --status-investigation: 285 57% 62%;
+  --severity-critical: 358 73% 65%;
+  --status-draft: 218 8% 59%;
+  --status-investigation: 285 57% 65%;
   --status-approval: 38 92% 56%;
   --status-closed: 153 48% 49%;
   --status-ready: 153 48% 49%;
@@ -91,8 +98,8 @@
   --tw-success-foreground: 240 8% 95%;
   --tw-warning-foreground: 240 8% 7%;
   --tw-info: 284 55% 55%;
-  --border-light: 240 5% 23%;
-  --input: 240 5% 20%;
+  --border-light: 240 5% 30%;
+  --input: 240 5% 30%;
   --ring: 284 55% 55%;
   --radius: 4px;
   --chart-1: 285 57% 55%;
@@ -110,17 +117,20 @@
   --sidebar-ring: 284 55% 55%;
 
   /* ---- Decorative / alpha / gradient tokens (theme-specific) ---- */
-  --line-1: rgba(255, 255, 255, 0.03);
-  --line-2: rgba(255, 255, 255, 0.05);
-  --line-3: rgba(255, 255, 255, 0.09);
+  --line-1: rgba(255, 255, 255, 0.06);
+  --line-2: rgba(255, 255, 255, 0.10);
+  --line-3: rgba(255, 255, 255, 0.16);
   --field-bg: hsl(var(--field));
   --field-bg-hover: color-mix(in srgb, hsl(var(--field)) 82%, hsl(var(--card)));
   --table-head-bg: hsl(var(--elevated));
   --table-head-fg: hsl(var(--foreground-secondary));
-  --grad-start: #9B3AC5;
-  --grad-mid: #C4688C;
-  --grad-end: #E07D60;
-  --grad-brand: linear-gradient(135deg, #9B3AC5 0%, #C4688C 52%, #E07D60 100%);
+  --grad-start: #8E2FB8;
+  --grad-mid: #A33D7A;
+  --grad-end: #A8472E;
+  --grad-brand: linear-gradient(135deg, #8E2FB8 0%, #A33D7A 52%, #A8472E 100%);
+  --page-gradient:
+    radial-gradient(1100px 560px at 80% -10%, hsl(284 48% 16% / 0.45), transparent 58%),
+    radial-gradient(880px 520px at 4% 2%, hsl(264 46% 15% / 0.35), transparent 55%);
   --accent-soft: hsl(var(--primary) / 0.13);
   --accent-line: hsl(var(--primary) / 0.38);
   --accent-glow: hsl(var(--primary) / 0.50);
@@ -162,14 +172,15 @@
   /* ---- Text ---- */
   --foreground: 216 28% 7%;
   --foreground-secondary: 223 25% 30%;
-  --foreground-tertiary: 225 15% 50%;
-  --foreground-faint: 218 26% 69%;
+  --foreground-tertiary: 225 16% 42%;   /* fg-3 — 4.9:1 on field */
+  --foreground-faint: 218 18% 42%;       /* fg-4 — 4.7:1 on field */
 
   /* ---- Brand accent ---- */
   --primary: 275 61% 41%;
   --primary-foreground: 0 0% 100%;
   --primary-light: 275 58% 50%;
   --primary-dark: 275 64% 34%;
+  --on-primary: 0 0% 100%;               /* white text on solid dark-purple fill */
 
   /* ---- Semantic ---- */
   --tw-success: 150 65% 29%;
@@ -178,9 +189,9 @@
   --destructive-foreground: 0 0% 100%;
 
   /* ---- Borders ---- */
-  --border-subtle: 216 24% 93%;
-  --border: 215 20% 88%;
-  --border-strong: 216 16% 80%;
+  --border-subtle: 216 20% 90%;
+  --border: 215 18% 84%;
+  --border-strong: 216 16% 74%;
 
   /* ---- shadcn-only ---- */
   --card-foreground: 216 28% 7%;
@@ -191,28 +202,28 @@
   --panel: 210 20% 98%;
   --panel-foreground: 222 47% 11%;
   --muted: 215 20% 94%;
-  --muted-foreground: 215 16% 47%;
+  --muted-foreground: 215 16% 42%;
   --tw-accent: 245 58% 51%;
   --tw-accent-foreground: 0 0% 100%;
   --tw-accent-light: 245 58% 65%;
   --nova: 263 70% 52%;
   --nova-foreground: 0 0% 100%;
   --nova-soft: 263 70% 96%;
-  --severity-minor: 199 89% 48%;
-  --severity-major: 38 92% 45%;
-  --severity-critical: 0 72% 51%;
+  --severity-minor: 199 89% 36%;
+  --severity-major: 38 92% 32%;
+  --severity-critical: 0 72% 48%;
   --status-draft: 215 16% 47%;
   --status-investigation: 221 83% 53%;
-  --status-approval: 38 92% 45%;
-  --status-closed: 142 71% 35%;
-  --status-ready: 142 71% 35%;
+  --status-approval: 38 92% 32%;
+  --status-closed: 142 71% 30%;
+  --status-ready: 142 71% 30%;
   --surface: 0 0% 100%;
   --surface-subtle: 210 20% 98%;
   --tw-success-foreground: 0 0% 100%;
   --tw-warning-foreground: 0 0% 100%;
   --tw-info: 275 61% 41%;
-  --border-light: 215 20% 93%;
-  --input: 215 20% 88%;
+  --border-light: 215 18% 86%;
+  --input: 215 16% 72%;
   --ring: 275 61% 41%;
   --chart-1: 221 83% 53%;
   --chart-2: 245 58% 51%;
@@ -229,9 +240,9 @@
   --sidebar-ring: 221 83% 53%;
 
   /* ---- Decorative / alpha / gradient (theme-specific) ---- */
-  --line-1: rgba(13, 17, 48, 0.06);
-  --line-2: rgba(13, 17, 48, 0.10);
-  --line-3: rgba(13, 17, 48, 0.18);
+  --line-1: rgba(13, 17, 48, 0.08);
+  --line-2: rgba(13, 17, 48, 0.14);
+  --line-3: rgba(13, 17, 48, 0.22);
   --field-bg: #F8FAFE;
   --field-bg-hover: #FFFFFF;
   --table-head-bg: hsl(var(--primary) / 0.60);
@@ -240,6 +251,9 @@
   --accent-line: hsl(var(--primary) / 0.28);
   --accent-glow: hsl(var(--primary) / 0.20);
   --coral-glow: rgba(224, 125, 96, 0.18);
+  --page-gradient:
+    radial-gradient(1100px 560px at 80% -10%, hsl(266 72% 92% / 0.55), transparent 58%),
+    radial-gradient(880px 520px at 4% 2%, hsl(221 82% 93% / 0.45), transparent 55%);
   --glass-dark: rgba(255, 255, 255, 0.82);
   --glass-light: rgba(13, 17, 48, 0.04);
   --glass-border: rgba(13, 17, 48, 0.10);
@@ -395,7 +409,7 @@
   background: hsl(var(--primary));
   border: 1px solid hsl(var(--background));
   border-radius: var(--r-full);
-  color: var(--on-accent);
+  color: hsl(var(--on-primary));
   display: flex;
   font-family: var(--font-sans);
   font-size: 9px;
@@ -521,16 +535,19 @@
 
 .lead-card {
   background: hsl(var(--card));
-  border: none;
+  border: 1px solid var(--line-2);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
   transition:
     background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .lead-card:hover {
   background: hsl(var(--elevated));
+  border-color: var(--line-3);
+  box-shadow: var(--shadow-md);
 }
 
 .lead-popover {
@@ -640,6 +657,9 @@ a,
 
   body {
     @apply bg-background text-foreground antialiased;
+    background-image: var(--page-gradient);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.5;

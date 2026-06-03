@@ -17,6 +17,7 @@ import containmentSuggestionsJson from "@/mock-data/nova-scripts/containment-sug
 import decisionTreeComplaintJson from "@/mock-data/nova-scripts/decision-tree-complaint-particulate.json";
 import fishboneAuditJson from "@/mock-data/nova-scripts/fishbone-audit-documentation.json";
 import fiveWhysHepaJson from "@/mock-data/nova-scripts/5whys-hepa.json";
+import gateDraftsJson from "@/mock-data/nova-scripts/gate-drafts.json";
 import paSuggestionsJson from "@/mock-data/nova-scripts/pa-suggestions.json";
 import verificationCoachingJson from "@/mock-data/nova-scripts/verification-coaching.json";
 import type { AuditEvent, CAPACase, CorrectiveAction, DashboardStats, DepartmentHeatmapEntry, KGCitation, PreventiveAction, PreFillContext, RecurrenceTrendPoint, RootCauseTrendEntry, TrendDataPoint } from "@/types";
@@ -53,6 +54,7 @@ export const novaScripts = {
   fiveWhysHepa: fiveWhysHepaJson,
   fishboneAuditDocumentation: fishboneAuditJson,
   decisionTreeComplaintParticulate: decisionTreeComplaintJson,
+  gateDrafts: gateDraftsJson,
   containmentSuggestions: containmentSuggestionsJson,
   correctiveActionSuggestions: caSuggestionsJson,
   preventiveActionSuggestions: paSuggestionsJson,

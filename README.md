@@ -36,6 +36,16 @@ npm i
 npm run dev
 ```
 
+## Nova OpenRouter prototype
+
+Nova runs in mock mode by default. To test live OpenRouter generation locally, create a local `.env` from `.env.example`, set `OPENROUTER_API_KEY`, and use:
+
+```sh
+VITE_NOVA_AI_MODE=fallback
+```
+
+`fallback` calls OpenRouter through `/api/nova` and silently falls back to the curated mock scripts if the API key, model, network, or JSON shape fails. Locally, Vite serves that proxy middleware; on Vercel, `api/nova.js` serves the same route as an Express serverless function. Use `openrouter` only when you want failures to surface instead of falling back; use `mock` for deterministic demo behavior.
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).

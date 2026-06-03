@@ -53,7 +53,8 @@ export function NovaChatPanel() {
     setDraft("");
     setMessages((current) => [...current, { role: "user", content: userMessage }]);
     setIsThinking(true);
-    const response = await getChatResponse(step, userMessage);
+    const responseStep = [novaChatContext.capaId, step].filter(Boolean).join(":") || step;
+    const response = await getChatResponse(responseStep, userMessage);
     setMessages((current) => [...current, { role: "nova", content: response }]);
     setIsThinking(false);
   };

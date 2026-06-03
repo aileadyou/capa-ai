@@ -1,75 +1,43 @@
-import { kgCitations, prefills, novaScripts } from "@/mock-data";
 import type { CAPAType, ImpactClassification, PreFillContext, RCAMethod } from "@/types";
-import { computeImpact } from "@/utils/impact";
-import { mockAICall } from "@/utils/mockAI";
-
-export type RCAResponse =
-  | typeof novaScripts.fiveWhysHepa
-  | typeof novaScripts.fishboneAuditDocumentation
-  | typeof novaScripts.decisionTreeComplaintParticulate;
-
-const sourceIdByType: Record<CAPAType, string> = {
-  deviation: "DEV-2026-0341",
-  audit: "AUD-2026-0089",
-  complaint: "CMP-2026-0112",
-};
-
-function validateSourceId(type: CAPAType, sourceId: string) {
-  return sourceId === sourceIdByType[type];
-}
+import type { GateDraftSet } from "@/services/nova/types";
+import {
+  getChatPromptsFromScripts,
+  getNovaProvider,
+  getSimilarityResultsFromKg,
+  type RCAResponse,
+} from "@/services/nova/providers";
+export type { GateDraftSet } from "@/services/nova/types";
 
 export async function importSourceData(type: CAPAType, sourceId: string): Promise<PreFillContext> {
-  if (!validateSourceId(type, sourceId)) {
-    throw new Error(`No mocked ${type} source data found for ${sourceId}.`);
-  }
-
-  return mockAICall<PreFillContext>(`prefills.${type}`, {
-    delayMs: 1500,
-    fallback: prefills[type],
-  });
+  return getNovaProvider().importSourceData(type, sourceId);
 }
 
 export async function classifyImpact(prefill: PreFillContext): Promise<ImpactClassification> {
-  return mockAICall<ImpactClassification>("impact.classification", {
-    delayMs: 1000,
-    fallback: computeImpact(prefill),
-  });
+  return getNovaProvider().classifyImpact(prefill);
+}
+
+/**
+ * Nova reads the imported finding and drafts answers to every gate question so
+ * the initiator can review and refine instead of starting from scratch.
+ */
+export async function draftGateAnswers(type: CAPAType): Promise<GateDraftSet> {
+  return getNovaProvider().draftGateAnswers(type);
 }
 
 export async function getContainmentSuggestion(capaId: string) {
-  return mockAICall<Array<{ id: string; content: string }>>(
-    `containmentSuggestions.${capaId}`,
-    {
-      delayMs: 1500,
-      fallback: [],
-    },
-  );
+  return getNovaProvider().getContainmentSuggestion(capaId);
 }
 
 export async function getRCASuggestions(capaId: string, method: RCAMethod): Promise<RCAResponse> {
-  if (method === "5whys") {
-    return mockAICall<RCAResponse>("fiveWhysHepa", { delayMs: 2000 });
-  }
-
-  if (method === "fishbone") {
-    return mockAICall<RCAResponse>("fishboneAuditDocumentation", { delayMs: 1500 });
-  }
-
-  return mockAICall<RCAResponse>("decisionTreeComplaintParticulate", { delayMs: 1500 });
+  return getNovaProvider().getRCASuggestions(capaId, method) as Promise<RCAResponse>;
 }
 
 export async function getCorrectiveActionSuggestions(capaId: string): Promise<string[]> {
-  return mockAICall<string[]>(`correctiveActionSuggestions.${capaId}`, {
-    delayMs: 2000,
-    fallback: [],
-  });
+  return getNovaProvider().getCorrectiveActionSuggestions(capaId);
 }
 
 export async function getPreventiveActionSuggestions(capaId: string): Promise<string[]> {
-  return mockAICall<string[]>(`preventiveActionSuggestions.${capaId}`, {
-    delayMs: 2000,
-    fallback: [],
-  });
+  return getNovaProvider().getPreventiveActionSuggestions(capaId);
 }
 
 export async function getVerificationCoaching(capaId: string): Promise<{
@@ -77,58 +45,17 @@ export async function getVerificationCoaching(capaId: string): Promise<{
   Recommendation: string;
   "Audit Rationale": string;
 }> {
-  return mockAICall(`verificationCoaching.${capaId}`, {
-    delayMs: 1000,
-    fallback: novaScripts.verificationCoaching["CAPA-2026-0341"],
-  });
+  return getNovaProvider().getVerificationCoaching(capaId);
 }
 
 export async function getChatResponse(step: string, message: string): Promise<string> {
-  const scriptedResponses = (novaScripts.chatResponses as Record<string, unknown>)[step];
-  const normalizedMessage = message.toLowerCase();
-
-  if (Array.isArray(scriptedResponses)) {
-    const match = scriptedResponses.find(
-      (entry) =>
-        typeof entry === "object" &&
-        entry !== null &&
-        "prompt" in entry &&
-        (String(entry.prompt).toLowerCase() === normalizedMessage ||
-          normalizedMessage.includes(String(entry.prompt).toLowerCase().slice(0, 20))),
-    ) as { response: string } | undefined;
-
-    if (match) {
-      return mockAICall<string>(`chatResponses.${step}.match.response`, {
-        delayMs: 1000,
-        fallback: match.response,
-      });
-    }
-  }
-
-  return mockAICall<string>("chatResponses.fallback.response", {
-    delayMs: 1500,
-    fallback: novaScripts.chatResponses.fallback.response,
-  });
+  return getNovaProvider().getChatResponse(step, message);
 }
 
 export function getChatPrompts(step: string): string[] {
-  const scriptedResponses = (novaScripts.chatResponses as Record<string, unknown>)[step];
-  if (!Array.isArray(scriptedResponses)) return [];
-  return scriptedResponses
-    .filter((entry): entry is { prompt: string; response: string } =>
-      typeof entry === "object" && entry !== null && "prompt" in entry,
-    )
-    .map((entry) => entry.prompt);
+  return getChatPromptsFromScripts(step);
 }
 
 export function getSimilarityResults(query = "") {
-  const normalizedQuery = query.toLowerCase();
-  const results = normalizedQuery
-    ? kgCitations.filter((citation) =>
-        `${citation.rootCause} ${citation.correctiveAction}`.toLowerCase().includes(normalizedQuery),
-      )
-    : kgCitations;
-
-  return structuredClone(results);
+  return getSimilarityResultsFromKg(query);
 }
-

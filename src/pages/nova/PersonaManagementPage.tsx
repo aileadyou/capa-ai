@@ -82,7 +82,7 @@ export function PersonaManagementPage() {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border">
                       <AvatarFallback
-                        className={`text-sm font-semibold ${isActive ? "bg-primary text-primary-foreground" : "bg-nova/10 text-nova"}`}
+                        className={`text-sm font-semibold ${isActive ? "bg-primary text-primary-on" : "bg-nova/10 text-nova"}`}
                       >
                         {persona.avatarInitials ?? <UserRound className="h-5 w-5" />}
                       </AvatarFallback>

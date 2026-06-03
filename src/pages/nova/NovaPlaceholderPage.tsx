@@ -223,7 +223,7 @@ export function NovaPlaceholderPage({
                 to={`/capa/${params.id}/8d/${step}`}
                 className={`rounded border px-3 py-2 text-xs font-medium transition-colors ${
                   index === currentStepIndex
-                    ? "border-primary bg-primary text-primary-foreground"
+                    ? "border-primary bg-primary text-primary-on"
                     : "border-border bg-card hover:border-primary/40"
                 }`}
               >

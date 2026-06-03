@@ -114,9 +114,10 @@ function DetailModal({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close similarity detail"
             className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent p-1 text-foreground-tertiary hover:bg-field hover:text-foreground"
           >
-            <X size={18} strokeWidth={1.75} />
+            <X size={18} strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
 
@@ -225,11 +226,11 @@ export function SimilarityExplorerPage() {
       {/* ── Header ────────────────────────────────────────────────────── */}
       <div className="mb-6">
         <h1
-          className="m-0 font-sans text-[22px] font-semibold tracking-[-0.02em] text-foreground"
+          className="m-0 font-sans text-4xl font-bold tracking-[-0.025em] text-foreground"
         >
           Similarity explorer
         </h1>
-        <p className="mt-1.5 max-w-[620px] font-sans text-[13px] leading-6 text-foreground-tertiary">
+        <p className="mt-1.5 max-w-[620px] font-sans text-sm leading-normal text-foreground-tertiary">
           Search historical CAPA patterns by finding description, root cause, corrective action, outcome, and source type.
         </p>
       </div>
@@ -308,6 +309,8 @@ export function SimilarityExplorerPage() {
               step={1}
               value={minSimilarity}
               onChange={(e) => setMinSimilarity(Number(e.target.value))}
+              aria-label="Minimum similarity percentage"
+              aria-valuetext={`${minSimilarity} percent`}
               className="h-1 w-full cursor-pointer accent-primary"
             />
           </div>
@@ -375,8 +378,17 @@ export function SimilarityExplorerPage() {
               {filteredResults.map((citation) => (
                 <div
                   key={`${citation.capaId}-${citation.deviationId}`}
-                  className="cursor-pointer rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-[18px] shadow-sm transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:shadow-md"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View similarity detail for ${citation.capaId}`}
+                  className="cursor-pointer rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-[18px] shadow-sm transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   onClick={() => setSelectedResult(citation)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedResult(citation);
+                    }
+                  }}
                 >
                   {/* Header */}
                   <div className="mb-3 flex items-start justify-between">

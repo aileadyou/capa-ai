@@ -214,11 +214,11 @@ export function ConsolidatedActionPlanPage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1
-            className="m-0 font-sans text-[22px] font-semibold tracking-[-0.02em] text-foreground"
+            className="m-0 font-sans text-4xl font-bold tracking-[-0.025em] text-foreground"
           >
             Consolidated action plan
           </h1>
-          <p className="mt-1.5 max-w-[600px] font-sans text-[13px] leading-6 text-foreground-tertiary">
+          <p className="mt-1.5 max-w-[600px] font-sans text-sm leading-normal text-foreground-tertiary">
             Management overview of corrective and preventive actions across all CAPAs, grouped by recurring root cause, department, or risk priority.
           </p>
         </div>
