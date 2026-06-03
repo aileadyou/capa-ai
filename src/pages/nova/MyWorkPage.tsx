@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { useCapaStore, usePersonaStore } from "@/store";
 import type { CAPACase, Finding, PersonaID } from "@/types";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
+import { cn } from "@/lib/utils";
 
 /* ════════════════════════════════════════════════════════════
    LIFECYCLE MODEL
@@ -29,7 +30,7 @@ const LIFECYCLE_LABELS: Record<LifecycleStage, string> = {
 function getLifecycleStage(status: string): LifecycleStage {
   if (status === "closed") return 4;
   if (status === "approval") return 3;
-  return 2; // draft | disposisi | investigation
+  return 2; // draft | pending_review | revision_requested | investigation
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -90,53 +91,17 @@ function getGreeting() {
    SHARED DESIGN TOKENS / PRIMITIVES
    ════════════════════════════════════════════════════════════ */
 
-const T = {
-  cardBase: {
-    background: "var(--bg-2)",
-    border: "1px solid var(--line-2)",
-    borderRadius: "var(--r-md)",
-    boxShadow: "var(--shadow-sm)",
-    padding: "14px 16px",
-    display: "flex",
-    alignItems: "flex-start",
-    gap: "12px",
-  } as React.CSSProperties,
-  monoId: {
-    fontFamily: "var(--font-mono)",
-    fontSize: "12px",
-    fontWeight: 600,
-    color: "var(--fg-1)",
-  } as React.CSSProperties,
-  title: {
-    fontSize: "13px",
-    color: "var(--fg-2)",
-    margin: "3px 0 10px",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap" as const,
-  } as React.CSSProperties,
-  badgeRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    flexWrap: "wrap" as const,
-  } as React.CSSProperties,
-};
+const CARD_CLASS = "flex items-start gap-3 rounded-[var(--r-md)] border border-[var(--line-2)] bg-card px-4 py-3.5 shadow-sm";
+const MONO_ID_CLASS = "font-sans text-xs font-semibold text-foreground";
+const TITLE_CLASS = "mb-2.5 mt-[3px] truncate text-sm text-foreground-secondary";
+const BADGE_ROW_CLASS = "flex flex-wrap items-center gap-1.5";
 
 /* ── Primitives ─────────────────────────────────────────────── */
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <p
-      style={{
-        fontFamily: "var(--font-mono)",
-        fontSize: "10px",
-        fontWeight: 500,
-        letterSpacing: "0.18em",
-        textTransform: "uppercase",
-        color: "var(--fg-4)",
-        margin: 0,
-      }}
+      className="m-0 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
     >
       {children}
     </p>
@@ -146,15 +111,7 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 function StepBadge({ step }: { step: string }) {
   return (
     <span
-      style={{
-        background: "var(--accent-soft)",
-        color: "var(--accent)",
-        fontFamily: "var(--font-mono)",
-        fontSize: "11px",
-        fontWeight: 500,
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-      }}
+      className="rounded-[var(--r-full)] bg-[var(--accent-soft)] px-2 py-0.5 font-sans text-[11px] font-medium text-primary"
     >
       {STEP_LABEL[step] ?? step}
     </span>
@@ -166,15 +123,12 @@ function DueBadge({ id }: { id: string }) {
   if (!d) return null;
   return (
     <span
-      style={{
-        background: d.overdue ? "var(--danger-soft)" : d.soon ? "var(--warning-soft)" : "transparent",
-        color: d.overdue ? "var(--danger)" : d.soon ? "var(--warning)" : "var(--fg-3)",
-        fontFamily: "var(--font-mono)",
-        fontSize: "11px",
-        fontWeight: d.overdue || d.soon ? 600 : 400,
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-      }}
+      className={cn(
+        "rounded-[var(--r-full)] px-2 py-0.5 font-sans text-[11px]",
+        d.overdue && "bg-[var(--danger-soft)] font-semibold text-destructive",
+        d.soon && "bg-[var(--warning-soft)] font-semibold text-warning",
+        !d.overdue && !d.soon && "bg-transparent font-normal text-foreground-tertiary",
+      )}
     >
       {d.label}
     </span>
@@ -184,39 +138,32 @@ function DueBadge({ id }: { id: string }) {
 /** Mini 4-stage lifecycle pill bar */
 function LifecyclePill({ stage }: { stage: LifecycleStage }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+    <div className="flex items-center gap-[3px]">
       {([1, 2, 3, 4] as LifecycleStage[]).map((s) => {
         const active = s === stage;
         const done = s < stage;
         return (
-          <div key={s} style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+          <div key={s} className="flex items-center gap-[3px]">
             <div
               title={LIFECYCLE_LABELS[s]}
-              style={{
-                width: "20px",
-                height: "4px",
-                borderRadius: "2px",
-                background: done
-                  ? "var(--success)"
-                  : active
-                    ? s === 3
-                      ? "var(--warning)"
-                      : "var(--accent)"
-                    : "var(--bg-4)",
-                transition: "background 200ms",
-              }}
+              className={cn(
+                "h-1 w-5 rounded-sm transition-[background] duration-200",
+                done && "bg-success",
+                active && s === 3 && "bg-warning",
+                active && s !== 3 && "bg-primary",
+                !done && !active && "bg-field",
+              )}
             />
           </div>
         );
       })}
       <span
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "10px",
-          color:
-            stage === 3 ? "var(--warning)" : stage === 4 ? "var(--success)" : "var(--fg-3)",
-          marginLeft: "4px",
-        }}
+        className={cn(
+          "ml-1 font-sans text-[10px]",
+          stage === 3 && "text-warning",
+          stage === 4 && "text-success",
+          stage !== 3 && stage !== 4 && "text-foreground-tertiary",
+        )}
       >
         {LIFECYCLE_LABELS[stage]}
       </span>
@@ -224,22 +171,14 @@ function LifecyclePill({ stage }: { stage: LifecycleStage }) {
   );
 }
 
-function OpenLink({ to, label = "Open", color = "var(--accent)" }: { to: string; label?: string; color?: string }) {
+function OpenLink({ to, label = "Open", tone = "primary" }: { to: string; label?: string; tone?: "primary" | "warning" }) {
   return (
     <Link
       to={to}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "4px",
-        fontFamily: "var(--font-sans)",
-        fontSize: "13px",
-        fontWeight: 600,
-        color,
-        textDecoration: "none",
-        flexShrink: 0,
-        whiteSpace: "nowrap",
-      }}
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1 whitespace-nowrap font-sans text-sm font-semibold no-underline",
+        tone === "warning" ? "text-warning" : "text-primary",
+      )}
     >
       {label}
       <ArrowRight size={13} strokeWidth={2} />
@@ -259,22 +198,18 @@ function Section({
   mt?: number;
 }) {
   return (
-    <section style={{ marginTop: mt }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "12px" }}>
+    <section className={mt === 0 ? undefined : "mt-8"}>
+      <div className="mb-3 flex items-baseline gap-2">
         <Eyebrow>{label}</Eyebrow>
         {count !== undefined && (
           <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              color: "var(--fg-4)",
-            }}
+            className="font-sans text-[10px] text-foreground-faint"
           >
             {count}
           </span>
         )}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>{children}</div>
+      <div className="flex flex-col gap-2">{children}</div>
     </section>
   );
 }
@@ -282,14 +217,7 @@ function Section({
 function EmptyCard({ text }: { text: string }) {
   return (
     <div
-      style={{
-        padding: "16px",
-        borderRadius: "var(--r-md)",
-        border: "1px dashed var(--line-2)",
-        textAlign: "center",
-        color: "var(--fg-4)",
-        fontSize: "13px",
-      }}
+      className="rounded-[var(--r-md)] border border-dashed border-[var(--line-2)] p-4 text-center text-sm text-foreground-faint"
     >
       {text}
     </div>
@@ -300,40 +228,31 @@ function EmptyCard({ text }: { text: string }) {
    CARD VARIANTS
    ════════════════════════════════════════════════════════════ */
 
-function ActiveCard({ capa, accentLeft }: { capa: CAPACase; accentLeft?: string }) {
+function ActiveCard({ capa, accentTone }: { capa: CAPACase; accentTone?: "danger" }) {
   const stage = getLifecycleStage(capa.status);
   const d = dueDays(capa.id);
   return (
     <div
-      style={{
-        ...T.cardBase,
-        ...(accentLeft ? { borderLeft: `3px solid ${accentLeft}` } : {}),
-      }}
+      className={cn(CARD_CLASS, accentTone === "danger" && "border-l-[3px] border-l-destructive")}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
-          <span style={T.monoId}>{capa.id}</span>
+      <div className="min-w-0 flex-1">
+        <div className="mb-0.5 flex items-center gap-2">
+          <span className={MONO_ID_CLASS}>{capa.id}</span>
         </div>
-        <p style={T.title}>{capa.title}</p>
-        <div style={T.badgeRow}>
+        <p className={TITLE_CLASS}>{capa.title}</p>
+        <div className={BADGE_ROW_CLASS}>
           <SeverityBadge severity={capa.impact.severity} />
           <StepBadge step={capa.currentStep} />
           <DueBadge id={capa.id} />
         </div>
-        <div style={{ marginTop: "8px" }}>
+        <div className="mt-2">
           <LifecyclePill stage={stage} />
         </div>
         {d?.overdue && (
           <p
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "var(--danger)",
-              margin: "6px 0 0",
-            }}
+            className="mb-0 mt-1.5 font-sans text-[11px] font-bold text-destructive"
           >
-            ⚠ {d.label}
+            ! {d.label}
           </p>
         )}
       </div>
@@ -344,70 +263,74 @@ function ActiveCard({ capa, accentLeft }: { capa: CAPACase; accentLeft?: string 
 
 function ReviewCard({ capa }: { capa: CAPACase }) {
   return (
-    <div style={{ ...T.cardBase, borderLeft: "3px solid var(--warning)" }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
-          <span style={T.monoId}>{capa.id}</span>
+    <div className={cn(CARD_CLASS, "border-l-[3px] border-l-warning")}>
+      <div className="min-w-0 flex-1">
+        <div className="mb-0.5 flex items-center gap-2">
+          <span className={MONO_ID_CLASS}>{capa.id}</span>
           <SeverityBadge severity={capa.impact.severity} />
         </div>
-        <p style={T.title}>{capa.title}</p>
-        <div style={T.badgeRow}>
+        <p className={TITLE_CLASS}>{capa.title}</p>
+        <div className={BADGE_ROW_CLASS}>
           <span
-            style={{
-              background: "var(--warning-soft)",
-              color: "var(--warning)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "11px",
-              fontWeight: 500,
-              padding: "2px 8px",
-              borderRadius: "var(--r-full)",
-            }}
+            className="rounded-[var(--r-full)] bg-[var(--warning-soft)] px-2 py-0.5 font-sans text-[11px] font-medium text-warning"
           >
             D7 Sign-off
           </span>
           <DueBadge id={capa.id} />
         </div>
-        <div style={{ marginTop: "8px" }}>
+        <div className="mt-2">
           <LifecyclePill stage={3} />
         </div>
       </div>
-      <OpenLink to={`/capa/${capa.id}`} label="Review" color="var(--warning)" />
+      <OpenLink to={`/capa/${capa.id}`} label="Review" tone="warning" />
+    </div>
+  );
+}
+
+function IntakeReviewCard({ capa }: { capa: CAPACase }) {
+  return (
+    <div className={cn(CARD_CLASS, "border-l-[3px] border-l-warning")}>
+      <div className="min-w-0 flex-1">
+        <div className="mb-0.5 flex items-center gap-2">
+          <span className={MONO_ID_CLASS}>{capa.id}</span>
+          <SeverityBadge severity={capa.impact.severity} />
+        </div>
+        <p className={TITLE_CLASS}>{capa.title}</p>
+        <div className={BADGE_ROW_CLASS}>
+          <span className="rounded-[var(--r-full)] bg-[var(--warning-soft)] px-2 py-0.5 font-sans text-[11px] font-medium text-warning">
+            Intake Review
+          </span>
+          <DueBadge id={capa.id} />
+        </div>
+        <div className="mt-2">
+          <LifecyclePill stage={2} />
+        </div>
+      </div>
+      <OpenLink to={`/capa/${capa.id}`} label="Review" tone="warning" />
     </div>
   );
 }
 
 function ClosedCard({ capa }: { capa: CAPACase }) {
   return (
-    <div style={{ ...T.cardBase, opacity: 0.45, alignItems: "center" }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ ...T.monoId, textDecoration: "line-through", color: "var(--fg-2)" }}>
+    <div className={cn(CARD_CLASS, "items-center opacity-45")}>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-sans text-xs font-semibold text-foreground-secondary line-through">
             {capa.id}
           </span>
           <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              padding: "2px 7px",
-              borderRadius: "var(--r-full)",
-              background: "var(--bg-4)",
-              color: "var(--fg-4)",
-            }}
+            className="rounded-[var(--r-full)] bg-field px-[7px] py-0.5 font-sans text-[10px] text-foreground-faint"
           >
             Closed
           </span>
           <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "var(--fg-3)",
-            }}
+            className="font-sans text-[11px] font-semibold text-foreground-tertiary"
           >
             Score {capa.score.total}
           </span>
         </div>
-        <p style={{ ...T.title, margin: "2px 0 0", color: "var(--fg-3)" }}>{capa.title}</p>
+        <p className="mb-0 mt-0.5 truncate text-sm text-foreground-tertiary">{capa.title}</p>
       </div>
     </div>
   );
@@ -416,50 +339,38 @@ function ClosedCard({ capa }: { capa: CAPACase }) {
 function FindingCard({ finding }: { finding: Finding }) {
   const isMajor = finding.severity === "Major" || finding.severity === "Critical";
   const noCapa = finding.status === "pending_capa";
+  const underReview = finding.status === "pending_review";
   const overdue = finding.status === "overdue";
   return (
     <div
-      style={{
-        ...T.cardBase,
-        ...(overdue ? { borderLeft: "3px solid var(--danger)" } : {}),
-      }}
+      className={cn(CARD_CLASS, overdue && "border-l-[3px] border-l-destructive")}
     >
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
-          <span style={T.monoId}>{finding.id}</span>
+      <div className="min-w-0 flex-1">
+        <div className="mb-0.5 flex items-center gap-2">
+          <span className={MONO_ID_CLASS}>{finding.id}</span>
           <span
-            style={{
-              background: isMajor ? "var(--danger-soft)" : "var(--warning-soft)",
-              color: isMajor ? "var(--danger)" : "var(--warning)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "11px",
-              padding: "2px 8px",
-              borderRadius: "var(--r-full)",
-            }}
+            className={cn(
+              "rounded-[var(--r-full)] px-2 py-0.5 font-sans text-[11px]",
+              isMajor ? "bg-[var(--danger-soft)] text-destructive" : "bg-[var(--warning-soft)] text-warning",
+            )}
           >
             {finding.severity}
           </span>
         </div>
-        <p style={T.title}>{finding.shortDescription}</p>
-        <div style={T.badgeRow}>
+        <p className={TITLE_CLASS}>{finding.shortDescription}</p>
+        <div className={BADGE_ROW_CLASS}>
           <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              padding: "2px 8px",
-              borderRadius: "var(--r-full)",
-              background: noCapa ? "var(--warning-soft)" : "var(--accent-soft)",
-              color: noCapa ? "var(--warning)" : "var(--accent)",
-            }}
+            className={cn(
+              "rounded-[var(--r-full)] px-2 py-0.5 font-sans text-[10px]",
+              noCapa && "bg-[var(--warning-soft)] text-warning",
+              underReview && "bg-[var(--accent-soft)] text-primary",
+              !noCapa && !underReview && "bg-[var(--accent-soft)] text-primary",
+            )}
           >
-            {noCapa ? "No CAPA yet" : overdue ? "Overdue" : "CAPA in progress"}
+            {noCapa ? "No CAPA yet" : underReview ? "Intake under review" : overdue ? "Overdue" : "CAPA in progress"}
           </span>
           <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              color: "var(--fg-4)",
-            }}
+            className="font-sans text-[10px] text-foreground-faint"
           >
             {finding.department} · {finding.source}
           </span>
@@ -470,12 +381,7 @@ function FindingCard({ finding }: { finding: Finding }) {
       ) : (
         <Link
           to="/findings"
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "12px",
-            color: "var(--fg-3)",
-            textDecoration: "none",
-          }}
+          className="font-sans text-xs text-foreground-tertiary no-underline"
         >
           View
         </Link>
@@ -493,28 +399,36 @@ function QADeviationView() {
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
   const capas = useCapaStore((s) => s.capas);
 
-  const { overdue, active, closed } = useMemo(() => {
+  const { pendingIntake, overdue, active, closed } = useMemo(() => {
     const mine = capas.filter((c) => c.assignedTo === activePersonaId);
     const open = mine.filter((c) => c.status !== "closed");
+    const pendingIntake = capas.filter(
+      (c) => c.status === "pending_review" &&
+        c.intakeReviews?.some((r) => r.reviewerPersonaId === activePersonaId && !r.decision),
+    );
     return {
+      pendingIntake,
       overdue: open.filter((c) => isOverdue(c.id)),
-      active: open.filter((c) => !isOverdue(c.id)),
+      active: open.filter((c) => !isOverdue(c.id) && c.status !== "pending_review"),
       closed: mine.filter((c) => c.status === "closed").slice(0, 3),
     };
   }, [capas, activePersonaId]);
 
-  const totalOpen = overdue.length + active.length;
-
   return (
     <>
+      {pendingIntake.length > 0 && (
+        <Section label="Intake review needed" count={pendingIntake.length} mt={0}>
+          {pendingIntake.map((c) => <IntakeReviewCard key={c.id} capa={c} />)}
+        </Section>
+      )}
       {overdue.length > 0 && (
-        <Section label="Needs attention" count={overdue.length} mt={0}>
+        <Section label="Needs attention" count={overdue.length} mt={pendingIntake.length ? 32 : 0}>
           {overdue.map((c) => (
-            <ActiveCard key={c.id} capa={c} accentLeft="var(--danger)" />
+            <ActiveCard key={c.id} capa={c} accentTone="danger" />
           ))}
         </Section>
       )}
-      <Section label="My active CAPAs" count={active.length} mt={overdue.length ? 32 : 0}>
+      <Section label="My active CAPAs" count={active.length} mt={overdue.length || pendingIntake.length ? 32 : 0}>
         {active.length > 0 ? (
           active.map((c) => <ActiveCard key={c.id} capa={c} />)
         ) : (
@@ -560,18 +474,10 @@ function InitiatorView() {
         </Section>
       )}
       <div
-        style={{
-          marginTop: "24px",
-          padding: "14px 16px",
-          borderRadius: "var(--r-md)",
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          fontSize: "13px",
-          color: "var(--fg-3)",
-        }}
+        className="mt-6 rounded-[var(--r-md)] border border-[var(--line-2)] bg-card px-4 py-3.5 text-sm text-foreground-tertiary"
       >
         To create a CAPA from a finding,{" "}
-        <Link to="/findings" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>
+        <Link to="/findings" className="font-semibold text-primary no-underline">
           open the Findings page →
         </Link>
       </div>
@@ -584,11 +490,16 @@ function DeptHeadView() {
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
   const capas = useCapaStore((s) => s.capas);
 
-  const { overdue, active, review } = useMemo(() => {
+  const { pendingIntake, overdue, active, review } = useMemo(() => {
     const mine = capas.filter((c) => c.assignedTo === activePersonaId);
     const open = mine.filter((c) => c.status !== "closed");
     const pendingApproval = capas.filter((c) => c.status === "approval");
+    const pendingIntake = capas.filter(
+      (c) => c.status === "pending_review" &&
+        c.intakeReviews?.some((r) => r.reviewerPersonaId === activePersonaId && !r.decision),
+    );
     return {
+      pendingIntake,
       overdue: open.filter((c) => isOverdue(c.id)),
       active: open.filter((c) => !isOverdue(c.id)),
       review: pendingApproval,
@@ -597,14 +508,19 @@ function DeptHeadView() {
 
   return (
     <>
+      {pendingIntake.length > 0 && (
+        <Section label="Intake review needed" count={pendingIntake.length} mt={0}>
+          {pendingIntake.map((c) => <IntakeReviewCard key={c.id} capa={c} />)}
+        </Section>
+      )}
       {overdue.length > 0 && (
-        <Section label="Overdue — needs action" count={overdue.length} mt={0}>
+        <Section label="Overdue — needs action" count={overdue.length} mt={pendingIntake.length ? 32 : 0}>
           {overdue.map((c) => (
-            <ActiveCard key={c.id} capa={c} accentLeft="var(--danger)" />
+            <ActiveCard key={c.id} capa={c} accentTone="danger" />
           ))}
         </Section>
       )}
-      <Section label="Investigations in progress" count={active.length} mt={overdue.length ? 32 : 0}>
+      <Section label="Investigations in progress" count={active.length} mt={overdue.length || pendingIntake.length ? 32 : 0}>
         {active.length > 0 ? (
           active.map((c) => <ActiveCard key={c.id} capa={c} />)
         ) : (
@@ -646,7 +562,7 @@ function HeadOfQAView() {
       {allOverdue.length > 0 && (
         <Section label="Org-wide overdue CAPAs" count={allOverdue.length}>
           {allOverdue.map((c) => (
-            <ActiveCard key={c.id} capa={c} accentLeft="var(--danger)" />
+            <ActiveCard key={c.id} capa={c} accentTone="danger" />
           ))}
         </Section>
       )}
@@ -681,20 +597,11 @@ function SMEView() {
         )}
       </Section>
       <div
-        style={{
-          marginTop: "24px",
-          padding: "14px 16px",
-          borderRadius: "var(--r-md)",
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          fontSize: "13px",
-          color: "var(--fg-3)",
-          lineHeight: 1.6,
-        }}
+        className="mt-6 rounded-[var(--r-md)] border border-[var(--line-2)] bg-card px-4 py-3.5 text-sm leading-relaxed text-foreground-tertiary"
       >
-        <span style={{ fontWeight: 600, color: "var(--fg-2)" }}>Your role as SME —</span> You are
+        <span className="font-semibold text-foreground-secondary">Your role as SME —</span> You are
         consulted on root cause and corrective action review for cases in your domain. Navigate to{" "}
-        <Link to="/capa" style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 600 }}>
+        <Link to="/capa" className="font-semibold text-primary no-underline">
           All CAPAs
         </Link>{" "}
         to browse or search all active investigations.
@@ -748,31 +655,17 @@ export function MyWorkPage() {
 
   return (
     <div
-      style={{
-        maxWidth: "760px",
-        fontFamily: "var(--font-sans)",
-      }}
+      className="max-w-[760px] font-sans"
     >
       {/* ── Greeting header ──────────────────────────────────── */}
-      <div style={{ marginBottom: "32px" }}>
+      <div className="mb-8">
         <h2
-          style={{
-            fontSize: "26px",
-            fontWeight: 600,
-            letterSpacing: "-0.02em",
-            color: "var(--fg-1)",
-            margin: "0 0 6px",
-          }}
+          className="mb-1.5 mt-0 text-4xl font-semibold tracking-[-0.02em] text-foreground"
         >
           {getGreeting()}, {persona.displayName.split(" ")[0]}
         </h2>
         <p
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "13px",
-            color: "var(--fg-2)",
-            margin: 0,
-          }}
+          className="m-0 font-sans text-sm text-foreground-secondary"
         >
           {new Date("2026-05-31").toLocaleDateString("en-GB", {
             weekday: "long",
@@ -781,7 +674,7 @@ export function MyWorkPage() {
             year: "numeric",
           })}{" "}
           ·{" "}
-          <span style={{ color: "var(--fg-1)", fontWeight: 600 }}>
+          <span className="font-semibold text-foreground">
             {PERSONA_SUBTITLES[activePersonaId]?.(persona.displayName.split(" ")[0], subtitleCount) ??
               `${subtitleCount} active`}
           </span>

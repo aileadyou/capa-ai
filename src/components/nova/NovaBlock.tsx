@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, MessageSquareText, Sparkles } from "lucide-react";
 import { useAuditTrailStore, useUIStore } from "@/store";
+import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -47,10 +48,10 @@ function formatConfidence(n: number): string {
 }
 
 /** Color-tint the confidence badge based on score */
-function confidenceColor(n: number): string {
-  if (n >= 85) return "var(--success)";
-  if (n >= 65) return "var(--warning)";
-  return "var(--danger)";
+function confidenceClass(n: number): string {
+  if (n >= 85) return "text-success";
+  if (n >= 65) return "text-warning";
+  return "text-destructive";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,46 +59,25 @@ function confidenceColor(n: number): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function NovaBlockSkeleton() {
-  const shimmer: React.CSSProperties = {
-    borderRadius: "var(--r-sm)",
-    height: "14px",
-    marginBottom: "8px",
-  };
   return (
-    <div
-      style={{
-        background: "var(--bg-3)",
-        borderTop: "1px solid var(--accent-line)",
-        borderRight: "1px solid var(--accent-line)",
-        borderBottom: "1px solid var(--accent-line)",
-        borderLeft: "3px solid var(--accent)",
-        borderRadius: "var(--r-md)",
-        padding: "16px",
-      }}
-    >
+    <div className="rounded-[var(--r-md)] border border-[var(--accent-line)] border-l-[3px] border-l-primary bg-elevated p-4">
       {/* Header placeholder */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-        <div
-          className="animate-shimmer"
-          style={{ ...shimmer, width: "14px", height: "14px", borderRadius: "50%", marginBottom: 0 }}
-        />
-        <div className="animate-shimmer" style={{ ...shimmer, width: "120px", marginBottom: 0 }} />
-        <div
-          className="animate-shimmer"
-          style={{ ...shimmer, width: "80px", marginBottom: 0, marginLeft: "auto", height: "20px", borderRadius: "20px" }}
-        />
+      <div className="mb-4 flex items-center gap-2">
+        <div className="h-3.5 w-3.5 rounded-full animate-shimmer" />
+        <div className="h-3.5 w-[120px] rounded-[var(--r-sm)] animate-shimmer" />
+        <div className="ml-auto h-5 w-20 rounded-full animate-shimmer" />
       </div>
 
       {/* Body placeholders */}
-      <div className="animate-shimmer" style={{ ...shimmer, width: "100%" }} />
-      <div className="animate-shimmer" style={{ ...shimmer, width: "88%" }} />
-      <div className="animate-shimmer" style={{ ...shimmer, width: "72%", marginBottom: "16px" }} />
+      <div className="mb-2 h-3.5 w-full rounded-[var(--r-sm)] animate-shimmer" />
+      <div className="mb-2 h-3.5 w-[88%] rounded-[var(--r-sm)] animate-shimmer" />
+      <div className="mb-4 h-3.5 w-[72%] rounded-[var(--r-sm)] animate-shimmer" />
 
       {/* Action row placeholders */}
-      <div style={{ display: "flex", gap: "8px" }}>
-        <div className="animate-shimmer" style={{ ...shimmer, width: "130px", height: "30px", marginBottom: 0, borderRadius: "var(--r-sm)" }} />
-        <div className="animate-shimmer" style={{ ...shimmer, width: "90px", height: "30px", marginBottom: 0, borderRadius: "var(--r-sm)" }} />
-        <div className="animate-shimmer" style={{ ...shimmer, width: "50px", height: "30px", marginBottom: 0, borderRadius: "var(--r-sm)" }} />
+      <div className="flex gap-2">
+        <div className="h-[30px] w-[130px] rounded-[var(--r-sm)] animate-shimmer" />
+        <div className="h-[30px] w-[90px] rounded-[var(--r-sm)] animate-shimmer" />
+        <div className="h-[30px] w-[50px] rounded-[var(--r-sm)] animate-shimmer" />
       </div>
     </div>
   );
@@ -196,62 +176,27 @@ export function NovaBlock({
   // ── Accepted ───────────────────────────────────────────────────────────
   if (state === "accepted") {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          gap: "8px",
-          padding: "9px 14px",
-          background: "var(--accent-soft)",
-          border: "1px solid var(--accent-line)",
-          borderRadius: "var(--r-md)",
-          animation: "leadReveal var(--dur-tab) var(--ease-out) both",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%" }}>
+      <div className="flex animate-[leadReveal_var(--dur-tab)_var(--ease-out)_both] flex-col items-start gap-2 rounded-[var(--r-md)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3.5 py-[9px]">
+        <div className="flex w-full items-center gap-2">
           <Sparkles
             size={13}
             strokeWidth={1.75}
-            style={{ color: "var(--accent)", flexShrink: 0 }}
+            className="shrink-0 text-primary"
           />
-          <span
-            style={{
-              fontSize: "13px",
-              fontWeight: 600,
-              color: "var(--accent)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
+          <span className="font-sans text-[13px] font-semibold text-primary">
             Nova suggestion applied
           </span>
-          <span
-            style={{
-              fontSize: "12px",
-              color: "var(--fg-3)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
+          <span className="font-sans text-xs text-foreground-tertiary">
             — edit the field below to refine
           </span>
           <button
             onClick={handleRestore}
-            style={{
-              marginLeft: "auto",
-              fontSize: "12px",
-              color: "var(--fg-3)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "2px 6px",
-              fontFamily: "var(--font-sans)",
-              lineHeight: 1,
-            }}
+            className="ml-auto cursor-pointer border-0 bg-transparent px-1.5 py-0.5 font-sans text-xs leading-none text-foreground-tertiary"
           >
             Undo
           </button>
         </div>
-        <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6, fontFamily: "var(--font-sans)" }}>
+        <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
           {draft}
         </p>
       </div>
@@ -260,52 +205,19 @@ export function NovaBlock({
 
   // ── Idle / Editing ─────────────────────────────────────────────────────
   return (
-    <div
-      style={{
-        background: "var(--bg-3)",
-        borderTop: "1px solid var(--accent-line)",
-        borderRight: "1px solid var(--accent-line)",
-        borderBottom: "1px solid var(--accent-line)",
-        borderLeft: "3px solid var(--accent)",
-        borderRadius: "var(--r-md)",
-        overflow: "hidden",
-        // Stagger-reveal when first mounted
-        animation: "leadReveal var(--dur-reveal) var(--ease-out) both",
-      }}
-    >
+    <div className="animate-[leadReveal_var(--dur-reveal)_var(--ease-out)_both] overflow-hidden rounded-[var(--r-md)] border border-[var(--accent-line)] border-l-[3px] border-l-primary bg-elevated">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "12px 16px 0",
-        }}
-      >
+      <div className="flex items-center gap-2 px-4 pt-3">
         <Sparkles
           size={15}
           strokeWidth={1.75}
-          style={{ color: "var(--accent)", flexShrink: 0 }}
+          className="shrink-0 text-primary"
         />
 
-        <span
-          style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "var(--fg-1)",
-            fontFamily: "var(--font-sans)",
-            lineHeight: 1,
-          }}
-        >
+        <span className="font-sans text-[13px] font-semibold leading-none text-foreground">
           Nova's suggestion
           {context && (
-            <span
-              style={{
-                fontWeight: 400,
-                color: "var(--fg-3)",
-                marginLeft: "6px",
-              }}
-            >
+            <span className="ml-1.5 font-normal text-foreground-tertiary">
               {context}
             </span>
           )}
@@ -313,24 +225,7 @@ export function NovaBlock({
 
         {/* Confidence badge */}
         {confidence !== undefined && (
-          <span
-            style={{
-              marginLeft: "auto",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-              padding: "3px 9px",
-              borderRadius: "20px",
-              background: "var(--accent-soft)",
-              border: "1px solid var(--accent-line)",
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              color: confidenceColor(confidence),
-              letterSpacing: "0.02em",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <span className={cn("ml-auto inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-[var(--accent-line)] bg-[var(--accent-soft)] px-[9px] py-[3px] font-sans text-[11px] font-semibold tracking-[0.02em]", confidenceClass(confidence))}>
             {formatConfidence(confidence)}
           </span>
         )}
@@ -338,13 +233,10 @@ export function NovaBlock({
 
       {/* ── Suggestion body ──────────────────────────────────────────────── */}
       <div
-        style={{
-          padding: "10px 16px 0",
-          transition: "background 380ms ease",
-          background: isFlashing ? "var(--accent-soft)" : "transparent",
-          borderRadius: "4px",
-          margin: "0 4px",
-        }}
+        className={cn(
+          "mx-1 rounded px-4 pt-2.5 transition-[background] [transition-duration:380ms]",
+          isFlashing ? "bg-[var(--accent-soft)]" : "bg-transparent",
+        )}
       >
         {state === "editing" ? (
           <textarea
@@ -352,33 +244,10 @@ export function NovaBlock({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             rows={4}
-            style={{
-              width: "100%",
-              background: "var(--field-bg)",
-              border: "1px solid var(--accent)",
-              borderRadius: "var(--r-sm)",
-              padding: "10px 12px",
-              fontSize: "14px",
-              lineHeight: "1.6",
-              color: "var(--fg-1)",
-              fontFamily: "var(--font-sans)",
-              resize: "vertical",
-              outline: "none",
-              boxSizing: "border-box",
-              boxShadow: "0 0 0 3px var(--accent-soft)",
-              display: "block",
-            }}
+            className="box-border block w-full resize-y rounded-[var(--r-sm)] border border-primary bg-[var(--field-bg)] px-3 py-2.5 font-sans text-sm leading-[1.6] text-foreground outline-none shadow-[0_0_0_3px_var(--accent-soft)]"
           />
         ) : (
-          <p
-            style={{
-              margin: 0,
-              fontSize: "15px",
-              lineHeight: "1.6",
-              color: "var(--fg-2)",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
+          <p className="m-0 font-sans text-[15px] leading-[1.6] text-foreground-secondary">
             {draft}
           </p>
         )}
@@ -386,23 +255,10 @@ export function NovaBlock({
 
       {/* ── Expandable reasoning ─────────────────────────────────────────── */}
       {reasoning && state !== "editing" && (
-        <div style={{ padding: "8px 16px 0" }}>
+        <div className="px-4 pt-2">
           <button
             onClick={() => setShowReasoning((v) => !v)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              color: "var(--fg-3)",
-              letterSpacing: "0.18em",
-              lineHeight: 1,
-            }}
+            className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 font-sans text-[11px] leading-none tracking-[0.18em] text-foreground-tertiary"
           >
             {showReasoning ? (
               <>
@@ -418,25 +274,12 @@ export function NovaBlock({
           </button>
 
           <div
-            style={{
-              overflow: "hidden",
-              maxHeight: showReasoning ? "240px" : "0",
-              opacity: showReasoning ? 1 : 0,
-              transition: "max-height var(--dur-tab) var(--ease-out), opacity var(--dur-tab) var(--ease-out)",
-            }}
+            className={cn(
+              "overflow-hidden transition-[max-height,opacity] [transition-duration:var(--dur-tab)] [transition-timing-function:var(--ease-out)]",
+              showReasoning ? "max-h-60 opacity-100" : "max-h-0 opacity-0",
+            )}
           >
-            <div
-              style={{
-                marginTop: "8px",
-                padding: "10px 12px",
-                background: "var(--field-bg)",
-                borderRadius: "var(--r-sm)",
-                fontFamily: "var(--font-mono)",
-                fontSize: "11px",
-                lineHeight: "1.65",
-                color: "var(--fg-3)",
-              }}
-            >
+            <div className="mt-2 rounded-[var(--r-sm)] bg-[var(--field-bg)] px-3 py-2.5 font-sans text-[11px] leading-[1.65] text-foreground-tertiary">
               {reasoning}
             </div>
           </div>
@@ -444,51 +287,19 @@ export function NovaBlock({
       )}
 
       {/* ── Action row ───────────────────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "12px 16px",
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="flex flex-wrap items-center gap-2 px-4 py-3">
         {state === "editing" ? (
           // ── Edit mode actions ──────────────────────────────────────────
           <>
             <button
               onClick={handleApplyEdit}
-              style={{
-                background: "var(--grad-brand)",
-                color: "var(--on-accent)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "7px 16px",
-                fontSize: "13px",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                lineHeight: 1,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-[7px] font-sans text-[13px] font-semibold leading-none text-primary-foreground"
             >
               Apply edit
             </button>
             <button
               onClick={handleCancelEdit}
-              style={{
-                background: "var(--field-bg)",
-                color: "var(--fg-2)",
-                border: "1px solid var(--line-2)",
-                borderRadius: "var(--r-sm)",
-                padding: "7px 13px",
-                fontSize: "13px",
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                lineHeight: 1,
-              }}
+              className="cursor-pointer rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-[13px] py-[7px] font-sans text-[13px] leading-none text-foreground-secondary"
             >
               Cancel
             </button>
@@ -499,24 +310,7 @@ export function NovaBlock({
             {/* Primary — accept as-is */}
             <button
               onClick={handleAccept}
-              style={{
-                background: "var(--grad-brand)",
-                color: "var(--on-accent)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "7px 16px",
-                fontSize: "13px",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                lineHeight: 1,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                transition: "filter var(--dur-fast) var(--ease-out)",
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.1)")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLButtonElement).style.filter = "none")}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-[7px] font-sans text-[13px] font-semibold leading-none text-primary-foreground transition-[filter] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:brightness-110"
             >
               {/* Checkmark glyph */}
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
@@ -528,29 +322,7 @@ export function NovaBlock({
             {/* Secondary — discuss in Ask Nova */}
             <button
               onClick={handleDiscussWithNova}
-              style={{
-                background: "var(--bg-3)",
-                color: "var(--fg-1)",
-                border: "1px solid var(--line-2)",
-                borderRadius: "var(--r-sm)",
-                padding: "7px 13px",
-                fontSize: "13px",
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                lineHeight: 1,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--line-3)";
-                (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-4)";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--line-2)";
-                (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-3)";
-              }}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-[13px] py-[7px] font-sans text-[13px] leading-none text-foreground transition-[background,border-color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:bg-field"
             >
               <MessageSquareText size={13} />
               Discuss with Nova

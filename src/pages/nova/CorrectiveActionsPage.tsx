@@ -163,7 +163,7 @@ export function CorrectiveActionsPage() {
         <CardContent>
           <div className="overflow-hidden rounded border">
             <table className="w-full text-left text-sm">
-              <thead className="bg-[var(--table-head-bg)] text-xs uppercase text-[var(--fg-2)]">
+              <thead className="bg-[var(--table-head-bg)] text-xs uppercase text-[var(--table-head-fg)]">
                 <tr>
                   <th className="px-3 py-2">CA ID</th>
                   <th className="px-3 py-2">Description</th>
@@ -178,7 +178,7 @@ export function CorrectiveActionsPage() {
               <tbody>
                 {filteredRows.map(({ action, department, capaTitle }) => (
                   <tr key={action.id} className="border-t align-top">
-                    <td className="px-3 py-3 font-mono text-xs text-primary">{action.id}</td>
+                    <td className="px-3 py-3 font-sans text-xs text-primary">{action.id}</td>
                     <td className="max-w-lg px-3 py-3">
                       <div>{action.description}</div>
                       <div className="mt-2 text-xs text-muted-foreground">
@@ -186,7 +186,7 @@ export function CorrectiveActionsPage() {
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <Link className="font-mono text-xs text-primary hover:underline" to={`/capa/${action.capaId}`}>
+                      <Link className="font-sans text-xs text-primary hover:underline" to={`/capa/${action.capaId}`}>
                         {action.capaId}
                       </Link>
                       <div className="mt-1 max-w-[220px] text-xs text-muted-foreground">{capaTitle}</div>

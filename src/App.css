@@ -38,5 +38,5 @@
 }
 
 .read-the-docs {
-  color: var(--fg-3);
+  color: hsl(var(--foreground-tertiary));
 }

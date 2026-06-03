@@ -14,6 +14,7 @@ import type { AuditDomain, AuditEvent, AuditEventType } from "@/types";
 import { formatDateTime } from "@/utils/formatters";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { FilterCard, FilterSearchInput, FilterSelect } from "@/components/shared/FilterControls";
+import { cn } from "@/lib/utils";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -21,11 +22,11 @@ const ALL = "all";
 const DATE_FILTERS = ["all", "today", "last_7_days", "last_30_days"] as const;
 type DateFilter = (typeof DATE_FILTERS)[number];
 
-const DOMAIN_COLORS: Record<AuditDomain, { bg: string; border: string; text: string }> = {
-  system: { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" },
-  ai_decision: { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" },
-  integration: { bg: "var(--success-soft)", border: "color-mix(in srgb, var(--success) 38%, transparent)", text: "var(--success)" },
-  clear_labeling: { bg: "var(--success-soft)", border: "color-mix(in srgb, var(--success) 38%, transparent)", text: "var(--success)" },
+const DOMAIN_CLASSES: Record<AuditDomain, string> = {
+  system: "border-[var(--accent-line)] bg-[var(--accent-soft)] text-primary",
+  ai_decision: "border-[var(--accent-line)] bg-[var(--accent-soft)] text-primary",
+  integration: "border-success/40 bg-[var(--success-soft)] text-success",
+  clear_labeling: "border-success/40 bg-[var(--success-soft)] text-success",
 };
 
 const DOMAIN_LABELS: Record<AuditDomain, string> = {
@@ -64,21 +65,12 @@ function isInDateFilter(timestamp: string, filter: DateFilter): boolean {
 // ── Styled sub-components ─────────────────────────────────────────────────────
 
 function DomainBadge({ domain }: { domain: AuditDomain }) {
-  const colors = DOMAIN_COLORS[domain];
   return (
     <span
-      style={{
-        display: "inline-block",
-        padding: "3px 8px",
-        borderRadius: "20px",
-        fontSize: "11px",
-        fontWeight: 600,
-        fontFamily: "var(--font-mono)",
-        background: colors.bg,
-        border: `1px solid ${colors.border}`,
-        color: colors.text,
-        whiteSpace: "nowrap",
-      }}
+      className={cn(
+        "inline-block whitespace-nowrap rounded-[20px] border px-2 py-[3px] font-sans text-[11px] font-semibold",
+        DOMAIN_CLASSES[domain],
+      )}
     >
       {DOMAIN_LABELS[domain]}
     </span>
@@ -87,36 +79,14 @@ function DomainBadge({ domain }: { domain: AuditDomain }) {
 
 function KpiCard({ label, value }: { label: string; value: number | string }) {
   return (
-    <div
-      style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-lg)",
-        boxShadow: "var(--shadow-sm)",
-        padding: "16px 20px",
-      }}
-    >
+    <div className="rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-5 py-4 shadow-sm">
       <div
-        style={{
-          fontSize: "11px",
-          fontFamily: "var(--font-mono)",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--fg-3)",
-          marginBottom: "6px",
-        }}
+        className="mb-1.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
       >
         {label}
       </div>
       <div
-        style={{
-          fontSize: "28px",
-          fontWeight: 700,
-          fontFamily: "var(--font-mono)",
-          color: "var(--fg-1)",
-          letterSpacing: "-0.02em",
-        }}
+        className="font-sans text-[28px] font-bold tracking-[-0.02em] text-foreground"
       >
         {value}
       </div>
@@ -180,67 +150,30 @@ export function AuditTrailPage() {
   }
 
   return (
-    <div className="animate-page-enter" style={{ maxWidth: "1400px" }}>
+    <div className="animate-page-enter ">
       {/* ── Header ────────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1
-            style={{
-              fontSize: "22px",
-              fontWeight: 600,
-              color: "var(--fg-1)",
-              fontFamily: "var(--font-sans)",
-              letterSpacing: "-0.02em",
-              margin: 0,
-            }}
+            className="m-0 font-sans text-[22px] font-semibold tracking-[-0.02em] text-foreground"
           >
             Global audit trail
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", marginTop: "6px", maxWidth: "600px", lineHeight: "1.5" }}>
+          <p className="mt-1.5 max-w-[600px] text-sm leading-normal text-foreground-tertiary">
             Read-only event log for system actions, Nova decisions, integration imports, and approvals. ALCOA+ compliant.
           </p>
         </div>
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div className="flex gap-2">
           <button
             onClick={() => handleExport("csv")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 14px",
-              background: "var(--bg-3)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-sm)",
-              color: "var(--fg-2)",
-              fontSize: "13px",
-              fontFamily: "var(--font-sans)",
-              cursor: "pointer",
-              transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-3)"; e.currentTarget.style.background = "var(--bg-4)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.background = "var(--bg-3)"; }}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-3.5 py-2 font-sans text-sm text-foreground-secondary transition-[border-color,background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:bg-field"
           >
             <Download size={14} strokeWidth={1.75} />
             Export CSV
           </button>
           <button
             onClick={() => handleExport("pdf")}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 14px",
-              background: "var(--bg-3)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-sm)",
-              color: "var(--fg-2)",
-              fontSize: "13px",
-              fontFamily: "var(--font-sans)",
-              cursor: "pointer",
-              transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-3)"; e.currentTarget.style.background = "var(--bg-4)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.background = "var(--bg-3)"; }}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-3.5 py-2 font-sans text-sm text-foreground-secondary transition-[border-color,background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:bg-field"
           >
             <FileText size={14} strokeWidth={1.75} />
             Export PDF
@@ -249,7 +182,7 @@ export function AuditTrailPage() {
       </div>
 
       {/* ── KPI row ───────────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "20px" }}>
+      <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Total events" value={events.length} />
         <KpiCard label="AI decisions" value={aiDecisionCount} />
         <KpiCard label="Integrations" value={integrationCount} />
@@ -257,7 +190,7 @@ export function AuditTrailPage() {
       </div>
 
       {/* ── Filter bar ────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: "20px" }}>
+      <div className="mb-5">
         <FilterCard>
           <FilterSearchInput
             value={query}
@@ -306,59 +239,27 @@ export function AuditTrailPage() {
 
       {/* ── Results count ─────────────────────────────────────────────── */}
       <div
-        style={{
-          fontSize: "11px",
-          fontFamily: "var(--font-mono)",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--fg-3)",
-          marginBottom: "10px",
-        }}
+        className="mb-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
       >
         {filteredEvents.length} audit events
       </div>
 
       {/* ── Table ─────────────────────────────────────────────────────── */}
       <div
-        style={{
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-lg)",
-          boxShadow: "var(--shadow-sm)",
-          overflow: "hidden",
-        }}
+        className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm"
       >
-        <div style={{ overflowX: "auto" }}>
+        <div className="overflow-x-auto">
           <table
-            style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              fontSize: "13px",
-              fontFamily: "var(--font-sans)",
-            }}
+            className="w-full border-collapse font-sans text-sm"
           >
             <thead>
               <tr
-                style={{
-                  background: "var(--table-head-bg)",
-                  borderBottom: "1px solid var(--line-2)",
-                }}
+                className="border-b border-[var(--line-2)] bg-[var(--table-head-bg)]"
               >
                 {["Timestamp", "Domain", "Actor", "Action", "CAPA / Finding", "Before / After", "Nova metadata"].map((h) => (
                   <th
                     key={h}
-                    style={{
-                      padding: "10px 12px",
-                      textAlign: "left",
-                      fontSize: "10px",
-                      fontFamily: "var(--font-mono)",
-                      fontWeight: 600,
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
-                      color: "var(--fg-3)",
-                      whiteSpace: "nowrap",
-                    }}
+                    className="whitespace-nowrap px-3 py-2.5 text-left font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--table-head-fg)]"
                   >
                     {h}
                   </th>
@@ -370,7 +271,7 @@ export function AuditTrailPage() {
                 <tr>
                   <td
                     colSpan={7}
-                    style={{ padding: "24px" }}
+                    className="p-6"
                   >
                     <EmptyState
                       title="No audit events"
@@ -382,70 +283,50 @@ export function AuditTrailPage() {
               {filteredEvents.map((evt: AuditEvent) => (
                 <tr
                   key={evt.id}
-                  style={{
-                    borderBottom: "1px solid var(--line-1)",
-                    verticalAlign: "top",
-                    transition: "background var(--dur-fast) var(--ease-out)",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-3)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  className="border-b border-[var(--line-1)] align-top transition-[background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-elevated"
                 >
                   {/* Timestamp */}
-                  <td style={{ padding: "12px", minWidth: "120px" }}>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--fg-3)" }}>{evt.id}</div>
-                    <div style={{ fontSize: "12px", color: "var(--fg-2)", marginTop: "3px" }}>{formatDateTime(evt.timestamp)}</div>
+                  <td className="min-w-[120px] p-3">
+                    <div className="font-sans text-[11px] text-foreground-tertiary">{evt.id}</div>
+                    <div className="mt-[3px] text-xs text-foreground-secondary">{formatDateTime(evt.timestamp)}</div>
                   </td>
 
                   {/* Domain */}
-                  <td style={{ padding: "12px", minWidth: "130px" }}>
+                  <td className="min-w-[130px] p-3">
                     <DomainBadge domain={evt.domain} />
-                    <div style={{ fontSize: "11px", color: "var(--fg-3)", marginTop: "5px" }}>
+                    <div className="mt-[5px] text-[11px] text-foreground-tertiary">
                       {formatEventType(evt.eventType)}
                     </div>
                   </td>
 
                   {/* Actor */}
-                  <td style={{ padding: "12px", minWidth: "130px" }}>
-                    <div style={{ fontWeight: 600, color: "var(--fg-1)", fontSize: "13px" }}>{evt.actorName}</div>
-                    <div style={{ fontSize: "11px", color: "var(--fg-3)", marginTop: "2px" }}>{evt.actorRole}</div>
+                  <td className="min-w-[130px] p-3">
+                    <div className="text-sm font-semibold text-foreground">{evt.actorName}</div>
+                    <div className="mt-0.5 text-[11px] text-foreground-tertiary">{evt.actorRole}</div>
                   </td>
 
                   {/* Action */}
-                  <td style={{ padding: "12px", maxWidth: "320px", color: "var(--fg-2)", lineHeight: "1.5" }}>
+                  <td className="max-w-[320px] p-3 leading-normal text-foreground-secondary">
                     {evt.action}
                   </td>
 
                   {/* CAPA / Finding */}
-                  <td style={{ padding: "12px", minWidth: "130px" }}>
+                  <td className="min-w-[130px] p-3">
                     {evt.capaId ? (
                       <Link
                         to={`/capa/${evt.capaId}`}
-                        style={{
-                          fontFamily: "var(--font-mono)",
-                          fontSize: "12px",
-                          color: "var(--accent)",
-                          textDecoration: "none",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
-                        onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                        className="font-sans text-xs text-primary no-underline hover:underline"
                       >
                         {evt.capaId}
                       </Link>
                     ) : (
-                      <span style={{ fontSize: "11px", color: "var(--fg-3)" }}>No CAPA</span>
+                      <span className="text-[11px] text-foreground-tertiary">No CAPA</span>
                     )}
                     {evt.findingId && (
-                      <div style={{ marginTop: "4px" }}>
+                      <div className="mt-1">
                         <Link
                           to={`/findings/${evt.findingId}`}
-                          style={{
-                            fontFamily: "var(--font-mono)",
-                            fontSize: "12px",
-                            color: "var(--accent)",
-                            textDecoration: "none",
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
-                          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                          className="font-sans text-xs text-primary no-underline hover:underline"
                         >
                           {evt.findingId}
                         </Link>
@@ -454,69 +335,49 @@ export function AuditTrailPage() {
                   </td>
 
                   {/* Before / After */}
-                  <td style={{ padding: "12px", maxWidth: "240px" }}>
+                  <td className="max-w-[240px] p-3">
                     {evt.before || evt.after ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div className="flex flex-col gap-1">
                         {evt.before && (
                           <div
-                            style={{
-                              background: "var(--bg-4)",
-                              borderRadius: "6px",
-                              padding: "6px 8px",
-                              fontSize: "11px",
-                              color: "var(--fg-3)",
-                              lineHeight: "1.4",
-                            }}
+                            className="rounded-md bg-field px-2 py-1.5 text-[11px] leading-[1.4] text-foreground-tertiary"
                           >
-                            <span style={{ fontWeight: 600, color: "var(--fg-3)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.18em" }}>
+                            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
                               Before
                             </span>
-                            <div style={{ marginTop: "2px" }}>{evt.before}</div>
+                            <div className="mt-0.5">{evt.before}</div>
                           </div>
                         )}
                         {evt.after && (
                           <div
-                            style={{
-                              background: "var(--bg-4)",
-                              borderRadius: "6px",
-                              padding: "6px 8px",
-                              fontSize: "11px",
-                              color: "var(--fg-2)",
-                              lineHeight: "1.4",
-                            }}
+                            className="rounded-md bg-field px-2 py-1.5 text-[11px] leading-[1.4] text-foreground-secondary"
                           >
-                            <span style={{ fontWeight: 600, color: "var(--fg-3)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.18em" }}>
+                            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
                               After
                             </span>
-                            <div style={{ marginTop: "2px" }}>{evt.after}</div>
+                            <div className="mt-0.5">{evt.after}</div>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <span style={{ fontSize: "11px", color: "var(--fg-3)" }}>No field diff</span>
+                      <span className="text-[11px] text-foreground-tertiary">No field diff</span>
                     )}
                   </td>
 
                   {/* Nova metadata */}
-                  <td style={{ padding: "12px", minWidth: "140px" }}>
+                  <td className="min-w-[140px] p-3">
                     {evt.novaMetadata ? (
                       <div
-                        style={{
-                          background: "var(--accent-soft)",
-                          border: "1px solid var(--accent-line)",
-                          borderRadius: "var(--r-sm)",
-                          padding: "8px 10px",
-                          fontSize: "11px",
-                        }}
+                        className="rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-2.5 py-2 text-[11px]"
                       >
-                        <div style={{ fontWeight: 600, color: "var(--accent)" }}>{evt.novaMetadata.modelName}</div>
-                        <div style={{ color: "var(--fg-3)", marginTop: "2px" }}>{evt.novaMetadata.modelVersion}</div>
-                        <div style={{ color: "var(--fg-2)", marginTop: "2px" }}>
+                        <div className="font-semibold text-primary">{evt.novaMetadata.modelName}</div>
+                        <div className="mt-0.5 text-foreground-tertiary">{evt.novaMetadata.modelVersion}</div>
+                        <div className="mt-0.5 text-foreground-secondary">
                           Confidence: {evt.novaMetadata.confidenceScore}%
                         </div>
                       </div>
                     ) : (
-                      <span style={{ fontSize: "11px", color: "var(--fg-3)" }}>Not AI-generated</span>
+                      <span className="text-[11px] text-foreground-tertiary">Not AI-generated</span>
                     )}
                   </td>
                 </tr>

@@ -7,10 +7,7 @@ export function PageWrapper({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ background: "var(--bg-1)", color: "var(--fg-1)", fontFamily: "var(--font-sans)" }}
-    >
+    <div className="min-h-screen bg-background font-sans text-foreground">
       <Sidebar />
 
       {/* Content: shifted right of sidebar on xl */}
@@ -19,7 +16,7 @@ export function PageWrapper({ children }: { children: ReactNode }) {
         <CompactNav />
         <main
           key={location.pathname}
-          className="app-main animate-page-enter lead-motion-scope mx-auto max-w-[1500px]"
+          className="app-main animate-page-enter lead-motion-scope mx-auto w-full"
         >
           {children}
         </main>

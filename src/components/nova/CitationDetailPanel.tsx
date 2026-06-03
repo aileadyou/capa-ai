@@ -46,8 +46,7 @@ export function CitationDetailPanel() {
         aria-modal="true"
         aria-labelledby="citation-panel-title"
         tabIndex={-1}
-        style={{ overscrollBehavior: "contain" }}
-        className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg"
+        className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col overscroll-contain border-l bg-background shadow-lg"
       >
         <div className="flex items-center justify-between border-b p-4">
           <div id="citation-panel-title" className="text-sm font-semibold">Historical CAPA Reference</div>
@@ -78,14 +77,14 @@ export function CitationDetailPanel() {
               <div className="text-xs font-medium uppercase text-muted-foreground">
                 CAPA ID
               </div>
-              <div className="font-mono text-sm font-semibold">{citation.capaId}</div>
+              <div className="font-sans text-sm font-semibold">{citation.capaId}</div>
             </div>
 
             <div className="space-y-1">
               <div className="text-xs font-medium uppercase text-muted-foreground">
                 Finding ID
               </div>
-              <div className="font-mono text-sm">{citation.deviationId}</div>
+              <div className="font-sans text-sm">{citation.deviationId}</div>
             </div>
 
             <div className="space-y-1">

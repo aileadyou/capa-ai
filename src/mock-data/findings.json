@@ -70,7 +70,7 @@
     "type": "deviation",
     "source": "Bizzmine",
     "shortDescription": "Line clearance checklist missed one secondary packaging material code.",
-    "severity": "Minor",
+    "severity": "Ungraded",
     "department": "Packaging",
     "reportedAt": "2026-01-25T15:30:00+07:00",
     "status": "pending_capa"
@@ -111,7 +111,7 @@
     "type": "audit",
     "source": "Q100+",
     "shortDescription": "Internal audit checklist did not capture manual cleaning verification evidence.",
-    "severity": "Major",
+    "severity": "Ungraded",
     "department": "Production",
     "reportedAt": "2026-01-30T10:40:00+07:00",
     "status": "pending_capa"
@@ -152,7 +152,7 @@
     "type": "complaint",
     "source": "Bizzmine-Complaint",
     "shortDescription": "End user reported missing package insert in one secondary carton.",
-    "severity": "Minor",
+    "severity": "Ungraded",
     "department": "Packaging",
     "reportedAt": "2026-01-19T10:05:00+07:00",
     "status": "pending_capa"

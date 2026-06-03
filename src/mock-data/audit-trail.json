@@ -75,7 +75,7 @@
     "actorRole": "QA Deviation / QA Compliance / QA Complaint",
     "domain": "integration",
     "eventType": "source_imported",
-    "action": "Imported complaint data from Bizzmine Complaint for CMP-2026-0112.",
+    "action": "Imported complaint data from Bizzmine for CMP-2026-0112.",
     "capaId": "CAPA-2026-0112",
     "findingId": "CMP-2026-0112"
   },

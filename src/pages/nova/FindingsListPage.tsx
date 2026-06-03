@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { ArrowRight, Plus, X } from "lucide-react";
@@ -12,6 +12,7 @@ import { FilterCard, FilterSearchInput, FilterSelect } from "@/components/shared
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TypePill } from "@/components/shared/TypePill";
+import { cn } from "@/lib/utils";
 
 // ── Static Nova classification copy ──────────────────────────────────────────
 
@@ -43,16 +44,7 @@ function novaText(finding: Finding) {
 function SourceChip({ source }: { source: string }) {
   return (
     <span
-      style={{
-        fontSize: "10px",
-        fontFamily: "var(--font-mono)",
-        color: "var(--fg-4)",
-        background: "var(--bg-3)",
-        border: "1px solid var(--line-1)",
-        borderRadius: "var(--r-full)",
-        padding: "1px 6px",
-        whiteSpace: "nowrap",
-      }}
+      className="whitespace-nowrap rounded-[var(--r-full)] border border-[var(--line-1)] bg-elevated px-1.5 py-px font-sans text-[10px] text-foreground-faint"
     >
       {source}
     </span>
@@ -66,29 +58,12 @@ function FieldPair({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
       <p
-        style={{
-          fontSize: "10px",
-          fontFamily: "var(--font-mono)",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--fg-4)",
-          margin: "0 0 4px",
-        }}
+        className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
       >
         {label}
       </p>
       <div
-        style={{
-          background: "var(--bg-3)",
-          border: "1px solid var(--line-1)",
-          borderRadius: "var(--r-sm)",
-          padding: "8px 12px",
-          fontSize: "13px",
-          color: "var(--fg-1)",
-          fontFamily: "var(--font-sans)",
-          lineHeight: "1.5",
-        }}
+        className="rounded-[var(--r-sm)] border border-[var(--line-1)] bg-elevated px-3 py-2 font-sans text-sm leading-normal text-foreground"
       >
         {value}
       </div>
@@ -136,14 +111,7 @@ function FindingSlideOver({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "var(--glass-dark)",
-          zIndex: 60,
-          backdropFilter: "blur(2px)",
-          animation: "fadeIn var(--dur-tab) var(--ease-out)",
-        }}
+        className="fixed inset-0 z-[60] bg-[var(--glass-dark)] backdrop-blur-sm animate-[fadeIn_var(--dur-tab)_var(--ease-out)]"
       />
 
       {/* Panel */}
@@ -153,75 +121,27 @@ function FindingSlideOver({
         aria-modal="true"
         aria-label="Finding detail"
         tabIndex={-1}
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: "400px",
-          maxWidth: "100vw",
-          overscrollBehavior: "contain",
-          background: "var(--bg-2)",
-          borderLeft: "1px solid var(--line-2)",
-          boxShadow: "var(--shadow-lg)",
-          zIndex: 61,
-          display: "flex",
-          flexDirection: "column",
-          animation: "leadSlideOver var(--dur-panel) var(--ease-out)",
-        }}
+        className="fixed bottom-0 right-0 top-0 z-[61] flex w-[400px] max-w-[100vw] flex-col overscroll-contain border-l border-[var(--line-2)] bg-card shadow-lg animate-[leadSlideOver_var(--dur-panel)_var(--ease-out)]"
       >
         {/* Header */}
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "16px 20px",
-            borderBottom: "1px solid var(--line-1)",
-            flexShrink: 0,
-          }}
+          className="flex shrink-0 items-center justify-between border-b border-[var(--line-1)] px-5 py-4"
         >
           <div>
             <p
-              style={{
-                fontSize: "10px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--fg-4)",
-                margin: "0 0 2px",
-              }}
+              className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
             >
               Finding detail
             </p>
             <p
-              style={{
-                fontSize: "15px",
-                fontWeight: 700,
-                color: "var(--fg-1)",
-                margin: 0,
-                fontFamily: "var(--font-mono)",
-                letterSpacing: "0.02em",
-              }}
+              className="m-0 font-sans text-[15px] font-bold tracking-[0.02em] text-foreground"
             >
               {finding.id}
             </p>
           </div>
           <button
             onClick={onClose}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "32px",
-              height: "32px",
-              borderRadius: "var(--r-sm)",
-              background: "var(--bg-4)",
-              border: "1px solid var(--line-2)",
-              color: "var(--fg-3)",
-              cursor: "pointer",
-            }}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-[var(--r-sm)] border border-[var(--line-2)] bg-field text-foreground-tertiary"
             aria-label="Close panel"
           >
             <X size={15} />
@@ -230,17 +150,10 @@ function FindingSlideOver({
 
         {/* Scrollable content */}
         <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "14px",
-          }}
+          className="flex flex-1 flex-col gap-3.5 overflow-y-auto p-5"
         >
           {/* Badge row */}
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+          <div className="flex flex-wrap gap-1.5">
             <TypePill type={finding.type} />
             <SeverityBadge severity={finding.severity} />
             <StatusBadge status={finding.status} />
@@ -266,34 +179,15 @@ function FindingSlideOver({
 
           {/* Nova classification block */}
           <div
-            style={{
-              background: "var(--bg-3)",
-              borderLeft: "3px solid var(--accent)",
-              borderRadius: "var(--r-md)",
-              padding: "14px 16px",
-            }}
+            className="rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3.5"
           >
             <p
-              style={{
-                fontSize: "10px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--accent)",
-                margin: "0 0 8px",
-              }}
+              className="mb-2 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"
             >
               Nova classification
             </p>
             <p
-              style={{
-                fontSize: "13px",
-                color: "var(--fg-2)",
-                lineHeight: "1.6",
-                margin: 0,
-                fontFamily: "var(--font-sans)",
-              }}
+              className="m-0 font-sans text-sm leading-relaxed text-foreground-secondary"
             >
               {novaText(finding)}
             </p>
@@ -302,35 +196,12 @@ function FindingSlideOver({
 
         {/* Action footer */}
         <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            padding: "16px 20px",
-            borderTop: "1px solid var(--line-1)",
-            flexShrink: 0,
-          }}
+          className="flex shrink-0 gap-2.5 border-t border-[var(--line-1)] px-5 py-4"
         >
           {finding.linkedCapaId ? (
             <Link
               to={`/capa/${finding.linkedCapaId}`}
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                background: "var(--grad-brand)",
-                color: "var(--on-accent)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "9px 16px",
-                fontSize: "13px",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                textDecoration: "none",
-                letterSpacing: "0.01em",
-              }}
+              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-[9px] font-sans text-sm font-semibold tracking-[0.01em] text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
               onClick={onClose}
             >
               Open CAPA
@@ -339,24 +210,7 @@ function FindingSlideOver({
           ) : (
             <Link
               to={`/capa/new?type=${finding.type}&sourceId=${finding.id}`}
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                background: "var(--grad-brand)",
-                color: "var(--on-accent)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "9px 16px",
-                fontSize: "13px",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                textDecoration: "none",
-                letterSpacing: "0.01em",
-              }}
+              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-[9px] font-sans text-sm font-semibold tracking-[0.01em] text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
               onClick={onClose}
             >
               Create CAPA
@@ -365,16 +219,7 @@ function FindingSlideOver({
           )}
           <button
             onClick={onClose}
-            style={{
-              background: "transparent",
-              color: "var(--fg-3)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-sm)",
-              padding: "9px 16px",
-              fontSize: "13px",
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-            }}
+            className="cursor-pointer rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-4 py-[9px] font-sans text-sm text-foreground-tertiary"
           >
             Close
           </button>
@@ -385,22 +230,7 @@ function FindingSlideOver({
   );
 }
 
-// ── Filter helpers ────────────────────────────────────────────────────────────
-
 const allValue = "all";
-
-function isWithinRange(dateStr: string, range: string): boolean {
-  if (range === "all") return true;
-  const date = new Date(dateStr).getTime();
-  const now = Date.now();
-  const daysMap: Record<string, number> = {
-    last_7_days: 7,
-    last_30_days: 30,
-    last_90_days: 90,
-    last_12_months: 365,
-  };
-  return date >= now - (daysMap[range] ?? 0) * 86400000;
-}
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
@@ -435,61 +265,23 @@ export function FindingsListPage() {
     });
   }, [findings, query, typeFilter, severityFilter, statusFilter]);
 
-  // Row style helpers
-  function rowColor(f: Finding) {
-    if (f.status === "pending_capa") return "var(--fg-4)";
-    if (f.status === "overdue") return "var(--fg-2)";
-    return "var(--fg-2)";
-  }
-
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      <div className="flex flex-col gap-5">
 
         {/* ── Page header ────────────────────────────────────────────────── */}
         <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            gap: "16px",
-            flexWrap: "wrap",
-          }}
+          className="flex flex-wrap items-end justify-between gap-4"
         >
           <div>
-            <p
-              style={{
-                fontSize: "11px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--fg-4)",
-                margin: "0 0 4px",
-              }}
-            >
-              Quality events
-            </p>
+
             <h1
-              style={{
-                fontSize: "22px",
-                fontWeight: 700,
-                color: "var(--fg-1)",
-                margin: "0 0 6px",
-                fontFamily: "var(--font-sans)",
-                letterSpacing: "-0.02em",
-              }}
+              className="mb-1.5 mt-0 font-sans text-4xl font-bold tracking-[-0.02em] text-foreground"
             >
               Findings
             </h1>
             <p
-              style={{
-                fontSize: "13px",
-                color: "var(--fg-3)",
-                margin: 0,
-                fontFamily: "var(--font-sans)",
-                maxWidth: "520px",
-              }}
+              className="m-0 max-w-[520px] font-sans text-sm text-foreground-secondary"
             >
               Deviations, audit findings, and complaints imported from source systems. New CAPAs are created from here.
             </p>
@@ -497,23 +289,7 @@ export function FindingsListPage() {
 
           <Link
             to="/capa/new"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "var(--grad-brand)",
-              color: "var(--on-accent)",
-              border: "none",
-              borderRadius: "var(--r-sm)",
-              padding: "8px 16px",
-              fontSize: "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-              textDecoration: "none",
-              letterSpacing: "0.01em",
-              whiteSpace: "nowrap",
-            }}
+            className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-2 font-sans text-sm font-semibold tracking-[0.01em] text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
           >
             <Plus size={14} />
             New CAPA
@@ -545,6 +321,7 @@ export function FindingsListPage() {
             ariaLabel="Filter by severity"
             options={[
               { value: "all", label: "All severities" },
+              { value: "Ungraded", label: "Ungraded" },
               { value: "Critical", label: "Critical" },
               { value: "Major", label: "Major" },
               { value: "Minor", label: "Minor" },
@@ -558,6 +335,7 @@ export function FindingsListPage() {
               { value: "all", label: "All statuses" },
               { value: "capa_in_progress", label: "CAPA in progress" },
               { value: "pending_capa", label: "No CAPA" },
+              { value: "pending_review", label: "Under review" },
               { value: "overdue", label: "Overdue" },
               { value: "capa_closed", label: "CAPA closed" },
             ]}
@@ -566,62 +344,29 @@ export function FindingsListPage() {
 
         {/* ── Results count ───────────────────────────────────────────────── */}
         <p
-          style={{
-            fontSize: "11px",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 600,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: "var(--fg-4)",
-            margin: 0,
-          }}
+          className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
         >
           {filtered.length} {filtered.length === 1 ? "finding" : "findings"}
         </p>
 
         {/* ── Table ──────────────────────────────────────────────────────── */}
         <div
-          style={{
-            background: "var(--bg-2)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-lg)",
-            boxShadow: "var(--shadow-sm)",
-            overflow: "hidden",
-            maxWidth: "100%",
-          }}
+          className="max-w-full overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm"
         >
-          <div style={{ overflowX: "auto" }}>
+          <div className="overflow-x-auto">
             <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontFamily: "var(--font-sans)",
-              }}
+              className="w-full border-collapse font-sans"
             >
             {/* Table head */}
             <thead>
               <tr
-                style={{
-                  background: "var(--table-head-bg)",
-                  borderBottom: "1px solid var(--line-2)",
-                }}
+                className="border-b border-[var(--line-2)] bg-[var(--table-head-bg)]"
               >
                 {["ID / Source", "Type", "Description", "Severity", "Dept", "Reported", "Status", "Actions"].map(
                   (col) => (
                     <th
                       key={col}
-                      style={{
-                        padding: "10px 14px",
-                        textAlign: "left",
-                        fontSize: "10px",
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: 600,
-                        letterSpacing: "0.18em",
-                        textTransform: "uppercase",
-                        color: "var(--fg-2)",
-                        background: "transparent",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="whitespace-nowrap bg-transparent px-3.5 py-2.5 text-left font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--table-head-fg)]"
                     >
                       {col}
                     </th>
@@ -636,9 +381,7 @@ export function FindingsListPage() {
                 <tr>
                   <td
                     colSpan={8}
-                    style={{
-                      padding: "24px",
-                    }}
+                    className="p-6"
                   >
                     <EmptyState
                       title="No findings"
@@ -655,19 +398,10 @@ export function FindingsListPage() {
                     role="button"
                     tabIndex={0}
                     aria-label={`View finding ${finding.id}`}
-                    style={{
-                      borderTop: "1px solid var(--line-1)",
-                      cursor: "pointer",
-                      transition: "background var(--dur-fast) var(--ease-out)",
-                      opacity: dimmed ? 0.55 : 1,
-                    }}
-                    onMouseEnter={(e) =>
-                      ((e.currentTarget as HTMLTableRowElement).style.background =
-                        "var(--bg-3)")
-                    }
-                    onMouseLeave={(e) =>
-                      ((e.currentTarget as HTMLTableRowElement).style.background = "transparent")
-                    }
+                    className={cn(
+                      "cursor-pointer border-t border-[var(--line-1)] transition-[background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-elevated",
+                      dimmed && "opacity-55",
+                    )}
                     onClick={() => setSelectedId(finding.id)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -678,21 +412,10 @@ export function FindingsListPage() {
                   >
                     {/* ID + source */}
                     <td
-                      style={{
-                        padding: "12px 14px",
-                        verticalAlign: "top",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="whitespace-nowrap px-3.5 py-3 align-top"
                     >
                       <p
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          fontFamily: "var(--font-mono)",
-                          color: "var(--accent)",
-                          margin: "0 0 5px",
-                          letterSpacing: "0.03em",
-                        }}
+                        className="mb-[5px] mt-0 font-sans text-xs font-semibold tracking-[0.03em] text-primary"
                       >
                         {finding.id}
                       </p>
@@ -700,95 +423,60 @@ export function FindingsListPage() {
                     </td>
 
                     {/* Type */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                    <td className="px-3.5 py-3 align-top">
                       <TypePill type={finding.type} />
                     </td>
 
                     {/* Description */}
                     <td
-                      style={{
-                        padding: "12px 14px",
-                        verticalAlign: "top",
-                        maxWidth: "300px",
-                      }}
+                      className="max-w-[300px] px-3.5 py-3 align-top"
                     >
                       <p
-                        style={{
-                          fontSize: "13px",
-                          color: rowColor(finding),
-                          margin: 0,
-                          lineHeight: "1.45",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
+                        className={cn(
+                          "m-0 line-clamp-2 text-sm leading-[1.45]",
+                          finding.status === "pending_capa"
+                            ? "text-foreground-faint"
+                            : "text-foreground-secondary",
+                        )}
                       >
                         {finding.shortDescription}
                       </p>
                     </td>
 
                     {/* Severity */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                    <td className="px-3.5 py-3 align-top">
                       <SeverityBadge severity={finding.severity} />
                     </td>
 
                     {/* Department */}
                     <td
-                      style={{
-                        padding: "12px 14px",
-                        verticalAlign: "top",
-                        fontSize: "12px",
-                        color: "var(--fg-3)",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="whitespace-nowrap px-3.5 py-3 align-top text-xs text-foreground-tertiary"
                     >
                       {finding.department}
                     </td>
 
                     {/* Reported */}
                     <td
-                      style={{
-                        padding: "12px 14px",
-                        verticalAlign: "top",
-                        fontSize: "12px",
-                        fontFamily: "var(--font-mono)",
-                        color: "var(--fg-3)",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="whitespace-nowrap px-3.5 py-3 align-top font-sans text-xs text-foreground-tertiary"
                     >
                       {formatDate(finding.reportedAt)}
                     </td>
 
                     {/* Status */}
-                    <td style={{ padding: "12px 14px", verticalAlign: "top" }}>
+                    <td className="px-3.5 py-3 align-top">
                       <StatusBadge status={finding.status} />
                     </td>
 
                     {/* Actions */}
                     <td
-                      style={{
-                        padding: "12px 14px",
-                        verticalAlign: "top",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="whitespace-nowrap px-3.5 py-3 align-top"
                       onClick={(e) => e.stopPropagation()} // don't let actions bubble to row click
                     >
-                      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                      <div className="flex items-center gap-1.5">
                         {/* View (opens slide-over) */}
                         <button
                           onClick={() => setSelectedId(finding.id)}
-                          style={{
-                            background: "transparent",
-                            color: "var(--fg-3)",
-                            border: "1px solid var(--line-2)",
-                            borderRadius: "var(--r-sm)",
-                            padding: "5px 10px",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                            fontFamily: "var(--font-sans)",
-                            whiteSpace: "nowrap",
-                          }}
+                          className="cursor-pointer whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-2.5 py-[5px] font-sans text-xs text-foreground-tertiary"
                         >
                           View
                         </button>
@@ -797,22 +485,7 @@ export function FindingsListPage() {
                         {finding.linkedCapaId ? (
                           <Link
                             to={`/capa/${finding.linkedCapaId}`}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              background: "var(--accent-soft)",
-                              color: "var(--accent)",
-                              border: "1px solid var(--accent-line)",
-                              borderRadius: "var(--r-sm)",
-                              padding: "5px 10px",
-                              fontSize: "12px",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              fontFamily: "var(--font-sans)",
-                              textDecoration: "none",
-                              whiteSpace: "nowrap",
-                            }}
+                            className="inline-flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-2.5 py-[5px] font-sans text-xs font-semibold text-primary no-underline hover:bg-primary/20"
                           >
                             Open CAPA
                             <ArrowRight size={12} />
@@ -820,22 +493,7 @@ export function FindingsListPage() {
                         ) : (
                           <Link
                             to={`/capa/new?type=${finding.type}&sourceId=${finding.id}`}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              background: "var(--grad-brand)",
-                              color: "var(--on-accent)",
-                              border: "none",
-                              borderRadius: "var(--r-sm)",
-                              padding: "5px 10px",
-                              fontSize: "12px",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              fontFamily: "var(--font-sans)",
-                              textDecoration: "none",
-                              whiteSpace: "nowrap",
-                            }}
+                            className="inline-flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-2.5 py-[5px] font-sans text-xs font-semibold text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
                           >
                             Create CAPA
                             <ArrowRight size={12} />

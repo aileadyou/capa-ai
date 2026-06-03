@@ -7,6 +7,7 @@ import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore, useNotificationStore } from "@/store";
 import type { CAPACase } from "@/types";
+import { cn } from "@/lib/utils";
 import { computeContainmentStrength, computeTotalQualityScore } from "@/utils/scoring";
 
 // ── Mock suggestion data ─────────────────────────────────────────────────────
@@ -189,33 +190,17 @@ export function D2ContainmentPage() {
 
   return (
     <EightDShell capaId={capa.id} activeStep="containment">
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div className="flex flex-col gap-6">
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <p
-            style={{
-              fontSize: "12px",
-              fontFamily: "var(--font-mono)",
-              color: "var(--fg-3)",
-              margin: "0 0 6px",
-              letterSpacing: "0.18em",
-            }}
-          >
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
             {capa.id} · D2
           </p>
-          <h1
-            style={{
-              fontSize: "22px",
-              fontWeight: 700,
-              color: "var(--fg-1)",
-              margin: "0 0 8px",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
+          <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
             Containment Action
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, lineHeight: "1.55", maxWidth: "600px" }}>
+          <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
             Define immediate containment for {capa.id}. Nova checks that the action is clear, accountable, and time-bound before RCA can begin.
           </p>
         </div>
@@ -231,30 +216,9 @@ export function D2ContainmentPage() {
         />
 
         {/* ── Containment form ─────────────────────────────────────────── */}
-        <div
-          style={{
-            background: "var(--bg-2)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-lg)",
-            boxShadow: "var(--shadow-sm)",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "18px",
-          }}
-        >
+        <div className="flex flex-col gap-[18px] rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5 shadow-sm">
           {/* Section label */}
-          <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: 0,
-            }}
-          >
+          <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
             Containment Form
           </p>
 
@@ -262,15 +226,7 @@ export function D2ContainmentPage() {
           <div>
             <label
               htmlFor="containment-action"
-              style={{
-                display: "block",
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "var(--fg-2)",
-                marginBottom: "8px",
-                fontFamily: "var(--font-sans)",
-                letterSpacing: "0.02em",
-              }}
+              className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary"
             >
               Action description
             </label>
@@ -280,82 +236,35 @@ export function D2ContainmentPage() {
               onChange={(e) => setDescription(e.target.value)}
               rows={6}
               placeholder="Describe the immediate hold, quarantine, restriction, review, or assessment action."
-              style={{
-                width: "100%",
-                background: "var(--field-bg)",
-                border: `1px solid ${shouldShowBlocker ? "var(--danger)" : "var(--line-2)"}`,
-                borderRadius: "var(--r-sm)",
-                padding: "12px 14px",
-                fontSize: "13px",
-                lineHeight: "1.65",
-                color: "var(--fg-1)",
-                fontFamily: "var(--font-sans)",
-                resize: "vertical",
-                outline: "none",
-                boxSizing: "border-box",
-                transition: "border-color var(--dur-fast) var(--ease-out)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--accent)";
-                e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = shouldShowBlocker ? "var(--danger)" : "var(--line-2)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
+              className={cn(
+                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                shouldShowBlocker ? "border-destructive" : "border-[var(--line-2)]",
+              )}
             />
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
-              <span style={{ fontSize: "11px", color: "var(--fg-4)", fontFamily: "var(--font-mono)" }}>
+            <div className="mt-1.5 flex justify-between">
+              <span className="font-sans text-[11px] text-foreground-faint">
                 {description.length} chars
               </span>
-              <span style={{ fontSize: "11px", color: passedCount === 4 ? "var(--accent)" : "var(--fg-4)", fontFamily: "var(--font-mono)" }}>
+              <span className={cn("font-sans text-[11px]", passedCount === 4 ? "text-primary" : "text-foreground-faint")}>
                 {passedCount}/4 checks passing
               </span>
             </div>
           </div>
 
           {/* PIC + Due date row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div className="grid grid-cols-2 gap-4">
             {/* PIC */}
             <div>
               <label
-                style={{
-                  display: "block",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "var(--fg-2)",
-                  marginBottom: "8px",
-                  fontFamily: "var(--font-sans)",
-                  letterSpacing: "0.02em",
-                }}
+                className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary"
               >
                 Person in Charge
               </label>
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <select
                   value={pic}
                   onChange={(e) => setPic(e.target.value)}
-                  style={{
-                    width: "100%",
-                    appearance: "none",
-                    background: "var(--field-bg)",
-                    border: "1px solid var(--line-2)",
-                    borderRadius: "var(--r-sm)",
-                    padding: "9px 36px 9px 12px",
-                    fontSize: "13px",
-                    color: "var(--fg-1)",
-                    fontFamily: "var(--font-sans)",
-                    outline: "none",
-                    cursor: "pointer",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "var(--accent)";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--line-2)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
+                  className="w-full cursor-pointer appearance-none rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] py-[9px] pl-3 pr-9 font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
                 >
                   {picOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -363,7 +272,7 @@ export function D2ContainmentPage() {
                 </select>
                 <svg
                   width="12" height="12" viewBox="0 0 12 12"
-                  style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--fg-3)" }}
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-foreground-tertiary"
                   fill="none" stroke="currentColor" strokeWidth="1.5"
                 >
                   <path d="M2 4l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
@@ -375,15 +284,7 @@ export function D2ContainmentPage() {
             <div>
               <label
                 htmlFor="containment-due-date"
-                style={{
-                  display: "block",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "var(--fg-2)",
-                  marginBottom: "8px",
-                  fontFamily: "var(--font-sans)",
-                  letterSpacing: "0.02em",
-                }}
+                className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary"
               >
                 Due date
               </label>
@@ -392,26 +293,7 @@ export function D2ContainmentPage() {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                style={{
-                  width: "100%",
-                  background: "var(--field-bg)",
-                  border: "1px solid var(--line-2)",
-                  borderRadius: "var(--r-sm)",
-                  padding: "9px 12px",
-                  fontSize: "13px",
-                  color: "var(--fg-1)",
-                  fontFamily: "var(--font-sans)",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "var(--accent)";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "var(--line-2)";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
+                className="box-border w-full rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3 py-[9px] font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
               />
             </div>
           </div>
@@ -419,22 +301,13 @@ export function D2ContainmentPage() {
 
         {/* ── Blocker banner ───────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              padding: "12px 14px",
-              background: "var(--danger-soft)",
-              border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)",
-              borderRadius: "var(--r-sm)",
-            }}
-          >
-            <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
+          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+            <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+              <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">
                 Containment action is incomplete
               </p>
-              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+              <p className="m-0 font-sans text-xs text-foreground-tertiary">
                 Add a clear containment description with hold/quarantine/restrict language, assign a PIC, and set a due date.
               </p>
             </div>
@@ -443,43 +316,34 @@ export function D2ContainmentPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 10px",
-            }}
-          >
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
             Quality Signals
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+          <div className="grid grid-cols-2 gap-2">
             {validation.checks.map((check) => (
               <div
                 key={check.label}
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  padding: "10px 12px",
-                  borderRadius: "var(--r-sm)",
-                  background: check.passed ? "color-mix(in srgb, var(--success) 6%, transparent)" : "var(--bg-3)",
-                  border: `1px solid ${check.passed ? "color-mix(in srgb, var(--success) 28%, transparent)" : "var(--line-1)"}`,
-                }}
+                className={cn(
+                  "flex gap-2.5 rounded-[var(--r-sm)] border px-3 py-2.5",
+                  check.passed ? "border-success/30 bg-[var(--success-soft)]" : "border-border-subtle bg-elevated",
+                )}
               >
                 {check.passed ? (
-                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "var(--success)", marginTop: "1px" }} />
+                  <CheckCircle2 size={14} className="mt-px shrink-0 text-success" />
                 ) : (
-                  <Circle size={14} style={{ flexShrink: 0, color: "var(--fg-4)", marginTop: "1px" }} />
+                  <Circle size={14} className="mt-px shrink-0 text-foreground-faint" />
                 )}
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: "12px", fontWeight: check.passed ? 500 : 400, color: check.passed ? "var(--fg-2)" : "var(--fg-3)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+                <div className="min-w-0">
+                  <p
+                    className={cn(
+                      "mb-0.5 mt-0 font-sans text-xs",
+                      check.passed ? "font-medium text-foreground-secondary" : "font-normal text-foreground-tertiary",
+                    )}
+                  >
                     {check.label}
                   </p>
                   {!check.passed && (
-                    <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                    <p className="m-0 font-sans text-[11px] text-foreground-faint">
                       {check.hint}
                     </p>
                   )}
@@ -490,80 +354,35 @@ export function D2ContainmentPage() {
         </div>
 
         {/* ── Score preview ────────────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "10px 14px",
-            background: "var(--bg-3)",
-            borderRadius: "var(--r-sm)",
-            border: "1px solid var(--line-1)",
-          }}
-        >
-          <span style={{ fontSize: "12px", color: "var(--fg-3)", fontFamily: "var(--font-sans)" }}>
+        <div className="flex items-center gap-3 rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-3.5 py-2.5">
+          <span className="font-sans text-xs text-foreground-tertiary">
             Containment score preview:
           </span>
           <span
-            style={{
-              fontSize: "13px",
-              fontWeight: 700,
-              fontFamily: "var(--font-mono)",
-              color: containmentScore >= 20 ? "var(--success)" : containmentScore >= 12 ? "var(--warning)" : "var(--fg-2)",
-            }}
+            className={cn(
+              "font-sans text-[13px] font-bold",
+              containmentScore >= 20 ? "text-success" : containmentScore >= 12 ? "text-warning" : "text-foreground-secondary",
+            )}
           >
             {containmentScore}/25
           </span>
-          <span style={{ fontSize: "12px", color: "var(--fg-4)", fontFamily: "var(--font-sans)" }}>
+          <span className="font-sans text-xs text-foreground-faint">
             · Total quality score: {previewScore.total}/100
           </span>
         </div>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: "10px",
-            paddingTop: "8px",
-            borderTop: "1px solid var(--line-1)",
-          }}
-        >
+        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
           <button
             onClick={() => saveContainment(false)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "var(--field-bg)",
-              color: "var(--fg-2)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-sm)",
-              padding: "8px 16px",
-              fontSize: "13px",
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-              fontWeight: 500,
-            }}
+            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
           >
             <Save size={14} />
             Save Draft
           </button>
           <button
             onClick={() => saveContainment(true)}
-            style={{
-              background: "var(--grad-brand)",
-              color: "var(--on-accent)",
-              border: "none",
-              borderRadius: "var(--r-sm)",
-              padding: "8px 20px",
-              fontSize: "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-              letterSpacing: "0.01em",
-            }}
+            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
           >
             Continue to D3 Root Cause Analysis →
           </button>

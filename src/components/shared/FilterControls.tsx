@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Search } from "lucide-react";
 
 interface FilterCardProps {
@@ -21,52 +21,20 @@ interface FilterSelectProps {
   ariaLabel?: string;
 }
 
-const fieldBaseStyle: CSSProperties = {
-  width: "100%",
-  height: "36px",
-  background: "var(--field-bg)",
-  border: "1px solid var(--line-2)",
-  borderRadius: "var(--r-sm)",
-  color: "var(--fg-1)",
-  fontSize: "13px",
-  fontFamily: "var(--font-sans)",
-  outline: "none",
-  boxSizing: "border-box",
-  transition:
-    "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
-};
-
-function focusField(element: HTMLElement) {
-  element.style.background = "var(--field-bg-hover)";
-  element.style.borderColor = "var(--accent)";
-  element.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-}
-
-function blurField(element: HTMLElement) {
-  element.style.background = "var(--field-bg)";
-  element.style.borderColor = "var(--line-2)";
-  element.style.boxShadow = "none";
-}
+const fieldClassName =
+  "h-9 w-full box-border rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] font-sans text-sm text-foreground outline-none transition-[background,border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:bg-[var(--field-bg-hover)] focus:shadow-[0_0_0_3px_var(--accent-soft)]";
 
 export function FilterCard({ children, minColumnWidth = 160 }: FilterCardProps) {
   return (
     <div
+      className="max-w-full rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-4 shadow-sm"
       style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-lg)",
-        boxShadow: "var(--shadow-sm)",
-        padding: "16px",
-        maxWidth: "100%",
-      }}
+          gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))`,
+        }}
     >
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))`,
-          gap: "10px",
-          alignItems: "end",
-        }}
+        className="grid items-end gap-2.5"
+        style={{ gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${minColumnWidth}px), 1fr))` }}
       >
         {children}
       </div>
@@ -82,19 +50,12 @@ export function FilterSearchInput({
   onEnter,
 }: FilterSearchInputProps) {
   return (
-    <div style={{ position: "relative", minWidth: 0 }}>
+    <div className="relative min-w-0">
       <Search
         size={14}
         strokeWidth={1.75}
         aria-hidden="true"
-        style={{
-          position: "absolute",
-          left: "12px",
-          top: "50%",
-          transform: "translateY(-50%)",
-          color: "var(--fg-3)",
-          pointerEvents: "none",
-        }}
+        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-tertiary"
       />
       <input
         type="text"
@@ -108,12 +69,7 @@ export function FilterSearchInput({
         }}
         placeholder={placeholder}
         aria-label={ariaLabel ?? placeholder}
-        style={{
-          ...fieldBaseStyle,
-          padding: "0 12px 0 34px",
-        }}
-        onFocus={(event) => focusField(event.currentTarget)}
-        onBlur={(event) => blurField(event.currentTarget)}
+        className={`${fieldClassName} pl-[34px] pr-3`}
       />
     </div>
   );
@@ -126,20 +82,12 @@ export function FilterSelect({
   ariaLabel,
 }: FilterSelectProps) {
   return (
-    <div style={{ position: "relative", minWidth: 0 }}>
+    <div className="relative min-w-0">
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
         aria-label={ariaLabel}
-        style={{
-          ...fieldBaseStyle,
-          appearance: "none",
-          WebkitAppearance: "none",
-          cursor: "pointer",
-          padding: "0 34px 0 12px",
-        }}
-        onFocus={(event) => focusField(event.currentTarget)}
-        onBlur={(event) => blurField(event.currentTarget)}
+        className={`${fieldClassName} cursor-pointer appearance-none pl-3 pr-[34px]`}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -153,17 +101,11 @@ export function FilterSelect({
         viewBox="0 0 12 12"
         fill="none"
         aria-hidden="true"
-        style={{
-          position: "absolute",
-          right: "12px",
-          top: "50%",
-          transform: "translateY(-50%)",
-          pointerEvents: "none",
-        }}
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-foreground-tertiary"
       >
         <path
           d="M3 5l3 3 3-3"
-          stroke="var(--fg-3)"
+          stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"

@@ -6,7 +6,7 @@ export type ISO8601 = string;
 
 export type CAPAType = "deviation" | "audit" | "complaint";
 
-export type Severity = "Minor" | "Major" | "Critical";
+export type Severity = "Ungraded" | "Minor" | "Major" | "Critical";
 
 export type EightDStep =
   | "problem"
@@ -17,7 +17,18 @@ export type EightDStep =
   | "verification"
   | "signoff";
 
-export type CAPAStatus = "draft" | "disposisi" | "investigation" | "approval" | "closed";
+export type CAPAStatus = "draft" | "pending_review" | "revision_requested" | "rejected" | "investigation" | "approval" | "closed";
+
+export type IntakeDecision = "accepted" | "revision_requested" | "rejected";
+
+export interface IntakeReview {
+  reviewerPersonaId: PersonaID;
+  reviewerName: string;
+  role: string;
+  decision?: IntakeDecision;
+  notes?: string;
+  reviewedAt?: ISO8601;
+}
 
 export type ActionStatus = "open" | "in_progress" | "completed" | "overdue" | "verified";
 
@@ -268,6 +279,7 @@ export interface CAPACase {
   correctiveActions: CorrectiveAction[];
   preventiveActions: PreventiveAction[];
   verification: VerificationData;
+  intakeReviews?: IntakeReview[];
   approvals: ApprovalEvent[];
   auditEvents: AuditEvent[];
   suggestions: NovaSuggestion[];

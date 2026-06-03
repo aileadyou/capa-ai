@@ -84,28 +84,17 @@ export function NovaSuggestionBlock({
   // ── Accepted state ───────────────────────────────────────────────────────
   if (mode === "accepted") {
     return (
-      <div
-        style={{
-          padding: "8px 12px",
-          borderRadius: "var(--r-sm)",
-          background: "var(--accent-soft)",
-          border: "1px solid var(--accent-line)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-          gap: "8px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Sparkles size={12} style={{ color: "var(--accent)" }} />
-          <span style={{ fontSize: "12px", color: "var(--accent)", fontWeight: 600, fontFamily: "var(--font-sans)" }}>
+      <div className="flex flex-col items-start gap-2 rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3 py-2">
+        <div className="flex items-center gap-2">
+          <Sparkles size={12} className="text-primary" />
+          <span className="font-sans text-xs font-semibold text-primary">
             Nova suggestion applied
           </span>
-          <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-sans)" }}>
+          <span className="font-sans text-[11px] text-foreground-tertiary">
             — edit the field below to refine
           </span>
         </div>
-        <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "12px", lineHeight: 1.6, fontFamily: "var(--font-sans)" }}>
+        <p className="m-0 font-sans text-xs leading-[1.6] text-foreground-secondary">
           {draft}
         </p>
       </div>
@@ -114,50 +103,22 @@ export function NovaSuggestionBlock({
 
   // ── Idle / Editing state ─────────────────────────────────────────────────
   return (
-    <div
-      style={{
-        background: "var(--bg-3)",
-        borderLeft: "3px solid var(--accent)",
-        borderRadius: "var(--r-md)",
-        padding: "14px 16px",
-      }}
-    >
+    <div className="rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3.5">
       {/* Header row */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-        <Sparkles size={14} style={{ color: "var(--accent)", flexShrink: 0 }} />
-        <span
-          style={{
-            fontSize: "11px",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 600,
-            letterSpacing: "0.18em",
-            color: "var(--accent)",
-            textTransform: "uppercase",
-          }}
-        >
+      <div className="mb-2.5 flex items-center gap-2">
+        <Sparkles size={14} className="shrink-0 text-primary" />
+        <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
           Nova Suggestion
         </span>
         {context && (
-          <span style={{ fontSize: "12px", color: "var(--fg-3)", fontFamily: "var(--font-sans)" }}>
+          <span className="font-sans text-xs text-foreground-tertiary">
             — {context}
           </span>
         )}
         {reasoning && (
           <button
             onClick={() => setShowReasoning(!showReasoning)}
-            style={{
-              marginLeft: "auto",
-              display: "flex",
-              alignItems: "center",
-              gap: "3px",
-              fontSize: "11px",
-              color: "var(--fg-3)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: 0,
-              fontFamily: "var(--font-sans)",
-            }}
+            className="ml-auto flex cursor-pointer items-center gap-[3px] border-0 bg-transparent p-0 font-sans text-[11px] text-foreground-tertiary"
           >
             {showReasoning ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
             Show reasoning
@@ -167,18 +128,7 @@ export function NovaSuggestionBlock({
 
       {/* Collapsible reasoning */}
       {showReasoning && reasoning && (
-        <div
-          style={{
-            background: "var(--field-bg)",
-            borderRadius: "var(--r-sm)",
-            padding: "10px 12px",
-            marginBottom: "10px",
-            fontFamily: "var(--font-mono)",
-            fontSize: "11px",
-            lineHeight: "1.65",
-            color: "var(--fg-3)",
-          }}
-        >
+        <div className="mb-2.5 rounded-[var(--r-sm)] bg-[var(--field-bg)] px-3 py-2.5 font-sans text-[11px] leading-[1.65] text-foreground-tertiary">
           {reasoning}
         </div>
       )}
@@ -189,70 +139,28 @@ export function NovaSuggestionBlock({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           rows={4}
-          style={{
-            width: "100%",
-            background: "var(--field-bg)",
-            border: "1px solid var(--accent-line)",
-            borderRadius: "var(--r-sm)",
-            padding: "10px 12px",
-            fontSize: "13px",
-            lineHeight: "1.65",
-            color: "var(--fg-1)",
-            fontFamily: "var(--font-sans)",
-            resize: "vertical",
-            outline: "none",
-            marginBottom: "12px",
-            boxSizing: "border-box",
-            boxShadow: "0 0 0 3px var(--accent-soft)",
-          }}
+          className="mb-3 box-border w-full resize-y rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--field-bg)] px-3 py-2.5 font-sans text-[13px] leading-[1.65] text-foreground outline-none shadow-[0_0_0_3px_var(--accent-soft)]"
           autoFocus
         />
       ) : (
-        <p
-          style={{
-            fontSize: "13px",
-            lineHeight: "1.65",
-            color: "var(--fg-2)",
-            margin: "0 0 12px",
-            fontFamily: "var(--font-sans)",
-          }}
-        >
+        <p className="mb-3 mt-0 font-sans text-[13px] leading-[1.65] text-foreground-secondary">
           {draft}
         </p>
       )}
 
       {/* Action buttons */}
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+      <div className="flex flex-wrap items-center gap-2">
         {mode === "editing" ? (
           <>
             <button
               onClick={handleAccept}
-              style={{
-                background: "var(--accent)",
-                color: "var(--on-accent)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "6px 14px",
-                fontSize: "12px",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-              }}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-foreground"
             >
               Apply edit
             </button>
             <button
               onClick={() => { setMode("idle"); setDraft(suggestion); }}
-              style={{
-                background: "transparent",
-                color: "var(--fg-3)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "6px 12px",
-                fontSize: "12px",
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-              }}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent px-3 py-1.5 font-sans text-xs text-foreground-tertiary"
             >
               Cancel
             </button>
@@ -261,35 +169,13 @@ export function NovaSuggestionBlock({
           <>
             <button
               onClick={handleAccept}
-              style={{
-                background: "var(--accent)",
-                color: "var(--on-accent)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "6px 14px",
-                fontSize: "12px",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-              }}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-foreground"
             >
               Use this suggestion
             </button>
             <button
               onClick={handleDiscussWithNova}
-              style={{
-                background: "var(--field-bg)",
-                color: "var(--fg-2)",
-                border: "1px solid var(--line-2)",
-                borderRadius: "var(--r-sm)",
-                padding: "6px 12px",
-                fontSize: "12px",
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3 py-1.5 font-sans text-xs text-foreground-secondary"
             >
               <MessageSquareText size={12} />
               Discuss with Nova

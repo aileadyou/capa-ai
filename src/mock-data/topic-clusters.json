@@ -6,6 +6,7 @@
     "trend": "up",
     "riskLevel": "High",
     "severityDistribution": {
+      "Ungraded": 0,
       "Minor": 0,
       "Major": 2,
       "Critical": 0
@@ -19,8 +20,9 @@
     "trend": "stable",
     "riskLevel": "Medium",
     "severityDistribution": {
+      "Ungraded": 1,
       "Minor": 1,
-      "Major": 2,
+      "Major": 1,
       "Critical": 0
     },
     "summary": "Documentation execution and verification remain recurring audit themes."
@@ -32,6 +34,7 @@
     "trend": "up",
     "riskLevel": "High",
     "severityDistribution": {
+      "Ungraded": 0,
       "Minor": 0,
       "Major": 1,
       "Critical": 2
@@ -45,6 +48,7 @@
     "trend": "stable",
     "riskLevel": "Medium",
     "severityDistribution": {
+      "Ungraded": 0,
       "Minor": 0,
       "Major": 1,
       "Critical": 0

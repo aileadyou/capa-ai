@@ -21,6 +21,7 @@ import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TypePill } from "@/components/shared/TypePill";
 import { ScorePill } from "@/components/shared/ScorePill";
+import { cn } from "@/lib/utils";
 
 // ── Nova classification copy (mirrors FindingsListPage) ───────────────────────
 
@@ -61,15 +62,9 @@ const STEP_LABELS: Record<EightDStep, string> = {
 
 // ── Shared building blocks ────────────────────────────────────────────────────
 
-const eyebrow: React.CSSProperties = {
-  fontSize: "10px",
-  fontFamily: "var(--font-mono)",
-  fontWeight: 600,
-  letterSpacing: "0.18em",
-  textTransform: "uppercase",
-  color: "var(--fg-4)",
-  margin: "0 0 4px",
-};
+const EYEBROW_CLASS = "mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint";
+const PRIMARY_LINK_CLASS =
+  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] bg-[image:var(--grad-brand)] px-4 py-[9px] font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground no-underline";
 
 function SectionCard({
   title,
@@ -82,38 +77,19 @@ function SectionCard({
 }) {
   return (
     <div
-      style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-lg)",
-        boxShadow: "var(--shadow-sm)",
-        overflow: "hidden",
-      }}
+      className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm"
     >
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "13px 18px",
-          borderBottom: "1px solid var(--line-1)",
-        }}
+        className="flex items-center gap-2 border-b border-border-subtle px-[18px] py-[13px]"
       >
         {icon}
         <h2
-          style={{
-            fontSize: "13px",
-            fontWeight: 600,
-            color: "var(--fg-1)",
-            margin: 0,
-            fontFamily: "var(--font-sans)",
-            letterSpacing: "-0.01em",
-          }}
+          className="m-0 font-sans text-[13px] font-semibold tracking-[-0.01em] text-foreground"
         >
           {title}
         </h2>
       </div>
-      <div style={{ padding: "18px" }}>{children}</div>
+      <div className="p-[18px]">{children}</div>
     </div>
   );
 }
@@ -122,16 +98,9 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
   return (
     <div>
-      <p style={eyebrow}>{label}</p>
+      <p className={EYEBROW_CLASS}>{label}</p>
       <p
-        style={{
-          fontSize: "13px",
-          color: "var(--fg-1)",
-          margin: 0,
-          lineHeight: "1.5",
-          fontFamily: "var(--font-sans)",
-          wordBreak: "break-word",
-        }}
+        className="m-0 break-words font-sans text-[13px] leading-6 text-foreground"
       >
         {value}
       </p>
@@ -142,23 +111,11 @@ function InfoRow({ label, value }: { label: string; value?: string | null }) {
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div
-      style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-lg)",
-        boxShadow: "var(--shadow-sm)",
-        padding: "14px 16px",
-      }}
+      className="rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-4 py-3.5 shadow-sm"
     >
-      <p style={eyebrow}>{label}</p>
+      <p className={EYEBROW_CLASS}>{label}</p>
       <p
-        style={{
-          fontSize: "14px",
-          fontWeight: 600,
-          color: "var(--fg-1)",
-          margin: 0,
-          fontFamily: "var(--font-sans)",
-        }}
+        className="m-0 font-sans text-sm font-semibold text-foreground"
       >
         {value}
       </p>
@@ -169,19 +126,15 @@ function StatCard({ label, value }: { label: string; value: string }) {
 // ── Imported source data (per source variant) ─────────────────────────────────
 
 function SourceDataGrid({ prefill, finding }: { prefill?: PreFillContext; finding: Finding }) {
-  const gridStyle: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-    gap: "16px",
-  };
+  const gridClass = "grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4";
 
   if (!prefill) {
     return (
-      <div style={gridStyle}>
+      <div className={gridClass}>
         <InfoRow label="Source" value={finding.source} />
         <InfoRow label="Department" value={finding.department} />
         <InfoRow label="Reported" value={formatDateTime(finding.reportedAt)} />
-        <div style={{ gridColumn: "1 / -1" }}>
+        <div className="col-span-full">
           <InfoRow label="Description" value={finding.shortDescription} />
         </div>
       </div>
@@ -190,7 +143,7 @@ function SourceDataGrid({ prefill, finding }: { prefill?: PreFillContext; findin
 
   if (prefill.source === "Bizzmine") {
     return (
-      <div style={gridStyle}>
+      <div className={gridClass}>
         <InfoRow label="Deviation ID" value={prefill.deviationId} />
         <InfoRow label="Reported" value={formatDateTime(prefill.reportedAt)} />
         <InfoRow label="Occurred" value={formatDateTime(prefill.occurredAt)} />
@@ -200,7 +153,7 @@ function SourceDataGrid({ prefill, finding }: { prefill?: PreFillContext; findin
         <InfoRow label="Initiator" value={`${prefill.initiator.name} · ${prefill.initiator.role}`} />
         <InfoRow label="Affected batches" value={prefill.affectedBatches.join(", ")} />
         <InfoRow label="SOP references" value={prefill.sopReferences.join(", ")} />
-        <div style={{ gridColumn: "1 / -1" }}>
+        <div className="col-span-full">
           <InfoRow label="Initial observation" value={prefill.initialObservation} />
         </div>
       </div>
@@ -209,7 +162,7 @@ function SourceDataGrid({ prefill, finding }: { prefill?: PreFillContext; findin
 
   if (prefill.source === "Q100+") {
     return (
-      <div style={gridStyle}>
+      <div className={gridClass}>
         <InfoRow label="Finding ID" value={prefill.findingId} />
         <InfoRow label="Audit ID" value={prefill.auditId} />
         <InfoRow label="Audit type" value={prefill.auditType} />
@@ -219,7 +172,7 @@ function SourceDataGrid({ prefill, finding }: { prefill?: PreFillContext; findin
         <InfoRow label="Finding category" value={prefill.findingCategory} />
         <InfoRow label="Regulation reference" value={prefill.regulationReference.join(", ")} />
         <InfoRow label="SOP references" value={prefill.sopReferences.join(", ")} />
-        <div style={{ gridColumn: "1 / -1" }}>
+        <div className="col-span-full">
           <InfoRow label="Finding description" value={prefill.findingDescription} />
         </div>
       </div>
@@ -227,7 +180,7 @@ function SourceDataGrid({ prefill, finding }: { prefill?: PreFillContext; findin
   }
 
   return (
-    <div style={gridStyle}>
+    <div className={gridClass}>
       <InfoRow label="Complaint ID" value={prefill.complaintId} />
       <InfoRow label="Reported" value={formatDateTime(prefill.reportedAt)} />
       <InfoRow label="Customer" value={`${prefill.customer.name} · ${prefill.customer.type}`} />
@@ -235,7 +188,7 @@ function SourceDataGrid({ prefill, finding }: { prefill?: PreFillContext; findin
       <InfoRow label="Lot number" value={prefill.product.lotNumber} />
       <InfoRow label="Expiry date" value={prefill.product.expiryDate} />
       <InfoRow label="Complaint type" value={prefill.complaintType} />
-      <div style={{ gridColumn: "1 / -1" }}>
+      <div className="col-span-full">
         <InfoRow label="Complaint description" value={prefill.description} />
       </div>
     </div>
@@ -271,48 +224,32 @@ function Timeline({ finding, capa }: { finding: Finding; capa?: CAPACase }) {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
+    <div className="flex flex-col">
       {items.map((item, index) => (
-        <div key={item.label} style={{ display: "flex", gap: "12px" }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div key={item.label} className="flex gap-3">
+          <div className="flex flex-col items-center">
             {item.active ? (
-              <CheckCircle2 size={16} style={{ flexShrink: 0, color: "var(--success)" }} />
+              <CheckCircle2 size={16} className="shrink-0 text-success" />
             ) : (
-              <Circle size={16} style={{ flexShrink: 0, color: "var(--fg-4)" }} />
+              <Circle size={16} className="shrink-0 text-foreground-faint" />
             )}
             {index < items.length - 1 && (
               <div
-                style={{
-                  width: "1px",
-                  flex: 1,
-                  minHeight: "22px",
-                  background: "var(--line-2)",
-                  margin: "4px 0",
-                }}
+                className="my-1 min-h-[22px] w-px flex-1 bg-border"
               />
             )}
           </div>
-          <div style={{ paddingBottom: index < items.length - 1 ? "14px" : 0 }}>
+          <div className={cn(index < items.length - 1 && "pb-3.5")}>
             <p
-              style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: item.active ? "var(--fg-1)" : "var(--fg-3)",
-                margin: "0 0 2px",
-                fontFamily: "var(--font-sans)",
-                lineHeight: "1.3",
-              }}
+              className={cn(
+                "mb-0.5 mt-0 font-sans text-[13px] font-semibold leading-[1.3]",
+                item.active ? "text-foreground" : "text-foreground-tertiary",
+              )}
             >
               {item.label}
             </p>
             <p
-              style={{
-                fontSize: "12px",
-                color: "var(--fg-4)",
-                margin: 0,
-                fontFamily: "var(--font-sans)",
-                lineHeight: "1.45",
-              }}
+              className="m-0 font-sans text-xs leading-[1.45] text-foreground-faint"
             >
               {item.description}
             </p>
@@ -344,96 +281,49 @@ export function FindingDetailPage() {
 
   const createCAPAUrl = `/capa/new?type=${finding.type}&sourceId=${finding.id}`;
 
-  const primaryBtnStyle: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
-    background: "var(--grad-brand)",
-    color: "var(--on-accent)",
-    border: "none",
-    borderRadius: "var(--r-sm)",
-    padding: "9px 16px",
-    fontSize: "13px",
-    fontWeight: 600,
-    cursor: "pointer",
-    fontFamily: "var(--font-sans)",
-    textDecoration: "none",
-    letterSpacing: "0.01em",
-    whiteSpace: "nowrap",
-  };
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+    <div className="flex flex-col gap-5">
       {/* ── Back link ──────────────────────────────────────────────────────── */}
       <Link
         to="/findings"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "6px",
-          fontSize: "12px",
-          color: "var(--fg-3)",
-          textDecoration: "none",
-          fontFamily: "var(--font-sans)",
-          width: "fit-content",
-        }}
+        className="inline-flex w-fit items-center gap-1.5 font-sans text-xs text-foreground-tertiary no-underline"
       >
-        <ArrowLeft size={13} style={{ flexShrink: 0 }} />
+        <ArrowLeft size={13} className="shrink-0" />
         Back to Findings
       </Link>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div
-        style={{
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-          gap: "16px",
-          flexWrap: "wrap",
-        }}
+        className="flex flex-wrap items-end justify-between gap-4"
       >
-        <div style={{ minWidth: 0 }}>
-          <p style={eyebrow}>Quality event</p>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+        <div className="min-w-0">
+          <p className={EYEBROW_CLASS}>Quality event</p>
+          <div className="flex flex-wrap items-center gap-3">
             <h1
-              style={{
-                fontSize: "22px",
-                fontWeight: 700,
-                color: "var(--fg-1)",
-                margin: 0,
-                fontFamily: "var(--font-mono)",
-                letterSpacing: "0.01em",
-              }}
+              className="m-0 font-sans text-[22px] font-bold tracking-[0.01em] text-foreground"
             >
               {finding.id}
             </h1>
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            <div className="flex flex-wrap gap-1.5">
               <TypePill type={finding.type} />
               <SeverityBadge severity={finding.severity} />
               <StatusBadge status={finding.status} />
             </div>
           </div>
           <p
-            style={{
-              fontSize: "14px",
-              color: "var(--fg-3)",
-              margin: "10px 0 0",
-              maxWidth: "640px",
-              lineHeight: "1.6",
-              fontFamily: "var(--font-sans)",
-            }}
+            className="mt-2.5 max-w-[640px] font-sans text-sm leading-[1.6] text-foreground-tertiary"
           >
             {finding.shortDescription}
           </p>
         </div>
 
         {capa ? (
-          <Link to={`/capa/${capa.id}`} style={primaryBtnStyle}>
+          <Link to={`/capa/${capa.id}`} className={PRIMARY_LINK_CLASS}>
             Open linked CAPA
             <ArrowRight size={14} />
           </Link>
         ) : (
-          <Link to={createCAPAUrl} style={primaryBtnStyle}>
+          <Link to={createCAPAUrl} className={PRIMARY_LINK_CLASS}>
             <Plus size={14} />
             Create CAPA with Nova
           </Link>
@@ -442,11 +332,7 @@ export function FindingDetailPage() {
 
       {/* ── Stat strip ─────────────────────────────────────────────────────── */}
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-          gap: "12px",
-        }}
+        className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3"
       >
         <StatCard label="Type" value={formatCAPAType(finding.type)} />
         <StatCard label="Department" value={finding.department} />
@@ -456,54 +342,28 @@ export function FindingDetailPage() {
 
       {/* ── Two-column body ────────────────────────────────────────────────── */}
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-          gap: "20px",
-          alignItems: "start",
-        }}
+        className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] items-start gap-5"
       >
         {/* Left: source data + Nova */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px", minWidth: 0 }}>
+        <div className="flex min-w-0 flex-col gap-5">
           <SectionCard title="Imported source data">
             <SourceDataGrid prefill={capa?.preFill} finding={finding} />
           </SectionCard>
 
           {/* Nova classification */}
           <div
-            style={{
-              background: "var(--bg-2)",
-              border: "1px solid var(--line-2)",
-              borderLeft: "3px solid var(--accent)",
-              borderRadius: "var(--r-lg)",
-              boxShadow: "var(--shadow-sm)",
-              padding: "18px",
-            }}
+            className="rounded-[var(--r-lg)] border border-l-[3px] border-[var(--line-2)] border-l-primary bg-card p-[18px] shadow-sm"
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-              <Sparkles size={14} style={{ flexShrink: 0, color: "var(--accent)" }} />
+            <div className="mb-2.5 flex items-center gap-2">
+              <Sparkles size={14} className="shrink-0 text-primary" />
               <p
-                style={{
-                  fontSize: "10px",
-                  fontFamily: "var(--font-mono)",
-                  fontWeight: 600,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "var(--accent)",
-                  margin: 0,
-                }}
+                className="m-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"
               >
                 Nova classification
               </p>
             </div>
             <p
-              style={{
-                fontSize: "14px",
-                color: "var(--fg-2)",
-                lineHeight: "1.65",
-                margin: 0,
-                fontFamily: "var(--font-sans)",
-              }}
+              className="m-0 font-sans text-sm leading-[1.65] text-foreground-secondary"
             >
               {novaText(finding)}
             </p>
@@ -511,48 +371,31 @@ export function FindingDetailPage() {
         </div>
 
         {/* Right: summary + linked CAPA + timeline */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div className="flex flex-col gap-5">
           {capa && (
             <SectionCard title="Linked CAPA">
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div className="flex flex-col gap-3">
                 <div>
                   <Link
                     to={`/capa/${capa.id}`}
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: 700,
-                      color: "var(--accent)",
-                      textDecoration: "none",
-                      fontFamily: "var(--font-mono)",
-                    }}
+                    className="font-sans text-sm font-bold text-primary no-underline"
                   >
                     {capa.id}
                   </Link>
                   <p
-                    style={{
-                      fontSize: "13px",
-                      color: "var(--fg-3)",
-                      margin: "4px 0 0",
-                      lineHeight: "1.5",
-                      fontFamily: "var(--font-sans)",
-                    }}
+                    className="mt-1 font-sans text-[13px] leading-6 text-foreground-tertiary"
                   >
                     {capa.title}
                   </p>
                 </div>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                <div className="flex flex-wrap items-center gap-2">
                   <span
-                    style={{
-                      display: "inline-block",
-                      padding: "2px 8px",
-                      borderRadius: "var(--r-full)",
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      fontFamily: "var(--font-mono)",
-                      background: capa.status === "closed" ? "var(--success-soft)" : "var(--accent-soft)",
-                      color: capa.status === "closed" ? "var(--success)" : "var(--accent)",
-                      letterSpacing: "0.14em",
-                    }}
+                    className={cn(
+                      "inline-block rounded-[var(--r-full)] px-2 py-0.5 font-sans text-[11px] font-semibold tracking-[0.14em]",
+                      capa.status === "closed"
+                        ? "bg-[var(--success-soft)] text-success"
+                        : "bg-[var(--accent-soft)] text-primary",
+                    )}
                   >
                     {formatCAPAStatus(capa.status)}
                   </span>
@@ -560,21 +403,7 @@ export function FindingDetailPage() {
                 </div>
                 <Link
                   to={`/capa/${capa.id}`}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "6px",
-                    background: "transparent",
-                    color: "var(--fg-2)",
-                    border: "1px solid var(--line-2)",
-                    borderRadius: "var(--r-sm)",
-                    padding: "8px 14px",
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    textDecoration: "none",
-                    fontFamily: "var(--font-sans)",
-                  }}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-2 font-sans text-[13px] font-medium text-foreground-secondary no-underline"
                 >
                   View CAPA
                   <ArrowRight size={13} />
@@ -584,7 +413,7 @@ export function FindingDetailPage() {
           )}
 
           <SectionCard title="Finding summary">
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div className="flex flex-col gap-3.5">
               <InfoRow label="Source system" value={finding.source} />
               <InfoRow label="Severity" value={finding.severity} />
               <InfoRow label="CAPA type" value={formatCAPAType(finding.type)} />

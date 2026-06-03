@@ -38,6 +38,7 @@ function TrendBadge({ trend }: { trend: TopicCluster["trend"] }) {
 
 function getSeverityTotal(cluster: TopicCluster) {
   return (
+    (cluster.severityDistribution.Ungraded ?? 0) +
     cluster.severityDistribution.Minor +
     cluster.severityDistribution.Major +
     cluster.severityDistribution.Critical
@@ -165,7 +166,7 @@ export function TopicsGroupingPage() {
 
                   <div className="space-y-3">
                     <div className="text-xs font-medium uppercase text-muted-foreground">Severity Distribution</div>
-                    {(["Critical", "Major", "Minor"] as const).map((severity) => {
+                    {(["Critical", "Major", "Minor", "Ungraded"] as const).map((severity) => {
                       const value = cluster.severityDistribution[severity];
                       const percent = Math.round((value / severityTotal) * 100);
                       return (
@@ -192,7 +193,7 @@ export function TopicsGroupingPage() {
                       >
                         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                           <div>
-                            <div className="font-mono text-xs text-primary">{finding.id}</div>
+                            <div className="font-sans text-xs text-primary">{finding.id}</div>
                             <p className="mt-1 text-sm">{finding.shortDescription}</p>
                             <div className="mt-2 text-xs text-muted-foreground">
                               {formatCAPAType(finding.type)} · {finding.department}

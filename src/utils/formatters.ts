@@ -40,7 +40,9 @@ export function formatRelativeTime(value: string, referenceDate = new Date()): s
 export function formatCAPAStatus(status: CAPAStatus): string {
   const labels: Record<CAPAStatus, string> = {
     draft: "Draft",
-    disposisi: "Disposition",
+    pending_review: "Pending Review",
+    revision_requested: "Revision Requested",
+    rejected: "Rejected",
     investigation: "Investigation",
     approval: "Approval",
     closed: "Closed",
@@ -51,6 +53,7 @@ export function formatCAPAStatus(status: CAPAStatus): string {
 export function formatFindingStatus(status: FindingStatus): string {
   const labels: Record<FindingStatus, string> = {
     pending_capa: "Pending CAPA",
+    pending_review: "Under Review",
     capa_in_progress: "CAPA In Progress",
     capa_closed: "CAPA Closed",
     overdue: "Overdue",

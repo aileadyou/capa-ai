@@ -376,7 +376,7 @@ export function NotificationCenterPage() {
                     {notification.capaId && (
                       <Link
                         to={notification.actionUrl ?? `/capa/${notification.capaId}`}
-                        className="inline-flex items-center gap-1 font-mono text-primary hover:underline"
+                        className="inline-flex items-center gap-1 font-sans text-primary hover:underline"
                       >
                         {notification.capaId}
                         <ChevronRight className="h-3 w-3" aria-hidden="true" />

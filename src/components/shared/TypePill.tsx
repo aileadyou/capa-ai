@@ -25,7 +25,7 @@ export function TypePill({
   tone?: "color" | "neutral";
 }) {
   return (
-    <Badge variant="outline" className={tone === "neutral" ? NEUTRAL : typeClassName[type]}>
+    <Badge variant="outline" className={`w-[108px] justify-center ${tone === "neutral" ? NEUTRAL : typeClassName[type]}`}>
       {formatCAPAType(type)}
     </Badge>
   );

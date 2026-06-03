@@ -4,6 +4,408 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-03, 11:45 AM — CAPA intake dual-approval flow, Ungraded severity, D7 comprehensive review
+
+### Prompt
+Full CAPA lifecycle redesign:
+1. Severity "Ungraded" added for findings before QA approval (pre-CAPA creation)
+2. CAPA intake renamed from "disposisi" to "pending_review"; CAPAStatus extended with `revision_requested` and `rejected`
+3. Dual intake reviewers: Siti Rahmawati (QA) AND Bambang Saputra (Dept Head) both required to Accept before 8D opens
+4. `IntakeReview` type added to `CAPACase`; mock data for CAPA-2026-0275 populated with Siti Accepted + Bambang Pending
+5. `IntakeReviewCard` added to CapaDetailPage and MyWorkPage showing per-reviewer decisions
+6. D7 Sign-Off: comprehensive review panel with collapsible D1–D6 sections inline so approvers don't navigate away
+7. SME approval chain triggered for Major OR Critical severity (previously Critical only)
+
+### Changes
+- `src/types/capa.ts` — added `Severity` enum value `"Ungraded"`, extended `CAPAStatus`, added `IntakeDecision` and `IntakeReview` interfaces
+- `src/types/finding.ts` — added `"pending_review"` to `FindingStatus`
+- `src/utils/formatters.ts` — removed "disposisi", added pending_review/revision_requested/rejected labels; added "Under Review" for finding status
+- `src/components/shared/SeverityBadge.tsx` — added Ungraded style (neutral muted)
+- `src/components/shared/StatusBadge.tsx` — added pending_review/revision_requested/rejected styles
+- `src/mock-data/findings.json` — DEV-2026-0144, AUD-2026-0127, CMP-2026-0098 severity set to Ungraded
+- `src/mock-data/capa-cases.json` — CAPA-2026-0275 status→pending_review, added intakeReviews array
+- `src/mock-data/topic-clusters.json` — added Ungraded count to all severityDistribution objects
+- `src/pages/nova/CapaListPage.tsx` — filter options: added Ungraded severity + pending_review/revision_requested/rejected statuses
+- `src/pages/nova/CapaDetailPage.tsx` — replaced DispositionCard with IntakeReviewCard
+- `src/pages/nova/MyWorkPage.tsx` — added IntakeReviewCard, pendingIntake filter for QA and DeptHead views
+- `src/pages/nova/FindingsListPage.tsx` — added Ungraded severity filter + Under Review status filter
+- `src/pages/nova/TopicsGroupingPage.tsx` — Ungraded added to severity distribution loop
+- `src/pages/nova/eight-d/D7SignOffPage.tsx` — added ComprehensiveReview component (collapsible D1-D6), fixed SME trigger to Major||Critical
+
+## 2026-06-03, 12:47 AM — My Work-only roles and light table header standard
+
+### Prompt
+1. "Role Senior Operator dan SME Microbiology gausah ada dashboard. Fokus di My Work aja" and follow-up: "cek warna header table di http://localhost:8081/capa. Aku pengen di lightmode semua header table di aplikasi ini begitu. Tapi kalo di dark mode, biarin aja kek yg di http://localhost:8081/findings"
+
+### Completed
+- Added `isMyWorkOnlyPersona()` for persona access rules: `initiator` (Senior Operator) and `sme` (SME Microbiology) are now My Work-only personas.
+- `/dashboard` now redirects to `/` for those two personas; other personas still see Dashboard.
+- Removed Dashboard from desktop sidebar and compact mobile nav for Senior Operator + SME Microbiology; the logo also returns them to My Work instead of Dashboard.
+- Updated the 404 fallback CTA so My Work-only personas see "Return to My Work" instead of "Return to Dashboard".
+- Standardized table header tokens:
+  - Dark mode: `--table-head-bg = hsl(var(--elevated))`, `--table-head-fg = hsl(var(--foreground-secondary))` so it keeps the `/findings` dark look.
+  - Light mode: `--table-head-bg = hsl(var(--primary) / 0.60)`, `--table-head-fg = hsl(var(--primary-foreground))` so every table header follows the `/capa` light-mode look.
+- Updated manual table headers and shadcn table primitives to use `--table-head-bg` + `--table-head-fg`: CAPA list, Findings list, Audit Trail, Corrective Actions, Preventive Actions, Consolidated Action Plan, and the placeholder table primitive path.
+
+### Changed Files
+- `src/utils/personaAccess.ts` (added)
+- `src/router.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/pages/NotFound.tsx`
+- `src/index.css`
+- `src/components/ui/table.tsx`
+- `src/pages/nova/CapaListPage.tsx`
+- `src/pages/nova/FindingsListPage.tsx`
+- `src/pages/nova/AuditTrailPage.tsx`
+- `src/pages/nova/CorrectiveActionsPage.tsx`
+- `src/pages/nova/PreventiveActionsPage.tsx`
+- `src/pages/nova/ConsolidatedActionPlanPage.tsx`
+- `src/pages/nova/NovaPlaceholderPage.tsx`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit --pretty false` ✅ passes.
+- `npm run build` ✅ passes (existing Browserslist staleness + bundle-size warning only).
+- `git diff --check` ✅ passes after cleaning two trailing-whitespace spots.
+- Static table-header scan ✅ no remaining `/capa`-specific `bg-primary/60 dark:bg-primary/20` header class and no active table header still using the old foreground class where the new header token should be used.
+
+### Notes
+- Browser smoke via local dev server was not run because starting Vite on `127.0.0.1:8080` hit sandbox `EPERM`, and the escalation request was not approved in this turn.
+
+---
+
+## 2026-06-03, 12:15 AM — Badge uniform width, Bizzmine rename, sheet close animation, role-based dashboard
+
+### Prompt
+Four requests: (1) make all status/severity/type badges in tables a uniform fixed width with centered text; (2) rename "Bizzmine-Complaint" display label to just "Bizzmine" everywhere; (3) add a slide-out animation when closing Sheets (open already animated, close was instant "snap"); (4) make the Dashboard show a different layout per persona role, like MyWork already does.
+
+### Completed
+- **Uniform badge widths.** `SeverityBadge` → `w-[76px]`, `TypePill` → `w-[108px]`, `StatusBadge` → `w-[132px]` (fits longest label "CAPA In Progress"); all get `justify-center` so text aligns regardless of content length.
+- **Bizzmine rename.** Added `DISPLAY_NAMES` map to `SourceBadge` so `"Bizzmine-Complaint"` and `"Bizzmine Complaint"` both resolve to `"Bizzmine"`. Also updated `getSourceSystem()` in `CapaDetailPage`, `getPrefillSource()` in `CapaIntakePage`, prose in `D1ProblemPage`, and an audit trail JSON entry.
+- **Sheet close animation.** Radix sets `data-[state="closed"]` before unmounting and waits for `animationend`. Added `leadSlideOut` / `leadBackdropFadeOut` keyframes and bound them to `[data-state="closed"]` selectors so the panel eases back off-screen instead of snapping.
+- **Role-based dashboard.** `DashboardPage` now reads `usePersonaStore` and branches into 5 layout modes via `ROLE_CONFIG`: `executive` (head_of_qa — 4 KPIs, trend+type, root cause+heatmap), `qa_officer` (qa_deviation — same + latest findings), `dept_head` (head_of_dept — 3 KPIs, heatmap full-width, trend+root cause), `operator` (initiator — 2 KPIs, dept summary, latest findings, no date selector), `expert` (sme — 2 KPIs, root cause+type, recurrence trend full-width). Added `RecurrenceTrendChart`, `LatestFindingsList`, and `MyDeptSummary` sub-components using existing service functions.
+
+### Changed Files
+- `src/components/shared/SeverityBadge.tsx`, `StatusBadge.tsx`, `TypePill.tsx` (fixed widths)
+- `src/components/shared/SourceBadge.tsx` (Bizzmine rename map)
+- `src/pages/nova/CapaDetailPage.tsx`, `CapaIntakePage.tsx` (Bizzmine rename)
+- `src/pages/nova/eight-d/D1ProblemPage.tsx` (Bizzmine prose)
+- `src/mock-data/audit-trail.json` (Bizzmine rename in audit entry)
+- `src/index.css` (sheet slide-out keyframes + `[data-state="closed"]` rules)
+- `src/pages/nova/DashboardPage.tsx` (role-based layout, 3 new sub-components)
+
+## 2026-06-02, 11:03 PM — Neutral dark rebase, borderless cards, mono stripped from UI
+
+### Prompt
+Client feedback: (1) too much monospace text — "Ngeganggu… bikin mata sakit", wants to control mono himself; (2) dislikes the current dark scheme; (3) wants borderless cards that stand out by being *lighter* than the background (reference image), and OK to change the dark base colors.
+
+### Completed
+- **Mono stripped from the UI (opt-in only now).** Found the hidden culprit: a global rule in `index.css` forced `font-family: var(--font-mono)` onto *every* `uppercase` + `text-foreground/​muted` element (higher specificity than any `font-*` class), plus `.eyebrow/.kicker/.mono-label` and `.compact-nav-badge`. Removed the global auto-mono rule, switched `.eyebrow/.kicker` and the nav badge to sans, and converted all 189 `font-mono` class usages across 32 `.tsx` files to `font-sans`. Mono is now entirely opt-in: re-add `font-mono` (or the kept `.mono-label` class) wherever you actually want it. Also relaxed the harsh `0.18em` label tracking to `0.08em`.
+- **Neutral charcoal dark rebase.** Replaced the blue-tinted grays (hue ~218, sat ~18–20%) with a near-neutral hue 240 / 5–6% sat ramp. Elevation now reads through *lightness*: `--background 240 6% 9%` → `--card 240 5% 13%` → `--elevated 16%` → `--field 20%`. Re-tuned all neutral shadcn tokens (popover/secondary/panel/muted/surface/input/sidebar-*) and text tokens to match. Brand/semantic accents (primary purple, success, warning, severity, status, charts) left unchanged.
+- **Borderless cards.** `.lead-card` no longer draws a border — it stands out via the lighter `--card` surface + `--shadow-sm`, and hovers by lifting to `--elevated` instead of changing a border color. Border tokens (`--border*`) and decorative `--line-1/2/3` overlays were dropped to near-surface / very low opacity so any remaining explicit borders read as faint hairlines rather than contrast outlines.
+
+### Changed Files
+- `src/index.css` (dark palette surfaces/text/borders/neutrals/lines, `.lead-card`, mono rules)
+- 32 `.tsx` files under `src/pages` and `src/components` (`font-mono` → `font-sans`)
+
+### Validation
+- `npx tsc --noEmit` ✅ · `npm run build` ✅ (only the pre-existing Browserslist + bundle-size warnings).
+- Runtime ✅: page bg `rgb(22,22,24)` vs card `rgb(31,31,35)` — cards are clearly lighter; remaining borders are `rgba(255,255,255,0.05)` hairlines + soft shadow (borderless look). Uppercase label "Management" now computes to Plus Jakarta Sans (was mono). Dashboard and CAPA list verified: badges/accents still pop against the neutral surface, tables stay readable.
+
+### Notes
+- Only the dark block changed; light theme is untouched (the `.lead-card` borderless + mono removal apply to both, which is intended).
+- The faint hairline on some custom `bg-card` panels comes from explicit `border-[var(--line-2)]` in those components; it's now ~5% white (barely visible). Say the word if you want it fully removed too.
+- Mono font picker stays in the customizer — it applies wherever `font-mono` is (re)added.
+
+### Next Recommended Task
+- Optional: sweep custom `bg-card` panels to drop their explicit `border-*` classes for a 100% borderless result, and add a soft "lift on hover" to list rows for parity with the card hover.
+
+## 2026-06-02, 10:49 PM — Customization panel expanded to all color tokens + mono font
+
+### Prompt
+"Belum semua text udah pake tokenized. ada beberapa text yang aku gonta ganti font malah ga keganti." (contoh `font-mono` "Trend") + "Sama aku mau customizationnya bisa ganti font mono sama sans. Pokoknya semua token warna aku bisa ganti." — make the mono font swappable too (so `font-mono` text reacts), and let the panel edit every color token, not just primary.
+
+### Completed
+- Pointed Tailwind `fontFamily.mono` at `var(--font-mono)` in the prior step; this step adds the runtime control: `font-mono` text (e.g. the uppercase "Trend" labels) now re-renders when the mono family changes. Verified in-browser that overriding `--font-mono` switches a live `.font-mono` element from IBM Plex Mono → JetBrains Mono.
+- Reworked `src/lib/customization.ts` into a generic token system:
+  - `COLOR_GROUPS` registry of every editable token (Brand, Semantic, Severity, Status, Surfaces, Text, Borders, Charts) — each maps 1:1 to a `--<id>` in `index.css`.
+  - `applyColorToken(id, hsl)` / `resetColorToken(id)` / `resetAllColors()` persist a JSON override map (`capa-ai-colors`). `primary` still derives `--primary-light/-dark/--ring`; `status-closed` mirrors `--status-ready`.
+  - `readTokenHex(id)` reads the live computed value (theme + overrides aware) to seed each picker.
+  - Split fonts into sans + mono: `applySansFont` / `applyMonoFont` (+ `FONT_SANS_OPTIONS`, `FONT_MONO_OPTIONS`, separate storage keys `capa-ai-font-sans` / `capa-ai-font-mono`). 6 mono families (IBM Plex Mono default + JetBrains/Fira Code/Roboto/Space/Geist Mono, lazy-loaded from Google Fonts).
+  - `applyCustomization()` boot hook now replays the color map + both fonts before paint.
+- Rebuilt `src/components/shared/ThemeCustomizer.tsx` as a right-side Sheet (scrollable, more room): Fonts (Sans + Mono selects with in-typeface previews), Brand quick-swatches, then a grouped color editor where each row shows label + hex + a swatch wrapping a native color picker, with per-token reset and a global "Reset all".
+
+### Changed Files
+- `src/lib/customization.ts`
+- `src/components/shared/ThemeCustomizer.tsx`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit` ✅ no errors.
+- `npm run build` ✅ passes (existing Browserslist + bundle-size warnings only).
+- Runtime ✅: panel renders all token groups; `--font-mono` override flips computed `.font-mono` font family; non-primary tokens (e.g. `--severity-minor`) read/write through the generic path.
+
+### Notes
+- Color overrides are inline on `<html>`, so they apply to both light and dark (one value per token). Per-token and global reset fall back to the theme-aware stylesheet defaults.
+- Tailwind `font-sans`/`font-mono` both now resolve through CSS vars, so any tokenized text (sans or mono) follows the panel. Text that still wouldn't react would have to be using a hardcoded inline `font-family` — none found among the migrated components.
+
+### Next Recommended Task
+- Optional: add a density/radius control and an export/import of the full token set (JSON) so a finished palette can be promoted back into `index.css` defaults.
+
+## 2026-06-02, 10:11 PM — Runtime customization panel (brand color + UI font)
+
+### Prompt
+"Selanjutnya adalah bisakah kamu bikinin aku 'panel khusus' untuk gonta ganti font, dan prime color?" — build a dedicated runtime panel to swap the brand/primary color and the UI font, leveraging the now-unified token system.
+
+### Completed
+- Added `src/lib/customization.ts`: persists and applies brand color + font as inline custom properties on `<html>` (inline overrides the canonical `index.css` tokens and survives light/dark toggles). Mirrors the `theme.ts` localStorage pattern (`capa-ai-primary`, `capa-ai-font`).
+  - `applyPrimaryColor(hsl)` writes `--primary` and derives `--primary-light` (L+9) / `--primary-dark` (L−7) / `--ring`; soft/line tokens follow automatically because they reference `hsl(var(--primary)/a)`.
+  - `applyFont(id)` writes `--font-sans`, lazy-injecting a Google Fonts `<link>` for non-bundled families. Includes `hexToHslTriple` / `hslTripleToHex` for the custom color picker, plus reset helpers and an `applyCustomization()` boot hook.
+- Pointed Tailwind `fontFamily.sans`/`.mono` at `var(--font-sans)`/`var(--font-mono)` so the `font-sans`/`font-mono` utility classes (not just raw CSS-var consumers) react to runtime font swaps.
+- Wired `applyCustomization()` into `src/main.tsx` (pre-render, flash-safe alongside `applyTheme`).
+- Added `src/components/shared/ThemeCustomizer.tsx`: a shadcn Popover with 8 brand swatches + custom hex picker (live preview) and 6 interface-font options (each previewed in its own typeface), an active-state check, and a Reset-to-default control. Hosted in the sidebar footer next to the existing theme toggle.
+
+### Changed Files
+- `src/lib/customization.ts` (new)
+- `src/components/shared/ThemeCustomizer.tsx` (new)
+- `src/main.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `tailwind.config.ts`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit` ✅ no errors.
+- `npm run build` ✅ passes (existing Browserslist staleness + bundle-size warning only).
+- Runtime browser checks ✅: selecting "Blue" set `--primary=217 80% 56%` with derived `--primary-light=217 80% 65%`, `--primary-dark=217 80% 49%`, `--ring` matched, and persisted to `localStorage`. Selecting "Inter" set `--font-sans`, injected the Google Fonts link, persisted `capa-ai-font=inter`, and the `h1` (Tailwind `font-sans`) computed to Inter — confirming the var-backed font wiring. Reset removed both inline props and cleared storage; computed `--primary` fell back to canonical `284 55% 55%`. Popover layout verified visually.
+
+### Notes
+- Brand color is intentionally theme-agnostic (set as one inline value, not per `.light`/`.dark`), so a chosen brand stays consistent across the light/dark toggle. Presets are mid-lightness to read acceptably in both themes.
+- Only the sans family is user-swappable; `--font-mono` (IBM Plex Mono) is left as-is. Easy to extend later via the same `FONT_OPTIONS` mechanism.
+
+### Next Recommended Task
+- Optional: expose a mono-font selector and/or a border-radius / density control through the same panel, and consider a flash-safe inline `<head>` script if customizations should apply before the JS bundle parses.
+
+## 2026-06-02, 08:34 PM — Legacy alias bridge removed (Phase 4 of UI overhaul)
+
+### Prompt
+Active goal continuation: "lanjhutin terus sampai selesai" — after completing Phase 3 static-token migration, perform the Phase 4 alias audit/removal and final both-theme validation.
+
+### Completed
+- Audited the active `src` tree for exact legacy alias dependencies (`var(--bg-0..4)`, `var(--fg-1..4)`, `var(--accent)`, `var(--accent-hover)`, `var(--accent-press)`, `var(--success)`, `var(--warning)`, `var(--danger)`, `var(--info)`) before removing the bridge.
+- Migrated the last exact active dependencies: `src/App.css` `.read-the-docs`, shadcn `Input`, shadcn `SelectTrigger`, and global utility rules in `src/index.css` now reference canonical HSL tokens / Tailwind token classes instead of the legacy alias names.
+- Removed the full `INLINE-UI ALIASES` bridge block from `src/index.css`; retheming now runs through the canonical palette + Tailwind/shadcn tokens, with no `--bg-*`, `--fg-*`, or bare semantic alias layer left in the app CSS.
+- Preserved canonical decorative/semantic soft tokens (`--accent-soft`, `--accent-line`, `--field-bg`, `--success-soft`, `--warning-soft`, `--danger-soft`) because they are first-class tokens, not the removed alias bridge.
+- Ran a browser runtime sweep in both dark and light themes across Dashboard, CAPA list, Findings list, CAPA detail, and Similarity Explorer: old aliases are no longer exposed in computed style, while canonical `--background`, `--primary`, body background, and heading colors resolve correctly.
+
+### Changed Files
+- `src/index.css`
+- `src/App.css`
+- `src/components/ui/input.tsx`
+- `src/components/ui/select.tsx`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- Exact legacy alias scan ✅ no `var(--bg-*)`, `var(--fg-*)`, `var(--accent)`, `var(--success)`, `var(--warning)`, `var(--danger)`, or `var(--info)` dependencies remain in `src`.
+- Alias-definition scan ✅ no legacy alias definitions remain in `src/index.css` or `design_system/colors_and_type.css`.
+- `npx tsc --noEmit --pretty false` ✅ passes.
+- `git diff --check` ✅ passes.
+- `npm run build` ✅ passes (1761 modules; existing Browserslist staleness + bundle-size warning only).
+- `npm run test:visual` ✅ passes (8/8 desktop + mobile Chrome).
+- Runtime dark/light sweep ✅ Dashboard, CAPA list, Findings list, CAPA detail, and Similarity Explorer render with resolved canonical colors in both themes (`dark --primary=284 55% 55%`, `light --primary=275 61% 41%`).
+
+### Notes
+- Phase 3 and Phase 4 of the UI-token overhaul are now complete for the active application surfaces. Remaining `style={{...}}` usage is intentionally dynamic (SVG/chart geometry, runtime progress widths, `FilterControls` prop-driven grid template, range slider accent color where native CSS var support is unreliable).
+- `design_system/preview/*.html` and historical handoff/docs still mention the old aliases as archived reference material; they are not active app dependencies.
+
+### Next Recommended Task
+- Optional cleanup: refresh design-system reference docs/previews to describe the canonical Tailwind/shadcn token workflow, or start a visual design pass now that colors/fonts are centrally rethemeable.
+
+---
+
+## 2026-06-02, 08:28 PM — 8D workflow token migration complete (Phase 3 continuation)
+
+### Prompt
+Active goal continuation: "lanjhutin terus sampai selesai" — continue Phase 3 after the intake/shared Nova batch and finish the remaining 8D workflow pages.
+
+### Completed
+- Completed static token-style migration for the remaining 8D workflow pages `D3RCAPage`, `D4CorrectiveActionPage`, `D5PreventiveActionPage`, `D6VerificationPage`, and `D7SignOffPage`.
+- `D3RCAPage`: converted RCA method picker, 5-Whys chain, Fishbone grid, Decision Tree, Similar CAPA cards, confirmed root cause editor, blocker, quality signals, and footer actions to class-based token styling. Removed similar-card hover DOM mutation.
+- `D4CorrectiveActionPage` and `D5PreventiveActionPage`: converted local status badges, action-list cards, add-action forms, native selects/date inputs/textareas, blocker banners, quality-signal cards, and footer actions to token classes. Removed delete-button hover DOM mutation.
+- `D6VerificationPage`: converted verification evidence form, method select, result textarea, mock upload input/button, uploaded evidence chip, blocker, quality-signal cards, and footer actions to token classes.
+- `D7SignOffPage`: converted the e-signature modal, notes textarea, approve/reject buttons, sign-off header, score blocker, final quality gate, approval-chain rows/status pills/e-sign buttons, and closed-state banner to token classes.
+- Confirmed no remaining live-tree DOM style mutation patterns (`onMouseEnter`, `onMouseLeave`, `currentTarget.style`) in the Nova/layout/shared/page surfaces covered by the Phase 3 scans.
+
+### Changed Files
+- `src/pages/nova/eight-d/D3RCAPage.tsx`
+- `src/pages/nova/eight-d/D4CorrectiveActionPage.tsx`
+- `src/pages/nova/eight-d/D5PreventiveActionPage.tsx`
+- `src/pages/nova/eight-d/D6VerificationPage.tsx`
+- `src/pages/nova/eight-d/D7SignOffPage.tsx`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit --pretty false` ✅ passes.
+- Static mutation/token scan ✅ no `onMouseEnter`, `onMouseLeave`, `currentTarget.style`, or one-line legacy static token `style={{...var(--bg/fg/accent/success/warning/danger)...}}` matches in active Nova/layout/shared surfaces.
+- `git diff --check` ✅ passes.
+- `npm run build` ✅ passes (1761 modules; existing Browserslist staleness + bundle-size warning only).
+- `npm run test:visual` ✅ passes (8/8 desktop + mobile Chrome).
+
+### Notes
+- Phase 3 migration is now materially complete for static inline token styling in the active Nova pages and shared components. Remaining inline `style={{...}}` hits are intentionally dynamic layout/data styles such as chart/SVG geometry, runtime progress widths, and `FilterControls` prop-driven grid templates.
+- Phase 4 is still separate: remove the legacy alias bridge in `src/index.css` only after a final alias-dependency audit proves no migrated or remaining active surface still depends on it.
+
+### Next Recommended Task
+- Phase 4 audit/removal: scan every active route/component for legacy alias-token dependencies, remove the alias bridge from `src/index.css` if safe, then run TypeScript, build, visual tests, and a dark/light browser sweep.
+
+---
+
+## 2026-06-02, 08:14 PM — Intake, Nova, and early 8D token migration (Phase 3 continuation)
+
+### Prompt
+"bisa dilanjutkan?" / continue Phase 3: keep migrating static token-based inline styles to Tailwind/shadcn token classes while preserving the current look.
+
+### Completed
+- Completed `CapaIntakePage` static token-style migration: wizard shell, step indicator, source cards, gate questions, Nova assessment, severity cards, review/submit summaries, form controls, buttons, and readiness checklist now use class-based token styling. Removed focus/hover DOM style mutation and kept only allowed arbitrary token classes for field/focus/soft surfaces.
+- Migrated shared Nova surfaces used across 8D and suggestion flows: `NovaSuggestionBlock`, `NovaChatPanel` suggestion context, `CitationDetailPanel` overscroll handling, and `NovaBlock` skeleton/accepted/idle/editing/reasoning/action states now use token classes. Removed `NovaBlock` hover style mutation and fixed the ambiguous Tailwind `duration-[380ms]` warning.
+- Migrated global action table header text tokens in `CorrectiveActionsPage` and `PreventiveActionsPage`.
+- Started the dedicated 8D batch by completing D1 Problem and D2 Containment static-token migration: headers, editors, field focus, blocker banners, quality signal cards, score preview, and footer actions now use class-based token styling. Dynamic validation state stays class-driven through `cn`.
+
+### Changed Files
+- `src/pages/nova/CapaIntakePage.tsx`
+- `src/components/nova/NovaBlock.tsx`
+- `src/components/nova/NovaSuggestionBlock.tsx`
+- `src/components/nova/NovaChatPanel.tsx`
+- `src/components/nova/CitationDetailPanel.tsx`
+- `src/pages/nova/CorrectiveActionsPage.tsx`
+- `src/pages/nova/PreventiveActionsPage.tsx`
+- `src/pages/nova/eight-d/D1ProblemPage.tsx`
+- `src/pages/nova/eight-d/D2ContainmentPage.tsx`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit --pretty false` ✅ passes.
+- `npm run build` ✅ passes (1761 modules; existing Browserslist staleness + bundle-size warning only).
+- `npm run test:visual` ✅ passes (8/8 desktop + mobile Chrome).
+
+### Notes
+- Phase 3 is still in progress. Remaining heavy 8D pages: D3 RCA, D4 Corrective Action, D5 Preventive Action, D6 Verification, and D7 Sign-Off. A final scan should separate truly dynamic inline styles (progress widths, SVG/chart geometry) from static token styles before Phase 4 removes the alias bridge.
+- Token definition files remain untouched in this batch.
+
+### Next Recommended Task
+- Continue Phase 3 8D batch with `D3RCAPage` first, then D4/D5/D6/D7, validating after each pair because those pages have the densest form/checklist surfaces.
+
+---
+
+## 2026-06-02, 05:45 PM — Detail and management token migration (Phase 3 continuation)
+
+### Prompt
+"lanjhutin terus sampai selesai" — keep progressing Phase 3 full inline-token migration toward completion.
+
+### Completed
+- Completed static token-style migration for `ConsolidatedActionPlanPage`: KPI cards, action kind badges, progress bars, export/AI clustering buttons, group-mode panel, loading state, grouped action cards, tables, hover states, CAPA links, and footer link now use token classes. Remaining inline style is only runtime progress width.
+- Completed static token-style migration for `SimilarityExplorerPage`: outcome badges, detail modal/backdrop/panel, meta grid, search card, AI Search button, loading state, filter bar, range slider, result count, result cards, score pills, root-cause/action text, and year badges now use token classes with no DOM hover mutation.
+- Migrated the `CapaDetailPage` main hub/read-only surfaces: local primitives (`Pill`, `InfoGrid`, `Card`, `CardLabel`, `EmptyStepState`), left rail overview/8D progress/CAPA info/quality score/lift tips, right-column breadcrumb/badge row/title/CTA, top action bar, and closed-CAPA `StepDetailView` now use class-based token styling. Remaining CAPA detail inline style is limited to runtime score/progress width.
+- Kept the dynamic/embedded 8D workflow pages untouched for their dedicated batch; `CapaDetailPage` still renders the existing editable 8D components through `EightDEmbedProvider`.
+
+### Changed Files
+- `src/pages/nova/ConsolidatedActionPlanPage.tsx`
+- `src/pages/nova/SimilarityExplorerPage.tsx`
+- `src/pages/nova/CapaDetailPage.tsx`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit` ✅ passes (no errors).
+- `npm run build` ✅ passes (1761 modules; existing chunk-size warning only).
+- `npm run test:visual` ✅ passes (8/8 across desktop + mobile Chrome).
+- Extra Playwright smoke for `/actions/consolidated` ✅ authenticated route renders heading and KPI content.
+- `git diff --check` ✅ passes.
+- Static style scan on the newly migrated files ✅ only allowed arbitrary soft/accent tokens and runtime `style={{ width: ... }}` progress values remain.
+
+### Notes
+- Phase 3 is still active. Remaining major surfaces: `CapaIntakePage`, embedded 8D step pages, and Nova suggestion/chat components.
+
+### Next Recommended Task
+- Continue Phase 3 with `CapaIntakePage` first, then the 8D step pages (`D1`–`D7`), then shared Nova components (`NovaBlock`, `NovaSuggestionBlock`, `NovaChatPanel`) so the workflow surfaces and AI primitives converge together.
+
+---
+
+## 2026-06-02, 04:06 PM — Batch 2 list migration continued (Phase 3 of UI overhaul)
+
+### Prompt
+"bisa dilanjutkan?" — continue Phase 3 Batch 2 from the previous entry. PLANS/pasted migration rules still win.
+
+### Completed
+- Finished `FindingsListPage` static token migration: source chips, slide-over panel/backdrop/footer, field pairs, Nova classification block, page header, filter/table shell, table headers, rows, row hover, action buttons, and create/open CAPA links now use Tailwind token classes instead of static inline `var(--...)` styles.
+- Finished `MyWorkPage` static token migration: replaced the old `T.cardBase`/`T.monoId`/`T.title`/`T.badgeRow` inline style object with shared class constants; migrated `Eyebrow`, `StepBadge`, `DueBadge`, `LifecyclePill`, `OpenLink`, `Section`, `EmptyCard`, all persona card variants, role info banners, and the greeting header.
+- Migrated Dashboard shell/card layer: `DateRangeSelector`, `KpiCard`, `Card`, page header, and responsive dashboard grids now use token classes.
+- Completed the focused Dashboard chart-internals pass without regressing SVG rendering: trend SVG presentation styles moved to SVG attributes backed by canonical HSL tokens; donut/root-cause/department chart wrappers, legends, labels, tracks, badges, and static swatches moved to classes. Remaining chart inline styles are only runtime values (`width`, `left`, and computed data color/background).
+- Started Batch 3 detail pages and completed `FindingDetailPage`: section cards, info rows, stat strip, source-data grids, timeline, header/back link, Nova classification panel, linked-CAPA card, and summary blocks now use class-based token styling. Only allowed arbitrary soft/accent tokens remain.
+- Removed more DOM hover style mutation from the migrated list/dashboard surfaces.
+
+### Changed Files
+- `src/pages/nova/FindingsListPage.tsx`
+- `src/pages/nova/MyWorkPage.tsx`
+- `src/pages/nova/DashboardPage.tsx`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit` ✅ passes (no errors).
+- `npm run build` ✅ passes (1761 modules; existing chunk-size warning only).
+- `npm run test:visual` ✅ passes (8/8 across desktop + mobile Chrome).
+- Extra Playwright smoke for `/` (My Work), `/audit-trail`, and `/findings/DEV-2026-0341` ✅ authenticated routes render expected content.
+- `git diff --check` ✅ passes.
+- Static style scan on migrated list/dashboard/detail pages ✅ `CapaListPage`, `FindingsListPage`, `AuditTrailPage`, `MyWorkPage`, `FindingDetailPage`, layout/shared components, and Login have no static `style={{...}}` blocks left except the intentionally dynamic `FilterControls` grid template; `DashboardPage` only retains chart runtime `style={{...}}` values for dynamic dimensions/positions/colors.
+
+### Notes
+- Batch 2 is functionally migrated for list pages plus Dashboard shell/charts.
+- Batch 3 has started with `FindingDetailPage`; the heavier detail/management pages remain.
+- Allowed arbitrary class survivors remain where expected: `--accent-soft`, `--accent-line`, `--warning-soft`, `--danger-soft`, `--line-*`, `--r-*`, and transition vars.
+
+### Next Recommended Task
+- Continue Phase 3 with the remaining Batch 3 detail/management pages: `CapaDetailPage`, `CapaIntakePage`, `ConsolidatedActionPlanPage`, `SimilarityExplorerPage`, then the 8D step pages.
+
+---
+
+## 2026-06-02, 03:34 PM — Inline token style migration start (Phase 3 of UI overhaul)
+
+### Prompt
+"oke. lanjut kerjakan" — execute pasted Phase 3 instructions: migrate remaining static token-based inline `style={{ ... }}` blocks to Tailwind/shadcn token classes in batches, preserving the current look. Plans/pasted instructions win.
+
+### Completed
+- Completed Batch 1 layout/shared migration: converted static token inline styles in the app shell and shared primitives to Tailwind token classes while preserving the same spacing, surface colors, borders, shadows, typography, hover, and focus states.
+- Converted `FilterControls` to shared class-based inputs/selects using `bg-[var(--field-bg)]`, `focus:border-primary`, and `focus:shadow-[0_0_0_3px_var(--accent-soft)]`; retained only the dynamic `gridTemplateColumns` inline style because it depends on the `minColumnWidth` prop.
+- Converted `EmptyState`, `PageWrapper`, `Sidebar`, `TopBar`, `EightDShell`, and `LoginPage` from static token inline styles to class-based Tailwind token usage. Sidebar nav/user block, TopBar icon buttons, Ask Nova button, login inputs, gradient buttons, and persona-card hover states now use classes instead of DOM style mutation.
+- Started Batch 2 list-page migration and completed `/capa` + `/audit-trail`: table shells, table headers, row hover, export buttons, KPI cards, domain badges, inline links, empty states, and metadata/diff cells now use class-based token styling.
+- Removed old `onMouseEnter` / `onMouseLeave` style mutation from the migrated shell/list surfaces.
+
+### Changed Files
+- `src/components/shared/FilterControls.tsx`
+- `src/components/shared/EmptyState.tsx`
+- `src/components/layout/PageWrapper.tsx`
+- `src/components/layout/Sidebar.tsx`
+- `src/components/layout/TopBar.tsx`
+- `src/components/layout/EightDShell.tsx`
+- `src/pages/LoginPage.tsx`
+- `src/pages/nova/CapaListPage.tsx`
+- `src/pages/nova/AuditTrailPage.tsx`
+- `docs/BUILD_LOGS.md`
+
+### Validation
+- `npx tsc --noEmit` ✅ passes (no errors).
+- `npm run build` ✅ passes (1761 modules; existing chunk-size warning only).
+- `npm run test:visual` ✅ passes (8/8 across desktop + mobile Chrome).
+- Extra Playwright smoke for `/audit-trail` ✅ — authenticated route loads, heading/filter/table header are visible.
+- Token scan on migrated `/capa` + `/audit-trail` ✅ only allowed arbitrary survivors remain (`--accent-soft`, `--accent-line`, `--line-*`, `--r-*`, transition vars).
+
+### Notes
+- Phase 3 is not finished. Remaining Batch 2 pages still need migration: `MyWorkPage`, `FindingsListPage`, and `DashboardPage`. Dashboard has many SVG/chart attributes that should be handled separately so dynamic chart styling is not over-converted.
+- No token definition files were edited (`src/index.css`, `tailwind.config.ts`, `design_system/colors_and_type.css` untouched).
+
+### Next Recommended Task
+- Continue Phase 3 Batch 2: migrate `FindingsListPage` next because it shares the `/capa` table/filter patterns, then `MyWorkPage`, then split `DashboardPage` into shell/cards first and SVG chart attributes second.
+
+---
+
 ## 2026-06-02, 03:13 PM — Shared themed badge primitives (Phase 2 of UI overhaul)
 
 ### Prompt

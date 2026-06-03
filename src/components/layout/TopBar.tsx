@@ -64,76 +64,23 @@ export function TopBar() {
 
   return (
     <header
-      className="sticky top-0 z-20"
-      style={{
-        height: "60px",
-        display: "flex",
-        alignItems: "center",
-        background: "var(--glass-dark)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        borderBottom: "1px solid var(--line-2)",
-        boxShadow: "var(--shadow-sm)",
-        padding: "0 20px",
-        gap: "16px",
-        fontFamily: "var(--font-sans)",
-      }}
+      className="sticky top-0 z-20 flex h-[60px] items-center gap-4 border-b border-[var(--line-2)] bg-[var(--glass-dark)] px-5 font-sans shadow-sm backdrop-blur-[20px]"
     >
-      {/* Left — page title */}
-      <div className="hidden xl:block shrink-0" style={{ minWidth: 0 }}>
-        <div
-          aria-label={`Current page: ${pageTitle}`}
-          style={{
-            margin: 0,
-            fontSize: "17px",
-            fontWeight: 600,
-            letterSpacing: "-0.012em",
-            color: "var(--fg-1)",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            maxWidth: "220px",
-          }}
-        >
-          {pageTitle}
-        </div>
-      </div>
+
 
       {/* Center — search */}
       <div className="flex-1 max-w-md mx-auto hidden xl:flex">
         <div
-          className="flex items-center gap-2 w-full"
-          style={{
-            background: "var(--field-bg)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-sm)",
-            padding: "0 12px",
-            height: "36px",
-          }}
+          className="flex h-9 w-full items-center gap-2 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3"
         >
-          <Search size={14} strokeWidth={1.75} aria-hidden="true" style={{ color: "var(--fg-4)", flexShrink: 0 }} />
+          <Search size={14} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-foreground-faint" />
           <span
-            style={{
-              flex: 1,
-              fontSize: "13px",
-              fontFamily: "var(--font-mono)",
-              color: "var(--fg-4)",
-              letterSpacing: "-0.01em",
-            }}
+            className="flex-1 font-sans text-sm tracking-[-0.01em] text-foreground-faint"
           >
             Search CAPAs, findings, actions…
           </span>
           <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              color: "var(--fg-4)",
-              background: "var(--field-bg-hover)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-xs)",
-              padding: "2px 6px",
-              whiteSpace: "nowrap",
-            }}
+            className="whitespace-nowrap rounded-[var(--r-xs)] border border-[var(--line-2)] bg-[var(--field-bg-hover)] px-1.5 py-0.5 font-sans text-[10px] text-foreground-faint"
           >
             ⌘K
           </span>
@@ -147,27 +94,7 @@ export function TopBar() {
           onClick={() => openModal("resetDemoData")}
           aria-label="Reset demo data"
           title="Reset demo data"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "34px",
-            height: "34px",
-            borderRadius: "var(--r-sm)",
-            background: "transparent",
-            border: "1px solid var(--line-2)",
-            color: "var(--fg-3)",
-            cursor: "pointer",
-            transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out)",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "var(--bg-3)";
-            (e.currentTarget as HTMLElement).style.color = "var(--fg-2)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "transparent";
-            (e.currentTarget as HTMLElement).style.color = "var(--fg-3)";
-          }}
+          className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent text-foreground-tertiary transition-[background,border-color,color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-elevated hover:text-foreground-secondary"
         >
           <RotateCcw size={14} strokeWidth={1.75} aria-hidden="true" />
         </button>
@@ -178,43 +105,13 @@ export function TopBar() {
           onClick={() => navigate("/notifications")}
           aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
           title="Notifications"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "34px",
-            height: "34px",
-            borderRadius: "var(--r-sm)",
-            background: "transparent",
-            border: "1px solid var(--line-2)",
-            color: "var(--fg-2)",
-            cursor: "pointer",
-            position: "relative",
-            transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out)",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "var(--bg-3)";
-            (e.currentTarget as HTMLElement).style.color = "var(--fg-1)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "transparent";
-            (e.currentTarget as HTMLElement).style.color = "var(--fg-2)";
-          }}
+          className="relative flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent text-foreground-secondary transition-[background,border-color,color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-elevated hover:text-foreground"
         >
           <Bell size={16} strokeWidth={1.75} aria-hidden="true" />
           {unreadCount > 0 && (
             <span
               aria-hidden="true"
-              style={{
-                position: "absolute",
-                top: "4px",
-                right: "4px",
-                width: "8px",
-                height: "8px",
-                borderRadius: "var(--r-full)",
-                background: "var(--accent)",
-                border: "1.5px solid var(--bg-1)",
-              }}
+              className="absolute right-1 top-1 h-2 w-2 rounded-[var(--r-full)] border-[1.5px] border-background bg-primary"
             />
           )}
         </button>
@@ -223,29 +120,7 @@ export function TopBar() {
         <button
           onClick={() => openNovaChat({})}
           aria-label="Ask Nova"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "0 12px",
-            height: "34px",
-            borderRadius: "var(--r-sm)",
-            background: "var(--accent-soft)",
-            border: "1px solid var(--accent-line)",
-            color: "var(--accent)",
-            fontSize: "13px",
-            fontWeight: 600,
-            fontFamily: "var(--font-sans)",
-            cursor: "pointer",
-            transition: "background var(--dur-fast) var(--ease-out)",
-            whiteSpace: "nowrap",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "color-mix(in srgb, var(--accent) 22%, transparent)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "var(--accent-soft)";
-          }}
+          className="flex h-[34px] cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3 font-sans text-sm font-semibold text-primary transition-[background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-primary/20"
         >
           {/* Nova spark icon */}
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -259,21 +134,7 @@ export function TopBar() {
 
         {/* User avatar */}
         <div
-          style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "var(--r-full)",
-            background: "var(--grad-brand)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "11px",
-            fontWeight: 700,
-            color: "var(--on-accent)",
-            cursor: "default",
-            flexShrink: 0,
-            letterSpacing: "0.02em",
-          }}
+          className="flex h-8 w-8 shrink-0 cursor-default items-center justify-center rounded-[var(--r-full)] bg-[image:var(--grad-brand)] text-[11px] font-bold tracking-[0.02em] text-primary-foreground"
           title={`${persona.displayName} · ${persona.role}`}
         >
           {persona.avatarInitials}

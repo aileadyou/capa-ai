@@ -7,6 +7,7 @@ import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { CAPACase } from "@/types";
+import { cn } from "@/lib/utils";
 import {
   computeProblemSpecificity,
   computeTotalQualityScore,
@@ -20,7 +21,7 @@ const suggestedProblems: Record<string, string> = {
   "CAPA-2026-0089":
     "During internal GMP audit AUD-2026-0089 on 10 June 2026, three warehouse material transfer records were found completed after the actual transfer time and missing second-person verification. The issue affected Warehouse Zone WH-02 and involved material movement records for lots MAT-2406-11, MAT-2406-12, and MAT-2406-13.",
   "CAPA-2026-0112":
-    "On 12 June 2026, Hospital Sentosa reported visible particulate matter in one vial of Vaximmun 10-dose presentation, lot VX-2405-22, expiry May 2027. The complaint was received through Bizzmine Complaint module CMP-2026-0112 and requires investigation of visual inspection records, retained samples, and batch release documentation.",
+    "On 12 June 2026, Hospital Sentosa reported visible particulate matter in one vial of Vaximmun 10-dose presentation, lot VX-2405-22, expiry May 2027. The complaint was received through Bizzmine module CMP-2026-0112 and requires investigation of visual inspection records, retained samples, and batch release documentation.",
 };
 
 const suggestionReasoning: Record<string, string> = {
@@ -187,34 +188,18 @@ export function D1ProblemPage() {
 
   return (
     <EightDShell capaId={capa.id} activeStep="problem">
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div className="flex flex-col gap-6">
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
           {/* CAPA ID breadcrumb */}
-          <p
-            style={{
-              fontSize: "12px",
-              fontFamily: "var(--font-mono)",
-              color: "var(--fg-3)",
-              margin: "0 0 6px",
-              letterSpacing: "0.18em",
-            }}
-          >
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
             {capa.id} · D1
           </p>
-          <h1
-            style={{
-              fontSize: "22px",
-              fontWeight: 700,
-              color: "var(--fg-1)",
-              margin: "0 0 8px",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
+          <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
             Problem Statement
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, lineHeight: "1.55", maxWidth: "600px" }}>
+          <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
             Build a specific, measurable problem statement. Nova checks for six quality signals before the workflow can continue to D2 Containment.
           </p>
         </div>
@@ -233,15 +218,7 @@ export function D1ProblemPage() {
         <div>
           <label
             htmlFor="problem-statement"
-            style={{
-              display: "block",
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "var(--fg-2)",
-              marginBottom: "8px",
-              fontFamily: "var(--font-sans)",
-              letterSpacing: "0.02em",
-            }}
+            className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary"
           >
             Problem statement
           </label>
@@ -251,41 +228,16 @@ export function D1ProblemPage() {
             onChange={(e) => setStatement(e.target.value)}
             rows={7}
             placeholder="Describe what happened, when, where, which system or product was affected, and the measurable issue."
-            style={{
-              width: "100%",
-              background: "var(--field-bg)",
-              border: `1px solid ${shouldShowBlocker ? "var(--danger)" : "var(--line-2)"}`,
-              borderRadius: "var(--r-sm)",
-              padding: "12px 14px",
-              fontSize: "13px",
-              lineHeight: "1.65",
-              color: "var(--fg-1)",
-              fontFamily: "var(--font-sans)",
-              resize: "vertical",
-              outline: "none",
-              boxSizing: "border-box",
-              transition: "border-color var(--dur-fast) var(--ease-out)",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--accent)";
-              e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = shouldShowBlocker ? "var(--danger)" : "var(--line-2)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
+            className={cn(
+              "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+              shouldShowBlocker ? "border-destructive" : "border-[var(--line-2)]",
+            )}
           />
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginTop: "6px",
-            }}
-          >
-            <span style={{ fontSize: "11px", color: "var(--fg-4)", fontFamily: "var(--font-mono)" }}>
+          <div className="mt-1.5 flex justify-between">
+            <span className="font-sans text-[11px] text-foreground-faint">
               {statement.length} chars
             </span>
-            <span style={{ fontSize: "11px", color: passedCount === 6 ? "var(--accent)" : "var(--fg-4)", fontFamily: "var(--font-mono)" }}>
+            <span className={cn("font-sans text-[11px]", passedCount === 6 ? "text-primary" : "text-foreground-faint")}>
               {passedCount}/6 checks passing
             </span>
           </div>
@@ -293,22 +245,13 @@ export function D1ProblemPage() {
 
         {/* ── Blocker banner ───────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              padding: "12px 14px",
-              background: "var(--danger-soft)",
-              border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)",
-              borderRadius: "var(--r-sm)",
-            }}
-          >
-            <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
+          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+            <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+              <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">
                 Problem statement is not specific enough
               </p>
-              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+              <p className="m-0 font-sans text-xs text-foreground-tertiary">
                 Add date, area/location, equipment or system reference, affected batch/lot or record scope, and measurable observation before continuing.
               </p>
             </div>
@@ -317,57 +260,34 @@ export function D1ProblemPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 10px",
-            }}
-          >
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
             Quality Signals
           </p>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "8px",
-            }}
-          >
+          <div className="grid grid-cols-2 gap-2">
             {validation.checks.map((check) => (
               <div
                 key={check.label}
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  padding: "10px 12px",
-                  borderRadius: "var(--r-sm)",
-                  background: check.passed ? "var(--success-soft)" : "var(--bg-3)",
-                  border: `1px solid ${check.passed ? "color-mix(in srgb, var(--success) 28%, transparent)" : "var(--line-1)"}`,
-                }}
+                className={cn(
+                  "flex gap-2.5 rounded-[var(--r-sm)] border px-3 py-2.5",
+                  check.passed ? "border-success/30 bg-[var(--success-soft)]" : "border-border-subtle bg-elevated",
+                )}
               >
                 {check.passed ? (
-                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "var(--success)", marginTop: "1px" }} />
+                  <CheckCircle2 size={14} className="mt-px shrink-0 text-success" />
                 ) : (
-                  <Circle size={14} style={{ flexShrink: 0, color: "var(--fg-4)", marginTop: "1px" }} />
+                  <Circle size={14} className="mt-px shrink-0 text-foreground-faint" />
                 )}
-                <div style={{ minWidth: 0 }}>
+                <div className="min-w-0">
                   <p
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: check.passed ? 500 : 400,
-                      color: check.passed ? "var(--fg-2)" : "var(--fg-3)",
-                      margin: "0 0 2px",
-                      fontFamily: "var(--font-sans)",
-                    }}
+                    className={cn(
+                      "mb-0.5 mt-0 font-sans text-xs",
+                      check.passed ? "font-medium text-foreground-secondary" : "font-normal text-foreground-tertiary",
+                    )}
                   >
                     {check.label}
                   </p>
                   {!check.passed && (
-                    <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                    <p className="m-0 font-sans text-[11px] text-foreground-faint">
                       {check.hint}
                     </p>
                   )}
@@ -378,50 +298,17 @@ export function D1ProblemPage() {
         </div>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: "10px",
-            paddingTop: "8px",
-            borderTop: "1px solid var(--line-1)",
-          }}
-        >
+        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
           <button
             onClick={() => saveProblem(false)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "var(--field-bg)",
-              color: "var(--fg-2)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-sm)",
-              padding: "8px 16px",
-              fontSize: "13px",
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-              fontWeight: 500,
-            }}
+            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
           >
             <Save size={14} />
             Save Draft
           </button>
           <button
             onClick={() => saveProblem(true)}
-            style={{
-              background: "var(--grad-brand)",
-              color: "var(--on-accent)",
-              border: "none",
-              borderRadius: "var(--r-sm)",
-              padding: "8px 20px",
-              fontSize: "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-              letterSpacing: "0.01em",
-            }}
+            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
           >
             Continue to D2 Containment →
           </button>

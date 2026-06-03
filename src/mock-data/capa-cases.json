@@ -535,14 +535,32 @@
     "verification": {
       "evidenceFileNames": []
     },
+    "intakeReviews": [
+      {
+        "reviewerPersonaId": "qa_deviation",
+        "reviewerName": "Siti Rahmawati",
+        "role": "QA Deviation / QA Complaint",
+        "decision": "accepted",
+        "notes": "Compliant intake. Label abrasion confirmed as Minor — proceed to 8D.",
+        "reviewedAt": "2026-04-17T14:10:00+07:00"
+      },
+      {
+        "reviewerPersonaId": "head_of_dept",
+        "reviewerName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": null,
+        "notes": null,
+        "reviewedAt": null
+      }
+    ],
     "approvals": [],
     "auditEvents": [],
     "suggestions": [],
-    "status": "disposisi",
+    "status": "pending_review",
     "currentStep": "problem",
     "createdAt": "2026-04-17T12:20:00+07:00",
-    "updatedAt": "2026-04-17T12:40:00+07:00",
-    "createdBy": "qa_deviation",
+    "updatedAt": "2026-04-17T14:10:00+07:00",
+    "createdBy": "initiator",
     "assignedTo": "qa_deviation",
     "department": "QA Complaint / Packaging"
   },

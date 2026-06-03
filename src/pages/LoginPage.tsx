@@ -4,31 +4,45 @@ import { ArrowRight, Lock, Mail } from "lucide-react";
 import { usePersonaStore } from "@/store/usePersonaStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { PersonaID } from "@/types";
+import { cn } from "@/lib/utils";
 
 // ── Persona role descriptions (shorter, friendlier) ───────────────────────────
 
-const PERSONA_CONTEXT: Record<PersonaID, { color: string; context: string }> = {
+const PERSONA_CONTEXT: Record<PersonaID, { border: string; avatar: string; text: string; context: string }> = {
   initiator: {
-    color: "var(--accent)",
+    border: "hover:border-primary",
+    avatar: "group-hover:bg-primary",
+    text: "group-hover:text-primary",
     context: "Submits findings, fills D1–D3",
   },
   qa_deviation: {
-    color: "var(--success)",
+    border: "hover:border-success",
+    avatar: "group-hover:bg-success",
+    text: "group-hover:text-success",
     context: "Manages CAPAs end-to-end",
   },
   head_of_dept: {
-    color: "var(--warning)",
+    border: "hover:border-warning",
+    avatar: "group-hover:bg-warning",
+    text: "group-hover:text-warning",
     context: "Reviews actions, approves D7",
   },
   head_of_qa: {
-    color: "var(--danger)",
+    border: "hover:border-destructive",
+    avatar: "group-hover:bg-destructive",
+    text: "group-hover:text-destructive",
     context: "Final sign-off, audit readiness",
   },
   sme: {
-    color: "var(--fg-3)",
+    border: "hover:border-foreground-tertiary",
+    avatar: "group-hover:bg-foreground-tertiary",
+    text: "group-hover:text-foreground-tertiary",
     context: "Technical SME review & input",
   },
 };
+
+const inputClassName =
+  "h-[42px] w-full box-border rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated py-2.5 pl-[38px] pr-3 font-sans text-base text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] placeholder:text-foreground-faint focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]";
 
 // ── Login page ────────────────────────────────────────────────────────────────
 
@@ -39,7 +53,6 @@ export function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [hoveredId, setHoveredId] = useState<PersonaID | null>(null);
 
   function handlePersonaLogin(personaId: PersonaID) {
     login(personaId);
@@ -52,86 +65,27 @@ export function LoginPage() {
     handlePersonaLogin("qa_deviation");
   }
 
-  const inputStyle = (focused?: boolean): React.CSSProperties => ({
-    width: "100%",
-    background: "var(--bg-3)",
-    border: `1px solid ${focused ? "var(--accent)" : "var(--line-2)"}`,
-    boxShadow: focused ? "0 0 0 3px var(--accent-soft)" : "none",
-    borderRadius: "var(--r-sm)",
-    padding: "10px 12px 10px 38px",
-    fontSize: "14px",
-    color: "var(--fg-1)",
-    fontFamily: "var(--font-sans)",
-    outline: "none",
-    height: "42px",
-    boxSizing: "border-box",
-    transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
-  });
-
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg-0)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "480px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "28px",
-        }}
-      >
+    <div className="flex min-h-screen items-center justify-center bg-void px-4 py-6">
+      <div className="flex w-full max-w-[480px] flex-col gap-7">
         {/* ── Brand ──────────────────────────────────────────────────────── */}
-        <div style={{ textAlign: "center" }}>
+        <div className="text-center">
           <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "48px",
-              height: "48px",
-              borderRadius: "var(--r-md)",
-              background: "var(--grad-brand)",
-              marginBottom: "16px",
-            }}
+            className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-[var(--r-md)] bg-[image:var(--grad-brand)]"
           >
             <span
-              style={{
-                fontSize: "20px",
-                fontWeight: 800,
-                color: "var(--on-accent)",
-                fontFamily: "var(--font-mono)",
-              }}
+              className="font-sans text-2xl font-extrabold text-primary-foreground"
             >
               N
             </span>
           </div>
           <h1
-            style={{
-              fontSize: "22px",
-              fontWeight: 700,
-              color: "var(--fg-1)",
-              margin: "0 0 6px",
-              fontFamily: "var(--font-sans)",
-              letterSpacing: "-0.02em",
-            }}
+            className="mb-1.5 mt-0 font-sans text-[22px] font-bold tracking-[-0.02em] text-foreground"
           >
             Sign in to Nova
           </h1>
           <p
-            style={{
-              fontSize: "13px",
-              color: "var(--fg-4)",
-              margin: 0,
-              fontFamily: "var(--font-sans)",
-            }}
+            className="m-0 font-sans text-sm text-foreground-faint"
           >
             AI-powered CAPA quality management
           </p>
@@ -139,45 +93,22 @@ export function LoginPage() {
 
         {/* ── Login card ─────────────────────────────────────────────────── */}
         <div
-          style={{
-            background: "var(--bg-2)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-lg)",
-            boxShadow: "var(--shadow-lg)",
-            padding: "24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "20px",
-          }}
+          className="flex flex-col gap-5 rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-6 shadow-lg"
         >
           {/* Email + password form */}
-          <form onSubmit={handleFormSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <form onSubmit={handleFormSubmit} className="flex flex-col gap-3.5">
             {/* Email */}
             <div>
               <label
                 htmlFor="login-email"
-                style={{
-                  display: "block",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "var(--fg-3)",
-                  marginBottom: "6px",
-                  fontFamily: "var(--font-sans)",
-                }}
+                className="mb-1.5 block font-sans text-xs font-semibold text-foreground-tertiary"
               >
                 Email address
               </label>
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <Mail
                   size={15}
-                  style={{
-                    position: "absolute",
-                    left: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--fg-4)",
-                    pointerEvents: "none",
-                  }}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-faint"
                 />
                 <input
                   id="login-email"
@@ -187,15 +118,7 @@ export function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@bifarma.co.id"
-                  style={inputStyle()}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "var(--accent)";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--line-2)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
+                  className={inputClassName}
                 />
               </div>
             </div>
@@ -204,28 +127,14 @@ export function LoginPage() {
             <div>
               <label
                 htmlFor="login-password"
-                style={{
-                  display: "block",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "var(--fg-3)",
-                  marginBottom: "6px",
-                  fontFamily: "var(--font-sans)",
-                }}
+                className="mb-1.5 block font-sans text-xs font-semibold text-foreground-tertiary"
               >
                 Password
               </label>
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <Lock
                   size={15}
-                  style={{
-                    position: "absolute",
-                    left: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "var(--fg-4)",
-                    pointerEvents: "none",
-                  }}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground-faint"
                 />
                 <input
                   id="login-password"
@@ -235,38 +144,14 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password…"
-                  style={inputStyle()}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "var(--accent)";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--line-2)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
+                  className={inputClassName}
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                background: "var(--grad-brand)",
-                color: "var(--on-accent)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "11px 20px",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                letterSpacing: "0.01em",
-                marginTop: "2px",
-              }}
+              className="mt-0.5 flex cursor-pointer items-center justify-center gap-1.5 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-[11px] font-sans text-base font-semibold tracking-[0.01em] text-primary-foreground hover:brightness-110 active:scale-[0.99]"
             >
               Sign in
               <ArrowRight size={15} />
@@ -275,105 +160,50 @@ export function LoginPage() {
 
           {/* Divider */}
           <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-            }}
+            className="flex items-center gap-3"
           >
-            <div style={{ flex: 1, height: "1px", background: "var(--line-2)" }} />
+            <div className="h-px flex-1 bg-[var(--line-2)]" />
             <span
-              style={{
-                fontSize: "11px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                color: "var(--fg-4)",
-                whiteSpace: "nowrap",
-              }}
+              className="whitespace-nowrap font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
             >
               Or sign in as demo persona
             </span>
-            <div style={{ flex: 1, height: "1px", background: "var(--line-2)" }} />
+            <div className="h-px flex-1 bg-[var(--line-2)]" />
           </div>
 
           {/* Persona cards */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div className="flex flex-col gap-2">
             {personas.map((persona) => {
               const meta = PERSONA_CONTEXT[persona.id];
-              const isHovered = hoveredId === persona.id;
               return (
                 <button
                   key={persona.id}
                   type="button"
                   onClick={() => handlePersonaLogin(persona.id)}
-                  onMouseEnter={() => setHoveredId(persona.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    background: isHovered ? "var(--bg-3)" : "var(--bg-4)",
-                    border: isHovered
-                      ? `1px solid ${meta.color}`
-                      : "1px solid var(--line-2)",
-                    borderRadius: "var(--r-md)",
-                    padding: "10px 14px",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    width: "100%",
-                    transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out)",
-                  }}
+                  className={cn(
+                    "group flex w-full cursor-pointer items-center gap-3 rounded-[var(--r-md)] border border-[var(--line-2)] bg-field px-3.5 py-2.5 text-left transition-[background,border-color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-elevated",
+                    meta.border,
+                  )}
                 >
                   {/* Avatar */}
                   <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "var(--r-full)",
-                      background: isHovered ? meta.color : "var(--bg-2)",
-                      border: isHovered ? "none" : "1px solid var(--line-2)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      color: isHovered ? "var(--on-accent)" : "var(--fg-3)",
-                      flexShrink: 0,
-                      fontFamily: "var(--font-mono)",
-                      letterSpacing: "0.02em",
-                      transition: "background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out)",
-                    }}
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r-full)] border border-[var(--line-2)] bg-card font-sans text-xs font-bold tracking-[0.02em] text-foreground-tertiary transition-[background,color,border-color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] group-hover:border-transparent group-hover:text-primary-foreground",
+                      meta.avatar,
+                    )}
                   >
                     {persona.avatarInitials}
                   </div>
 
                   {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="min-w-0 flex-1">
                     <p
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "var(--fg-1)",
-                        margin: "0 0 2px",
-                        fontFamily: "var(--font-sans)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="mb-0.5 mt-0 truncate font-sans text-sm font-semibold text-foreground"
                     >
                       {persona.displayName}
                     </p>
                     <p
-                      style={{
-                        fontSize: "11px",
-                        color: "var(--fg-3)",
-                        margin: 0,
-                        fontFamily: "var(--font-sans)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="m-0 truncate font-sans text-[11px] text-foreground-tertiary"
                     >
                       {persona.role}
                     </p>
@@ -381,17 +211,10 @@ export function LoginPage() {
 
                   {/* Context chip */}
                   <span
-                    style={{
-                      fontSize: "10px",
-                      fontFamily: "var(--font-mono)",
-                      fontWeight: 600,
-                      letterSpacing: "0.1em",
-                      color: isHovered ? meta.color : "var(--fg-4)",
-                      background: isHovered ? "transparent" : "transparent",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      display: "none",
-                    }}
+                    className={cn(
+                      "hidden shrink-0 whitespace-nowrap bg-transparent font-sans text-[10px] font-semibold tracking-[0.1em] text-foreground-faint",
+                      meta.text,
+                    )}
                   >
                     {meta.context}
                   </span>
@@ -399,11 +222,10 @@ export function LoginPage() {
                   {/* Arrow */}
                   <ArrowRight
                     size={14}
-                    style={{
-                      flexShrink: 0,
-                      color: isHovered ? meta.color : "var(--fg-4)",
-                      transition: "color var(--dur-fast) var(--ease-out)",
-                    }}
+                    className={cn(
+                      "shrink-0 text-foreground-faint transition-[color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+                      meta.text,
+                    )}
                   />
                 </button>
               );
@@ -413,14 +235,7 @@ export function LoginPage() {
 
         {/* ── Footer note ────────────────────────────────────────────────── */}
         <p
-          style={{
-            fontSize: "11px",
-            color: "var(--fg-4)",
-            textAlign: "center",
-            margin: 0,
-            fontFamily: "var(--font-sans)",
-            lineHeight: "1.5",
-          }}
+          className="m-0 text-center font-sans text-[11px] leading-normal text-foreground-faint"
         >
           This is a demo environment. All data is simulated.
           <br />

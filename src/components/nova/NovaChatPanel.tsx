@@ -65,8 +65,7 @@ export function NovaChatPanel() {
       aria-modal="true"
       aria-labelledby="nova-chat-title"
       tabIndex={-1}
-      style={{ overscrollBehavior: "contain" }}
-      className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col border-l bg-background shadow-lg"
+      className="motion-slide-over fixed inset-y-0 right-0 z-40 flex w-full max-w-md flex-col overscroll-contain border-l bg-background shadow-lg"
     >
       <div className="flex items-center justify-between border-b p-4">
         <div id="nova-chat-title" className="flex items-center gap-2 font-semibold text-nova">
@@ -98,28 +97,11 @@ export function NovaChatPanel() {
 
       <div className="border-t p-4 space-y-3">
         {novaChatContext.source === "nova-suggestion" && novaChatContext.suggestionText && (
-          <div
-            style={{
-              background: "var(--accent-soft)",
-              border: "1px solid var(--accent-line)",
-              borderRadius: "var(--r-sm)",
-              padding: "10px 12px",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "10px",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--accent)",
-                margin: "0 0 6px",
-              }}
-            >
+          <div className="rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3 py-2.5">
+            <p className="mb-1.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
               Suggestion context
             </p>
-            <p style={{ color: "var(--fg-2)", fontSize: "12px", lineHeight: 1.55, margin: 0 }}>
+            <p className="m-0 text-xs leading-[1.55] text-foreground-secondary">
               {novaChatContext.suggestionContext ? `${novaChatContext.suggestionContext}: ` : ""}
               {novaChatContext.suggestionText}
             </p>

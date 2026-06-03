@@ -256,7 +256,7 @@ export function NovaPlaceholderPage({
           <SectionCard title="Golden Demo Cases">
             <div className="overflow-hidden rounded border">
               <table className="w-full text-left text-sm">
-                <thead className="bg-muted text-xs uppercase text-muted-foreground">
+                <thead className="bg-[var(--table-head-bg)] text-xs uppercase text-[var(--table-head-fg)]">
                   <tr>
                     <th className="px-3 py-2">Type</th>
                     <th className="px-3 py-2">Finding</th>

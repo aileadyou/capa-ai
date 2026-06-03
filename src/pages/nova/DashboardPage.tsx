@@ -5,22 +5,28 @@ import {
   getDashboardStats,
   getDepartmentHeatmap,
   getFindingTrend,
+  getLatestFindings,
+  getRecurrenceTrend,
   getRootCauseTrends,
   getTypeBreakdown,
 } from "@/services/dashboardService";
+import { usePersonaStore } from "@/store";
+import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type RangeOption = "This Month" | "Last 3 Months" | "Year to Date" | "Last 12 Months";
 
 // ── Palette constants for SVG/chart attributes ───────────────────────────────
-const CLR_ACCENT = "var(--accent)";
-const CLR_SUCCESS = "var(--success)";
-const CLR_FG3 = "var(--fg-3)";
-const CLR_FG4 = "var(--fg-4)";
-const CLR_FG1 = "var(--fg-1)";
-const CLR_BG4 = "var(--bg-4)";
-const CLR_LINE1 = "var(--line-1)";
+const CLR_PRIMARY = "hsl(var(--primary))";
+const CLR_SUCCESS = "hsl(var(--tw-success))";
+const CLR_WARNING = "hsl(var(--tw-warning))";
+const CLR_DANGER = "hsl(var(--destructive))";
+const CLR_FOREGROUND = "hsl(var(--foreground))";
+const CLR_FOREGROUND_TERTIARY = "hsl(var(--foreground-tertiary))";
+const CLR_FOREGROUND_FAINT = "hsl(var(--foreground-faint))";
+const CLR_FIELD = "hsl(var(--field))";
+const CLR_BORDER_SUBTLE = "hsl(var(--border-subtle))";
 
 // ── Date range selector ───────────────────────────────────────────────────────
 
@@ -35,62 +41,29 @@ function DateRangeSelector({
   const options: RangeOption[] = ["This Month", "Last 3 Months", "Year to Date", "Last 12 Months"];
 
   return (
-    <div style={{ position: "relative" }}>
+    <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "7px 12px",
-          background: "var(--bg-3)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-sm)",
-          fontSize: "12px",
-          fontWeight: 500,
-          color: "var(--fg-2)",
-          fontFamily: "var(--font-sans)",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
+        className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-3 py-[7px] font-sans text-xs font-medium text-foreground-secondary"
       >
         {value}
-        <ChevronDown size={13} style={{ color: "var(--fg-3)" }} />
+        <ChevronDown size={13} className="text-foreground-tertiary" />
       </button>
 
       {open && (
         <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 4px)",
-            right: 0,
-            zIndex: 20,
-            background: "var(--bg-3)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-md)",
-            padding: "4px",
-            minWidth: "160px",
-            boxShadow: "var(--shadow-lg)",
-          }}
+          className="absolute right-0 top-[calc(100%+4px)] z-20 min-w-40 rounded-[var(--r-md)] border border-[var(--line-2)] bg-elevated p-1 shadow-lg"
         >
           {options.map((opt) => (
             <button
               key={opt}
               onClick={() => { onChange(opt); setOpen(false); }}
-              style={{
-                display: "block",
-                width: "100%",
-                textAlign: "left",
-                padding: "7px 10px",
-                borderRadius: "var(--r-sm)",
-                fontSize: "12px",
-                fontFamily: "var(--font-sans)",
-                color: opt === value ? "var(--accent)" : "var(--fg-2)",
-                background: opt === value ? "var(--accent-soft)" : "transparent",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: opt === value ? 600 : 400,
-              }}
+              className={cn(
+                "block w-full cursor-pointer rounded-[var(--r-sm)] border-0 px-2.5 py-[7px] text-left font-sans text-xs",
+                opt === value
+                  ? "bg-[var(--accent-soft)] font-semibold text-primary"
+                  : "bg-transparent font-normal text-foreground-secondary",
+              )}
             >
               {opt}
             </button>
@@ -119,87 +92,40 @@ function KpiCard({
   return (
     <Link
       to={to}
-      style={{ textDecoration: "none", display: "block" }}
+      className="block no-underline"
     >
       <div
-        style={{
-          position: "relative",
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-lg)",
-          boxShadow: "var(--shadow-sm)",
-          padding: "20px 20px 20px 24px",
-          overflow: "hidden",
-          cursor: "pointer",
-          transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLDivElement).style.borderColor = "var(--line-3)";
-          (e.currentTarget as HTMLDivElement).style.background = "var(--bg-2)";
-          (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-md)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLDivElement).style.borderColor = "var(--line-2)";
-          (e.currentTarget as HTMLDivElement).style.background = "var(--bg-2)";
-          (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--shadow-sm)";
-        }}
+        className="relative cursor-pointer overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card py-5 pl-6 pr-5 shadow-sm transition-[border-color,background,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:bg-card hover:shadow-md"
       >
         {/* Gradient left border */}
         {gradientBorder && (
           <div
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: "3px",
-              background: "var(--grad-brand)",
-              borderRadius: "var(--r-lg) 0 0 var(--r-lg)",
-            }}
+            className="absolute bottom-0 left-0 top-0 w-[3px] rounded-l-[var(--r-lg)] bg-[image:var(--grad-brand)]"
           />
         )}
 
         {/* Eyebrow */}
         <p
-          style={{
-            fontSize: "10px",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 600,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: "var(--fg-4)",
-            margin: "0 0 8px",
-          }}
+          className="mb-2 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
         >
           {eyebrow}
         </p>
 
         {/* Metric */}
         <p
-          style={{
-            fontSize: "40px",
-            fontWeight: 700,
-            lineHeight: 1,
-            fontFamily: "var(--font-mono)",
-            color: gradientBorder ? "transparent" : "var(--fg-1)",
-            background: gradientBorder ? "var(--grad-brand)" : undefined,
-            WebkitBackgroundClip: gradientBorder ? "text" : undefined,
-            backgroundClip: gradientBorder ? "text" : undefined,
-            margin: "0 0 8px",
-            letterSpacing: "-0.02em",
-          }}
+          className={cn(
+            "mb-2 mt-0 font-sans text-[40px] font-bold leading-none tracking-[-0.02em]",
+            gradientBorder
+              ? "bg-[image:var(--grad-brand)] bg-clip-text text-transparent"
+              : "text-foreground",
+          )}
         >
           {metric}
         </p>
 
         {/* Caption */}
         <p
-          style={{
-            fontSize: "12px",
-            color: "var(--fg-3)",
-            margin: 0,
-            fontFamily: "var(--font-sans)",
-          }}
+          className="m-0 font-sans text-xs text-foreground-tertiary"
         >
           {caption}
         </p>
@@ -215,63 +141,32 @@ function Card({
   title,
   subtitle,
   children,
-  style: extraStyle,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
   children: React.ReactNode;
-  style?: React.CSSProperties;
 }) {
   return (
     <div
-      style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-lg)",
-        boxShadow: "var(--shadow-sm)",
-        padding: "20px 22px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-        ...extraStyle,
-      }}
+      className="flex flex-col gap-4 rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-[22px] py-5 shadow-sm"
     >
       <div>
         {eyebrow && (
           <p
-            style={{
-              fontSize: "10px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 4px",
-            }}
+            className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
           >
             {eyebrow}
           </p>
         )}
         <p
-          style={{
-            fontSize: "14px",
-            fontWeight: 600,
-            color: "var(--fg-1)",
-            margin: 0,
-            fontFamily: "var(--font-sans)",
-          }}
+          className="m-0 font-sans text-base font-semibold text-foreground"
         >
           {title}
         </p>
         {subtitle && (
           <p
-            style={{
-              fontSize: "12px",
-              color: "var(--fg-3)",
-              margin: "3px 0 0",
-              fontFamily: "var(--font-sans)",
-            }}
+            className="mt-[3px] font-sans text-xs text-foreground-tertiary"
           >
             {subtitle}
           </p>
@@ -307,13 +202,13 @@ function FindingTrendChart() {
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      style={{ width: "100%", height: "auto", overflow: "visible" }}
+      className="h-auto w-full overflow-visible"
       aria-label="Finding trend area chart"
     >
       <defs>
         <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" style={{ stopColor: CLR_ACCENT, stopOpacity: 0.28 }} />
-          <stop offset="100%" style={{ stopColor: CLR_ACCENT, stopOpacity: 0 }} />
+          <stop offset="0%" stopColor={CLR_PRIMARY} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={CLR_PRIMARY} stopOpacity="0" />
         </linearGradient>
       </defs>
 
@@ -325,23 +220,23 @@ function FindingTrendChart() {
             x2={W - PAD.right}
             y1={toY(tick)}
             y2={toY(tick)}
-            style={{ stroke: CLR_LINE1 }}
+            stroke={CLR_BORDER_SUBTLE}
             strokeWidth="1"
           />
-          <text x={PAD.left - 6} y={toY(tick) + 4} textAnchor="end" fontSize="9" style={{ fill: CLR_FG4 }}>
+          <text x={PAD.left - 6} y={toY(tick) + 4} textAnchor="end" fontSize="9" fill={CLR_FOREGROUND_FAINT}>
             {tick}
           </text>
         </g>
       ))}
 
       {/* Area fill */}
-      <path d={areaPts} style={{ fill: "url(#trendFill)" }} />
+      <path d={areaPts} fill="url(#trendFill)" />
 
       {/* Line */}
       <path
         d={linePts}
         fill="none"
-        style={{ stroke: CLR_ACCENT }}
+        stroke={CLR_PRIMARY}
         strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -349,7 +244,7 @@ function FindingTrendChart() {
 
       {/* Dots */}
       {totals.map((v, i) => (
-        <circle key={i} cx={toX(i)} cy={toY(v)} r="3" style={{ fill: CLR_ACCENT }} />
+        <circle key={i} cx={toX(i)} cy={toY(v)} r="3" fill={CLR_PRIMARY} />
       ))}
 
       {/* X-axis labels — every other month */}
@@ -362,7 +257,7 @@ function FindingTrendChart() {
             y={H - 4}
             textAnchor="middle"
             fontSize="9"
-            style={{ fill: CLR_FG4 }}
+            fill={CLR_FOREGROUND_FAINT}
           >
             {d.label.slice(0, 3)} {d.label.slice(-2)}
           </text>
@@ -382,7 +277,7 @@ function TypeDonutChart() {
   const r = 54;
   const sw = 20;
   const circumference = 2 * Math.PI * r;
-  const segColors = [CLR_ACCENT, CLR_SUCCESS, CLR_FG3];
+  const segColors = [CLR_PRIMARY, CLR_SUCCESS, CLR_FOREGROUND_TERTIARY];
 
   const typeLabels: Record<string, string> = {
     deviation: "Deviation",
@@ -400,11 +295,11 @@ function TypeDonutChart() {
   });
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>
+    <div className="flex items-center gap-7">
       {/* SVG donut */}
       <svg
         viewBox="0 0 152 152"
-        style={{ width: "140px", height: "140px", flexShrink: 0 }}
+        className="h-[140px] w-[140px] shrink-0"
         aria-label="Breakdown by type donut chart"
       >
         {/* Track */}
@@ -413,7 +308,7 @@ function TypeDonutChart() {
           cy={cy}
           r={r}
           fill="none"
-          stroke={CLR_BG4}
+          stroke={CLR_FIELD}
           strokeWidth={sw}
         />
         {segments.map((seg) => (
@@ -436,8 +331,8 @@ function TypeDonutChart() {
           textAnchor="middle"
           fontSize="24"
           fontWeight="700"
-          fill={CLR_FG1}
-          fontFamily="'IBM Plex Mono', monospace"
+          fill={CLR_FOREGROUND}
+          fontFamily="inherit"
         >
           {total}
         </text>
@@ -446,8 +341,8 @@ function TypeDonutChart() {
           y={cy + 13}
           textAnchor="middle"
           fontSize="9"
-          fill={CLR_FG4}
-          fontFamily="'IBM Plex Mono', monospace"
+          fill={CLR_FOREGROUND_FAINT}
+          fontFamily="inherit"
           letterSpacing="0.08em"
         >
           TOTAL
@@ -455,36 +350,19 @@ function TypeDonutChart() {
       </svg>
 
       {/* Legend */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+      <div className="flex flex-1 flex-col gap-3">
         {segments.map((seg) => (
-          <div key={seg.type} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div key={seg.type} className="flex items-center gap-2.5">
             <div
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
               style={{
-                width: "10px",
-                height: "10px",
-                borderRadius: "50%",
                 background: seg.color,
-                flexShrink: 0,
               }}
             />
-            <span
-              style={{
-                fontSize: "12px",
-                color: "var(--fg-2)",
-                fontFamily: "var(--font-sans)",
-                flex: 1,
-              }}
-            >
+            <span className="flex-1 font-sans text-xs text-foreground-secondary">
               {typeLabels[seg.type] ?? seg.type}
             </span>
-            <span
-              style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                fontFamily: "var(--font-mono)",
-                color: "var(--fg-1)",
-              }}
-            >
+            <span className="font-sans text-[13px] font-semibold text-foreground">
               {seg.count}
             </span>
           </div>
@@ -501,7 +379,7 @@ function RootCauseBarChart() {
   const maxCount = Math.max(...data.map((d) => d.count));
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+    <div className="flex flex-col gap-3.5">
       {data.map((item) => {
         const pct = (item.count / maxCount) * 100;
         const recurringPct = item.count > 0 ? (item.recurringCount / item.count) * 100 : 0;
@@ -510,52 +388,20 @@ function RootCauseBarChart() {
           <div key={item.category}>
             {/* Label row */}
             <div
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                marginBottom: "6px",
-              }}
+              className="mb-1.5 flex items-baseline justify-between"
             >
-              <span
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  color: "var(--fg-2)",
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
+              <span className="font-sans text-xs font-medium text-foreground-secondary">
                 {item.category}
               </span>
               <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
+                className="flex items-center gap-2"
               >
                 {item.recurringCount > 0 && (
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      fontFamily: "var(--font-mono)",
-                      color: "var(--warning)",
-                      background: "var(--warning-soft)",
-                      padding: "1px 6px",
-                      borderRadius: "var(--r-full)",
-                    }}
-                  >
+                  <span className="rounded-[var(--r-full)] bg-[var(--warning-soft)] px-1.5 py-px font-sans text-[10px] text-warning">
                     {item.recurringCount} recurring
                   </span>
                 )}
-                <span
-                  style={{
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    fontFamily: "var(--font-mono)",
-                    color: "var(--fg-1)",
-                  }}
-                >
+                <span className="font-sans text-xs font-bold text-foreground">
                   {item.count}
                 </span>
               </div>
@@ -563,38 +409,22 @@ function RootCauseBarChart() {
 
             {/* Bar track */}
             <div
-              style={{
-                height: "8px",
-                background: "var(--bg-4)",
-                borderRadius: "4px",
-                overflow: "hidden",
-                position: "relative",
-              }}
+              className="relative h-2 overflow-hidden rounded bg-field"
             >
               {/* Main bar — grad-brand */}
               <div
+                className="absolute left-0 top-0 h-full rounded bg-[image:var(--grad-brand)] transition-[width] duration-500 ease-out"
                 style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  height: "100%",
                   width: `${pct}%`,
-                  background: "var(--grad-brand)",
-                  borderRadius: "4px",
-                  transition: "width 0.5s cubic-bezier(0.22,1,0.36,1)",
                 }}
               />
               {/* Recurring overlay — semi-transparent warning */}
               {item.recurringCount > 0 && (
                 <div
+                  className="absolute top-0 h-full rounded-r bg-[color-mix(in_srgb,hsl(var(--tw-warning))_45%,transparent)]"
                   style={{
-                    position: "absolute",
                     left: `${pct - recurringPct * (pct / 100)}%`,
-                    top: 0,
-                    height: "100%",
                     width: `${recurringPct * (pct / 100)}%`,
-                    background: "color-mix(in srgb, var(--warning) 45%, transparent)",
-                    borderRadius: "0 4px 4px 0",
                   }}
                 />
               )}
@@ -605,37 +435,17 @@ function RootCauseBarChart() {
 
       {/* Legend */}
       <div
-        style={{
-          display: "flex",
-          gap: "16px",
-          marginTop: "4px",
-          paddingTop: "12px",
-          borderTop: "1px solid var(--line-1)",
-        }}
+        className="mt-1 flex gap-4 border-t border-border-subtle pt-3"
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <div
-            style={{
-              width: "20px",
-              height: "6px",
-              borderRadius: "3px",
-              background: "var(--grad-brand)",
-            }}
-          />
-          <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-sans)" }}>
+        <div className="flex items-center gap-1.5">
+          <div className="h-1.5 w-5 rounded-[3px] bg-[image:var(--grad-brand)]" />
+          <span className="font-sans text-[11px] text-foreground-tertiary">
             Total occurrences
           </span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <div
-            style={{
-              width: "20px",
-              height: "6px",
-              borderRadius: "3px",
-              background: "color-mix(in srgb, var(--warning) 45%, transparent)",
-            }}
-          />
-          <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-sans)" }}>
+        <div className="flex items-center gap-1.5">
+          <div className="h-1.5 w-5 rounded-[3px] bg-[color-mix(in_srgb,hsl(var(--tw-warning))_45%,transparent)]" />
+          <span className="font-sans text-[11px] text-foreground-tertiary">
             Recurring (same root cause pattern)
           </span>
         </div>
@@ -651,65 +461,34 @@ function DeptHeatmap() {
 
   function trackColor(rate: number) {
     if (rate >= 80) return CLR_SUCCESS;
-    if (rate >= 65) return "var(--warning)";
-    return "var(--danger)";
+    if (rate >= 65) return CLR_WARNING;
+    return CLR_DANGER;
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div className="flex flex-col gap-4">
       {data.map((dept) => (
         <div key={dept.department}>
           {/* Row header */}
           <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "7px",
-            }}
+            className="mb-[7px] flex items-center justify-between"
           >
-            <span
-              style={{
-                fontSize: "13px",
-                fontWeight: 500,
-                color: "var(--fg-2)",
-                fontFamily: "var(--font-sans)",
-              }}
-            >
+            <span className="font-sans text-[13px] font-medium text-foreground-secondary">
               {dept.department}
             </span>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div className="flex items-center gap-2.5">
               {dept.overdueCapas > 0 && (
-                <span
-                  style={{
-                    fontSize: "10px",
-                    fontFamily: "var(--font-mono)",
-                    color: "var(--danger)",
-                    background: "var(--danger-soft)",
-                    padding: "1px 6px",
-                    borderRadius: "var(--r-full)",
-                  }}
-                >
+                <span className="rounded-[var(--r-full)] bg-[var(--danger-soft)] px-1.5 py-px font-sans text-[10px] text-destructive">
                   {dept.overdueCapas} overdue
                 </span>
               )}
-              <span
-                style={{
-                  fontSize: "10px",
-                  color: "var(--fg-3)",
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
+              <span className="font-sans text-[10px] text-foreground-tertiary">
                 {dept.openCapas} open
               </span>
               <span
+                className="min-w-[38px] text-right font-sans text-[13px] font-bold"
                 style={{
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  fontFamily: "var(--font-mono)",
                   color: trackColor(dept.completionRate),
-                  minWidth: "38px",
-                  textAlign: "right",
                 }}
               >
                 {dept.completionRate}%
@@ -719,20 +498,13 @@ function DeptHeatmap() {
 
           {/* Progress bar */}
           <div
-            style={{
-              height: "6px",
-              background: "var(--bg-4)",
-              borderRadius: "3px",
-              overflow: "hidden",
-            }}
+            className="h-1.5 overflow-hidden rounded-[3px] bg-field"
           >
             <div
+              className="h-full rounded-[3px] transition-[width] duration-500 ease-out"
               style={{
-                height: "100%",
                 width: `${dept.completionRate}%`,
                 background: trackColor(dept.completionRate),
-                borderRadius: "3px",
-                transition: "width 0.5s cubic-bezier(0.22,1,0.36,1)",
               }}
             />
           </div>
@@ -741,31 +513,21 @@ function DeptHeatmap() {
 
       {/* Scale legend */}
       <div
-        style={{
-          display: "flex",
-          gap: "14px",
-          marginTop: "4px",
-          paddingTop: "12px",
-          borderTop: "1px solid var(--line-1)",
-          flexWrap: "wrap",
-        }}
+        className="mt-1 flex flex-wrap gap-3.5 border-t border-border-subtle pt-3"
       >
         {[
           { color: CLR_SUCCESS, label: "≥ 80% on track" },
-          { color: "var(--warning)", label: "65–79% at risk" },
-          { color: "var(--danger)", label: "< 65% needs attention" },
+          { color: CLR_WARNING, label: "65–79% at risk" },
+          { color: CLR_DANGER, label: "< 65% needs attention" },
         ].map((item) => (
-          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <div key={item.label} className="flex items-center gap-[5px]">
             <div
+              className="h-2 w-2 shrink-0 rounded-full"
               style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
                 background: item.color,
-                flexShrink: 0,
               }}
             />
-            <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-sans)" }}>
+            <span className="font-sans text-[11px] text-foreground-tertiary">
               {item.label}
             </span>
           </div>
@@ -775,150 +537,304 @@ function DeptHeatmap() {
   );
 }
 
+// ── Recurrence trend (line chart) — for SME / expert view ────────────────────
+
+function RecurrenceTrendChart() {
+  const raw = getRecurrenceTrend();
+  const n = raw.length;
+  const maxNew = Math.max(...raw.map((d) => d.newFindings));
+
+  const W = 600;
+  const H = 140;
+  const PAD = { top: 16, right: 12, bottom: 32, left: 28 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+  const toX = (i: number) => PAD.left + (i / (n - 1)) * cW;
+  const toY = (v: number) => PAD.top + cH - (v / maxNew) * cH;
+
+  const newPts = raw.map((d, i) => `${i === 0 ? "M" : "L"}${toX(i).toFixed(1)},${toY(d.newFindings).toFixed(1)}`).join(" ");
+  const recurPts = raw.map((d, i) => `${i === 0 ? "M" : "L"}${toX(i).toFixed(1)},${toY(d.recurred).toFixed(1)}`).join(" ");
+  const areaNew = `${newPts} L${toX(n - 1).toFixed(1)},${(PAD.top + cH).toFixed(1)} L${toX(0).toFixed(1)},${(PAD.top + cH).toFixed(1)} Z`;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full overflow-visible" aria-label="Recurrence trend chart">
+        <defs>
+          <linearGradient id="recurFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={CLR_PRIMARY} stopOpacity="0.18" />
+            <stop offset="100%" stopColor={CLR_PRIMARY} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={areaNew} fill="url(#recurFill)" />
+        <path d={newPts} fill="none" stroke={CLR_PRIMARY} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={recurPts} fill="none" stroke={CLR_WARNING} strokeWidth="1.5" strokeDasharray="4 3" strokeLinecap="round" strokeLinejoin="round" />
+        {raw.map((d, i) => i % 2 === 0 && (
+          <text key={i} x={toX(i)} y={H - 4} textAnchor="middle" fontSize="9" fill={CLR_FOREGROUND_FAINT}>
+            {d.label.slice(0, 3)} {d.label.slice(-2)}
+          </text>
+        ))}
+      </svg>
+      <div className="flex gap-4 border-t border-border-subtle pt-3">
+        <div className="flex items-center gap-1.5">
+          <div className="h-1.5 w-5 rounded-[3px]" style={{ background: CLR_PRIMARY }} />
+          <span className="font-sans text-[11px] text-foreground-tertiary">Total findings</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="h-[1px] w-5 border-t-2 border-dashed" style={{ borderColor: CLR_WARNING }} />
+          <span className="font-sans text-[11px] text-foreground-tertiary">Recurrences</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Latest findings list — for QA officer / operator views ───────────────────
+
+function LatestFindingsList({ limit = 4 }: { limit?: number }) {
+  const findings = getLatestFindings(limit);
+  const severityColor: Record<string, string> = {
+    Minor: CLR_PRIMARY,
+    Major: CLR_WARNING,
+    Critical: CLR_DANGER,
+  };
+  return (
+    <div className="flex flex-col divide-y divide-border/50">
+      {findings.map((f) => (
+        <Link key={f.id} to={`/findings/${f.id}`} className="flex items-center gap-3 py-2.5 no-underline hover:opacity-80">
+          <span
+            className="h-2 w-2 shrink-0 rounded-full"
+            style={{ background: severityColor[f.severity] ?? CLR_FOREGROUND_TERTIARY }}
+          />
+          <span className="flex-1 truncate font-sans text-[13px] text-foreground-secondary">{f.title}</span>
+          <span className="shrink-0 font-sans text-[11px] text-foreground-faint">{f.severity}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+// ── My department summary — for operator view ─────────────────────────────────
+
+function MyDeptSummary({ department }: { department: string }) {
+  const all = getDepartmentHeatmap();
+  const dept = all.find((d) => department.includes(d.department)) ?? all[0];
+
+  function color(rate: number) {
+    if (rate >= 80) return CLR_SUCCESS;
+    if (rate >= 65) return CLR_WARNING;
+    return CLR_DANGER;
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <span className="font-sans text-sm font-medium text-foreground-secondary">{dept.department}</span>
+        <span className="font-sans text-2xl font-bold" style={{ color: color(dept.completionRate) }}>
+          {dept.completionRate}%
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-field">
+        <div
+          className="h-full rounded-full transition-[width] duration-500 ease-out"
+          style={{ width: `${dept.completionRate}%`, background: color(dept.completionRate) }}
+        />
+      </div>
+      <div className="flex gap-4 text-xs text-foreground-tertiary">
+        <span>{dept.openCapas} open CAPA{dept.openCapas !== 1 ? "s" : ""}</span>
+        {dept.overdueCapas > 0 && (
+          <span className="text-destructive">{dept.overdueCapas} overdue</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Role → dashboard mode mapping ─────────────────────────────────────────────
+
+type DashboardMode = "executive" | "qa_officer" | "dept_head" | "operator" | "expert";
+
+const ROLE_CONFIG: Record<string, { mode: DashboardMode; title: string; subtitle: (range: string) => string }> = {
+  head_of_qa: {
+    mode: "executive",
+    title: "Dashboard",
+    subtitle: (r) => `QA performance overview for ${r}.`,
+  },
+  qa_deviation: {
+    mode: "qa_officer",
+    title: "QA Operations",
+    subtitle: (r) => `Findings and CAPA status across all types for ${r}.`,
+  },
+  head_of_dept: {
+    mode: "dept_head",
+    title: "Department Overview",
+    subtitle: (r) => `Closure rate and open items for your departments — ${r}.`,
+  },
+  initiator: {
+    mode: "operator",
+    title: "My Activity",
+    subtitle: () => "Your open actions and department CAPA status.",
+  },
+  sme: {
+    mode: "expert",
+    title: "Quality Insights",
+    subtitle: (r) => `Root cause patterns and recurrence trends for ${r}.`,
+  },
+};
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function DashboardPage() {
   const stats = getDashboardStats();
   const [range, setRange] = useState<RangeOption>("This Month");
+  const persona = usePersonaStore((s) => s.activePersona());
+  const { mode, title, subtitle } = ROLE_CONFIG[persona.id] ?? ROLE_CONFIG.head_of_qa;
+
+  const twoCol = "grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] gap-3.5";
+  const kpiGrid = "grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-3.5";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div className="flex flex-col gap-6">
 
-      {/* ── Page header row ──────────────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-          gap: "16px",
-          flexWrap: "wrap",
-        }}
-      >
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 4px",
-            }}
-          >
-            Analytics
-          </p>
-          <h1
-            style={{
-              fontSize: "22px",
-              fontWeight: 700,
-              color: "var(--fg-1)",
-              margin: 0,
-              fontFamily: "var(--font-sans)",
-              letterSpacing: "-0.02em",
-            }}
-          >
+          <h1 className="m-0 font-sans text-4xl font-bold tracking-[-0.02em] text-foreground">
             Dashboard
           </h1>
-          <p
-            style={{
-              fontSize: "13px",
-              color: "var(--fg-3)",
-              margin: "4px 0 0",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
-            QA performance overview for {range.toLowerCase()}.
+          <p className="mt-1 font-sans text-sm text-foreground-secondary">
+            {subtitle(range.toLowerCase())}
           </p>
         </div>
-
-        <DateRangeSelector value={range} onChange={setRange} />
+        {mode !== "operator" && <DateRangeSelector value={range} onChange={setRange} />}
       </div>
 
-      {/* ── ROW 1 — KPI cards ────────────────────────────────────────────── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
-          gap: "14px",
-        }}
-      >
-        <KpiCard
-          eyebrow="Findings MTD"
-          metric={stats.totalFindingsMTD}
-          caption="Deviations, audits, complaints"
-          to="/findings"
-        />
-        <KpiCard
-          eyebrow="Open CAPAs"
-          metric={stats.openCapas}
-          caption="Across all active statuses"
-          to="/capa"
-        />
-        <KpiCard
-          eyebrow="Overdue CAPAs"
-          metric={stats.overdueCapas}
-          caption="Past target closure date"
-          to="/capa"
-          gradientBorder
-        />
-        <KpiCard
-          eyebrow="Effectiveness rate"
-          metric={`${stats.effectivenessRate}%`}
-          caption="Verified CAPA effectiveness"
-          to="/capa"
-        />
-      </div>
+      {/* ── EXECUTIVE (Head of QA) — full strategic view ──────────────── */}
+      {mode === "executive" && (
+        <>
+          <div className={kpiGrid}>
+            <KpiCard eyebrow="Findings MTD" metric={stats.totalFindingsMTD} caption="Deviations, audits, complaints" to="/findings" />
+            <KpiCard eyebrow="Open CAPAs" metric={stats.openCapas} caption="Across all active statuses" to="/capa" />
+            <KpiCard eyebrow="Overdue CAPAs" metric={stats.overdueCapas} caption="Past target closure date" to="/capa" gradientBorder />
+            <KpiCard eyebrow="Effectiveness rate" metric={`${stats.effectivenessRate}%`} caption="Verified CAPA effectiveness" to="/capa" />
+          </div>
+          <div className={twoCol}>
+            <Card eyebrow="Trend" title="Finding trend" subtitle="Total findings per month — last 12 months">
+              <FindingTrendChart />
+            </Card>
+            <Card eyebrow="Breakdown" title="Breakdown by type" subtitle="Distribution of open findings by source">
+              <TypeDonutChart />
+            </Card>
+          </div>
+          <div className={twoCol}>
+            <Card eyebrow="Root cause" title="Top root cause categories" subtitle="Occurrences this period — orange band indicates recurring pattern">
+              <RootCauseBarChart />
+            </Card>
+            <Card eyebrow="Departments" title="Completion heatmap" subtitle="CAPA closure rate by department">
+              <DeptHeatmap />
+            </Card>
+          </div>
+        </>
+      )}
 
-      {/* ── ROW 2 — Finding trend + Type donut ───────────────────────────── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
-          gap: "14px",
-        }}
-      >
-        <Card
-          eyebrow="Trend"
-          title="Finding trend"
-          subtitle="Total findings per month — last 12 months"
-        >
-          <FindingTrendChart />
-        </Card>
+      {/* ── QA OFFICER — operational quality view ────────────────────── */}
+      {mode === "qa_officer" && (
+        <>
+          <div className={kpiGrid}>
+            <KpiCard eyebrow="Findings MTD" metric={stats.totalFindingsMTD} caption="Deviations, audits, complaints" to="/findings" />
+            <KpiCard eyebrow="Open CAPAs" metric={stats.openCapas} caption="Requiring review or action" to="/capa" />
+            <KpiCard eyebrow="Overdue CAPAs" metric={stats.overdueCapas} caption="Past target closure date" to="/capa" gradientBorder />
+            <KpiCard eyebrow="Effectiveness rate" metric={`${stats.effectivenessRate}%`} caption="Verified CAPA effectiveness" to="/capa" />
+          </div>
+          <div className={twoCol}>
+            <Card eyebrow="Trend" title="Finding trend" subtitle="Total findings per month — last 12 months">
+              <FindingTrendChart />
+            </Card>
+            <Card eyebrow="Breakdown" title="Breakdown by type" subtitle="Distribution of open findings by source">
+              <TypeDonutChart />
+            </Card>
+          </div>
+          <div className="grid grid-cols-1 gap-3.5">
+            <Card eyebrow="Root cause" title="Top root cause categories" subtitle="Occurrences this period — orange band indicates recurring pattern">
+              <RootCauseBarChart />
+            </Card>
+          </div>
+          <div className="grid grid-cols-1 gap-3.5">
+            <Card eyebrow="Recent" title="Latest findings" subtitle="Most recently reported across all sources">
+              <LatestFindingsList limit={5} />
+            </Card>
+          </div>
+        </>
+      )}
 
-        <Card
-          eyebrow="Breakdown"
-          title="Breakdown by type"
-          subtitle="Distribution of open findings by source"
-        >
-          <TypeDonutChart />
-        </Card>
-      </div>
+      {/* ── DEPT HEAD — department-centric view ──────────────────────── */}
+      {mode === "dept_head" && (
+        <>
+          <div className={kpiGrid}>
+            <KpiCard eyebrow="Open CAPAs" metric={stats.openCapas} caption="Across your departments" to="/capa" />
+            <KpiCard eyebrow="Overdue CAPAs" metric={stats.overdueCapas} caption="Past target closure date" to="/capa" gradientBorder />
+            <KpiCard eyebrow="Effectiveness rate" metric={`${stats.effectivenessRate}%`} caption="Verified CAPA effectiveness" to="/capa" />
+          </div>
+          <div className="grid grid-cols-1 gap-3.5">
+            <Card eyebrow="Departments" title="Completion heatmap" subtitle="CAPA closure rate by department — your responsibility areas highlighted">
+              <DeptHeatmap />
+            </Card>
+          </div>
+          <div className={twoCol}>
+            <Card eyebrow="Trend" title="Finding trend" subtitle="Total findings per month — last 12 months">
+              <FindingTrendChart />
+            </Card>
+            <Card eyebrow="Root cause" title="Top root cause categories" subtitle="Occurrences this period">
+              <RootCauseBarChart />
+            </Card>
+          </div>
+        </>
+      )}
 
-      {/* ── ROW 3 — Root cause bar + Dept heatmap ────────────────────────── */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 360px), 1fr))",
-          gap: "14px",
-        }}
-      >
-        <Card
-          eyebrow="Root cause"
-          title="Top root cause categories"
-          subtitle="Occurrences this period — orange band indicates recurring pattern"
-        >
-          <RootCauseBarChart />
-        </Card>
+      {/* ── OPERATOR — personal activity view ────────────────────────── */}
+      {mode === "operator" && (
+        <>
+          <div className={cn(kpiGrid, "max-w-lg")}>
+            <KpiCard eyebrow="Open CAPAs" metric={2} caption="Assigned to you" to="/capa" />
+            <KpiCard eyebrow="Due this week" metric={1} caption="Upcoming deadlines" to="/" />
+          </div>
+          <div className={twoCol}>
+            <Card eyebrow="Department" title="Fill-Finish completion" subtitle="CAPA closure status for your department">
+              <MyDeptSummary department={persona.department} />
+            </Card>
+            <Card eyebrow="Recent" title="Latest findings" subtitle="Most recently reported in your area">
+              <LatestFindingsList limit={4} />
+            </Card>
+          </div>
+          <div className="grid grid-cols-1 gap-3.5">
+            <Card eyebrow="Overview" title="Finding trend" subtitle="Total findings per month — last 12 months">
+              <FindingTrendChart />
+            </Card>
+          </div>
+        </>
+      )}
 
-        <Card
-          eyebrow="Departments"
-          title="Completion heatmap"
-          subtitle="CAPA closure rate by department"
-        >
-          <DeptHeatmap />
-        </Card>
-      </div>
+      {/* ── EXPERT (SME) — root cause & recurrence focus ─────────────── */}
+      {mode === "expert" && (
+        <>
+          <div className={cn(kpiGrid, "max-w-lg")}>
+            <KpiCard eyebrow="Findings MTD" metric={stats.totalFindingsMTD} caption="Across all types" to="/findings" />
+            <KpiCard eyebrow="Effectiveness rate" metric={`${stats.effectivenessRate}%`} caption="Verified CAPA effectiveness" to="/capa" />
+          </div>
+          <div className={twoCol}>
+            <Card eyebrow="Root cause" title="Top root cause categories" subtitle="Occurrences this period — orange band indicates recurring pattern">
+              <RootCauseBarChart />
+            </Card>
+            <Card eyebrow="Breakdown" title="Breakdown by type" subtitle="Distribution of open findings by source">
+              <TypeDonutChart />
+            </Card>
+          </div>
+          <div className="grid grid-cols-1 gap-3.5">
+            <Card eyebrow="Recurrence" title="Recurrence trend" subtitle="New findings vs recurrences per month — last 12 months">
+              <RecurrenceTrendChart />
+            </Card>
+          </div>
+        </>
+      )}
 
     </div>
   );

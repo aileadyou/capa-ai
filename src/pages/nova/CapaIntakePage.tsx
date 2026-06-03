@@ -7,6 +7,7 @@ import { useCapaStore } from "@/store";
 import type { CAPAType, GateQuestionID, ImpactClassification, PreFillContext, Severity } from "@/types";
 import { computeIntakeScore, getPrefillSummary, getSuggestedTitle } from "@/utils/intakeHelpers";
 import { formatDateTime } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
 
 // ── Static config ─────────────────────────────────────────────────────────────
 
@@ -17,10 +18,9 @@ const SOURCE_CARDS = [
     sourceId: "DEV-2026-0341",
     badge: "Deviation",
     description: "Environmental monitoring, process deviation, batch issue",
-    color: "var(--accent)",
-    softBg: "var(--accent-soft)",
-    softBorder: "var(--accent-line)",
-    selectedBg: "var(--accent-soft)",
+    badgeClass: "bg-[var(--accent-soft)] text-primary",
+    selectedBorderClass: "border-[var(--accent-line)]",
+    selectedButtonClass: "border-[var(--accent-line)] bg-[var(--accent-soft)] text-primary",
   },
   {
     type: "audit" as CAPAType,
@@ -28,10 +28,9 @@ const SOURCE_CARDS = [
     sourceId: "AUD-2026-0089",
     badge: "Audit finding",
     description: "Internal audit, regulatory inspection, compliance gap",
-    color: "var(--success)",
-    softBg: "var(--success-soft)",
-    softBorder: "color-mix(in srgb, var(--success) 38%, transparent)",
-    selectedBg: "var(--success-soft)",
+    badgeClass: "bg-[var(--success-soft)] text-success",
+    selectedBorderClass: "border-success/40",
+    selectedButtonClass: "border-success/40 bg-[var(--success-soft)] text-success",
   },
   {
     type: "complaint" as CAPAType,
@@ -39,10 +38,9 @@ const SOURCE_CARDS = [
     sourceId: "CMP-2026-0112",
     badge: "Complaint",
     description: "Customer complaint, adverse event, field quality report",
-    color: "var(--warning)",
-    softBg: "var(--warning-soft)",
-    softBorder: "color-mix(in srgb, var(--warning) 38%, transparent)",
-    selectedBg: "var(--warning-soft)",
+    badgeClass: "bg-[var(--warning-soft)] text-warning",
+    selectedBorderClass: "border-warning/40",
+    selectedButtonClass: "border-warning/40 bg-[var(--warning-soft)] text-warning",
   },
 ] as const;
 
@@ -94,41 +92,44 @@ const SEVERITY_OPTIONS: Array<{
   value: Severity;
   label: string;
   description: string;
-  color: string;
-  softBg: string;
-  softBorder: string;
+  toneClass: string;
+  selectedClass: string;
+  radioClass: string;
   weight: string;
 }> = [
   {
     value: "Minor",
     label: "Minor",
     description: "Limited product impact. No direct patient risk. Correctable at site level without regulatory notification.",
-    color: "var(--warning)",
-    softBg: "var(--warning-soft)",
-    softBorder: "color-mix(in srgb, var(--warning) 38%, transparent)",
+    toneClass: "text-warning",
+    selectedClass: "border-warning/40 bg-[var(--warning-soft)]",
+    radioClass: "border-warning bg-warning",
     weight: "Low",
   },
   {
     value: "Major",
     label: "Major",
     description: "Significant process deviation or compliance gap. Potential product impact. Requires full CAPA investigation.",
-    color: "var(--danger)",
-    softBg: "var(--danger-soft)",
-    softBorder: "color-mix(in srgb, var(--danger) 38%, transparent)",
+    toneClass: "text-destructive",
+    selectedClass: "border-destructive/40 bg-[var(--danger-soft)]",
+    radioClass: "border-destructive bg-destructive",
     weight: "Medium",
   },
   {
     value: "Critical",
     label: "Critical",
     description: "Direct patient safety or regulatory risk. Immediate containment and escalation required. May trigger recall assessment.",
-    color: "var(--danger)",
-    softBg: "var(--danger-soft)",
-    softBorder: "color-mix(in srgb, var(--danger) 38%, transparent)",
+    toneClass: "text-destructive",
+    selectedClass: "border-destructive/40 bg-[var(--danger-soft)]",
+    radioClass: "border-destructive bg-destructive",
     weight: "High",
   },
 ];
 
 const STEP_LABELS = ["Source import", "Gate questions", "Impact assessment", "Review & submit"];
+const STEP_EYEBROW_CLASS = "mb-1 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint";
+const STEP_TITLE_CLASS = "mb-1.5 mt-0 font-sans text-[17px] font-bold text-foreground";
+const STEP_COPY_CLASS = "font-sans text-[13px] text-foreground-tertiary";
 
 // ── Helper functions ──────────────────────────────────────────────────────────
 
@@ -137,7 +138,7 @@ function isCAPAType(value: string | null): value is CAPAType {
 }
 
 function getPrefillSource(prefill: PreFillContext) {
-  if (prefill.source === "Bizzmine-Complaint") return "Bizzmine Complaint";
+  if (prefill.source === "Bizzmine-Complaint") return "Bizzmine";
   return prefill.source;
 }
 
@@ -145,41 +146,31 @@ function getPrefillSource(prefill: PreFillContext) {
 
 function StepIndicator({ current }: { current: number }) {
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "center" }}>
+    <div className="flex items-start justify-center">
       {STEP_LABELS.map((label, i) => {
         const stepNum = i + 1;
         const isDone = stepNum < current;
         const isActive = stepNum === current;
 
         return (
-          <div key={label} style={{ display: "flex", alignItems: "flex-start", flex: i < STEP_LABELS.length - 1 ? 1 : "none" }}>
+          <div key={label} className={cn("flex items-start", i < STEP_LABELS.length - 1 && "flex-1")}>
             {/* Step node */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <div className="flex shrink-0 flex-col items-center gap-2">
               {/* Circle */}
               <div
-                style={{
-                  width: "30px",
-                  height: "30px",
-                  borderRadius: "50%",
-                  background: isDone || isActive ? "var(--grad-brand)" : "var(--bg-4)",
-                  border: isDone || isActive ? "none" : "1px solid var(--line-2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  transition: "background 0.3s",
-                }}
+                className={cn(
+                  "flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full transition-[background] duration-300",
+                  isDone || isActive ? "border-0 bg-[image:var(--grad-brand)]" : "border border-[var(--line-2)] bg-field",
+                )}
               >
                 {isDone ? (
-                  <Check size={14} style={{ color: "var(--on-accent)" }} strokeWidth={2.5} />
+                  <Check size={14} className="text-primary-foreground" strokeWidth={2.5} />
                 ) : (
                   <span
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      fontFamily: "var(--font-mono)",
-                      color: isActive ? "var(--on-accent)" : "var(--fg-4)",
-                    }}
+                    className={cn(
+                      "font-sans text-xs font-bold",
+                      isActive ? "text-primary-foreground" : "text-foreground-faint",
+                    )}
                   >
                     {stepNum}
                   </span>
@@ -187,14 +178,10 @@ function StepIndicator({ current }: { current: number }) {
               </div>
               {/* Label */}
               <span
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "var(--font-sans)",
-                  fontWeight: isActive ? 600 : 400,
-                  color: isActive ? "var(--fg-1)" : isDone ? "var(--fg-2)" : "var(--fg-4)",
-                  textAlign: "center",
-                  whiteSpace: "nowrap",
-                }}
+                className={cn(
+                  "whitespace-nowrap text-center font-sans text-[11px]",
+                  isActive ? "font-semibold text-foreground" : isDone ? "font-normal text-foreground-secondary" : "font-normal text-foreground-faint",
+                )}
               >
                 {label}
               </span>
@@ -203,14 +190,10 @@ function StepIndicator({ current }: { current: number }) {
             {/* Connector line (not after last step) */}
             {i < STEP_LABELS.length - 1 && (
               <div
-                style={{
-                  flex: 1,
-                  height: "1px",
-                  marginTop: "14px",
-                  background: isDone ? "var(--accent)" : "var(--line-2)",
-                  minWidth: "32px",
-                  transition: "background 0.3s",
-                }}
+                className={cn(
+                  "mt-3.5 h-px min-w-8 flex-1 transition-[background] duration-300",
+                  isDone ? "bg-primary" : "bg-border",
+                )}
               />
             )}
           </div>
@@ -225,18 +208,11 @@ function StepIndicator({ current }: { current: number }) {
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
     <label
-      style={{
-        display: "block",
-        fontSize: "12px",
-        fontWeight: 600,
-        color: "var(--fg-2)",
-        marginBottom: "6px",
-        fontFamily: "var(--font-sans)",
-      }}
+      className="mb-1.5 block font-sans text-xs font-semibold text-foreground-secondary"
     >
       {children}
       {required && (
-        <span style={{ color: "var(--danger)", marginLeft: "3px" }}>*</span>
+        <span className="ml-[3px] text-destructive">*</span>
       )}
     </label>
   );
@@ -259,29 +235,7 @@ function StyledTextarea({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      style={{
-        width: "100%",
-        background: "var(--field-bg)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-sm)",
-        padding: "10px 12px",
-        fontSize: "13px",
-        lineHeight: "1.6",
-        color: "var(--fg-1)",
-        fontFamily: "var(--font-sans)",
-        resize: "vertical",
-        outline: "none",
-        boxSizing: "border-box",
-        transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
-      }}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = "var(--accent)";
-        e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = "var(--line-2)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
+      className="box-border w-full resize-y rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3 py-2.5 font-sans text-[13px] leading-[1.6] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
     />
   );
 }
@@ -291,26 +245,12 @@ function ReviewField({ label, value }: { label: string; value?: string | null })
   return (
     <div>
       <p
-        style={{
-          fontSize: "10px",
-          fontFamily: "var(--font-mono)",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--fg-4)",
-          margin: "0 0 4px",
-        }}
+        className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
       >
         {label}
       </p>
       <p
-        style={{
-          fontSize: "13px",
-          color: "var(--fg-1)",
-          margin: 0,
-          lineHeight: "1.55",
-          fontFamily: "var(--font-sans)",
-        }}
+        className="m-0 font-sans text-[13px] leading-[1.55] text-foreground"
       >
         {value}
       </p>
@@ -323,13 +263,7 @@ function ReviewField({ label, value }: { label: string; value?: string | null })
 function WizardCard({ children }: { children: React.ReactNode }) {
   return (
     <div
-      style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-lg)",
-        boxShadow: "var(--shadow-sm)",
-        padding: "32px",
-      }}
+      className="rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-8 shadow-sm"
     >
       {children}
     </div>
@@ -355,31 +289,12 @@ function NavButtons({
 }) {
   return (
     <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginTop: "28px",
-        paddingTop: "20px",
-        borderTop: "1px solid var(--line-1)",
-      }}
+      className="mt-7 flex items-center justify-between border-t border-border-subtle pt-5"
     >
       {step > 1 && onBack ? (
         <button
           onClick={onBack}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "transparent",
-            color: "var(--fg-3)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-sm)",
-            padding: "8px 16px",
-            fontSize: "13px",
-            cursor: "pointer",
-            fontFamily: "var(--font-sans)",
-          }}
+          className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-4 py-2 font-sans text-[13px] text-foreground-tertiary hover:bg-elevated hover:text-foreground-secondary"
         >
           <ArrowLeft size={13} />
           Back
@@ -391,27 +306,18 @@ function NavButtons({
       <button
         onClick={onNext}
         disabled={nextDisabled || isLoading}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          background: nextDisabled ? "var(--bg-4)" : "var(--grad-brand)",
-          color: nextDisabled ? "var(--fg-4)" : "var(--on-accent)",
-          border: "none",
-          borderRadius: "var(--r-sm)",
-          padding: "9px 20px",
-          fontSize: "13px",
-          fontWeight: 600,
-          cursor: nextDisabled || isLoading ? "not-allowed" : "pointer",
-          fontFamily: "var(--font-sans)",
-          letterSpacing: "0.01em",
-          opacity: nextDisabled ? 0.6 : 1,
-          transition: "opacity var(--dur-fast) var(--ease-out)",
-        }}
+        className={cn(
+          "flex items-center gap-1.5 rounded-[var(--r-sm)] border-0 px-5 py-[9px] font-sans text-[13px] font-semibold tracking-[0.01em] transition-opacity [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+          nextDisabled
+            ? "cursor-not-allowed bg-field text-foreground-faint opacity-60"
+            : isLoading
+              ? "cursor-not-allowed bg-[image:var(--grad-brand)] text-primary-foreground"
+              : "cursor-pointer bg-[image:var(--grad-brand)] text-primary-foreground",
+        )}
       >
         {isLoading ? (
           <>
-            <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+            <Loader2 size={14} className="animate-spin" />
             Importing…
           </>
         ) : (
@@ -546,45 +452,23 @@ export function CapaIntakePage() {
 
   return (
     <div
-      style={{
-        maxWidth: "720px",
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "28px",
-      }}
+      className="mx-auto flex max-w-[720px] flex-col gap-7"
     >
       {/* Page header */}
       <div>
         <Link
           to="/findings"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            fontSize: "12px",
-            color: "var(--fg-3)",
-            textDecoration: "none",
-            marginBottom: "10px",
-            fontFamily: "var(--font-sans)",
-          }}
+          className="mb-2.5 inline-flex items-center gap-[5px] font-sans text-xs text-foreground-tertiary no-underline hover:text-foreground-secondary"
         >
           <ArrowLeft size={13} />
           Back to findings
         </Link>
         <h1
-          style={{
-            fontSize: "22px",
-            fontWeight: 700,
-            color: "var(--fg-1)",
-            margin: "0 0 4px",
-            fontFamily: "var(--font-sans)",
-            letterSpacing: "-0.02em",
-          }}
+          className="mb-1 mt-0 font-sans text-[22px] font-bold tracking-[-0.02em] text-foreground"
         >
           New CAPA intake
         </h1>
-        <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+        <p className="m-0 font-sans text-[13px] text-foreground-tertiary">
           Import from source system, answer gate questions, and create an audit-ready CAPA workflow.
         </p>
       </div>
@@ -596,90 +480,51 @@ export function CapaIntakePage() {
       {step === 1 && (
         <WizardCard>
           <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 4px",
-            }}
+            className={STEP_EYEBROW_CLASS}
           >
             Step 1
           </p>
           <h2
-            style={{
-              fontSize: "17px",
-              fontWeight: 700,
-              color: "var(--fg-1)",
-              margin: "0 0 6px",
-              fontFamily: "var(--font-sans)",
-            }}
+            className={STEP_TITLE_CLASS}
           >
             Source import
           </h2>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: "0 0 24px", fontFamily: "var(--font-sans)" }}>
+          <p className={cn(STEP_COPY_CLASS, "mb-6 mt-0")}>
             Select a connected source system to auto-populate source data, or fill manually.
           </p>
 
           {/* Source system cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "12px" }}>
-            {SOURCE_CARDS.map((card) => (
+          <div className="mb-3 grid grid-cols-3 gap-3">
+            {SOURCE_CARDS.map((card) => {
+              const isImported = selectedType === card.type && Boolean(prefill);
+              return (
               <div
                 key={card.type}
-                style={{
-                  background: "var(--bg-3)",
-                  border: `1px solid ${selectedType === card.type && prefill ? card.softBorder : "var(--line-2)"}`,
-                  borderRadius: "var(--r-md)",
-                  padding: "16px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                  transition: "border-color var(--dur-fast) var(--ease-out)",
-                }}
+                className={cn(
+                  "flex flex-col gap-2.5 rounded-[var(--r-md)] border bg-elevated p-4 transition-[border-color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+                  isImported ? card.selectedBorderClass : "border-[var(--line-2)]",
+                )}
               >
                 {/* System header */}
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                <div className="flex items-start justify-between">
                   <div>
                     <p
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "var(--fg-1)",
-                        margin: "0 0 2px",
-                        fontFamily: "var(--font-sans)",
-                      }}
+                      className="mb-0.5 mt-0 font-sans text-sm font-bold text-foreground"
                     >
                       {card.system}
                     </p>
                     <span
-                      style={{
-                        display: "inline-block",
-                        fontSize: "10px",
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: 600,
-                        color: card.color,
-                        background: card.softBg,
-                        padding: "1px 6px",
-                        borderRadius: "var(--r-full)",
-                        letterSpacing: "0.18em",
-                      }}
+                      className={cn(
+                        "inline-block rounded-[var(--r-full)] px-1.5 py-px font-sans text-[10px] font-semibold tracking-[0.18em]",
+                        card.badgeClass,
+                      )}
                     >
                       {card.badge}
                     </span>
                   </div>
                   {/* Connected badge */}
                   <span
-                    style={{
-                      fontSize: "10px",
-                      fontFamily: "var(--font-mono)",
-                      color: "var(--success)",
-                      background: "var(--success-soft)",
-                      padding: "2px 7px",
-                      borderRadius: "var(--r-full)",
-                      fontWeight: 600,
-                    }}
+                    className="rounded-[var(--r-full)] bg-[var(--success-soft)] px-[7px] py-0.5 font-sans text-[10px] font-semibold text-success"
                   >
                     Connected
                   </span>
@@ -687,22 +532,13 @@ export function CapaIntakePage() {
 
                 {/* Source ID */}
                 <p
-                  style={{
-                    fontSize: "11px",
-                    fontFamily: "var(--font-mono)",
-                    color: "var(--fg-3)",
-                    margin: 0,
-                    background: "var(--field-bg)",
-                    padding: "4px 8px",
-                    borderRadius: "var(--r-sm)",
-                    border: "1px solid var(--line-1)",
-                  }}
+                  className="m-0 rounded-[var(--r-sm)] border border-border-subtle bg-[var(--field-bg)] px-2 py-1 font-sans text-[11px] text-foreground-tertiary"
                 >
                   {card.sourceId}
                 </p>
 
                 {/* Description */}
-                <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)", lineHeight: "1.4" }}>
+                <p className="m-0 font-sans text-[11px] leading-[1.4] text-foreground-faint">
                   {card.description}
                 </p>
 
@@ -710,28 +546,15 @@ export function CapaIntakePage() {
                 <button
                   onClick={() => handleImport(card.type, card.sourceId)}
                   disabled={isLoading}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "5px",
-                    background: selectedType === card.type && prefill ? card.selectedBg : "var(--bg-4)",
-                    color: selectedType === card.type && prefill ? card.color : "var(--fg-2)",
-                    border: `1px solid ${selectedType === card.type && prefill ? card.softBorder : "var(--line-2)"}`,
-                    borderRadius: "var(--r-sm)",
-                    padding: "7px 0",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    cursor: isLoading ? "wait" : "pointer",
-                    fontFamily: "var(--font-sans)",
-                    marginTop: "auto",
-                    width: "100%",
-                    transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out)",
-                  }}
+                  className={cn(
+                    "mt-auto flex w-full items-center justify-center gap-[5px] rounded-[var(--r-sm)] border px-0 py-[7px] font-sans text-xs font-semibold transition-[background,border-color,color,filter] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+                    isLoading ? "cursor-wait" : "cursor-pointer",
+                    isImported ? card.selectedButtonClass : "border-[var(--line-2)] bg-field text-foreground-secondary",
+                  )}
                 >
                   {isLoading && selectedType === card.type ? (
                     <>
-                      <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                      <Loader2 size={12} className="animate-spin" />
                       Importing…
                     </>
                   ) : selectedType === card.type && prefill ? (
@@ -747,27 +570,13 @@ export function CapaIntakePage() {
                   )}
                 </button>
               </div>
-            ))}
+            )})}
           </div>
 
           {/* Manual option */}
           <button
             onClick={handleManualMode}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              gap: "8px",
-              background: "transparent",
-              color: "var(--fg-3)",
-              border: "1px dashed var(--line-2)",
-              borderRadius: "var(--r-md)",
-              padding: "12px",
-              fontSize: "13px",
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-            }}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[var(--r-md)] border border-dashed border-[var(--line-2)] bg-transparent p-3 font-sans text-[13px] text-foreground-tertiary hover:bg-elevated hover:text-foreground-secondary"
           >
             Fill manually without source import
             <ArrowRight size={13} />
@@ -775,18 +584,9 @@ export function CapaIntakePage() {
 
           {existingFinding?.linkedCapaId && (
             <div
-              style={{
-                marginTop: "16px",
-                padding: "10px 14px",
-                background: "var(--accent-soft)",
-                border: "1px solid var(--accent-line)",
-                borderRadius: "var(--r-sm)",
-                fontSize: "12px",
-                color: "var(--accent)",
-                fontFamily: "var(--font-sans)",
-              }}
+              className="mt-4 rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3.5 py-2.5 font-sans text-xs text-primary"
             >
-              <Sparkles size={12} style={{ display: "inline", marginRight: "6px" }} />
+              <Sparkles size={12} className="mr-1.5 inline" />
               This finding is already linked to {existingFinding.linkedCapaId}. Submitting will open the existing CAPA.
             </div>
           )}
@@ -797,58 +597,36 @@ export function CapaIntakePage() {
       {step === 2 && (
         <WizardCard>
           <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 4px",
-            }}
+            className={STEP_EYEBROW_CLASS}
           >
             Step 2
           </p>
           <h2
-            style={{
-              fontSize: "17px",
-              fontWeight: 700,
-              color: "var(--fg-1)",
-              margin: "0 0 6px",
-              fontFamily: "var(--font-sans)",
-            }}
+            className={STEP_TITLE_CLASS}
           >
             Gate questions
           </h2>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: "0 0 20px", fontFamily: "var(--font-sans)" }}>
+          <p className={cn(STEP_COPY_CLASS, "mb-5 mt-0")}>
             Answer questions to help Nova assess severity and scope. Be specific: include dates, batch numbers, and measurable observations.
           </p>
 
           {/* Nova tip */}
           <div
-            style={{
-              background: "var(--bg-3)",
-              borderLeft: "3px solid var(--accent)",
-              borderRadius: "var(--r-md)",
-              padding: "12px 16px",
-              marginBottom: "24px",
-              display: "flex",
-              gap: "10px",
-            }}
+            className="mb-6 flex gap-2.5 rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3"
           >
-            <Sparkles size={14} style={{ color: "var(--accent)", flexShrink: 0, marginTop: "1px" }} />
+            <Sparkles size={14} className="mt-px shrink-0 text-primary" />
             <div>
-              <p style={{ fontSize: "12px", fontWeight: 600, color: "var(--accent)", margin: "0 0 3px", fontFamily: "var(--font-sans)" }}>
+              <p className="mb-[3px] mt-0 font-sans text-xs font-semibold text-primary">
                 Nova tip
               </p>
-              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)", lineHeight: "1.55" }}>
+              <p className="m-0 font-sans text-xs leading-[1.55] text-foreground-tertiary">
                 Be specific about dates, batch numbers, and measurable observations. Vague answers will lower your quality score and may delay CAPA approval.
               </p>
             </div>
           </div>
 
           {/* Required questions */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          <div className="flex flex-col gap-[18px]">
             {GATE_QUESTIONS.filter((q) => q.required).map((q) => (
               <div key={q.id}>
                 <FieldLabel required>{q.question}</FieldLabel>
@@ -863,25 +641,14 @@ export function CapaIntakePage() {
 
             {/* Additional context */}
             <div
-              style={{
-                paddingTop: "18px",
-                borderTop: "1px solid var(--line-1)",
-              }}
+              className="border-t border-border-subtle pt-[18px]"
             >
               <p
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "var(--font-mono)",
-                  fontWeight: 600,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "var(--fg-4)",
-                  margin: "0 0 16px",
-                }}
+                className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
               >
                 Additional context (recommended)
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div className="flex flex-col gap-3.5">
                 {GATE_QUESTIONS.filter((q) => !q.required).map((q) => (
                   <div key={q.id}>
                     <FieldLabel>{q.question}</FieldLabel>
@@ -918,88 +685,59 @@ export function CapaIntakePage() {
       {step === 3 && (
         <WizardCard>
           <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 4px",
-            }}
+            className={STEP_EYEBROW_CLASS}
           >
             Step 3
           </p>
           <h2
-            style={{
-              fontSize: "17px",
-              fontWeight: 700,
-              color: "var(--fg-1)",
-              margin: "0 0 6px",
-              fontFamily: "var(--font-sans)",
-            }}
+            className={STEP_TITLE_CLASS}
           >
             Impact assessment
           </h2>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: "0 0 24px", fontFamily: "var(--font-sans)" }}>
+          <p className={cn(STEP_COPY_CLASS, "mb-6 mt-0")}>
             Select a severity level. Nova's recommendation is pre-filled if you imported source data.
           </p>
 
           {/* Nova AI assessment */}
           {impactClassification ? (
             <div
-              style={{
-                background: "var(--bg-3)",
-                borderLeft: "3px solid var(--accent)",
-                borderRadius: "var(--r-md)",
-                padding: "14px 16px",
-                marginBottom: "24px",
-              }}
+              className="mb-6 rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3.5"
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                <Sparkles size={13} style={{ color: "var(--accent)" }} />
-                <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--accent)", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+              <div className="mb-2 flex items-center gap-2">
+                <Sparkles size={13} className="text-primary" />
+                <span className="font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                   Nova assessment
                 </span>
                 <span
-                  style={{
-                    fontSize: "11px",
-                    fontFamily: "var(--font-mono)",
-                    fontWeight: 700,
-                    color: impactClassification.severity === "Minor" ? "var(--warning)" : "var(--danger)",
-                    background: impactClassification.severity === "Minor" ? "var(--warning-soft)" : "var(--danger-soft)",
-                    padding: "1px 8px",
-                    borderRadius: "var(--r-full)",
-                    marginLeft: "4px",
-                  }}
+                  className={cn(
+                    "ml-1 rounded-[var(--r-full)] px-2 py-px font-sans text-[11px] font-bold",
+                    impactClassification.severity === "Minor"
+                      ? "bg-[var(--warning-soft)] text-warning"
+                      : "bg-[var(--danger-soft)] text-destructive",
+                  )}
                 >
                   {impactClassification.severity}
                 </span>
-                <span style={{ fontSize: "11px", color: "var(--fg-3)", marginLeft: "auto", fontFamily: "var(--font-mono)" }}>
+                <span className="ml-auto font-sans text-[11px] text-foreground-tertiary">
                   {Math.round(impactClassification.totalWeight)}% confidence
                 </span>
               </div>
-              <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: "0 0 10px", fontFamily: "var(--font-sans)", lineHeight: "1.55" }}>
+              <p className="mb-2.5 mt-0 font-sans text-xs leading-[1.55] text-foreground-secondary">
                 {impactClassification.rationale}
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+              <div className="grid grid-cols-3 gap-2">
                 {impactClassification.factors.map((factor) => (
                   <div
                     key={factor.factor}
-                    style={{
-                      background: "var(--field-bg)",
-                      borderRadius: "var(--r-sm)",
-                      padding: "8px 10px",
-                      border: "1px solid var(--line-1)",
-                    }}
+                    className="rounded-[var(--r-sm)] border border-border-subtle bg-[var(--field-bg)] px-2.5 py-2"
                   >
-                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", margin: "0 0 3px", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] uppercase tracking-[0.18em] text-foreground-tertiary">
                       {factor.factor}
                     </p>
-                    <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: "0 0 4px", fontFamily: "var(--font-sans)" }}>
+                    <p className="mb-1 mt-0 font-sans text-xs text-foreground-secondary">
                       {factor.value}
                     </p>
-                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--accent)", margin: 0 }}>
+                    <p className="m-0 font-sans text-[10px] text-primary">
                       Weight {factor.weight}
                     </p>
                   </div>
@@ -1008,18 +746,10 @@ export function CapaIntakePage() {
             </div>
           ) : (
             <div
-              style={{
-                background: "var(--bg-3)",
-                border: "1px solid var(--line-1)",
-                borderRadius: "var(--r-md)",
-                padding: "12px 16px",
-                marginBottom: "24px",
-                display: "flex",
-                gap: "10px",
-              }}
+              className="mb-6 flex gap-2.5 rounded-[var(--r-md)] border border-border-subtle bg-elevated px-4 py-3"
             >
-              <Sparkles size={13} style={{ color: "var(--fg-4)", flexShrink: 0, marginTop: "1px" }} />
-              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+              <Sparkles size={13} className="mt-px shrink-0 text-foreground-faint" />
+              <p className="m-0 font-sans text-xs text-foreground-tertiary">
                 No source data was imported. Select a severity level manually based on your assessment.
               </p>
             </div>
@@ -1027,17 +757,11 @@ export function CapaIntakePage() {
 
           {/* Severity cards */}
           <p
-            style={{
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "var(--fg-2)",
-              margin: "0 0 10px",
-              fontFamily: "var(--font-sans)",
-            }}
+            className="mb-2.5 mt-0 font-sans text-xs font-semibold text-foreground-secondary"
           >
-            Severity classification <span style={{ color: "var(--danger)" }}>*</span>
+            Severity classification <span className="text-destructive">*</span>
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "24px" }}>
+          <div className="mb-6 grid grid-cols-3 gap-2.5">
             {SEVERITY_OPTIONS.map((opt) => {
               const isSelected = selectedSeverity === opt.value;
               const isNova = impactClassification?.severity === opt.value;
@@ -1045,68 +769,38 @@ export function CapaIntakePage() {
                 <button
                   key={opt.value}
                   onClick={() => setSelectedSeverity(opt.value)}
-                  style={{
-                    textAlign: "left",
-                    background: isSelected ? opt.softBg : "var(--bg-3)",
-                    border: `1px solid ${isSelected ? opt.softBorder : "var(--line-2)"}`,
-                    borderRadius: "var(--r-md)",
-                    padding: "14px",
-                    cursor: "pointer",
-                    transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
-                    position: "relative",
-                  }}
+                  className={cn(
+                    "relative cursor-pointer rounded-[var(--r-md)] border p-3.5 text-left transition-[background,border-color,color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+                    isSelected ? opt.selectedClass : "border-[var(--line-2)] bg-elevated",
+                  )}
                 >
                   {/* Nova recommendation badge */}
                   {isNova && (
                     <span
-                      style={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "8px",
-                        fontSize: "9px",
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: 600,
-                        color: "var(--accent)",
-                        background: "var(--accent-soft)",
-                        padding: "1px 5px",
-                        borderRadius: "var(--r-full)",
-                        letterSpacing: "0.18em",
-                      }}
+                      className="absolute right-2 top-2 rounded-[var(--r-full)] bg-[var(--accent-soft)] px-[5px] py-px font-sans text-[9px] font-semibold tracking-[0.18em] text-primary"
                     >
                       Nova
                     </span>
                   )}
                   {/* Radio indicator */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                  <div className="mb-2 flex items-center gap-2">
                     <div
-                      style={{
-                        width: "16px",
-                        height: "16px",
-                        borderRadius: "50%",
-                        border: `2px solid ${isSelected ? opt.color : "var(--line-3)"}`,
-                        background: isSelected ? opt.color : "transparent",
-                        flexShrink: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
+                      className={cn(
+                        "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2",
+                        isSelected ? opt.radioClass : "border-[var(--line-3)] bg-transparent",
+                      )}
                     >
                       {isSelected && (
-                        <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--on-accent)" }} />
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
                       )}
                     </div>
                     <span
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 700,
-                        color: isSelected ? opt.color : "var(--fg-2)",
-                        fontFamily: "var(--font-sans)",
-                      }}
+                      className={cn("font-sans text-[13px] font-bold", isSelected ? opt.toneClass : "text-foreground-secondary")}
                     >
                       {opt.label}
                     </span>
                   </div>
-                  <p style={{ fontSize: "11px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)", lineHeight: "1.45" }}>
+                  <p className="m-0 font-sans text-[11px] leading-[1.45] text-foreground-tertiary">
                     {opt.description}
                   </p>
                 </button>
@@ -1122,27 +816,7 @@ export function CapaIntakePage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter a descriptive title for this CAPA"
-              style={{
-                width: "100%",
-                background: "var(--field-bg)",
-                border: "1px solid var(--line-2)",
-                borderRadius: "var(--r-sm)",
-                padding: "9px 12px",
-                fontSize: "13px",
-                color: "var(--fg-1)",
-                fontFamily: "var(--font-sans)",
-                outline: "none",
-                boxSizing: "border-box",
-                transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--accent)";
-                e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--line-2)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
+              className="box-border w-full rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3 py-[9px] font-sans text-[13px] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
             />
           </div>
 
@@ -1166,67 +840,32 @@ export function CapaIntakePage() {
       {/* ── Step 4: Review & Submit ────────────────────────────────────────── */}
       {step === 4 && (
         <WizardCard>
-          <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 4px",
-            }}
-          >
+          <p className={STEP_EYEBROW_CLASS}>
             Step 4
           </p>
-          <h2
-            style={{
-              fontSize: "17px",
-              fontWeight: 700,
-              color: "var(--fg-1)",
-              margin: "0 0 6px",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
+          <h2 className={STEP_TITLE_CLASS}>
             Review & submit
           </h2>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: "0 0 24px", fontFamily: "var(--font-sans)" }}>
+          <p className={cn(STEP_COPY_CLASS, "mb-6 mt-0")}>
             Review the CAPA details before submitting. This will create the CAPA and open the 8D workflow.
           </p>
 
           {/* Summary cards */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div className="flex flex-col gap-4">
 
             {/* Source summary */}
-            <div
-              style={{
-                background: "var(--bg-3)",
-                border: "1px solid var(--line-1)",
-                borderRadius: "var(--r-md)",
-                padding: "16px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "var(--font-mono)",
-                  fontWeight: 600,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "var(--fg-4)",
-                  margin: "0 0 12px",
-                }}
-              >
+            <div className="rounded-[var(--r-md)] border border-border-subtle bg-elevated p-4">
+              <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
                 Source data
               </p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-2 gap-3">
                 <ReviewField label="CAPA type" value={selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} />
                 <ReviewField label="Source ID" value={sourceId} />
                 <ReviewField label="System" value={prefill ? getPrefillSource(prefill) : "Manual entry"} />
                 <ReviewField label="Severity" value={selectedSeverity} />
               </div>
               {title && (
-                <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid var(--line-1)" }}>
+                <div className="mt-3 border-t border-border-subtle pt-3">
                   <ReviewField label="CAPA title" value={title} />
                 </div>
               )}
@@ -1234,28 +873,11 @@ export function CapaIntakePage() {
 
             {/* Imported source detail */}
             {prefill && (
-              <div
-                style={{
-                  background: "var(--bg-3)",
-                  border: "1px solid var(--line-1)",
-                  borderRadius: "var(--r-md)",
-                  padding: "16px",
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: "11px",
-                    fontFamily: "var(--font-mono)",
-                    fontWeight: 600,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    color: "var(--fg-4)",
-                    margin: "0 0 12px",
-                  }}
-                >
+              <div className="rounded-[var(--r-md)] border border-border-subtle bg-elevated p-4">
+                <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
                   Imported from {getPrefillSource(prefill)}
                 </p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div className="grid grid-cols-2 gap-2.5">
                   {getPrefillSummary(prefill).slice(0, 6).map(([label, value]) => (
                     <ReviewField key={label} label={label} value={value} />
                   ))}
@@ -1264,33 +886,16 @@ export function CapaIntakePage() {
             )}
 
             {/* Gate answers */}
-            <div
-              style={{
-                background: "var(--bg-3)",
-                border: "1px solid var(--line-1)",
-                borderRadius: "var(--r-md)",
-                padding: "16px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "var(--font-mono)",
-                  fontWeight: 600,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "var(--fg-4)",
-                  margin: "0 0 12px",
-                }}
-              >
+            <div className="rounded-[var(--r-md)] border border-border-subtle bg-elevated p-4">
+              <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
                 Gate questions
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="flex flex-col gap-2.5">
                 {GATE_QUESTIONS.filter((q) => gateAnswers[q.id].trim()).map((q) => (
                   <ReviewField key={q.id} label={q.question} value={gateAnswers[q.id]} />
                 ))}
                 {!Object.values(gateAnswers).some((v) => v.trim()) && (
-                  <p style={{ fontSize: "12px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                  <p className="m-0 font-sans text-xs text-foreground-faint">
                     No answers provided.
                   </p>
                 )}
@@ -1298,28 +903,11 @@ export function CapaIntakePage() {
             </div>
 
             {/* Readiness checklist */}
-            <div
-              style={{
-                background: "var(--bg-3)",
-                border: "1px solid var(--line-1)",
-                borderRadius: "var(--r-md)",
-                padding: "16px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "var(--font-mono)",
-                  fontWeight: 600,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "var(--fg-4)",
-                  margin: "0 0 12px",
-                }}
-              >
+            <div className="rounded-[var(--r-md)] border border-border-subtle bg-elevated p-4">
+              <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
                 Readiness check
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <div className="flex flex-col gap-2">
                 {[
                   { label: "Source imported or manual mode selected", passed: Boolean(prefill) || manualMode },
                   { label: "Gate questions answered", passed: gateAnswers.observation.trim().length >= 20 },
@@ -1327,18 +915,12 @@ export function CapaIntakePage() {
                   { label: "CAPA title provided", passed: title.trim().length >= 10 },
                   { label: "Nova impact classification", passed: Boolean(impactClassification) },
                 ].map((item) => (
-                  <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div key={item.label} className="flex items-center gap-2">
                     <CheckCircle2
                       size={14}
-                      style={{ flexShrink: 0, color: item.passed ? "var(--success)" : "var(--fg-4)" }}
+                      className={cn("shrink-0", item.passed ? "text-success" : "text-foreground-faint")}
                     />
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        color: item.passed ? "var(--fg-2)" : "var(--fg-4)",
-                        fontFamily: "var(--font-sans)",
-                      }}
-                    >
+                    <span className={cn("font-sans text-xs", item.passed ? "text-foreground-secondary" : "text-foreground-faint")}>
                       {item.label}
                     </span>
                   </div>
@@ -1348,31 +930,10 @@ export function CapaIntakePage() {
           </div>
 
           {/* Submit / Back */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginTop: "28px",
-              paddingTop: "20px",
-              borderTop: "1px solid var(--line-1)",
-            }}
-          >
+          <div className="mt-7 flex items-center justify-between border-t border-border-subtle pt-5">
             <button
               onClick={() => setStep(3)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                background: "transparent",
-                color: "var(--fg-3)",
-                border: "1px solid var(--line-2)",
-                borderRadius: "var(--r-sm)",
-                padding: "8px 16px",
-                fontSize: "13px",
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-              }}
+              className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-4 py-2 font-sans text-[13px] text-foreground-tertiary hover:bg-elevated hover:text-foreground-secondary"
             >
               <ArrowLeft size={13} />
               Back
@@ -1380,21 +941,7 @@ export function CapaIntakePage() {
 
             <button
               onClick={handleSubmit}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                background: "var(--grad-brand)",
-                color: "var(--on-accent)",
-                border: "none",
-                borderRadius: "var(--r-sm)",
-                padding: "10px 28px",
-                fontSize: "14px",
-                fontWeight: 700,
-                cursor: "pointer",
-                fontFamily: "var(--font-sans)",
-                letterSpacing: "0.01em",
-              }}
+              className="flex cursor-pointer items-center gap-2 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-7 py-2.5 font-sans text-sm font-bold tracking-[0.01em] text-primary-foreground"
             >
               Submit CAPA
               <ArrowRight size={15} />

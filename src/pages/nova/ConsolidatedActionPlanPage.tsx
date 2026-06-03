@@ -15,6 +15,7 @@ import type { ActionStatus, CorrectiveAction, PreventiveAction } from "@/types";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { formatDate } from "@/utils/formatters";
 import { FilterSelect } from "@/components/shared/FilterControls";
+import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -79,9 +80,9 @@ function groupActions(actions: UnifiedAction[], mode: GroupMode): ActionGroup[] 
 }
 
 function riskColor(priority: RiskPriority): string {
-  if (priority === "High") return "var(--danger)";
-  if (priority === "Medium") return "var(--warning)";
-  return "var(--fg-3)";
+  if (priority === "High") return "text-destructive";
+  if (priority === "Medium") return "text-warning";
+  return "text-foreground-tertiary";
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -89,35 +90,15 @@ function riskColor(priority: RiskPriority): string {
 function KpiCard({ label, value, sub }: { label: string; value: number | string; sub?: React.ReactNode }) {
   return (
     <div
-      style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-lg)",
-        boxShadow: "var(--shadow-sm)",
-        padding: "16px 20px",
-      }}
+      className="rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-5 py-4 shadow-sm"
     >
       <div
-        style={{
-          fontSize: "11px",
-          fontFamily: "var(--font-mono)",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--fg-3)",
-          marginBottom: "6px",
-        }}
+        className="mb-1.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
       >
         {label}
       </div>
       <div
-        style={{
-          fontSize: "28px",
-          fontWeight: 700,
-          fontFamily: "var(--font-mono)",
-          color: "var(--fg-1)",
-          letterSpacing: "-0.02em",
-        }}
+        className="font-sans text-[28px] font-bold tracking-[-0.02em] text-foreground"
       >
         {value}
       </div>
@@ -130,17 +111,10 @@ function KindBadge({ kind }: { kind: "CA" | "PA" }) {
   const isCA = kind === "CA";
   return (
     <span
-      style={{
-        display: "inline-block",
-        padding: "2px 7px",
-        borderRadius: "4px",
-        fontSize: "10px",
-        fontWeight: 700,
-        fontFamily: "var(--font-mono)",
-        letterSpacing: "0.18em",
-        background: isCA ? "var(--accent-soft)" : "var(--success-soft)",
-        color: isCA ? "var(--accent)" : "var(--success)",
-      }}
+      className={cn(
+        "inline-block rounded px-[7px] py-0.5 font-sans text-[10px] font-bold tracking-[0.18em]",
+        isCA ? "bg-[var(--accent-soft)] text-primary" : "bg-[var(--success-soft)] text-success",
+      )}
     >
       {kind}
     </span>
@@ -149,14 +123,14 @@ function KindBadge({ kind }: { kind: "CA" | "PA" }) {
 
 function ProgressBar({ value }: { value: number }) {
   return (
-    <div style={{ background: "var(--bg-4)", borderRadius: "3px", height: "6px", overflow: "hidden" }}>
+    <div className="h-1.5 overflow-hidden rounded-[3px] bg-field">
       <div
+        className={cn(
+          "h-full rounded-[3px] transition-[width] duration-500 ease-out",
+          value >= 80 ? "bg-success" : value >= 50 ? "bg-warning" : "bg-primary",
+        )}
         style={{
           width: `${value}%`,
-          height: "100%",
-          background: value >= 80 ? "var(--success)" : value >= 50 ? "var(--warning)" : "var(--accent)",
-          borderRadius: "3px",
-          transition: "width 500ms var(--ease-out)",
         }}
       />
     </div>
@@ -235,45 +209,23 @@ export function ConsolidatedActionPlanPage() {
   }
 
   return (
-    <div className="animate-page-enter" style={{ maxWidth: "1300px" }}>
+    <div className="animate-page-enter">
       {/* ── Header ────────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1
-            style={{
-              fontSize: "22px",
-              fontWeight: 600,
-              color: "var(--fg-1)",
-              fontFamily: "var(--font-sans)",
-              letterSpacing: "-0.02em",
-              margin: 0,
-            }}
+            className="m-0 font-sans text-[22px] font-semibold tracking-[-0.02em] text-foreground"
           >
             Consolidated action plan
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", marginTop: "6px", maxWidth: "600px", lineHeight: "1.5" }}>
+          <p className="mt-1.5 max-w-[600px] font-sans text-[13px] leading-6 text-foreground-tertiary">
             Management overview of corrective and preventive actions across all CAPAs, grouped by recurring root cause, department, or risk priority.
           </p>
         </div>
-        <div style={{ display: "flex", gap: "8px" }}>
+        <div className="flex gap-2">
           <button
             onClick={handleExport}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 14px",
-              background: "var(--bg-3)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-sm)",
-              color: "var(--fg-2)",
-              fontSize: "13px",
-              fontFamily: "var(--font-sans)",
-              cursor: "pointer",
-              transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-3)"; e.currentTarget.style.background = "var(--bg-4)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.background = "var(--bg-3)"; }}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-3.5 py-2 font-sans text-[13px] text-foreground-secondary transition-[border-color,background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:bg-field"
           >
             <Download size={14} strokeWidth={1.75} />
             Export Excel
@@ -281,26 +233,15 @@ export function ConsolidatedActionPlanPage() {
           <button
             onClick={runClustering}
             disabled={isClustering}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              padding: "8px 16px",
-              background: isClustering ? "var(--bg-4)" : "var(--grad-brand)",
-              color: isClustering ? "var(--fg-3)" : "var(--on-accent)",
-              border: "none",
-              borderRadius: "var(--r-sm)",
-              fontSize: "13px",
-              fontWeight: 600,
-              fontFamily: "var(--font-sans)",
-              cursor: isClustering ? "not-allowed" : "pointer",
-              transition: "filter var(--dur-fast) var(--ease-out)",
-            }}
-            onMouseEnter={(e) => { if (!isClustering) e.currentTarget.style.filter = "brightness(1.1)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+            className={cn(
+              "inline-flex items-center gap-[7px] rounded-[var(--r-sm)] border-0 px-4 py-2 font-sans text-[13px] font-semibold transition-[filter] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+              isClustering
+                ? "cursor-not-allowed bg-field text-foreground-tertiary"
+                : "cursor-pointer bg-[image:var(--grad-brand)] text-primary-foreground hover:brightness-110",
+            )}
           >
             {isClustering ? (
-              <Loader2 size={14} strokeWidth={1.75} style={{ animation: "spin 1s linear infinite" }} />
+              <Loader2 size={14} strokeWidth={1.75} className="animate-spin" />
             ) : (
               <BrainCircuit size={14} strokeWidth={1.75} />
             )}
@@ -310,7 +251,7 @@ export function ConsolidatedActionPlanPage() {
       </div>
 
       {/* ── KPI row ───────────────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: "12px", marginBottom: "20px" }}>
+      <div className="mb-5 grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-3">
         <KpiCard label="Total actions" value={unifiedActions.length} />
         <KpiCard label="Corrective" value={correctiveActions.length} />
         <KpiCard label="Preventive" value={preventiveActions.length} />
@@ -323,18 +264,7 @@ export function ConsolidatedActionPlanPage() {
 
       {/* ── Group mode selector ───────────────────────────────────────── */}
       <div
-        style={{
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-lg)",
-          boxShadow: "var(--shadow-sm)",
-          padding: "16px 20px",
-          marginBottom: "20px",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
-          gap: "16px",
-          alignItems: "center",
-        }}
+        className="mb-5 grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] items-center gap-4 rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-5 py-4 shadow-sm"
       >
         <FilterSelect
           value={groupMode}
@@ -347,14 +277,7 @@ export function ConsolidatedActionPlanPage() {
           ]}
         />
         <div
-          style={{
-            background: "var(--bg-3)",
-            borderRadius: "var(--r-sm)",
-            padding: "10px 14px",
-            fontSize: "12px",
-            color: "var(--fg-3)",
-            lineHeight: "1.5",
-          }}
+          className="rounded-[var(--r-sm)] bg-elevated px-3.5 py-2.5 font-sans text-xs leading-6 text-foreground-tertiary"
         >
           {hasClustered
             ? "Nova clustering is active. Switch grouping modes to inspect management views."
@@ -365,26 +288,15 @@ export function ConsolidatedActionPlanPage() {
       {/* ── Loading ───────────────────────────────────────────────────── */}
       {isClustering && (
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "14px 20px",
-            background: "var(--bg-2)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-lg)",
-            marginBottom: "16px",
-            fontSize: "12px",
-            color: "var(--accent)",
-          }}
+          className="mb-4 flex items-center gap-2 rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-5 py-3.5 font-sans text-xs text-primary"
         >
-          <Loader2 size={14} strokeWidth={1.75} style={{ animation: "spin 1s linear infinite" }} />
+          <Loader2 size={14} strokeWidth={1.75} className="animate-spin" />
           Nova is clustering CA and PA records by recurring quality signals…
         </div>
       )}
 
       {/* ── Groups ────────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div className="flex flex-col gap-4">
         {groups.map((group) => {
           const progress = getGroupProgress(group.actions);
           const owners = Array.from(new Set(group.actions.map((a) => a.pic))).slice(0, 4);
@@ -392,67 +304,42 @@ export function ConsolidatedActionPlanPage() {
           return (
             <div
               key={group.id}
-              style={{
-                background: "var(--bg-2)",
-                border: "1px solid var(--line-2)",
-                borderRadius: "var(--r-lg)",
-                boxShadow: "var(--shadow-sm)",
-                overflow: "hidden",
-              }}
+              className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm"
             >
               {/* Group header */}
-              <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--line-1)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+              <div className="border-b border-border-subtle px-5 py-4">
+                <div className="mb-2.5 flex items-start justify-between">
                   <div>
-                    <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--fg-1)" }}>{group.title}</div>
-                    <div style={{ fontSize: "12px", color: "var(--fg-3)", marginTop: "3px" }}>
+                    <div className="font-sans text-[15px] font-semibold text-foreground">{group.title}</div>
+                    <div className="mt-[3px] font-sans text-xs text-foreground-tertiary">
                       PIC: {owners.join(", ") || "Unassigned"}
                     </div>
                   </div>
                   <span
-                    style={{
-                      padding: "3px 10px",
-                      borderRadius: "20px",
-                      fontSize: "11px",
-                      fontWeight: 600,
-                      fontFamily: "var(--font-mono)",
-                      background: "var(--bg-4)",
-                      border: "1px solid var(--line-2)",
-                      color: "var(--fg-2)",
-                    }}
+                    className="rounded-[20px] border border-[var(--line-2)] bg-field px-2.5 py-[3px] font-sans text-[11px] font-semibold text-foreground-secondary"
                   >
                     {group.actions.length} action{group.actions.length !== 1 ? "s" : ""}
                   </span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <div style={{ flex: 1 }}>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
                     <ProgressBar value={progress} />
                   </div>
-                  <span style={{ fontSize: "12px", fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--fg-2)", minWidth: "32px", textAlign: "right" }}>
+                  <span className="min-w-8 text-right font-sans text-xs font-semibold text-foreground-secondary">
                     {progress}%
                   </span>
                 </div>
               </div>
 
               {/* Group table */}
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "var(--font-sans)" }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse font-sans text-[13px]">
                   <thead>
-                    <tr style={{ background: "var(--table-head-bg)" }}>
+                    <tr className="bg-[var(--table-head-bg)]">
                       {["Type", "Action", "CAPA", "PIC", "Due / Target", "Status"].map((h) => (
                         <th
                           key={h}
-                          style={{
-                            padding: "9px 14px",
-                            textAlign: "left",
-                            fontSize: "10px",
-                            fontFamily: "var(--font-mono)",
-                            fontWeight: 600,
-                            letterSpacing: "0.18em",
-                            textTransform: "uppercase",
-                            color: "var(--fg-3)",
-                            whiteSpace: "nowrap",
-                          }}
+                          className="whitespace-nowrap px-3.5 py-[9px] text-left font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--table-head-fg)]"
                         >
                           {h}
                         </th>
@@ -463,42 +350,38 @@ export function ConsolidatedActionPlanPage() {
                     {group.actions.map((action) => (
                       <tr
                         key={`${action.kind}-${action.id}`}
-                        style={{ borderTop: "1px solid var(--line-1)", verticalAlign: "top", transition: "background var(--dur-fast) var(--ease-out)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-3)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                        className="border-t border-border-subtle align-top transition-[background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-elevated"
                       >
-                        <td style={{ padding: "12px 14px" }}>
+                        <td className="px-3.5 py-3">
                           <KindBadge kind={action.kind} />
                         </td>
-                        <td style={{ padding: "12px 14px", maxWidth: "380px" }}>
-                          <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--accent)", marginBottom: "3px" }}>
+                        <td className="max-w-[380px] px-3.5 py-3">
+                          <div className="mb-[3px] font-sans text-[11px] text-primary">
                             {action.id}
                           </div>
-                          <div style={{ color: "var(--fg-2)", lineHeight: "1.4" }}>{action.description}</div>
-                          <div style={{ fontSize: "11px", color: "var(--fg-3)", marginTop: "4px" }}>
+                          <div className="leading-[1.4] text-foreground-secondary">{action.description}</div>
+                          <div className="mt-1 text-[11px] text-foreground-tertiary">
                             Root cause: {action.rootCause}
                           </div>
                         </td>
-                        <td style={{ padding: "12px 14px" }}>
+                        <td className="px-3.5 py-3">
                           <Link
                             to={`/capa/${action.capaId}`}
-                            style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "var(--accent)", textDecoration: "none" }}
-                            onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
-                            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+                            className="font-sans text-xs text-primary no-underline hover:underline"
                           >
                             {action.capaId}
                           </Link>
                         </td>
-                        <td style={{ padding: "12px 14px", color: "var(--fg-2)", whiteSpace: "nowrap" }}>{action.pic}</td>
-                        <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                          <div style={{ color: "var(--fg-2)" }}>{formatDate(action.targetDate)}</div>
+                        <td className="whitespace-nowrap px-3.5 py-3 text-foreground-secondary">{action.pic}</td>
+                        <td className="whitespace-nowrap px-3.5 py-3">
+                          <div className="text-foreground-secondary">{formatDate(action.targetDate)}</div>
                           {action.riskPriority === "High" && (
-                            <div style={{ fontSize: "10px", fontWeight: 600, color: riskColor("High"), marginTop: "3px" }}>
+                            <div className={cn("mt-[3px] text-[10px] font-semibold", riskColor("High"))}>
                               High risk
                             </div>
                           )}
                         </td>
-                        <td style={{ padding: "12px 14px" }}>
+                        <td className="px-3.5 py-3">
                           <StatusBadge status={action.status} />
                         </td>
                       </tr>
@@ -512,25 +395,10 @@ export function ConsolidatedActionPlanPage() {
       </div>
 
       {/* ── Footer link ───────────────────────────────────────────────── */}
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+      <div className="mt-5 flex justify-end">
         <Link
           to="/capa"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "8px 14px",
-            background: "var(--bg-3)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-sm)",
-            color: "var(--fg-2)",
-            fontSize: "13px",
-            fontFamily: "var(--font-sans)",
-            textDecoration: "none",
-            transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-3)"; e.currentTarget.style.background = "var(--bg-4)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.background = "var(--bg-3)"; }}
+          className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-3.5 py-2 font-sans text-[13px] text-foreground-secondary no-underline transition-[border-color,background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:bg-field"
         >
           View all CAPAs
           <ArrowRight size={14} strokeWidth={1.75} />

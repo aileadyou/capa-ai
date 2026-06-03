@@ -7,6 +7,7 @@ import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import NotFound from "@/pages/NotFound";
 import { kgCitations } from "@/mock-data";
 import { useAuditTrailStore, useCapaStore, useUIStore } from "@/store";
+import { cn } from "@/lib/utils";
 import type {
   DecisionNode,
   FishboneCategory,
@@ -219,26 +220,16 @@ function evaluateRCA(method: RCAMethod, answers: string[], confirmedRootCause: s
 // ── Sub-components ───────────────────────────────────────────────────────────
 
 function OutcomeChip({ outcome }: { outcome: string }) {
-  const styles: Record<string, { bg: string; color: string }> = {
-    Effective: { bg: "var(--success-soft)", color: "var(--success)" },
-    Ongoing: { bg: "var(--warning-soft)", color: "var(--warning)" },
-    Recurred: { bg: "var(--danger-soft)", color: "var(--danger)" },
+  const styles: Record<string, string> = {
+    Effective: "bg-[var(--success-soft)] text-success",
+    Ongoing: "bg-[var(--warning-soft)] text-warning",
+    Recurred: "bg-[var(--danger-soft)] text-destructive",
   };
-  const s = styles[outcome] ?? { bg: "var(--bg-3)", color: "var(--fg-3)" };
+  const toneClass = styles[outcome] ?? "bg-elevated text-foreground-tertiary";
 
   return (
     <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: "var(--r-full)",
-        fontSize: "10px",
-        fontWeight: 600,
-        fontFamily: "var(--font-mono)",
-        background: s.bg,
-        color: s.color,
-        letterSpacing: "0.18em",
-      }}
+      className={cn("inline-block rounded-[var(--r-full)] px-2 py-0.5 font-sans text-[10px] font-semibold tracking-[0.18em]", toneClass)}
     >
       {outcome}
     </span>
@@ -252,92 +243,44 @@ function SimilarCapaCard({
   citation: KGCitation & { similarityScore: number; outcome: string };
   onOpen: (id: string) => void;
 }) {
-  const scoreColor =
+  const scoreClass =
     citation.similarityScore >= 90
-      ? "var(--success)"
+      ? "text-success"
       : citation.similarityScore >= 80
-        ? "var(--warning)"
-        : "var(--fg-3)";
+        ? "text-warning"
+        : "text-foreground-tertiary";
 
   return (
     <button
       onClick={() => onOpen(citation.capaId)}
-      style={{
-        display: "block",
-        width: "100%",
-        textAlign: "left",
-        background: "var(--bg-3)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-md)",
-        padding: "14px",
-        cursor: "pointer",
-        transition: "border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out)",
-        fontFamily: "var(--font-sans)",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent-line)";
-        (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-4)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--line-2)";
-        (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-3)";
-      }}
+      className="block w-full cursor-pointer rounded-[var(--r-md)] border border-[var(--line-2)] bg-elevated p-3.5 text-left font-sans transition-[background,border-color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--accent-line)] hover:bg-field"
     >
       {/* Header row */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span
-            style={{
-              fontSize: "12px",
-              fontWeight: 600,
-              fontFamily: "var(--font-mono)",
-              color: "var(--accent)",
-            }}
-          >
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-sans text-xs font-semibold text-primary">
             {citation.capaId}
           </span>
           <OutcomeChip outcome={citation.outcome} />
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-          <span style={{ fontSize: "12px", fontWeight: 700, color: scoreColor, fontFamily: "var(--font-mono)" }}>
+        <div className="flex items-center gap-1">
+          <span className={cn("font-sans text-xs font-bold", scoreClass)}>
             {citation.similarityScore}%
           </span>
-          <span style={{ fontSize: "10px", color: "var(--fg-4)" }}>match</span>
-          <ExternalLink size={11} style={{ color: "var(--fg-4)", marginLeft: "2px" }} />
+          <span className="text-[10px] text-foreground-faint">match</span>
+          <ExternalLink size={11} className="ml-0.5 text-foreground-faint" />
         </div>
       </div>
 
       {/* Root cause */}
-      <p
-        style={{
-          fontSize: "12px",
-          color: "var(--fg-2)",
-          margin: "0 0 6px",
-          lineHeight: "1.5",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-        }}
-      >
-        <span style={{ fontWeight: 500, color: "var(--fg-3)", marginRight: "4px" }}>Root cause:</span>
+      <p className="mb-1.5 mt-0 line-clamp-2 text-xs leading-[1.5] text-foreground-secondary">
+        <span className="mr-1 font-medium text-foreground-tertiary">Root cause:</span>
         {citation.rootCause}
       </p>
 
       {/* Corrective action */}
-      <p
-        style={{
-          fontSize: "11px",
-          color: "var(--fg-3)",
-          margin: 0,
-          lineHeight: "1.45",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-        }}
-      >
-        <span style={{ color: "var(--fg-4)", marginRight: "4px" }}>CA:</span>
+      <p className="m-0 line-clamp-2 text-[11px] leading-[1.45] text-foreground-tertiary">
+        <span className="mr-1 text-foreground-faint">CA:</span>
         {citation.correctiveAction}
       </p>
     </button>
@@ -364,87 +307,44 @@ function FiveWhysChain({
         return (
           <div
             key={item.level}
-            style={{ display: "flex", gap: "16px", alignItems: "flex-start" }}
+            className="flex items-start gap-4"
           >
             {/* Left: level indicator + connector line */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                flexShrink: 0,
-                paddingTop: "2px",
-              }}
-            >
+            <div className="flex shrink-0 flex-col items-center pt-0.5">
               {/* Level circle */}
               <div
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "50%",
-                  background: isRootCause ? "var(--accent)" : "var(--bg-4)",
-                  border: `1px solid ${isRootCause ? "var(--accent)" : "var(--line-2)"}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  fontFamily: "var(--font-mono)",
-                  color: isRootCause ? "var(--on-accent)" : "var(--fg-3)",
-                  flexShrink: 0,
-                }}
+                className={cn(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border font-sans text-[11px] font-bold",
+                  isRootCause ? "border-primary bg-primary text-primary-foreground" : "border-[var(--line-2)] bg-field text-foreground-tertiary",
+                )}
               >
                 {item.level}
               </div>
               {/* Connector line */}
               {!isLast && (
-                <div
-                  style={{
-                    width: "1px",
-                    flex: 1,
-                    minHeight: "24px",
-                    background: "var(--line-2)",
-                    marginTop: "4px",
-                    marginBottom: "4px",
-                  }}
-                />
+                <div className="my-1 min-h-6 w-px flex-1 bg-[var(--line-2)]" />
               )}
             </div>
 
             {/* Right: content */}
             <div
-              style={{
-                flex: 1,
-                paddingBottom: isLast ? 0 : "20px",
-                minWidth: 0,
-              }}
+              className={cn("min-w-0 flex-1", !isLast && "pb-5")}
             >
               {/* Why label + question */}
-              <div style={{ marginBottom: "10px" }}>
+              <div className="mb-2.5">
                 <span
-                  style={{
-                    display: "inline-block",
-                    fontSize: "10px",
-                    fontFamily: "var(--font-mono)",
-                    fontWeight: 600,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    color: isRootCause ? "var(--accent)" : "var(--fg-4)",
-                    marginBottom: "4px",
-                  }}
+                  className={cn(
+                    "mb-1 inline-block font-sans text-[10px] font-semibold uppercase tracking-[0.18em]",
+                    isRootCause ? "text-primary" : "text-foreground-faint",
+                  )}
                 >
                   {isRootCause ? "Root Cause · Why 5" : `Why ${item.level}`}
                 </span>
                 <p
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: isRootCause ? 600 : 500,
-                    color: isRootCause ? "var(--fg-1)" : "var(--fg-2)",
-                    margin: 0,
-                    lineHeight: "1.5",
-                    borderLeft: isRootCause ? "2px solid var(--line-3)" : "none",
-                    paddingLeft: isRootCause ? "10px" : 0,
-                  }}
+                  className={cn(
+                    "m-0 text-[13px] leading-[1.5]",
+                    isRootCause ? "border-l-2 border-[var(--line-3)] pl-2.5 font-semibold text-foreground" : "font-medium text-foreground-secondary",
+                  )}
                 >
                   {item.question}
                 </p>
@@ -479,20 +379,10 @@ function FishboneGrid({
   onAnswerChange: (category: FishboneName, content: string) => void;
 }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+    <div className="grid grid-cols-2 gap-3">
       {fishbonePlan.map((item) => (
         <div key={item.category}>
-          <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 8px",
-            }}
-          >
+          <p className="mb-2 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
             {item.category}
           </p>
           <NovaSuggestionBlock
@@ -511,42 +401,32 @@ function FishboneGrid({
 
 function DecisionTree({ nodes }: { nodes: DecisionNode[] }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+    <div className="flex flex-col gap-2">
       {nodes.map((node, index) => (
         <div
           key={node.id}
-          style={{
-            padding: "12px 14px",
-            background: "var(--bg-3)",
-            border: `1px solid ${node.isLeaf ? "var(--line-2)" : "var(--line-1)"}`,
-            borderRadius: "var(--r-sm)",
-          }}
+          className={cn("rounded-[var(--r-sm)] border bg-elevated px-3.5 py-3", node.isLeaf ? "border-[var(--line-2)]" : "border-border-subtle")}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-            <span style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-4)", letterSpacing: "0.18em" }}>
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="font-sans text-[10px] tracking-[0.18em] text-foreground-faint">
               Node {index + 1}
             </span>
             <span
-              style={{
-                fontSize: "10px",
-                fontFamily: "var(--font-mono)",
-                color: node.isLeaf ? "var(--accent)" : "var(--fg-3)",
-                fontWeight: node.isLeaf ? 600 : 400,
-              }}
+              className={cn("font-sans text-[10px]", node.isLeaf ? "font-semibold text-primary" : "font-normal text-foreground-tertiary")}
             >
               {node.isLeaf ? "Conclusion" : "Branch"}
             </span>
           </div>
-          <p style={{ fontSize: "13px", fontWeight: 500, color: "var(--fg-2)", margin: "0 0 4px", fontFamily: "var(--font-sans)" }}>
+          <p className="mb-1 mt-0 font-sans text-[13px] font-medium text-foreground-secondary">
             {node.question}
           </p>
           {node.yesNodeId && node.noNodeId && (
-            <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-mono)" }}>
+            <p className="m-0 font-sans text-[11px] text-foreground-faint">
               Yes → {node.yesNodeId} · No → {node.noNodeId}
             </p>
           )}
           {node.conclusion && (
-            <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: "4px 0 0", fontFamily: "var(--font-sans)", lineHeight: "1.5" }}>
+            <p className="mb-0 mt-1 font-sans text-xs leading-[1.5] text-foreground-tertiary">
               {node.conclusion}
             </p>
           )}
@@ -708,33 +588,17 @@ export function D3RCAPage() {
 
   return (
     <EightDShell capaId={capa.id} activeStep="rca">
-      <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+      <div className="flex flex-col gap-7">
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <p
-            style={{
-              fontSize: "12px",
-              fontFamily: "var(--font-mono)",
-              color: "var(--fg-3)",
-              margin: "0 0 6px",
-              letterSpacing: "0.18em",
-            }}
-          >
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
             {capa.id} · D3
           </p>
-          <h1
-            style={{
-              fontSize: "22px",
-              fontWeight: 700,
-              color: "var(--fg-1)",
-              margin: "0 0 8px",
-              fontFamily: "var(--font-sans)",
-            }}
-          >
+          <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
             Root Cause Analysis
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, lineHeight: "1.55", maxWidth: "600px" }}>
+          <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
             Choose your RCA method, review Nova's suggested causal chain, cite similar past CAPAs, and confirm the systemic root cause before corrective action planning.
           </p>
         </div>
@@ -743,18 +607,11 @@ export function D3RCAPage() {
         <div>
           <label
             htmlFor="rca-method"
-            style={{
-              display: "block",
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "var(--fg-2)",
-              marginBottom: "8px",
-              fontFamily: "var(--font-sans)",
-            }}
+            className="mb-2 block font-sans text-xs font-semibold text-foreground-secondary"
           >
             RCA method
           </label>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <div className="flex flex-wrap gap-2">
             {(["5whys", "fishbone", "decision_tree"] as RCAMethod[]).map((m) => (
               <button
                 key={m}
@@ -762,24 +619,18 @@ export function D3RCAPage() {
                   setMethod(m);
                   setConfirmedRootCause(confirmedRootCauseByMethod[m]);
                 }}
-                style={{
-                  padding: "7px 16px",
-                  borderRadius: "var(--r-sm)",
-                  fontSize: "12px",
-                  fontWeight: method === m ? 600 : 400,
-                  fontFamily: "var(--font-sans)",
-                  background: method === m ? "var(--accent-soft)" : "var(--bg-4)",
-                  color: method === m ? "var(--accent)" : "var(--fg-2)",
-                  border: `1px solid ${method === m ? "var(--accent-line)" : "var(--line-2)"}`,
-                  cursor: "pointer",
-                  transition: "background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out)",
-                }}
+                className={cn(
+                  "cursor-pointer rounded-[var(--r-sm)] border px-4 py-[7px] font-sans text-xs transition-[background,border-color,color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+                  method === m
+                    ? "border-[var(--accent-line)] bg-[var(--accent-soft)] font-semibold text-primary"
+                    : "border-[var(--line-2)] bg-field font-normal text-foreground-secondary",
+                )}
               >
                 {methodLabel[m]}
               </button>
             ))}
           </div>
-          <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: "8px 0 0", fontFamily: "var(--font-sans)" }}>
+          <p className="mb-0 mt-2 font-sans text-[11px] text-foreground-faint">
             Nova defaults: Deviation → 5-Whys · Audit → Fishbone · Complaint → Decision Tree
           </p>
         </div>
@@ -787,17 +638,7 @@ export function D3RCAPage() {
         {/* ── RCA content (method-specific) ───────────────────────────── */}
         {method === "5whys" && (
           <div>
-            <p
-              style={{
-                fontSize: "11px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--fg-4)",
-                margin: "0 0 16px",
-              }}
-            >
+            <p className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
               5-Whys Causal Chain
             </p>
             <FiveWhysChain
@@ -814,17 +655,7 @@ export function D3RCAPage() {
 
         {method === "fishbone" && (
           <div>
-            <p
-              style={{
-                fontSize: "11px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--fg-4)",
-                margin: "0 0 16px",
-              }}
-            >
+            <p className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
               Fishbone Categories
             </p>
             <FishboneGrid
@@ -839,17 +670,7 @@ export function D3RCAPage() {
 
         {method === "decision_tree" && (
           <div>
-            <p
-              style={{
-                fontSize: "11px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--fg-4)",
-                margin: "0 0 12px",
-              }}
-            >
+            <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
               Decision Tree
             </p>
             <DecisionTree nodes={decisionNodes} />
@@ -859,31 +680,15 @@ export function D3RCAPage() {
         {/* ── Similar Past CAPAs ───────────────────────────────────────── */}
         {relevantCitations.length > 0 && (
           <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "12px" }}>
-              <p
-                style={{
-                  fontSize: "11px",
-                  fontFamily: "var(--font-mono)",
-                  fontWeight: 600,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color: "var(--fg-4)",
-                  margin: 0,
-                }}
-              >
+            <div className="mb-3 flex items-baseline gap-2">
+              <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
                 Similar Past CAPAs
               </p>
-              <span style={{ fontSize: "11px", color: "var(--fg-4)", fontFamily: "var(--font-sans)" }}>
+              <span className="font-sans text-[11px] text-foreground-faint">
                 — review historical root causes and outcomes
               </span>
             </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "10px",
-              }}
-            >
+            <div className="grid grid-cols-2 gap-2.5">
               {relevantCitations.map((citation) => (
                 <SimilarCapaCard
                   key={citation.capaId}
@@ -899,18 +704,11 @@ export function D3RCAPage() {
         <div>
           <label
             htmlFor="confirmed-root-cause"
-            style={{
-              display: "block",
-              fontSize: "12px",
-              fontWeight: 600,
-              color: "var(--fg-2)",
-              marginBottom: "6px",
-              fontFamily: "var(--font-sans)",
-            }}
+            className="mb-1.5 block font-sans text-xs font-semibold text-foreground-secondary"
           >
             Confirmed root cause
           </label>
-          <p style={{ fontSize: "12px", color: "var(--fg-4)", margin: "0 0 10px", fontFamily: "var(--font-sans)" }}>
+          <p className="mb-2.5 mt-0 font-sans text-xs text-foreground-faint">
             Summarise the systemic management-system weakness, not just the immediate event.
           </p>
           <textarea
@@ -918,49 +716,19 @@ export function D3RCAPage() {
             value={confirmedRootCause}
             onChange={(e) => setConfirmedRootCause(e.target.value)}
             rows={4}
-            style={{
-              width: "100%",
-              background: "var(--field-bg)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-sm)",
-              padding: "12px 14px",
-              fontSize: "13px",
-              lineHeight: "1.65",
-              color: "var(--fg-1)",
-              fontFamily: "var(--font-sans)",
-              resize: "vertical",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = "var(--accent)";
-              e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)";
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "var(--line-2)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
+            className="box-border w-full resize-y rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
           />
         </div>
 
         {/* ── Blocker ──────────────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              padding: "12px 14px",
-              background: "var(--danger-soft)",
-              border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)",
-              borderRadius: "var(--r-sm)",
-            }}
-          >
-            <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
+          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+            <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+              <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">
                 Root cause confirmation is incomplete
               </p>
-              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+              <p className="m-0 font-sans text-xs text-foreground-tertiary">
                 Complete enough RCA depth and confirm a root cause before continuing to corrective action.
               </p>
             </div>
@@ -969,45 +737,28 @@ export function D3RCAPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              margin: "0 0 10px",
-            }}
-          >
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
             Quality Signals
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+          <div className="grid grid-cols-2 gap-2">
             {validation.checks.map((check) => (
               <div
                 key={check.label}
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  padding: "10px 12px",
-                  borderRadius: "var(--r-sm)",
-                  background: check.passed ? "var(--success-soft)" : "var(--bg-3)",
-                  border: `1px solid ${check.passed ? "color-mix(in srgb, var(--success) 28%, transparent)" : "var(--line-1)"}`,
-                }}
+                className={cn(
+                  "flex gap-2.5 rounded-[var(--r-sm)] border px-3 py-2.5",
+                  check.passed ? "border-success/30 bg-[var(--success-soft)]" : "border-border-subtle bg-elevated",
+                )}
               >
                 {check.passed ? (
-                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "var(--success)", marginTop: "1px" }} />
+                  <CheckCircle2 size={14} className="mt-px shrink-0 text-success" />
                 ) : (
-                  <Circle size={14} style={{ flexShrink: 0, color: "var(--fg-4)", marginTop: "1px" }} />
+                  <Circle size={14} className="mt-px shrink-0 text-foreground-faint" />
                 )}
                 <p
-                  style={{
-                    fontSize: "12px",
-                    color: check.passed ? "var(--fg-2)" : "var(--fg-3)",
-                    margin: 0,
-                    fontFamily: "var(--font-sans)",
-                    fontWeight: check.passed ? 500 : 400,
-                  }}
+                  className={cn(
+                    "m-0 font-sans text-xs",
+                    check.passed ? "font-medium text-foreground-secondary" : "font-normal text-foreground-tertiary",
+                  )}
                 >
                   {check.label}
                 </p>
@@ -1017,50 +768,17 @@ export function D3RCAPage() {
         </div>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: "10px",
-            paddingTop: "8px",
-            borderTop: "1px solid var(--line-1)",
-          }}
-        >
+        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
           <button
             onClick={() => saveRCA(false)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "var(--field-bg)",
-              color: "var(--fg-2)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-sm)",
-              padding: "8px 16px",
-              fontSize: "13px",
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-              fontWeight: 500,
-            }}
+            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
           >
             <Save size={14} />
             Save Draft
           </button>
           <button
             onClick={() => saveRCA(true)}
-            style={{
-              background: "var(--grad-brand)",
-              color: "var(--on-accent)",
-              border: "none",
-              borderRadius: "var(--r-sm)",
-              padding: "8px 20px",
-              fontSize: "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-              letterSpacing: "0.01em",
-            }}
+            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
           >
             Continue to D4 Corrective Action →
           </button>

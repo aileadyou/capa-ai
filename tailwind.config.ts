@@ -15,8 +15,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "-apple-system", "sans-serif"],
-        mono: ["IBM Plex Mono", "ui-monospace", "SF Mono", "Menlo", "monospace"],
+        // Read from CSS vars so the runtime customizer (src/lib/customization.ts)
+        // can swap fonts by overriding --font-sans / --font-mono on <html>.
+        sans: ["var(--font-sans)"],
+        mono: ["var(--font-mono)"],
       },
       colors: {
         border: {

@@ -14,6 +14,7 @@ import { TypePill } from "@/components/shared/TypePill";
 import { kgCitations } from "@/mock-data";
 import type { CAPAType, KGCitation } from "@/types";
 import { formatCAPAType } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -21,11 +22,13 @@ const ALL = "all";
 type OutcomeFilter = KGCitation["outcome"] | typeof ALL;
 type TypeFilter = CAPAType | typeof ALL;
 
-const OUTCOME_COLORS: Record<KGCitation["outcome"], { bg: string; border: string; text: string }> = {
-  Effective: { bg: "var(--success-soft)", border: "color-mix(in srgb, var(--success) 38%, transparent)", text: "var(--success)" },
-  Recurred: { bg: "var(--danger-soft)", border: "color-mix(in srgb, var(--danger) 38%, transparent)", text: "var(--danger)" },
-  Ongoing: { bg: "var(--accent-soft)", border: "var(--accent-line)", text: "var(--accent)" },
+const OUTCOME_CLASSES: Record<KGCitation["outcome"], string> = {
+  Effective: "border-success/40 bg-[var(--success-soft)] text-success",
+  Recurred: "border-destructive/40 bg-[var(--danger-soft)] text-destructive",
+  Ongoing: "border-[var(--accent-line)] bg-[var(--accent-soft)] text-primary",
 };
+
+const EYEBROW_CLASS = "font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -49,29 +52,21 @@ function searchSimilarity(query: string): KGCitation[] {
     .sort((a, b) => b.similarityScore - a.similarityScore);
 }
 
-function similarityColor(score: number): string {
-  if (score >= 85) return "var(--success)";
-  if (score >= 70) return "var(--warning)";
-  return "var(--fg-3)";
+function similarityColorClass(score: number): string {
+  if (score >= 85) return "text-success";
+  if (score >= 70) return "text-warning";
+  return "text-foreground-tertiary";
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function OutcomeBadge({ outcome }: { outcome: KGCitation["outcome"] }) {
-  const colors = OUTCOME_COLORS[outcome];
   return (
     <span
-      style={{
-        display: "inline-block",
-        padding: "3px 8px",
-        borderRadius: "20px",
-        fontSize: "11px",
-        fontWeight: 600,
-        fontFamily: "var(--font-mono)",
-        background: colors.bg,
-        border: `1px solid ${colors.border}`,
-        color: colors.text,
-      }}
+      className={cn(
+        "inline-block rounded-[20px] border px-2 py-[3px] font-sans text-[11px] font-semibold",
+        OUTCOME_CLASSES[outcome],
+      )}
     >
       {outcome}
     </span>
@@ -94,14 +89,7 @@ function DetailModal({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "var(--glass-dark)",
-          backdropFilter: "blur(2px)",
-          zIndex: 999,
-          animation: "fadeIn var(--dur-tab) var(--ease-out)",
-        }}
+        className="fixed inset-0 z-[999] bg-[var(--glass-dark)] backdrop-blur-[2px] animate-in fade-in [animation-duration:var(--dur-tab)] [animation-timing-function:var(--ease-out)]"
       />
       {/* Panel */}
       <div
@@ -110,61 +98,32 @@ function DetailModal({
         aria-modal="true"
         aria-labelledby="similarity-detail-title"
         tabIndex={-1}
-        style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "520px",
-          maxWidth: "90vw",
-          maxHeight: "85vh",
-          overflow: "auto",
-          overscrollBehavior: "contain",
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-lg)",
-          boxShadow: "var(--shadow-lg)",
-          zIndex: 1000,
-          animation: "leadReveal var(--dur-tab) var(--ease-out)",
-        }}
+        className="fixed left-1/2 top-1/2 z-[1000] max-h-[85vh] w-[520px] max-w-[90vw] -translate-x-1/2 -translate-y-1/2 overflow-auto overscroll-contain rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-lg animate-in fade-in slide-in-from-bottom-2 [animation-duration:var(--dur-tab)] [animation-timing-function:var(--ease-out)]"
       >
         {/* Header */}
         <div
-          style={{
-            padding: "16px 20px",
-            borderBottom: "1px solid var(--line-1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
+          className="flex items-center justify-between border-b border-border-subtle px-5 py-4"
         >
           <div>
-            <div id="similarity-detail-title" style={{ fontSize: "16px", fontWeight: 600, color: "var(--fg-1)", fontFamily: "var(--font-sans)" }}>
+            <div id="similarity-detail-title" className="font-sans text-base font-semibold text-foreground">
               {citation.capaId}
             </div>
-            <div style={{ fontSize: "12px", color: "var(--fg-3)", marginTop: "2px" }}>
+            <div className="mt-0.5 text-xs text-foreground-tertiary">
               Historical CAPA similarity detail
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--fg-3)",
-              padding: "4px",
-              borderRadius: "var(--r-sm)",
-            }}
+            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent p-1 text-foreground-tertiary hover:bg-field hover:text-foreground"
           >
             <X size={18} strokeWidth={1.75} />
           </button>
         </div>
 
         {/* Content */}
-        <div style={{ padding: "20px" }}>
+        <div className="p-5">
           {/* Meta grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "20px" }}>
+          <div className="mb-5 grid grid-cols-2 gap-2.5">
             {[
               ["Source ID", citation.deviationId],
               ["Similarity", `${citation.similarityScore}%`],
@@ -173,81 +132,45 @@ function DetailModal({
             ].map(([label, val]) => (
               <div
                 key={label}
-                style={{
-                  background: "var(--bg-3)",
-                  borderRadius: "var(--r-sm)",
-                  padding: "10px 12px",
-                }}
+                className="rounded-[var(--r-sm)] bg-elevated px-3 py-2.5"
               >
                 <div
-                  style={{
-                    fontSize: "10px",
-                    fontFamily: "var(--font-mono)",
-                    fontWeight: 600,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    color: "var(--fg-3)",
-                    marginBottom: "4px",
-                  }}
+                  className={cn(EYEBROW_CLASS, "mb-1")}
                 >
                   {label}
                 </div>
-                <div style={{ fontSize: "13px", color: "var(--fg-1)", fontWeight: 500 }}>{val}</div>
+                <div className="text-[13px] font-medium text-foreground">{val}</div>
               </div>
             ))}
           </div>
 
           {/* Root cause */}
-          <div style={{ marginBottom: "16px" }}>
+          <div className="mb-4">
             <div
-              style={{
-                fontSize: "10px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--fg-3)",
-                marginBottom: "6px",
-              }}
+              className={cn(EYEBROW_CLASS, "mb-1.5")}
             >
               Root cause
             </div>
-            <p style={{ fontSize: "13px", color: "var(--fg-2)", lineHeight: "1.6", margin: 0 }}>
+            <p className="m-0 text-[13px] leading-[1.6] text-foreground-secondary">
               {citation.rootCause}
             </p>
           </div>
 
           {/* Corrective action */}
-          <div style={{ marginBottom: "16px" }}>
+          <div className="mb-4">
             <div
-              style={{
-                fontSize: "10px",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--fg-3)",
-                marginBottom: "6px",
-              }}
+              className={cn(EYEBROW_CLASS, "mb-1.5")}
             >
               Corrective action
             </div>
-            <p style={{ fontSize: "13px", color: "var(--fg-2)", lineHeight: "1.6", margin: 0 }}>
+            <p className="m-0 text-[13px] leading-[1.6] text-foreground-secondary">
               {citation.correctiveAction}
             </p>
           </div>
 
           {/* Disclaimer */}
           <div
-            style={{
-              background: "var(--bg-3)",
-              borderRadius: "var(--r-sm)",
-              padding: "12px 14px",
-              fontSize: "12px",
-              color: "var(--fg-3)",
-              lineHeight: "1.5",
-              borderLeft: "3px solid var(--accent)",
-            }}
+            className="rounded-[var(--r-sm)] border-l-[3px] border-l-primary bg-elevated px-3.5 py-3 text-xs leading-6 text-foreground-tertiary"
           >
             Nova uses this case as a contextual citation only. The current CAPA still requires user confirmation and audit-ready evidence.
           </div>
@@ -298,52 +221,30 @@ export function SimilarityExplorerPage() {
   }
 
   return (
-    <div className="animate-page-enter" style={{ maxWidth: "1200px" }}>
+    <div className="animate-page-enter">
       {/* ── Header ────────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: "24px" }}>
+      <div className="mb-6">
         <h1
-          style={{
-            fontSize: "22px",
-            fontWeight: 600,
-            color: "var(--fg-1)",
-            fontFamily: "var(--font-sans)",
-            letterSpacing: "-0.02em",
-            margin: 0,
-          }}
+          className="m-0 font-sans text-[22px] font-semibold tracking-[-0.02em] text-foreground"
         >
           Similarity explorer
         </h1>
-        <p style={{ fontSize: "13px", color: "var(--fg-3)", marginTop: "6px", maxWidth: "620px", lineHeight: "1.5" }}>
+        <p className="mt-1.5 max-w-[620px] font-sans text-[13px] leading-6 text-foreground-tertiary">
           Search historical CAPA patterns by finding description, root cause, corrective action, outcome, and source type.
         </p>
       </div>
 
       {/* ── Search card ───────────────────────────────────────────────── */}
       <div
-        style={{
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-lg)",
-          boxShadow: "var(--shadow-sm)",
-          padding: "20px",
-          marginBottom: "16px",
-        }}
+        className="mb-4 rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5 shadow-sm"
       >
         <div
-          style={{
-            fontSize: "11px",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 600,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: "var(--fg-3)",
-            marginBottom: "10px",
-          }}
+          className="mb-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
         >
           AI search
         </div>
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex items-center gap-2.5">
+          <div className="min-w-0 flex-1">
             <FilterSearchInput
               value={query}
               onChange={setQuery}
@@ -358,28 +259,15 @@ export function SimilarityExplorerPage() {
           <button
             onClick={runSearch}
             disabled={isSearching}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              padding: "0 20px",
-              height: "40px",
-              background: isSearching ? "var(--bg-4)" : "var(--grad-brand)",
-              color: isSearching ? "var(--fg-3)" : "var(--on-accent)",
-              border: "none",
-              borderRadius: "var(--r-sm)",
-              fontSize: "13px",
-              fontWeight: 600,
-              fontFamily: "var(--font-sans)",
-              cursor: isSearching ? "not-allowed" : "pointer",
-              whiteSpace: "nowrap",
-              transition: "filter var(--dur-fast) var(--ease-out)",
-            }}
-            onMouseEnter={(e) => { if (!isSearching) e.currentTarget.style.filter = "brightness(1.1)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+            className={cn(
+              "inline-flex h-10 items-center gap-[7px] whitespace-nowrap rounded-[var(--r-sm)] border-0 px-5 font-sans text-[13px] font-semibold transition-[filter] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+              isSearching
+                ? "cursor-not-allowed bg-field text-foreground-tertiary"
+                : "cursor-pointer bg-[image:var(--grad-brand)] text-primary-foreground hover:brightness-110",
+            )}
           >
             {isSearching ? (
-              <Loader2 size={14} strokeWidth={1.75} style={{ animation: "spin 1s linear infinite" }} />
+              <Loader2 size={14} strokeWidth={1.75} className="animate-spin" />
             ) : (
               <BrainCircuit size={14} strokeWidth={1.75} />
             )}
@@ -390,17 +278,9 @@ export function SimilarityExplorerPage() {
         {/* Loading indicator */}
         {isSearching && (
           <div
-            style={{
-              marginTop: "12px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontSize: "12px",
-              color: "var(--accent)",
-              fontFamily: "var(--font-sans)",
-            }}
+            className="mt-3 flex items-center gap-2 font-sans text-xs text-primary"
           >
-            <Loader2 size={13} strokeWidth={1.75} style={{ animation: "spin 1s linear infinite" }} />
+            <Loader2 size={13} strokeWidth={1.75} className="animate-spin" />
             Nova is searching historical CAPA similarity…
           </div>
         )}
@@ -408,23 +288,16 @@ export function SimilarityExplorerPage() {
 
       {/* ── Filter bar ────────────────────────────────────────────────── */}
       <div
-        style={{
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-lg)",
-          boxShadow: "var(--shadow-sm)",
-          padding: "16px 20px",
-          marginBottom: "16px",
-        }}
+        className="mb-4 rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-5 py-4 shadow-sm"
       >
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: "12px", alignItems: "end" }}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] items-end gap-3">
           {/* Similarity slider */}
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-              <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 500, color: "var(--fg-3)", textTransform: "uppercase", letterSpacing: "0.18em" }}>
+            <div className="mb-1.5 flex justify-between">
+              <span className="font-sans text-[11px] font-medium uppercase tracking-[0.18em] text-foreground-tertiary">
                 Min similarity
               </span>
-              <span style={{ fontSize: "12px", fontFamily: "var(--font-mono)", fontWeight: 600, color: "var(--fg-1)" }}>
+              <span className="font-sans text-xs font-semibold text-foreground">
                 {minSimilarity}%
               </span>
             </div>
@@ -435,12 +308,7 @@ export function SimilarityExplorerPage() {
               step={1}
               value={minSimilarity}
               onChange={(e) => setMinSimilarity(Number(e.target.value))}
-              style={{
-                width: "100%",
-                height: "4px",
-                accentColor: "var(--accent)",
-                cursor: "pointer",
-              }}
+              className="h-1 w-full cursor-pointer accent-primary"
             />
           </div>
 
@@ -492,15 +360,7 @@ export function SimilarityExplorerPage() {
         <>
           {/* Result count */}
           <div
-            style={{
-              fontSize: "11px",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-3)",
-              marginBottom: "12px",
-            }}
+            className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
           >
             {filteredResults.length} match{filteredResults.length !== 1 ? "es" : ""}
           </div>
@@ -511,103 +371,61 @@ export function SimilarityExplorerPage() {
               description="No similarity results match the current filters."
             />
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: "12px" }}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-3">
               {filteredResults.map((citation) => (
                 <div
                   key={`${citation.capaId}-${citation.deviationId}`}
-                  style={{
-                    background: "var(--bg-2)",
-                    border: "1px solid var(--line-2)",
-                    borderRadius: "var(--r-lg)",
-                    boxShadow: "var(--shadow-sm)",
-                    padding: "18px",
-                    transition: "border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out)",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--line-3)"; e.currentTarget.style.boxShadow = "var(--shadow-md)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "var(--shadow-sm)"; }}
+                  className="cursor-pointer rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-[18px] shadow-sm transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:shadow-md"
                   onClick={() => setSelectedResult(citation)}
                 >
                   {/* Header */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                  <div className="mb-3 flex items-start justify-between">
                     <div>
-                      <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--fg-1)" }}>{citation.capaId}</div>
-                      <div style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", marginTop: "2px" }}>
+                      <div className="text-sm font-semibold text-foreground">{citation.capaId}</div>
+                      <div className="mt-0.5 font-sans text-[11px] text-foreground-tertiary">
                         {citation.deviationId}
                       </div>
                     </div>
                     <span
-                      style={{
-                        padding: "4px 10px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        fontFamily: "var(--font-mono)",
-                        color: similarityColor(citation.similarityScore),
-                        background: "var(--bg-4)",
-                        border: "1px solid var(--line-2)",
-                      }}
+                      className={cn(
+                        "rounded-[20px] border border-[var(--line-2)] bg-field px-2.5 py-1 font-sans text-xs font-semibold",
+                        similarityColorClass(citation.similarityScore),
+                      )}
                     >
                       {citation.similarityScore}%
                     </span>
                   </div>
 
                   {/* Root cause */}
-                  <div style={{ marginBottom: "10px" }}>
+                  <div className="mb-2.5">
                     <div
-                      style={{
-                        fontSize: "10px",
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: 600,
-                        letterSpacing: "0.18em",
-                        textTransform: "uppercase",
-                        color: "var(--fg-3)",
-                        marginBottom: "4px",
-                      }}
+                      className={cn(EYEBROW_CLASS, "mb-1")}
                     >
                       Root cause
                     </div>
-                    <p style={{ fontSize: "13px", color: "var(--fg-2)", lineHeight: "1.5", margin: 0 }}>
+                    <p className="m-0 text-[13px] leading-6 text-foreground-secondary">
                       {citation.rootCause}
                     </p>
                   </div>
 
                   {/* Corrective action */}
-                  <div style={{ marginBottom: "12px" }}>
+                  <div className="mb-3">
                     <div
-                      style={{
-                        fontSize: "10px",
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: 600,
-                        letterSpacing: "0.18em",
-                        textTransform: "uppercase",
-                        color: "var(--fg-3)",
-                        marginBottom: "4px",
-                      }}
+                      className={cn(EYEBROW_CLASS, "mb-1")}
                     >
                       Corrective action
                     </div>
-                    <p style={{ fontSize: "13px", color: "var(--fg-3)", lineHeight: "1.5", margin: 0 }}>
+                    <p className="m-0 text-[13px] leading-6 text-foreground-tertiary">
                       {citation.correctiveAction}
                     </p>
                   </div>
 
                   {/* Badges */}
-                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  <div className="flex flex-wrap gap-1.5">
                     <OutcomeBadge outcome={citation.outcome} />
                     <TypePill type={citation.sourceType} tone="neutral" />
                     <span
-                      style={{
-                        display: "inline-block",
-                        padding: "3px 8px",
-                        borderRadius: "20px",
-                        fontSize: "11px",
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: 500,
-                        background: "var(--bg-4)",
-                        border: "1px solid var(--line-2)",
-                        color: "var(--fg-3)",
-                      }}
+                      className="inline-block rounded-[20px] border border-[var(--line-2)] bg-field px-2 py-[3px] font-sans text-[11px] font-medium text-foreground-tertiary"
                     >
                       {citation.year}
                     </span>

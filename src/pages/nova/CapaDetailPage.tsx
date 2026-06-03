@@ -20,10 +20,11 @@ import { D5PreventiveActionPage } from "@/pages/nova/eight-d/D5PreventiveActionP
 import { D6VerificationPage } from "@/pages/nova/eight-d/D6VerificationPage";
 import { D7SignOffPage } from "@/pages/nova/eight-d/D7SignOffPage";
 import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore, usePersonaStore, useUIStore } from "@/store";
-import type { CAPACase, EightDStep, PreFillContext } from "@/types";
+import { useCapaStore, usePersonaStore } from "@/store";
+import type { CAPACase, EightDStep, IntakeReview, PreFillContext } from "@/types";
 import { formatCAPAType, formatDate, formatDateTime } from "@/utils/formatters";
 import { getScoreLiftTips } from "@/utils/scoring";
+import { cn } from "@/lib/utils";
 
 /* ── Mock due dates (no dueDate field in data) ───────────────────── */
 const MOCK_DUE: Record<string, string> = {
@@ -86,11 +87,11 @@ function getCtaLabel(step: EightDStep): string {
 }
 
 function getSourceSystem(prefill: PreFillContext): string {
-  return prefill.source === "Bizzmine-Complaint" ? "Bizzmine Complaint" : prefill.source;
+  return prefill.source === "Bizzmine-Complaint" ? "Bizzmine" : prefill.source;
 }
 
-/* ── Design token shortcuts ──────────────────────────────────────── */
-const mono = { fontFamily: "var(--font-mono)" };
+/* ── Shared class shortcuts ──────────────────────────────────────── */
+const MONO_EYEBROW_CLASS = "font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint";
 
 /* ════════════════════════════════════════════════════════════════════
    LEFT COLUMN — 8D Progress + CAPA Info + Score
@@ -99,15 +100,7 @@ const mono = { fontFamily: "var(--font-mono)" };
 function EyebrowLeft({ children }: { children: React.ReactNode }) {
   return (
     <p
-      style={{
-        ...mono,
-        fontSize: "10px",
-        fontWeight: 500,
-        letterSpacing: "0.18em",
-        textTransform: "uppercase" as const,
-        color: "var(--fg-4)",
-        margin: "0 0 8px",
-      }}
+      className="mb-2 mt-0 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
     >
       {children}
     </p>
@@ -126,28 +119,6 @@ function StepItem({
   onSelect: () => void;
 }) {
   const visualState = isSelected ? "active" : state;
-  const styles: Record<string, React.CSSProperties> = {
-    done: {
-      background: "var(--bg-2)",
-      color: "var(--fg-3)",
-      border: "1px solid var(--line-1)",
-      cursor: "pointer",
-    },
-    active: {
-      background: "var(--accent-soft)",
-      color: "var(--accent)",
-      border: "1px solid var(--accent-line)",
-      borderLeft: "3px solid var(--accent)",
-      fontWeight: 600,
-      cursor: "pointer",
-    },
-    locked: {
-      background: "var(--bg-1)",
-      color: "var(--fg-4)",
-      border: "1px solid var(--line-1)",
-      cursor: "not-allowed",
-    },
-  };
 
   const icon = {
     done: <Check size={12} strokeWidth={2.5} />,
@@ -157,33 +128,20 @@ function StepItem({
 
   const content = (
     <div
-      style={{
-        ...styles[visualState],
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "8px 10px",
-        borderRadius: "var(--r-sm)",
-        fontSize: "12px",
-        fontFamily: "var(--font-sans)",
-        transition: "background 180ms",
-        textDecoration: "none",
-        color: styles[visualState].color,
-      }}
+      className={cn(
+        "flex items-center gap-2 rounded-[var(--r-sm)] px-2.5 py-2 font-sans text-xs no-underline transition-[background] duration-200",
+        visualState === "done" && "cursor-pointer border border-border-subtle bg-card text-foreground-tertiary",
+        visualState === "active" && "cursor-pointer border border-l-[3px] border-[var(--accent-line)] border-l-primary bg-[var(--accent-soft)] font-semibold text-primary",
+        visualState === "locked" && "cursor-not-allowed border border-border-subtle bg-background text-foreground-faint",
+      )}
     >
-      <span style={{ flexShrink: 0, opacity: state === "locked" ? 0.5 : 1 }}>{icon}</span>
+      <span className={cn("shrink-0", state === "locked" && "opacity-50")}>{icon}</span>
       <span
-        style={{
-          ...mono,
-          fontSize: "10px",
-          fontWeight: 600,
-          marginRight: "2px",
-          opacity: state === "locked" ? 0.5 : 1,
-        }}
+        className={cn("mr-0.5 font-sans text-[10px] font-semibold", state === "locked" && "opacity-50")}
       >
         {STEP_SHORT[step]}
       </span>
-      <span style={{ flex: 1, fontSize: "12px" }}>
+      <span className="flex-1 text-xs">
         {STEP_LABELS[step].replace(/^D\d+ /, "")}
       </span>
     </div>
@@ -197,12 +155,7 @@ function StepItem({
     <button
       type="button"
       onClick={onSelect}
-      style={{
-        all: "unset",
-        display: "block",
-        width: "100%",
-        cursor: "pointer",
-      }}
+      className="block w-full cursor-pointer border-0 bg-transparent p-0 text-left"
     >
       {content}
     </button>
@@ -221,7 +174,7 @@ function LeftColumn({
   onOverview: () => void;
 }) {
   const personas = usePersonaStore((s) => s.personas);
-  const pic = personas.find((p) => p.id === capa.disposisi?.assignedTo);
+  const pic = personas.find((p) => p.id === capa.assignedTo);
   const scoreTips = getScoreLiftTips(capa.score);
   const scoreRows = [
     { label: "Problem", value: capa.score.problemSpecificity },
@@ -240,40 +193,18 @@ function LeftColumn({
 
   return (
     <div
-      style={{
-        width: "220px",
-        flexShrink: 0,
-        position: "sticky",
-        top: "72px",
-        height: "calc(100vh - 96px)",
-        overflowY: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "20px",
-        paddingRight: "4px",
-      }}
+      className="sticky top-[72px] flex h-[calc(100vh-96px)] w-[220px] shrink-0 flex-col gap-5 overflow-y-auto pr-1"
     >
       {/* Overview shortcut */}
       <button
         type="button"
         onClick={onOverview}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "6px",
-          padding: "7px 10px",
-          borderRadius: "var(--r-sm)",
-          border: selectedStep === null ? "1px solid var(--accent-line)" : "1px solid var(--line-2)",
-          background: selectedStep === null ? "var(--accent-soft)" : "var(--bg-2)",
-          color: selectedStep === null ? "var(--accent)" : "var(--fg-2)",
-          fontFamily: "var(--font-sans)",
-          fontSize: "12px",
-          fontWeight: 600,
-          cursor: "pointer",
-          transition: "background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out)",
-        }}
+        className={cn(
+          "flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-[var(--r-sm)] px-2.5 py-[7px] font-sans text-xs font-semibold transition-[background,color,border-color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+          selectedStep === null
+            ? "border border-[var(--accent-line)] bg-[var(--accent-soft)] text-primary"
+            : "border border-[var(--line-2)] bg-card text-foreground-secondary",
+        )}
       >
         Overview
       </button>
@@ -281,7 +212,7 @@ function LeftColumn({
       {/* 8D Progress */}
       <div>
         <EyebrowLeft>8D Progress</EyebrowLeft>
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <div className="flex flex-col gap-1">
           {eightDSteps.map((step) => (
             <StepItem
               key={step}
@@ -295,55 +226,35 @@ function LeftColumn({
       </div>
 
       {/* Divider */}
-      <div style={{ borderTop: "1px solid var(--line-1)" }} />
+      <div className="border-t border-border-subtle" />
 
       {/* CAPA Info */}
       <div>
         <EyebrowLeft>CAPA Info</EyebrowLeft>
         <div
-          style={{
-            background: "var(--bg-2)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-md)",
-            boxShadow: "var(--shadow-sm)",
-            padding: "12px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "10px",
-          }}
+          className="flex flex-col gap-2.5 rounded-[var(--r-md)] border border-[var(--line-2)] bg-card p-3 shadow-sm"
         >
           {[
-            { label: "PIC", value: pic?.displayName ?? capa.disposisi?.assignedTo ?? "—" },
+            { label: "PIC", value: pic?.displayName ?? capa.assignedTo ?? "—" },
             { label: "Dept", value: capa.department },
             {
               label: "Due date",
               value: dueStr,
-              color: isDue ? "var(--danger)" : undefined,
+              isDanger: isDue,
             },
             { label: "Source", value: sourceId },
-          ].map(({ label, value, color }) => (
+          ].map(({ label, value, isDanger }) => (
             <div key={label}>
               <p
-                style={{
-                  ...mono,
-                  fontSize: "9px",
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase" as const,
-                  color: "var(--fg-4)",
-                  margin: "0 0 2px",
-                }}
+                className="mb-0.5 mt-0 font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-faint"
               >
                 {label}
               </p>
               <p
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  fontSize: "12px",
-                  color: color ?? "var(--fg-2)",
-                  margin: 0,
-                  overflowWrap: "break-word",
-                  fontWeight: color ? 600 : 400,
-                }}
+                className={cn(
+                  "m-0 break-words font-sans text-xs [overflow-wrap:anywhere]",
+                  isDanger ? "font-semibold text-destructive" : "font-normal text-foreground-secondary",
+                )}
               >
                 {value}
               </p>
@@ -357,93 +268,62 @@ function LeftColumn({
         <EyebrowLeft>Quality Score</EyebrowLeft>
         <div
           id="score"
-          style={{
-            background: "var(--bg-2)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-md)",
-            boxShadow: "var(--shadow-sm)",
-            padding: "14px 12px",
-          }}
+          className="rounded-[var(--r-md)] border border-[var(--line-2)] bg-card px-3 py-3.5 shadow-sm"
         >
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: "8px" }}>
+          <div className="flex items-baseline justify-between gap-2">
             <p
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: "44px",
-                fontWeight: 600,
-                letterSpacing: "-0.03em",
-                color:
-                  capa.score.total >= 80
-                    ? "var(--success)"
-                    : capa.score.total >= 60
-                      ? "var(--warning)"
-                      : "var(--danger)",
-                margin: 0,
-                lineHeight: 1,
-                fontVariantNumeric: "tabular-nums",
-              }}
+              className={cn(
+                "m-0 font-sans text-[44px] font-semibold leading-none tracking-[-0.03em] tabular-nums",
+                capa.score.total >= 80
+                  ? "text-success"
+                  : capa.score.total >= 60
+                    ? "text-warning"
+                    : "text-destructive",
+              )}
             >
               {capa.score.total}
             </p>
             <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "10px",
-                color: capa.score.isAuditReady ? "var(--success)" : "var(--warning)",
-                background: capa.score.isAuditReady ? "var(--success-soft)" : "var(--warning-soft)",
-                borderRadius: "var(--r-full)",
-                padding: "2px 7px",
-                whiteSpace: "nowrap",
-              }}
+              className={cn(
+                "whitespace-nowrap rounded-[var(--r-full)] px-[7px] py-0.5 font-sans text-[10px]",
+                capa.score.isAuditReady
+                  ? "bg-[var(--success-soft)] text-success"
+                  : "bg-[var(--warning-soft)] text-warning",
+              )}
             >
               {capa.score.isAuditReady ? "Audit ready" : "Needs lift"}
             </span>
           </div>
           <p
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              color: "var(--fg-3)",
-              margin: "6px 0 12px",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-            }}
+            className="mb-3 mt-1.5 font-sans text-[10px] uppercase tracking-[0.18em] text-foreground-tertiary"
           >
             Total / 100
           </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div className="flex flex-col gap-2.5">
             {scoreRows.map((row) => {
               const pct = (row.value / 25) * 100;
-              const color =
+              const colorClass =
                 row.value >= 20
-                  ? "var(--success)"
+                  ? "bg-success"
                   : row.value >= 15
-                    ? "var(--warning)"
-                    : "var(--danger)";
+                    ? "bg-warning"
+                    : "bg-destructive";
               return (
                 <div key={row.label}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px", gap: "8px" }}>
-                    <span style={{ fontSize: "11px", color: "var(--fg-2)", fontWeight: 600 }}>{row.label}</span>
-                    <span style={{ fontSize: "11px", color: "var(--fg-3)", fontFamily: "var(--font-mono)" }}>
+                  <div className="mb-1 flex justify-between gap-2">
+                    <span className="text-[11px] font-semibold text-foreground-secondary">{row.label}</span>
+                    <span className="font-sans text-[11px] text-foreground-tertiary">
                       {row.value}/25
                     </span>
                   </div>
                   <div
-                    style={{
-                      height: "6px",
-                      background: "var(--bg-4)",
-                      borderRadius: "var(--r-full)",
-                      overflow: "hidden",
-                    }}
+                    className="h-1.5 overflow-hidden rounded-[var(--r-full)] bg-field"
                   >
                     <div
+                      className={cn("h-full rounded-[var(--r-full)] transition-[width] [transition-duration:var(--dur-tab)] [transition-timing-function:var(--ease-out)]", colorClass)}
                       style={{
                         width: `${pct}%`,
-                        height: "100%",
-                        background: color,
-                        borderRadius: "var(--r-full)",
-                        transition: "width var(--dur-tab) var(--ease-out)",
                       }}
                     />
                   </div>
@@ -454,41 +334,22 @@ function LeftColumn({
 
           {scoreTips.length > 0 && (
             <div
-              style={{
-                marginTop: "12px",
-                paddingTop: "12px",
-                borderTop: "1px solid var(--line-1)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }}
+              className="mt-3 flex flex-col gap-2 border-t border-border-subtle pt-3"
             >
               <p
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "9px",
-                  color: "var(--fg-3)",
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  margin: 0,
-                }}
+                className="m-0 font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-tertiary"
               >
                 Lift tips
               </p>
               {scoreTips.map((tip) => (
                 <div
                   key={`${tip.field}-${tip.subScore}`}
-                  style={{
-                    background: "var(--bg-3)",
-                    border: "1px solid var(--line-1)",
-                    borderRadius: "var(--r-sm)",
-                    padding: "8px 9px",
-                  }}
+                  className="rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-[9px] py-2"
                 >
-                  <p style={{ margin: "0 0 3px", color: "var(--fg-2)", fontSize: "11px", fontWeight: 600 }}>
+                  <p className="mb-[3px] mt-0 text-[11px] font-semibold text-foreground-secondary">
                     {tip.field} +{tip.scoreGain}
                   </p>
-                  <p style={{ margin: 0, color: "var(--fg-3)", fontSize: "11px", lineHeight: 1.5 }}>
+                  <p className="m-0 text-[11px] leading-6 text-foreground-tertiary">
                     {tip.suggestion}
                   </p>
                 </div>
@@ -507,26 +368,17 @@ function LeftColumn({
 
 function Pill({
   children,
-  bg = "var(--bg-3)",
-  color = "var(--fg-2)",
+  className,
 }: {
   children: React.ReactNode;
-  bg?: string;
-  color?: string;
+  className?: string;
 }) {
   return (
     <span
-      style={{
-        background: bg,
-        color,
-        fontFamily: "var(--font-mono)",
-        fontSize: "11px",
-        fontWeight: 500,
-        padding: "3px 10px",
-        borderRadius: "var(--r-full)",
-        border: "1px solid var(--line-2)",
-        whiteSpace: "nowrap" as const,
-      }}
+      className={cn(
+        "whitespace-nowrap rounded-[var(--r-full)] border border-[var(--line-2)] bg-elevated px-2.5 py-[3px] font-sans text-[11px] font-medium text-foreground-secondary",
+        className,
+      )}
     >
       {children}
     </span>
@@ -536,35 +388,18 @@ function Pill({
 function InfoGrid({ rows }: { rows: Array<{ label: string; value: string; span?: boolean }> }) {
   return (
     <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "12px 24px",
-      }}
+      className="grid grid-cols-2 gap-x-6 gap-y-3"
     >
       {rows.map(({ label, value, span }) =>
         value ? (
-          <div key={label} style={span ? { gridColumn: "1 / -1" } : {}}>
+          <div key={label} className={cn(span && "col-span-full")}>
             <p
-              style={{
-                ...mono,
-                fontSize: "10px",
-                letterSpacing: "0.18em",
-                textTransform: "uppercase" as const,
-                color: "var(--fg-4)",
-                margin: "0 0 3px",
-              }}
+              className={cn(MONO_EYEBROW_CLASS, "mb-[3px] mt-0")}
             >
               {label}
             </p>
             <p
-              style={{
-                fontFamily: "var(--font-sans)",
-                fontSize: "13px",
-                color: "var(--fg-2)",
-                margin: 0,
-                lineHeight: 1.5,
-              }}
+              className="m-0 font-sans text-[13px] leading-6 text-foreground-secondary"
             >
               {value}
             </p>
@@ -577,23 +412,20 @@ function InfoGrid({ rows }: { rows: Array<{ label: string; value: string; span?:
 
 function Card({
   children,
-  accentLeft,
-  bg = "var(--bg-2)",
+  accent = false,
+  surface = "card",
 }: {
   children: React.ReactNode;
-  accentLeft?: string;
-  bg?: string;
+  accent?: boolean;
+  surface?: "card" | "elevated";
 }) {
   return (
     <div
-      style={{
-        background: bg,
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-md)",
-        borderLeft: accentLeft ? `3px solid ${accentLeft}` : undefined,
-        boxShadow: "var(--shadow-sm)",
-        padding: "16px 20px",
-      }}
+      className={cn(
+        "rounded-[var(--r-md)] border border-[var(--line-2)] px-5 py-4 shadow-sm",
+        surface === "elevated" ? "bg-elevated" : "bg-card",
+        accent && "border-l-[3px] border-l-primary",
+      )}
     >
       {children}
     </div>
@@ -603,15 +435,7 @@ function Card({
 function CardLabel({ children }: { children: React.ReactNode }) {
   return (
     <p
-      style={{
-        fontFamily: "var(--font-sans)",
-        fontSize: "12px",
-        fontWeight: 600,
-        color: "var(--fg-3)",
-        textTransform: "uppercase" as const,
-        letterSpacing: "0.18em",
-        margin: "0 0 12px",
-      }}
+      className="mb-3 mt-0 font-sans text-xs font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
     >
       {children}
     </p>
@@ -665,36 +489,54 @@ function SourceDataCard({ prefill }: { prefill: PreFillContext }) {
   );
 }
 
-function DispositionCard({ capa }: { capa: CAPACase }) {
-  const personas = usePersonaStore((s) => s.personas);
-  if (!capa.disposisi) return null;
-  const { disposisi } = capa;
-  const reviewer = personas.find((p) => p.id === disposisi.reviewerPersonaId);
-  const assignee = personas.find((p) => p.id === disposisi.assignedTo);
+function IntakeReviewCard({ reviews }: { reviews: IntakeReview[] }) {
+  const decisionStyle: Record<string, { pill: string; label: string }> = {
+    accepted: { pill: "bg-[var(--success-soft)] text-success", label: "Accepted" },
+    revision_requested: { pill: "bg-[var(--warning-soft)] text-warning", label: "Revision Requested" },
+    rejected: { pill: "bg-[var(--danger-soft)] text-destructive", label: "Rejected" },
+  };
 
   return (
     <Card>
-      <CardLabel>QA Disposition</CardLabel>
-      <InfoGrid
-        rows={[
-          { label: "Reviewed by", value: reviewer?.displayName ?? disposisi.reviewerPersonaId },
-          { label: "Assigned to", value: assignee?.displayName ?? disposisi.assignedTo },
-          { label: "Severity confirmed", value: disposisi.severity },
-          { label: "Dispositioned on", value: formatDateTime(disposisi.dispositionAt) },
-        ]}
-      />
-      <div
-        style={{
-          marginTop: "14px",
-          padding: "12px 14px",
-          background: "var(--bg-3)",
-          borderRadius: "var(--r-sm)",
-          fontSize: "13px",
-          color: "var(--fg-2)",
-          lineHeight: 1.65,
-        }}
-      >
-        {disposisi.rationale}
+      <CardLabel>Intake Review</CardLabel>
+      <div className="flex flex-col gap-3 pt-1">
+        {reviews.map((r) => {
+          const ds = r.decision ? decisionStyle[r.decision] : null;
+          return (
+            <div
+              key={r.reviewerPersonaId}
+              className="flex items-start justify-between gap-3 rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-3 py-2.5"
+            >
+              <div className="min-w-0">
+                <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-foreground">
+                  {r.reviewerName}
+                </p>
+                <p className="m-0 text-xs text-foreground-tertiary">{r.role}</p>
+                {r.notes && (
+                  <p className="mb-0 mt-1.5 text-xs italic text-foreground-tertiary">
+                    "{r.notes}"
+                  </p>
+                )}
+                {r.reviewedAt && (
+                  <p className="mb-0 mt-1 font-sans text-[11px] text-foreground-faint">
+                    {formatDateTime(r.reviewedAt)}
+                  </p>
+                )}
+              </div>
+              <div className="shrink-0">
+                {ds ? (
+                  <span className={`rounded-[var(--r-full)] px-2.5 py-0.5 font-sans text-[11px] font-semibold ${ds.pill}`}>
+                    {ds.label}
+                  </span>
+                ) : (
+                  <span className="rounded-[var(--r-full)] border border-border-subtle bg-field px-2.5 py-0.5 font-sans text-[11px] text-foreground-faint">
+                    Pending
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </Card>
   );
@@ -705,32 +547,26 @@ function NovaSummaryCard({ capa }: { capa: CAPACase }) {
     capa.rca.confirmedRootCauses[0] ?? "Root cause confirmation is still in progress.";
 
   return (
-    <Card bg="var(--bg-3)" accentLeft="var(--accent)">
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+    <Card surface="elevated" accent>
+      <div className="mb-2.5 flex items-center gap-2">
         <Sparkles
           size={14}
           strokeWidth={1.75}
-          style={{ color: "var(--accent)", flexShrink: 0 }}
+          className="shrink-0 text-primary"
         />
         <CardLabel>Nova Summary</CardLabel>
       </div>
-      <p style={{ fontSize: "13px", color: "var(--fg-2)", lineHeight: 1.65, margin: "0 0 12px" }}>
+      <p className="mb-3 mt-0 text-[13px] leading-[1.65] text-foreground-secondary">
         {capa.impact.rationale}
       </p>
       {capa.rca.confirmedRootCauses.length > 0 && (
         <div
-          style={{
-            padding: "10px 12px",
-            background: "var(--bg-4)",
-            borderRadius: "var(--r-sm)",
-            fontSize: "12px",
-            color: "var(--fg-3)",
-          }}
+          className="rounded-[var(--r-sm)] bg-field px-3 py-2.5 text-xs text-foreground-tertiary"
         >
-          <span style={{ ...mono, fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase" as const, color: "var(--fg-3)" }}>
+          <span className="font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-tertiary">
             Confirmed root cause
           </span>
-          <p style={{ margin: "4px 0 0", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+          <p className="mt-1 text-[13px] leading-[1.6] text-foreground-secondary">
             {rootCause}
           </p>
         </div>
@@ -739,31 +575,23 @@ function NovaSummaryCard({ capa }: { capa: CAPACase }) {
   );
 }
 
-function statusTone(status: string): { bg: string; color: string } {
+function statusTone(status: string): string {
   if (["completed", "verified", "approved"].includes(status)) {
-    return { bg: "var(--success-soft)", color: "var(--success)" };
+    return "bg-[var(--success-soft)] text-success";
   }
   if (["overdue", "rejected"].includes(status)) {
-    return { bg: "var(--danger-soft)", color: "var(--danger)" };
+    return "bg-[var(--danger-soft)] text-destructive";
   }
   if (["in_progress", "pending"].includes(status)) {
-    return { bg: "var(--warning-soft)", color: "var(--warning)" };
+    return "bg-[var(--warning-soft)] text-warning";
   }
-  return { bg: "var(--bg-4)", color: "var(--fg-3)" };
+  return "bg-field text-foreground-tertiary";
 }
 
 function EmptyStepState({ children }: { children: React.ReactNode }) {
   return (
     <div
-      style={{
-        background: "var(--bg-3)",
-        border: "1px solid var(--line-1)",
-        borderRadius: "var(--r-md)",
-        padding: "16px",
-        color: "var(--fg-3)",
-        fontSize: "13px",
-        lineHeight: 1.6,
-      }}
+      className="rounded-[var(--r-md)] border border-border-subtle bg-elevated p-4 text-[13px] leading-[1.6] text-foreground-tertiary"
     >
       {children}
     </div>
@@ -783,10 +611,10 @@ function StepDetailView({
   const containmentAnswer = capa.gateAnswers.find((answer) => answer.questionId === "containment");
   const problemAnswer = capa.gateAnswers.find((answer) => answer.questionId === "observation");
   const stepTone = stepState === "done"
-    ? { bg: "var(--success-soft)", color: "var(--success)" }
+    ? "bg-[var(--success-soft)] text-success"
     : stepState === "active"
-      ? { bg: "var(--accent-soft)", color: "var(--accent)" }
-      : { bg: "var(--bg-4)", color: "var(--fg-3)" };
+      ? "bg-[var(--accent-soft)] text-primary"
+      : "bg-field text-foreground-tertiary";
 
   const renderStepBody = () => {
     switch (step) {
@@ -794,7 +622,7 @@ function StepDetailView({
         return (
           <Card>
             <CardLabel>Problem statement</CardLabel>
-            <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+            <p className="m-0 text-[13px] leading-[1.7] text-foreground-secondary">
               {problemAnswer?.answer || "Problem statement has not been saved yet."}
             </p>
           </Card>
@@ -804,7 +632,7 @@ function StepDetailView({
           <Card>
             <CardLabel>Immediate containment</CardLabel>
             {containmentAnswer ? (
-              <p style={{ margin: 0, whiteSpace: "pre-line", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+              <p className="m-0 whitespace-pre-line text-[13px] leading-[1.7] text-foreground-secondary">
                 {containmentAnswer.answer}
               </p>
             ) : (
@@ -817,20 +645,12 @@ function StepDetailView({
           <Card>
             <CardLabel>Root cause analysis</CardLabel>
             <InfoGrid rows={[{ label: "Method", value: capa.rca.method }]} />
-            <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div className="mt-3.5 flex flex-col gap-2.5">
               {capa.rca.confirmedRootCauses.length > 0 ? (
                 capa.rca.confirmedRootCauses.map((cause, index) => (
                   <div
                     key={`${cause}-${index}`}
-                    style={{
-                      background: "var(--bg-3)",
-                      border: "1px solid var(--line-1)",
-                      borderRadius: "var(--r-sm)",
-                      padding: "10px 12px",
-                      color: "var(--fg-2)",
-                      fontSize: "13px",
-                      lineHeight: 1.6,
-                    }}
+                    className="rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-3 py-2.5 text-[13px] leading-[1.6] text-foreground-secondary"
                   >
                     {cause}
                   </div>
@@ -846,26 +666,21 @@ function StepDetailView({
           <Card>
             <CardLabel>Corrective actions</CardLabel>
             {capa.correctiveActions.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="flex flex-col gap-2.5">
                 {capa.correctiveActions.map((action) => {
                   const tone = statusTone(action.status);
                   return (
                     <div
                       key={action.id}
-                      style={{
-                        background: "var(--bg-3)",
-                        border: "1px solid var(--line-1)",
-                        borderRadius: "var(--r-md)",
-                        padding: "12px 14px",
-                      }}
+                      className="rounded-[var(--r-md)] border border-border-subtle bg-elevated px-3.5 py-3"
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
-                        <p style={{ margin: 0, color: "var(--fg-1)", fontSize: "13px", fontWeight: 600 }}>
+                      <div className="mb-2 flex justify-between gap-3">
+                        <p className="m-0 text-[13px] font-semibold text-foreground">
                           {action.id}
                         </p>
-                        <Pill bg={tone.bg} color={tone.color}>{action.status.replace("_", " ")}</Pill>
+                        <Pill className={tone}>{action.status.replace("_", " ")}</Pill>
                       </div>
-                      <p style={{ margin: "0 0 10px", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+                      <p className="mb-2.5 mt-0 text-[13px] leading-[1.6] text-foreground-secondary">
                         {action.description}
                       </p>
                       <InfoGrid
@@ -890,26 +705,21 @@ function StepDetailView({
           <Card>
             <CardLabel>Preventive actions</CardLabel>
             {capa.preventiveActions.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="flex flex-col gap-2.5">
                 {capa.preventiveActions.map((action) => {
                   const tone = statusTone(action.status);
                   return (
                     <div
                       key={action.id}
-                      style={{
-                        background: "var(--bg-3)",
-                        border: "1px solid var(--line-1)",
-                        borderRadius: "var(--r-md)",
-                        padding: "12px 14px",
-                      }}
+                      className="rounded-[var(--r-md)] border border-border-subtle bg-elevated px-3.5 py-3"
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
-                        <p style={{ margin: 0, color: "var(--fg-1)", fontSize: "13px", fontWeight: 600 }}>
+                      <div className="mb-2 flex justify-between gap-3">
+                        <p className="m-0 text-[13px] font-semibold text-foreground">
                           {action.id}
                         </p>
-                        <Pill bg={tone.bg} color={tone.color}>{action.status.replace("_", " ")}</Pill>
+                        <Pill className={tone}>{action.status.replace("_", " ")}</Pill>
                       </div>
-                      <p style={{ margin: "0 0 10px", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+                      <p className="mb-2.5 mt-0 text-[13px] leading-[1.6] text-foreground-secondary">
                         {action.description}
                       </p>
                       <InfoGrid
@@ -932,7 +742,7 @@ function StepDetailView({
           <Card>
             <CardLabel>Verification evidence</CardLabel>
             {capa.verification.result || capa.verification.evidenceFileNames.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div className="flex flex-col gap-3.5">
                 <InfoGrid
                   rows={[
                     { label: "Method", value: capa.verification.method ?? "" },
@@ -942,7 +752,7 @@ function StepDetailView({
                   ]}
                 />
                 {capa.verification.result && (
-                  <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+                  <p className="m-0 text-[13px] leading-[1.7] text-foreground-secondary">
                     {capa.verification.result}
                   </p>
                 )}
@@ -957,37 +767,32 @@ function StepDetailView({
           <Card>
             <CardLabel>Sign-off chain</CardLabel>
             {capa.approvals.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="flex flex-col gap-2.5">
                 {capa.approvals.map((approval) => {
                   const tone = statusTone(approval.decision);
                   return (
                     <div
                       key={`${approval.approverPersonaId}-${approval.role}`}
-                      style={{
-                        background: "var(--bg-3)",
-                        border: "1px solid var(--line-1)",
-                        borderRadius: "var(--r-md)",
-                        padding: "12px 14px",
-                      }}
+                      className="rounded-[var(--r-md)] border border-border-subtle bg-elevated px-3.5 py-3"
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+                      <div className="mb-2 flex justify-between gap-3">
                         <div>
-                          <p style={{ margin: 0, color: "var(--fg-1)", fontSize: "13px", fontWeight: 600 }}>
+                          <p className="m-0 text-[13px] font-semibold text-foreground">
                             {approval.approverName}
                           </p>
-                          <p style={{ margin: "3px 0 0", color: "var(--fg-3)", fontSize: "12px" }}>
+                          <p className="mt-[3px] text-xs text-foreground-tertiary">
                             {approval.role}
                           </p>
                         </div>
-                        <Pill bg={tone.bg} color={tone.color}>{approval.decision}</Pill>
+                        <Pill className={tone}>{approval.decision}</Pill>
                       </div>
                       {approval.notes && (
-                        <p style={{ margin: "0 0 8px", color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+                        <p className="mb-2 mt-0 text-[13px] leading-[1.6] text-foreground-secondary">
                           {approval.notes}
                         </p>
                       )}
                       {approval.signedAt && (
-                        <p style={{ margin: 0, color: "var(--fg-3)", fontSize: "11px", fontFamily: "var(--font-mono)" }}>
+                        <p className="m-0 font-sans text-[11px] text-foreground-tertiary">
                           {formatDateTime(approval.signedAt)}
                         </p>
                       )}
@@ -1004,50 +809,40 @@ function StepDetailView({
   };
 
   return (
-    <div key={step} className="motion-tab-content" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
-      <p style={{ ...mono, fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>
+    <div key={step} className="motion-tab-content flex min-w-0 flex-1 flex-col gap-4">
+      <p className="m-0 font-sans text-xs text-foreground-tertiary">
         <button
           type="button"
           onClick={onBackToOverview}
-          style={{
-            all: "unset",
-            color: "var(--fg-4)",
-            cursor: "pointer",
-          }}
+          className="cursor-pointer border-0 bg-transparent p-0 font-inherit text-foreground-faint hover:text-foreground-secondary"
         >
           CAPA Overview
         </button>
         {" / "}
-        <span style={{ color: "var(--fg-2)" }}>{STEP_LABELS[step]}</span>
+        <span className="text-foreground-secondary">{STEP_LABELS[step]}</span>
       </p>
 
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1
-            style={{
-              fontSize: "24px",
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              color: "var(--fg-1)",
-              margin: "0 0 6px",
-            }}
+            className="mb-1.5 mt-0 text-2xl font-semibold tracking-[-0.02em] text-foreground"
           >
             {STEP_LABELS[step]}
           </h1>
-          <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.6 }}>
+          <p className="m-0 text-[13px] leading-[1.6] text-foreground-secondary">
             Inline 8D workspace for {capa.id}. The URL stays on the CAPA hub while this panel changes context.
           </p>
         </div>
-        <Pill bg={stepTone.bg} color={stepTone.color}>
+        <Pill className={stepTone}>
           {stepState}
         </Pill>
       </div>
 
       {renderStepBody()}
 
-      <Card bg="var(--bg-3)" accentLeft="var(--accent)">
+      <Card surface="elevated" accent>
         <CardLabel>Nova context</CardLabel>
-        <p style={{ margin: 0, color: "var(--fg-2)", fontSize: "13px", lineHeight: 1.7 }}>
+        <p className="m-0 text-[13px] leading-[1.7] text-foreground-secondary">
           {capa.impact.rationale}
         </p>
       </Card>
@@ -1067,21 +862,17 @@ function EditableStepWorkspace({
   const StepComponent = EMBEDDED_STEP_COMPONENTS[step];
 
   return (
-    <div key={step} className="motion-tab-content" style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
-      <p style={{ ...mono, fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>
+    <div key={step} className="motion-tab-content flex min-w-0 flex-1 flex-col gap-4">
+      <p className="m-0 font-sans text-xs text-foreground-tertiary">
         <button
           type="button"
           onClick={onBackToOverview}
-          style={{
-            all: "unset",
-            color: "var(--fg-4)",
-            cursor: "pointer",
-          }}
+          className="cursor-pointer border-0 bg-transparent p-0 font-inherit text-foreground-faint hover:text-foreground-secondary"
         >
           CAPA Overview
         </button>
         {" / "}
-        <span style={{ color: "var(--fg-2)" }}>{STEP_LABELS[step]}</span>
+        <span className="text-foreground-secondary">{STEP_LABELS[step]}</span>
       </p>
 
       <EightDEmbedProvider onStepChange={onStepChange}>
@@ -1117,55 +908,55 @@ function RightColumn({
   }
 
   const source = getSourceSystem(capa.preFill);
-  const severityColors: Record<string, { bg: string; color: string }> = {
-    Critical: { bg: "var(--danger-soft)", color: "var(--danger)" },
-    Major: { bg: "var(--danger-soft)", color: "var(--danger)" },
-    Minor: { bg: "var(--warning-soft)", color: "var(--warning)" },
+  const severityColors: Record<string, string> = {
+    Ungraded: "bg-field text-foreground-tertiary",
+    Critical: "bg-[var(--danger-soft)] text-destructive",
+    Major: "bg-[var(--danger-soft)] text-destructive",
+    Minor: "bg-[var(--warning-soft)] text-warning",
   };
-  const sev = severityColors[capa.impact.severity] ?? { bg: "var(--bg-3)", color: "var(--fg-2)" };
+  const sev = severityColors[capa.impact.severity] ?? "bg-elevated text-foreground-secondary";
 
-  const statusColors: Record<string, { bg: string; color: string }> = {
-    investigation: { bg: "var(--accent-soft)", color: "var(--accent)" },
-    approval: { bg: "var(--warning-soft)", color: "var(--warning)" },
-    closed: { bg: "var(--success-soft)", color: "var(--success)" },
-    draft: { bg: "var(--bg-4)", color: "var(--fg-3)" },
-    disposisi: { bg: "var(--bg-4)", color: "var(--fg-2)" },
+  const statusColors: Record<string, string> = {
+    investigation: "bg-[var(--accent-soft)] text-primary",
+    approval: "bg-[var(--warning-soft)] text-warning",
+    closed: "bg-[var(--success-soft)] text-success",
+    draft: "bg-field text-foreground-tertiary",
+    pending_review: "bg-[var(--warning-soft)] text-warning",
+    revision_requested: "bg-[var(--warning-soft)] text-warning",
+    rejected: "bg-[var(--danger-soft)] text-destructive",
   };
-  const st = statusColors[capa.status] ?? { bg: "var(--bg-3)", color: "var(--fg-2)" };
+  const st = statusColors[capa.status] ?? "bg-elevated text-foreground-secondary";
   const statusLabel: Record<string, string> = {
     investigation: "In progress",
     approval: "Pending approval",
     closed: "Closed",
     draft: "Draft",
-    disposisi: "QA disposition",
+    pending_review: "Pending review",
+    revision_requested: "Revision requested",
+    rejected: "Rejected",
   };
 
   return (
-    <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div className="flex min-w-0 flex-1 flex-col gap-4">
       {/* Breadcrumb */}
       <p
-        style={{
-          ...mono,
-          fontSize: "12px",
-          color: "var(--fg-3)",
-          margin: 0,
-        }}
+        className="m-0 font-sans text-xs text-foreground-tertiary"
       >
-        <Link to="/capa" style={{ color: "var(--fg-4)", textDecoration: "none" }}>
+        <Link to="/capa" className="text-foreground-faint no-underline hover:text-foreground-secondary">
           All CAPAs
         </Link>
         {" / "}
-        <span style={{ color: "var(--fg-2)" }}>{capa.id}</span>
+        <span className="text-foreground-secondary">{capa.id}</span>
       </p>
 
       {/* Badge row */}
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" as const }}>
+      <div className="flex flex-wrap items-center gap-1.5">
         <Pill>{source}</Pill>
         <Pill>{formatCAPAType(capa.type)}</Pill>
-        <Pill bg={sev.bg} color={sev.color}>
+        <Pill className={sev}>
           {capa.impact.severity}
         </Pill>
-        <Pill bg={st.bg} color={st.color}>
+        <Pill className={st}>
           {statusLabel[capa.status] ?? capa.status}
         </Pill>
       </div>
@@ -1173,25 +964,12 @@ function RightColumn({
       {/* Title */}
       <div>
         <h1
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "22px",
-            fontWeight: 600,
-            letterSpacing: "-0.018em",
-            color: "var(--fg-1)",
-            margin: "0 0 6px",
-          }}
+          className="mb-1.5 mt-0 font-sans text-[22px] font-semibold tracking-[-0.018em] text-foreground"
         >
           {capa.id}
         </h1>
         <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "14px",
-            color: "var(--fg-2)",
-            margin: 0,
-            lineHeight: 1.6,
-          }}
+          className="m-0 font-sans text-sm leading-[1.6] text-foreground-secondary"
         >
           {capa.title}
         </p>
@@ -1200,31 +978,20 @@ function RightColumn({
       {/* Source data */}
       <SourceDataCard prefill={capa.preFill} />
 
-      {/* QA Disposition */}
-      {capa.disposisi && <DispositionCard capa={capa} />}
+      {/* Intake Review */}
+      {capa.intakeReviews && capa.intakeReviews.length > 0 && (
+        <IntakeReviewCard reviews={capa.intakeReviews} />
+      )}
 
       {/* Nova Summary */}
       <NovaSummaryCard capa={capa} />
 
       {/* CTA */}
-      <div style={{ display: "flex", justifyContent: "flex-end", paddingBottom: "32px" }}>
+      <div className="flex justify-end pb-8">
         <button
           type="button"
           onClick={() => onSelectStep(capa.currentStep)}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "var(--grad-brand)",
-            color: "var(--on-accent)",
-            fontFamily: "var(--font-sans)",
-            fontSize: "14px",
-            fontWeight: 600,
-            padding: "10px 20px",
-            borderRadius: "var(--r-sm)",
-            border: "none",
-            cursor: "pointer",
-          }}
+          className="inline-flex cursor-pointer items-center gap-2 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2.5 font-sans text-sm font-semibold text-primary-foreground"
         >
           {getCtaLabel(capa.currentStep)}
           <ArrowRight size={16} strokeWidth={2} />
@@ -1260,72 +1027,23 @@ export function CapaDetailPage() {
   }
 
   return (
-    <div style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="font-sans">
       {/* ── Top action bar ────────────────────────────────────── */}
       <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "8px",
-          marginBottom: "24px",
-        }}
+        className="mb-6 flex justify-end gap-2"
       >
         <button
           onClick={() =>
             toast.info("Export PDF", { description: "PDF export is mocked in this demo." })
           }
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "7px 14px",
-            borderRadius: "var(--r-sm)",
-            background: "transparent",
-            border: "1px solid var(--line-2)",
-            color: "var(--fg-2)",
-            fontSize: "13px",
-            fontWeight: 500,
-            fontFamily: "var(--font-sans)",
-            cursor: "pointer",
-            transition: "background 180ms, color 180ms",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "var(--bg-3)";
-            (e.currentTarget as HTMLElement).style.color = "var(--fg-1)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "transparent";
-            (e.currentTarget as HTMLElement).style.color = "var(--fg-2)";
-          }}
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground"
         >
           <Download size={14} strokeWidth={1.75} />
           Export PDF
         </button>
         <button
           onClick={() => navigate(`/audit-trail`)}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "7px 14px",
-            borderRadius: "var(--r-sm)",
-            background: "transparent",
-            border: "1px solid var(--line-2)",
-            color: "var(--fg-2)",
-            fontSize: "13px",
-            fontWeight: 500,
-            fontFamily: "var(--font-sans)",
-            cursor: "pointer",
-            transition: "background 180ms, color 180ms",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "var(--bg-3)";
-            (e.currentTarget as HTMLElement).style.color = "var(--fg-1)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "transparent";
-            (e.currentTarget as HTMLElement).style.color = "var(--fg-2)";
-          }}
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground"
         >
           <ScrollText size={14} strokeWidth={1.75} />
           Audit trail
@@ -1333,7 +1051,7 @@ export function CapaDetailPage() {
       </div>
 
       {/* ── Two-column layout ─────────────────────────────────── */}
-      <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
+      <div className="flex items-start gap-7">
         <LeftColumn
           capa={capa}
           selectedStep={selectedStep}

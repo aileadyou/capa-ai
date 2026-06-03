@@ -1,15 +1,17 @@
 import { useMemo, useState } from "react";
 import { useDialog } from "@/hooks/use-dialog";
 import { useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, Circle, PenLine, ShieldCheck, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Circle, PenLine, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell } from "@/components/layout/EightDShell";
 import { ScorePill } from "@/components/shared/ScorePill";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore, useNotificationStore } from "@/store";
-import type { ApprovalEvent, CAPACase } from "@/types";
+import type { ApprovalEvent, CAPACase, CorrectiveAction, PreventiveAction } from "@/types";
+// CorrectiveAction & PreventiveAction used in ActionRow props
 import type { PersonaID } from "@/types/persona";
-import { formatDateTime } from "@/utils/formatters";
+import { formatCAPAType, formatDate, formatDateTime } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,7 +35,7 @@ function getApprovalChain(capa: CAPACase): Approver[] {
       ? ["qa_deviation", "head_of_dept", "head_of_qa"]
       : ["head_of_dept", "qa_deviation", "head_of_qa"];
 
-  if (capa.impact.severity === "Critical") {
+  if (capa.impact.severity === "Major" || capa.impact.severity === "Critical") {
     chain.splice(chain.length - 1, 0, "sme");
   }
 
@@ -62,16 +64,7 @@ function ESignatureModal({
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "var(--glass-dark)",
-        backdropFilter: "blur(4px)",
-      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--glass-dark)] backdrop-blur"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
@@ -80,52 +73,30 @@ function ESignatureModal({
         aria-modal="true"
         aria-labelledby="esig-title"
         tabIndex={-1}
-        style={{
-          width: "100%",
-          maxWidth: "440px",
-          maxHeight: "calc(100vh - 48px)",
-          overflowY: "auto",
-          overscrollBehavior: "contain",
-          background: "var(--bg-2)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-xl)",
-          boxShadow: "var(--shadow-lg)",
-          padding: "24px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
-          animation: "leadReveal var(--dur-tab) var(--ease-out)",
-        }}
+        className="flex max-h-[calc(100vh-48px)] w-full max-w-[440px] animate-[leadReveal_var(--dur-tab)_var(--ease-out)] flex-col gap-4 overflow-y-auto overscroll-contain rounded-[var(--r-xl)] border border-[var(--line-2)] bg-card p-6 shadow-lg"
       >
         {/* Header */}
         <div>
-          <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--accent)", margin: "0 0 6px" }}>
+          <p className="mb-1.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             E-Signature
           </p>
-          <h2 id="esig-title" style={{ fontSize: "18px", fontWeight: 700, color: "var(--fg-1)", margin: "0 0 4px", fontFamily: "var(--font-sans)" }}>
+          <h2 id="esig-title" className="mb-1 mt-0 font-sans text-lg font-bold text-foreground">
             Approval Decision
           </h2>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0 }}>
+          <p className="m-0 text-[13px] text-foreground-tertiary">
             {approver.name} will sign this CAPA with a mocked electronic signature and timestamp.
           </p>
         </div>
 
         {/* Approver info */}
-        <div
-          style={{
-            padding: "12px 14px",
-            background: "var(--bg-3)",
-            border: "1px solid var(--line-1)",
-            borderRadius: "var(--r-md)",
-          }}
-        >
-          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg-1)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+        <div className="rounded-[var(--r-md)] border border-border-subtle bg-elevated px-3.5 py-3">
+          <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-foreground">
             {approver.name}
           </p>
-          <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: "0 0 6px", fontFamily: "var(--font-sans)" }}>
+          <p className="mb-1.5 mt-0 font-sans text-xs text-foreground-tertiary">
             {approver.role}
           </p>
-          <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--fg-4)", margin: 0 }}>
+          <p className="m-0 font-sans text-[11px] text-foreground-faint">
             {new Date().toLocaleString()}
           </p>
         </div>
@@ -134,7 +105,7 @@ function ESignatureModal({
         <div>
           <label
             htmlFor="esig-notes"
-            style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}
+            className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary"
           >
             Notes (optional)
           </label>
@@ -144,40 +115,218 @@ function ESignatureModal({
             onChange={(e) => setNotes(e.target.value)}
             rows={4}
             placeholder="Approval or rejection notes…"
-            style={{
-              width: "100%",
-              background: "var(--field-bg)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-sm)",
-              padding: "10px 12px",
-              fontSize: "13px",
-              lineHeight: "1.6",
-              color: "var(--fg-1)",
-              fontFamily: "var(--font-sans)",
-              resize: "vertical",
-              outline: "none",
-              boxSizing: "border-box",
-            }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+            className="box-border w-full resize-y rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3 py-2.5 font-sans text-[13px] leading-[1.6] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
           />
         </div>
 
         {/* Actions */}
-        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
+        <div className="flex justify-end gap-2.5 pt-1">
           <button
             onClick={() => onReject(notes)}
-            style={{ background: "var(--danger-soft)", color: "var(--danger)", border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)", borderRadius: "var(--r-sm)", padding: "8px 16px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+            className="cursor-pointer rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-4 py-2 font-sans text-[13px] font-semibold text-destructive"
           >
             Reject
           </button>
           <button
             onClick={() => onApprove(notes)}
-            style={{ background: "var(--grad-brand)", color: "var(--on-accent)", border: "none", borderRadius: "var(--r-sm)", padding: "8px 20px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)" }}
+            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold text-primary-foreground"
           >
             Approve
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Comprehensive Review ──────────────────────────────────────────────────────
+
+const GATE_QUESTION_LABELS: Record<string, string> = {
+  observation: "What was observed?",
+  scope: "What is the scope?",
+  impact: "What is the patient/product/process impact?",
+  containment: "What containment measures were taken?",
+  cause_confirmation: "Has the root cause been confirmed?",
+  effectiveness_criteria: "What are the effectiveness criteria?",
+};
+
+function ReviewSection({
+  title,
+  tag,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  tag: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full cursor-pointer items-center gap-3 border-b border-border-subtle bg-elevated px-4 py-3 text-left"
+      >
+        <span className="rounded-[var(--r-sm)] border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-sans text-[10px] font-bold text-primary">
+          {tag}
+        </span>
+        <span className="flex-1 font-sans text-[13px] font-semibold text-foreground">{title}</span>
+        {open ? <ChevronDown size={14} className="text-foreground-tertiary" /> : <ChevronRight size={14} className="text-foreground-tertiary" />}
+      </button>
+      {open && <div className="px-4 py-4">{children}</div>}
+    </div>
+  );
+}
+
+function ActionRow({ action }: { action: CorrectiveAction | PreventiveAction }) {
+  const statusColors: Record<string, string> = {
+    open: "text-foreground-tertiary",
+    in_progress: "text-primary",
+    completed: "text-success",
+    overdue: "text-destructive",
+    verified: "text-success",
+  };
+  return (
+    <div className="flex items-start justify-between gap-3 border-b border-border-subtle py-2.5 last:border-0 last:pb-0">
+      <p className="m-0 flex-1 text-[13px] leading-[1.55] text-foreground-secondary">
+        {action.description}
+      </p>
+      <div className="flex shrink-0 flex-col items-end gap-0.5">
+        <span className={cn("font-sans text-[11px] font-semibold", statusColors[action.status] ?? "text-foreground-tertiary")}>
+          {action.status.replace("_", " ")}
+        </span>
+        <span className="font-sans text-[10px] text-foreground-faint">{action.pic}</span>
+      </div>
+    </div>
+  );
+}
+
+function ComprehensiveReview({ capa }: { capa: CAPACase }) {
+  const gateAnswers = capa.gateAnswers ?? [];
+  const cas = capa.correctiveActions;
+  const pas = capa.preventiveActions;
+  const rca = capa.rca;
+  const verification = capa.verification;
+
+  return (
+    <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
+      <div className="flex items-center gap-2.5 border-b border-border-subtle bg-elevated px-4 py-3.5">
+        <ShieldCheck size={14} className="shrink-0 text-primary" />
+        <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+          Case Summary (D1–D6)
+        </p>
+        <span className="ml-auto font-sans text-[11px] text-foreground-faint">
+          Review before signing
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-0">
+        {/* D1 — Problem statement */}
+        <ReviewSection tag="D1" title="Problem Statement">
+          <div className="mb-3 flex flex-wrap gap-2">
+            <span className="rounded-[var(--r-full)] border border-border-subtle bg-elevated px-2.5 py-0.5 font-sans text-xs text-foreground-secondary">
+              {formatCAPAType(capa.type)}
+            </span>
+            <span className="rounded-[var(--r-full)] border border-border-subtle bg-elevated px-2.5 py-0.5 font-sans text-xs text-foreground-secondary">
+              {capa.impact.severity}
+            </span>
+          </div>
+          <p className="mb-3 mt-0 font-sans text-[13px] font-semibold text-foreground">{capa.title}</p>
+          {gateAnswers.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {gateAnswers.map((a) => (
+                <div key={a.questionId}>
+                  <p className="mb-1 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground-tertiary">
+                    {GATE_QUESTION_LABELS[a.questionId] ?? a.questionId}
+                  </p>
+                  <p className="m-0 text-[13px] leading-[1.6] text-foreground-secondary">{a.answer}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="m-0 text-[13px] text-foreground-faint italic">No gate answers recorded.</p>
+          )}
+        </ReviewSection>
+
+        {/* D2 — Containment */}
+        <ReviewSection tag="D2" title="Containment">
+          {(() => {
+            const containmentGate = gateAnswers.find((a) => a.questionId === "containment");
+            return containmentGate ? (
+              <p className="m-0 text-[13px] leading-[1.6] text-foreground-secondary">{containmentGate.answer}</p>
+            ) : (
+              <p className="m-0 text-[13px] text-foreground-faint italic">No containment answer recorded.</p>
+            );
+          })()}
+          {capa.impact.rationale && (
+            <p className="mb-0 mt-3 text-[12px] leading-[1.5] text-foreground-tertiary">
+              <span className="font-semibold">Impact rationale:</span> {capa.impact.rationale}
+            </p>
+          )}
+        </ReviewSection>
+
+        {/* D3 — Root cause */}
+        <ReviewSection tag="D3" title="Root Cause Analysis">
+          <p className="mb-2 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground-tertiary">
+            Method: {rca.method?.replace("_", " ") ?? "—"}
+          </p>
+          {rca.confirmedRootCauses.length > 0 ? (
+            <ul className="m-0 flex flex-col gap-1.5 pl-4">
+              {rca.confirmedRootCauses.map((rc, i) => (
+                <li key={i} className="text-[13px] leading-[1.55] text-foreground-secondary">{rc}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="m-0 text-[13px] text-foreground-faint italic">No confirmed root causes recorded.</p>
+          )}
+        </ReviewSection>
+
+        {/* D4 — Corrective actions */}
+        <ReviewSection tag="D4" title={`Corrective Actions (${cas.length})`}>
+          {cas.length > 0 ? (
+            <div>{cas.map((a) => <ActionRow key={a.id} action={a} />)}</div>
+          ) : (
+            <p className="m-0 text-[13px] text-foreground-faint italic">No corrective actions added.</p>
+          )}
+        </ReviewSection>
+
+        {/* D5 — Preventive actions */}
+        <ReviewSection tag="D5" title={`Preventive Actions (${pas.length})`}>
+          {pas.length > 0 ? (
+            <div>{pas.map((a) => <ActionRow key={a.id} action={a} />)}</div>
+          ) : (
+            <p className="m-0 text-[13px] text-foreground-faint italic">No preventive actions added.</p>
+          )}
+        </ReviewSection>
+
+        {/* D6 — Verification */}
+        <ReviewSection tag="D6" title="Verification">
+          {verification.method ? (
+            <div className="flex flex-col gap-2">
+              <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground-tertiary">
+                Method: {verification.method.replace(/_/g, " ")}
+              </p>
+              {verification.result && (
+                <p className="m-0 text-[13px] leading-[1.6] text-foreground-secondary">{verification.result}</p>
+              )}
+              {verification.verifiedAt && (
+                <p className="m-0 text-[11px] text-foreground-faint">
+                  Verified {formatDate(verification.verifiedAt)}
+                  {verification.verifiedBy ? ` by ${verification.verifiedBy}` : ""}
+                </p>
+              )}
+              {verification.evidenceFileNames.length > 0 && (
+                <p className="m-0 text-[12px] text-foreground-tertiary">
+                  Evidence: {verification.evidenceFileNames.join(", ")}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="m-0 text-[13px] text-foreground-faint italic">Verification not yet completed.</p>
+          )}
+        </ReviewSection>
       </div>
     </div>
   );
@@ -318,52 +467,38 @@ export function D7SignOffPage() {
   return (
     <>
       <EightDShell capaId={capa.id} activeStep="signoff">
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        <div className="flex flex-col gap-6">
 
           {/* ── Page header ───────────────────────────────────────────── */}
           <div>
-            <p style={{ fontSize: "12px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", margin: "0 0 6px", letterSpacing: "0.18em" }}>
+            <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
               {capa.id} · D7
             </p>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-              <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--fg-1)", margin: 0, fontFamily: "var(--font-sans)" }}>
+            <div className="mb-2 flex items-center gap-2.5">
+              <h1 className="m-0 font-sans text-[22px] font-bold text-foreground">
                 Sign-Off
               </h1>
               {isAuditReady && (
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    fontFamily: "var(--font-mono)",
-                    color: "var(--success)",
-                    background: "var(--success-soft)",
-                    border: "1px solid color-mix(in srgb, var(--success) 38%, transparent)",
-                    borderRadius: "var(--r-full)",
-                    padding: "3px 10px",
-                  }}
-                >
+                <span className="flex items-center gap-[5px] rounded-[var(--r-full)] border border-success/40 bg-[var(--success-soft)] px-2.5 py-[3px] font-sans text-[11px] font-semibold text-success">
                   <ShieldCheck size={11} />
                   Audit Ready
                 </span>
               )}
             </div>
-            <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, lineHeight: "1.55", maxWidth: "600px" }}>
+            <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
               Complete the e-signature approval chain for {capa.id}. Final closure requires quality score 80 or higher and all required approvals.
             </p>
           </div>
 
           {/* ── Score blocker ─────────────────────────────────────────── */}
           {(!isAuditReady || showScoreBlocker) && (
-            <div style={{ display: "flex", gap: "10px", padding: "12px 14px", background: "var(--danger-soft)", border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)", borderRadius: "var(--r-sm)" }}>
-              <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
+            <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+              <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
               <div>
-                <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+                <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">
                   {showScoreBlocker ? "Approval attempt blocked" : "Sign-off blocked by quality score"}
                 </p>
-                <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+                <p className="m-0 font-sans text-xs text-foreground-tertiary">
                   {showScoreBlocker
                     ? "Improve the CAPA score through D1–D6 before attempting electronic sign-off."
                     : "Quality score must reach 80 before this CAPA can be approved and closed as Audit Ready."}
@@ -372,23 +507,18 @@ export function D7SignOffPage() {
             </div>
           )}
 
+          {/* ── Comprehensive review ──────────────────────────────────── */}
+          <ComprehensiveReview capa={capa} />
+
           {/* ── Final quality gate ────────────────────────────────────── */}
-          <div
-            style={{
-              background: "var(--bg-2)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-lg)",
-              boxShadow: "var(--shadow-sm)",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--line-1)", background: "var(--bg-3)", display: "flex", alignItems: "center", gap: "8px" }}>
-              <ShieldCheck size={14} style={{ color: "var(--accent)", flexShrink: 0 }} />
-              <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: 0 }}>
+          <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
+            <div className="flex items-center gap-2 border-b border-border-subtle bg-elevated px-4 py-3.5">
+              <ShieldCheck size={14} className="shrink-0 text-primary" />
+              <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
                 Final Quality Gate
               </p>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0" }}>
+            <div className="grid grid-cols-3">
               {[
                 {
                   label: "Final Score",
@@ -397,7 +527,7 @@ export function D7SignOffPage() {
                 {
                   label: "Required Status",
                   value: (
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: isAuditReady ? "var(--success)" : "var(--warning)", fontFamily: "var(--font-sans)" }}>
+                    <span className={cn("font-sans text-[13px] font-semibold", isAuditReady ? "text-success" : "text-warning")}>
                       {isAuditReady ? "Audit Ready" : "Needs Improvement"}
                     </span>
                   ),
@@ -405,7 +535,7 @@ export function D7SignOffPage() {
                 {
                   label: "Closure State",
                   value: (
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg-2)", fontFamily: "var(--font-sans)" }}>
+                    <span className="font-sans text-[13px] font-semibold text-foreground-secondary">
                       {isClosed ? "Closed" : allApproved ? "Ready to Close" : "Approval Pending"}
                     </span>
                   ),
@@ -413,12 +543,9 @@ export function D7SignOffPage() {
               ].map((cell, i) => (
                 <div
                   key={cell.label}
-                  style={{
-                    padding: "14px 16px",
-                    borderRight: i < 2 ? "1px solid var(--line-1)" : "none",
-                  }}
+                  className={cn("px-4 py-3.5", i < 2 && "border-r border-border-subtle")}
                 >
-                  <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: "0 0 8px" }}>
+                  <p className="mb-2 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
                     {cell.label}
                   </p>
                   {cell.value}
@@ -428,21 +555,13 @@ export function D7SignOffPage() {
           </div>
 
           {/* ── Approval chain ────────────────────────────────────────── */}
-          <div
-            style={{
-              background: "var(--bg-2)",
-              border: "1px solid var(--line-2)",
-              borderRadius: "var(--r-lg)",
-              boxShadow: "var(--shadow-sm)",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--line-1)", background: "var(--bg-3)" }}>
-              <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: 0 }}>
+          <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
+            <div className="border-b border-border-subtle bg-elevated px-4 py-3.5">
+              <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
                 Approval Chain
               </p>
             </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
+            <div className="flex flex-col">
               {approvalChain.map((approver, index) => {
                 const approval = getApprovalFor(capa.approvals, approver.personaId);
                 const isApproved = approval?.decision === "approved";
@@ -452,36 +571,36 @@ export function D7SignOffPage() {
                 return (
                   <div
                     key={approver.personaId}
-                    style={{
-                      padding: "16px",
-                      borderBottom: index < approvalChain.length - 1 ? "1px solid var(--line-1)" : "none",
-                      background: isApproved ? "color-mix(in srgb, var(--success) 3%, transparent)" : isRejected ? "color-mix(in srgb, var(--danger) 3%, transparent)" : "transparent",
-                    }}
+                    className={cn(
+                      "p-4",
+                      index < approvalChain.length - 1 && "border-b border-border-subtle",
+                      isApproved ? "bg-[var(--success-soft)]" : isRejected ? "bg-[var(--danger-soft)]" : "bg-transparent",
+                    )}
                   >
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" }}>
-                      <div style={{ display: "flex", gap: "12px", flex: 1, minWidth: 0 }}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex min-w-0 flex-1 gap-3">
                         {/* Status icon */}
-                        <div style={{ paddingTop: "2px", flexShrink: 0 }}>
+                        <div className="shrink-0 pt-0.5">
                           {isApproved ? (
-                            <CheckCircle2 size={18} style={{ color: "var(--success)" }} />
+                            <CheckCircle2 size={18} className="text-success" />
                           ) : isRejected ? (
-                            <XCircle size={18} style={{ color: "var(--danger)" }} />
+                            <XCircle size={18} className="text-destructive" />
                           ) : (
-                            <Circle size={18} style={{ color: "var(--fg-4)" }} />
+                            <Circle size={18} className="text-foreground-faint" />
                           )}
                         </div>
-                        <div style={{ minWidth: 0 }}>
-                          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--fg-1)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+                        <div className="min-w-0">
+                          <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-foreground">
                             {index + 1}. {approver.name}
                           </p>
-                          <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>{approver.role}</p>
+                          <p className="m-0 text-xs text-foreground-tertiary">{approver.role}</p>
                           {approval?.signedAt && (
-                            <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--fg-4)", margin: "6px 0 0" }}>
+                            <p className="mb-0 mt-1.5 font-sans text-[11px] text-foreground-faint">
                               Signed {formatDateTime(approval.signedAt)}
                             </p>
                           )}
                           {approval?.notes && (
-                            <p style={{ fontSize: "12px", color: "var(--fg-3)", background: "var(--bg-3)", border: "1px solid var(--line-1)", borderRadius: "var(--r-sm)", padding: "6px 10px", margin: "8px 0 0", fontStyle: "italic" }}>
+                            <p className="mb-0 mt-2 rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-2.5 py-1.5 text-xs italic text-foreground-tertiary">
                               {approval.notes}
                             </p>
                           )}
@@ -489,19 +608,19 @@ export function D7SignOffPage() {
                       </div>
 
                       {/* Right: status badge + action */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                      <div className="flex shrink-0 items-center gap-2.5">
                         {isApproved && (
-                          <span style={{ fontSize: "11px", fontWeight: 600, fontFamily: "var(--font-mono)", color: "var(--success)", background: "var(--success-soft)", border: "1px solid color-mix(in srgb, var(--success) 38%, transparent)", borderRadius: "var(--r-full)", padding: "2px 8px" }}>
+                          <span className="rounded-[var(--r-full)] border border-success/40 bg-[var(--success-soft)] px-2 py-0.5 font-sans text-[11px] font-semibold text-success">
                             Approved
                           </span>
                         )}
                         {isRejected && (
-                          <span style={{ fontSize: "11px", fontWeight: 600, fontFamily: "var(--font-mono)", color: "var(--danger)", background: "var(--danger-soft)", border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)", borderRadius: "var(--r-full)", padding: "2px 8px" }}>
+                          <span className="rounded-[var(--r-full)] border border-destructive/40 bg-[var(--danger-soft)] px-2 py-0.5 font-sans text-[11px] font-semibold text-destructive">
                             Rejected
                           </span>
                         )}
                         {!approval && (
-                          <span style={{ fontSize: "11px", fontWeight: 600, fontFamily: "var(--font-mono)", color: canAct ? "var(--warning)" : "var(--fg-4)", background: canAct ? "var(--warning-soft)" : "var(--bg-3)", border: `1px solid ${canAct ? "color-mix(in srgb, var(--warning) 38%, transparent)" : "var(--line-1)"}`, borderRadius: "var(--r-full)", padding: "2px 8px" }}>
+                          <span className={cn("rounded-[var(--r-full)] border px-2 py-0.5 font-sans text-[11px] font-semibold", canAct ? "border-warning/40 bg-[var(--warning-soft)] text-warning" : "border-border-subtle bg-elevated text-foreground-faint")}>
                             {canAct ? "Awaiting" : "Pending"}
                           </span>
                         )}
@@ -509,21 +628,12 @@ export function D7SignOffPage() {
                           type="button"
                           disabled={!canAct}
                           onClick={() => openESignature(approver)}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            background: canAct ? "var(--grad-brand)" : "var(--bg-4)",
-                            color: canAct ? "var(--on-accent)" : "var(--fg-4)",
-                            border: canAct ? "none" : "1px solid var(--line-2)",
-                            borderRadius: "var(--r-sm)",
-                            padding: "7px 14px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            cursor: canAct ? "pointer" : "not-allowed",
-                            fontFamily: "var(--font-sans)",
-                            opacity: canAct ? 1 : 0.5,
-                          }}
+                          className={cn(
+                            "flex items-center gap-1.5 rounded-[var(--r-sm)] px-3.5 py-[7px] font-sans text-xs font-semibold",
+                            canAct
+                              ? "cursor-pointer border-0 bg-[image:var(--grad-brand)] text-primary-foreground opacity-100"
+                              : "cursor-not-allowed border border-[var(--line-2)] bg-field text-foreground-faint opacity-50",
+                          )}
                         >
                           <PenLine size={13} />
                           Approve with E-Sig
@@ -538,22 +648,13 @@ export function D7SignOffPage() {
 
           {/* ── Closed state banner ───────────────────────────────────── */}
           {isClosed && (
-            <div
-              style={{
-                display: "flex",
-                gap: "12px",
-                padding: "14px 16px",
-                background: "color-mix(in srgb, var(--success) 6%, transparent)",
-                border: "1px solid color-mix(in srgb, var(--success) 30%, transparent)",
-                borderRadius: "var(--r-md)",
-              }}
-            >
-              <ShieldCheck size={18} style={{ color: "var(--success)", flexShrink: 0, marginTop: "1px" }} />
+            <div className="flex gap-3 rounded-[var(--r-md)] border border-success/30 bg-[var(--success-soft)] px-4 py-3.5">
+              <ShieldCheck size={18} className="mt-px shrink-0 text-success" />
               <div>
-                <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--success)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>
+                <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-success">
                   CAPA Closed as Audit Ready
                 </p>
-                <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0 }}>
+                <p className="m-0 text-xs text-foreground-tertiary">
                   All required approvers have signed off. {capa.id} is now marked Audit Ready and closed.
                 </p>
               </div>

@@ -7,6 +7,7 @@ import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { CorrectiveAction } from "@/types";
+import { cn } from "@/lib/utils";
 import { computeActionEffectiveness, computeTotalQualityScore } from "@/utils/scoring";
 import { formatDate } from "@/utils/formatters";
 
@@ -41,27 +42,17 @@ const picOptions = [
 // ── Status badge (inline) ────────────────────────────────────────────────────
 
 function ActionStatusBadge({ status }: { status: CorrectiveAction["status"] }) {
-  const map: Record<CorrectiveAction["status"], { label: string; color: string; bg: string }> = {
-    open: { label: "Open", color: "var(--fg-3)", bg: "var(--bg-3)" },
-    in_progress: { label: "In Progress", color: "var(--warning)", bg: "var(--warning-soft)" },
-    completed: { label: "Completed", color: "var(--success)", bg: "var(--success-soft)" },
-    overdue: { label: "Overdue", color: "var(--danger)", bg: "var(--danger-soft)" },
-    verified: { label: "Verified", color: "var(--accent)", bg: "var(--accent-soft)" },
+  const map: Record<CorrectiveAction["status"], { label: string; className: string }> = {
+    open: { label: "Open", className: "border-border-subtle bg-elevated text-foreground-tertiary" },
+    in_progress: { label: "In Progress", className: "border-warning/30 bg-[var(--warning-soft)] text-warning" },
+    completed: { label: "Completed", className: "border-success/30 bg-[var(--success-soft)] text-success" },
+    overdue: { label: "Overdue", className: "border-destructive/30 bg-[var(--danger-soft)] text-destructive" },
+    verified: { label: "Verified", className: "border-[var(--accent-line)] bg-[var(--accent-soft)] text-primary" },
   };
   const s = map[status] ?? map.open;
   return (
     <span
-      style={{
-        fontSize: "11px",
-        fontWeight: 600,
-        fontFamily: "var(--font-mono)",
-        color: s.color,
-        background: s.bg,
-        border: `1px solid ${s.color}40`,
-        borderRadius: "var(--r-full)",
-        padding: "2px 8px",
-        whiteSpace: "nowrap",
-      }}
+      className={cn("whitespace-nowrap rounded-[var(--r-full)] border px-2 py-0.5 font-sans text-[11px] font-semibold", s.className)}
     >
       {s.label}
     </span>
@@ -124,86 +115,47 @@ function ActionList({ actions, onRemove }: { actions: CorrectiveAction[]; onRemo
   if (actions.length === 0) return null;
 
   return (
-    <div
-      style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-lg)",
-        boxShadow: "var(--shadow-sm)",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          padding: "14px 16px",
-          borderBottom: "1px solid var(--line-1)",
-          background: "var(--bg-3)",
-        }}
-      >
-        <p
-          style={{
-            fontSize: "11px",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 600,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: "var(--fg-4)",
-            margin: 0,
-          }}
-        >
+    <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
+      <div className="border-b border-border-subtle bg-elevated px-4 py-3.5">
+        <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
           Added Corrective Actions
         </p>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+      <div className="flex flex-col">
         {actions.map((action, i) => (
           <div
             key={action.id}
-            style={{
-              padding: "14px 16px",
-              borderBottom: i < actions.length - 1 ? "1px solid var(--line-1)" : "none",
-            }}
+            className={cn("px-4 py-3.5", i < actions.length - 1 && "border-b border-border-subtle")}
           >
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                  <span style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--accent)", fontWeight: 600 }}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1.5 flex items-center gap-2">
+                  <span className="font-sans text-[11px] font-semibold text-primary">
                     {action.id}
                   </span>
                   <ActionStatusBadge status={action.status} />
                 </div>
-                <p style={{ fontSize: "13px", color: "var(--fg-2)", margin: "0 0 10px", lineHeight: "1.55" }}>
+                <p className="mb-2.5 mt-0 text-[13px] leading-[1.55] text-foreground-secondary">
                   {action.description}
                 </p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+                <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", margin: "0 0 3px" }}>PIC</p>
-                    <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: 0 }}>{action.pic}</p>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">PIC</p>
+                    <p className="m-0 text-xs text-foreground-secondary">{action.pic}</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", margin: "0 0 3px" }}>Due Date</p>
-                    <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: 0 }}>{formatDate(action.dueDate)}</p>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">Due Date</p>
+                    <p className="m-0 text-xs text-foreground-secondary">{formatDate(action.dueDate)}</p>
                   </div>
                   <div>
-                    <p style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", margin: "0 0 3px" }}>Verification</p>
-                    <p style={{ fontSize: "12px", color: "var(--fg-2)", margin: 0 }}>{action.verificationMethod}</p>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">Verification</p>
+                    <p className="m-0 text-xs text-foreground-secondary">{action.verificationMethod}</p>
                   </div>
                 </div>
               </div>
               <button
                 onClick={() => onRemove(action.id)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--fg-4)",
-                  padding: "4px",
-                  borderRadius: "var(--r-sm)",
-                  display: "flex",
-                  alignItems: "center",
-                  flexShrink: 0,
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--danger)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-4)"; }}
+                className="flex shrink-0 cursor-pointer items-center rounded-[var(--r-sm)] border-0 bg-transparent p-1 text-foreground-faint hover:text-destructive"
               >
                 <Trash2 size={14} />
               </button>
@@ -347,17 +299,17 @@ export function D4CorrectiveActionPage() {
 
   return (
     <EightDShell capaId={capa.id} activeStep="ca">
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div className="flex flex-col gap-6">
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <p style={{ fontSize: "12px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", margin: "0 0 6px", letterSpacing: "0.18em" }}>
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
             {capa.id} · D4
           </p>
-          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--fg-1)", margin: "0 0 8px", fontFamily: "var(--font-sans)" }}>
+          <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
             Corrective Action
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, lineHeight: "1.55", maxWidth: "600px" }}>
+          <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
             Define corrective actions that address the confirmed root cause, assign ownership, and specify how effectiveness will be verified.
           </p>
         </div>
@@ -376,27 +328,17 @@ export function D4CorrectiveActionPage() {
         />
 
         {/* ── Add CA form ───────────────────────────────────────────────── */}
-        <div
-          style={{
-            background: "var(--bg-2)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-lg)",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "18px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <ListPlus size={15} style={{ color: "var(--accent)", flexShrink: 0 }} />
-            <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: 0 }}>
+        <div className="flex flex-col gap-[18px] rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5">
+          <div className="flex items-center gap-2">
+            <ListPlus size={15} className="shrink-0 text-primary" />
+            <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
               Add Corrective Action
             </p>
           </div>
 
           {/* Description */}
           <div>
-            <label htmlFor="ca-description" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+            <label htmlFor="ca-description" className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
               Description
             </label>
             <textarea
@@ -404,47 +346,32 @@ export function D4CorrectiveActionPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
-              style={{
-                width: "100%",
-                background: "var(--field-bg)",
-                border: `1px solid ${shouldShowBlocker && description.trim().length < 30 ? "var(--danger)" : "var(--line-2)"}`,
-                borderRadius: "var(--r-sm)",
-                padding: "12px 14px",
-                fontSize: "13px",
-                lineHeight: "1.65",
-                color: "var(--fg-1)",
-                fontFamily: "var(--font-sans)",
-                resize: "vertical",
-                outline: "none",
-                boxSizing: "border-box",
-                transition: "border-color var(--dur-fast) var(--ease-out)",
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+              className={cn(
+                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                shouldShowBlocker && description.trim().length < 30 ? "border-destructive" : "border-[var(--line-2)]",
+              )}
             />
           </div>
 
           {/* PIC + Due date */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+              <label className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
                 Person in Charge
               </label>
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <select
                   value={pic}
                   onChange={(e) => setPic(e.target.value)}
-                  style={{ width: "100%", appearance: "none", background: "var(--field-bg)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "9px 36px 9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", cursor: "pointer" }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+                  className="w-full cursor-pointer appearance-none rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] py-[9px] pl-3 pr-9 font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
                 >
                   {picOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                 </select>
-                <svg width="12" height="12" viewBox="0 0 12 12" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--fg-3)" }} fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg width="12" height="12" viewBox="0 0 12 12" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-foreground-tertiary" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
             </div>
             <div>
-              <label htmlFor="ca-due-date" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+              <label htmlFor="ca-due-date" className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
                 Due date
               </label>
               <input
@@ -452,38 +379,37 @@ export function D4CorrectiveActionPage() {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                style={{ width: "100%", background: "var(--field-bg)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", boxSizing: "border-box" }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+                className="box-border w-full rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3 py-[9px] font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
               />
             </div>
           </div>
 
           {/* Linked root cause */}
           <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+            <label className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
               Linked root cause
             </label>
-            <div style={{ position: "relative" }}>
+            <div className="relative">
               <select
                 value={linkedRootCause}
                 onChange={(e) => setLinkedRootCause(e.target.value)}
-                style={{ width: "100%", appearance: "none", background: "var(--field-bg)", border: `1px solid ${shouldShowBlocker && linkedRootCause.trim().length < 20 ? "var(--danger)" : "var(--line-2)"}`, borderRadius: "var(--r-sm)", padding: "9px 36px 9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", cursor: "pointer" }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+                className={cn(
+                  "w-full cursor-pointer appearance-none rounded-[var(--r-sm)] border bg-[var(--field-bg)] py-[9px] pl-3 pr-9 font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                  shouldShowBlocker && linkedRootCause.trim().length < 20 ? "border-destructive" : "border-[var(--line-2)]",
+                )}
               >
                 {confirmedRootCauses.length === 0 && (
                   <option value="" disabled>Complete D3 Root Cause Analysis first</option>
                 )}
                 {confirmedRootCauses.map((rc) => <option key={rc} value={rc}>{rc}</option>)}
               </select>
-              <svg width="12" height="12" viewBox="0 0 12 12" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--fg-3)" }} fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <svg width="12" height="12" viewBox="0 0 12 12" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-foreground-tertiary" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
           </div>
 
           {/* Verification method */}
           <div>
-            <label htmlFor="verification-method" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+            <label htmlFor="verification-method" className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
               Verification method
             </label>
             <textarea
@@ -491,20 +417,21 @@ export function D4CorrectiveActionPage() {
               value={verificationMethod}
               onChange={(e) => setVerificationMethod(e.target.value)}
               rows={3}
-              style={{ width: "100%", background: "var(--field-bg)", border: `1px solid ${shouldShowBlocker && verificationMethod.trim().length < 10 ? "var(--danger)" : "var(--line-2)"}`, borderRadius: "var(--r-sm)", padding: "12px 14px", fontSize: "13px", lineHeight: "1.65", color: "var(--fg-1)", fontFamily: "var(--font-sans)", resize: "vertical", outline: "none", boxSizing: "border-box", transition: "border-color var(--dur-fast) var(--ease-out)" }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+              className={cn(
+                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                shouldShowBlocker && verificationMethod.trim().length < 10 ? "border-destructive" : "border-[var(--line-2)]",
+              )}
             />
           </div>
         </div>
 
         {/* ── Blocker banner ───────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div style={{ display: "flex", gap: "10px", padding: "12px 14px", background: "var(--danger-soft)", border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)", borderRadius: "var(--r-sm)" }}>
-            <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
+          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+            <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>Corrective action is incomplete</p>
-              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+              <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">Corrective action is incomplete</p>
+              <p className="m-0 font-sans text-xs text-foreground-tertiary">
                 Complete description, PIC, due date, linked root cause, and verification method.
               </p>
             </div>
@@ -513,44 +440,47 @@ export function D4CorrectiveActionPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: "0 0 10px" }}>
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
             Quality Signals
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+          <div className="grid grid-cols-2 gap-2">
             {validation.checks.map((check) => (
               <div
                 key={check.label}
-                style={{ display: "flex", gap: "10px", padding: "10px 12px", borderRadius: "var(--r-sm)", background: check.passed ? "color-mix(in srgb, var(--success) 6%, transparent)" : "var(--bg-3)", border: `1px solid ${check.passed ? "color-mix(in srgb, var(--success) 28%, transparent)" : "var(--line-1)"}` }}
+                className={cn(
+                  "flex gap-2.5 rounded-[var(--r-sm)] border px-3 py-2.5",
+                  check.passed ? "border-success/30 bg-[var(--success-soft)]" : "border-border-subtle bg-elevated",
+                )}
               >
                 {check.passed ? (
-                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "var(--success)", marginTop: "1px" }} />
+                  <CheckCircle2 size={14} className="mt-px shrink-0 text-success" />
                 ) : (
-                  <Circle size={14} style={{ flexShrink: 0, color: "var(--fg-4)", marginTop: "1px" }} />
+                  <Circle size={14} className="mt-px shrink-0 text-foreground-faint" />
                 )}
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: "12px", fontWeight: check.passed ? 500 : 400, color: check.passed ? "var(--fg-2)" : "var(--fg-3)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>{check.label}</p>
-                  {!check.passed && <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)" }}>{check.hint}</p>}
+                <div className="min-w-0">
+                  <p className={cn("mb-0.5 mt-0 font-sans text-xs", check.passed ? "font-medium text-foreground-secondary" : "font-normal text-foreground-tertiary")}>{check.label}</p>
+                  {!check.passed && <p className="m-0 font-sans text-[11px] text-foreground-faint">{check.hint}</p>}
                 </div>
               </div>
             ))}
           </div>
-          <p style={{ fontSize: "11px", color: passedCount === 5 ? "var(--accent)" : "var(--fg-4)", fontFamily: "var(--font-mono)", marginTop: "8px" }}>
+          <p className={cn("mt-2 font-sans text-[11px]", passedCount === 5 ? "text-primary" : "text-foreground-faint")}>
             {passedCount}/5 checks passing
           </p>
         </div>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "10px", paddingTop: "8px", borderTop: "1px solid var(--line-1)" }}>
+        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
           <button
             onClick={addCorrectiveAction}
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--field-bg)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "8px 16px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500 }}
+            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
           >
             <Save size={14} />
             Add CA
           </button>
           <button
             onClick={continueToPreventiveAction}
-            style={{ background: "var(--grad-brand)", color: "var(--on-accent)", border: "none", borderRadius: "var(--r-sm)", padding: "8px 20px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)", letterSpacing: "0.01em" }}
+            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
           >
             Continue to D5 Preventive Action →
           </button>

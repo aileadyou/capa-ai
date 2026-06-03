@@ -6,6 +6,7 @@ import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { VerificationData } from "@/types";
+import { cn } from "@/lib/utils";
 import { computeTotalQualityScore } from "@/utils/scoring";
 
 type VerificationMethod = NonNullable<VerificationData["method"]>;
@@ -156,53 +157,43 @@ export function D6VerificationPage() {
 
   return (
     <EightDShell capaId={capa.id} activeStep="verification">
-      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+      <div className="flex flex-col gap-6">
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <p style={{ fontSize: "12px", fontFamily: "var(--font-mono)", color: "var(--fg-3)", margin: "0 0 6px", letterSpacing: "0.18em" }}>
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
             {capa.id} · D6
           </p>
-          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "var(--fg-1)", margin: "0 0 8px", fontFamily: "var(--font-sans)" }}>
+          <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
             Verification
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", margin: 0, lineHeight: "1.55", maxWidth: "600px" }}>
+          <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
             Record verification method, outcome, and evidence before this CAPA can move into sign-off.
           </p>
         </div>
 
         {/* ── Verification form ─────────────────────────────────────────── */}
-        <div
-          style={{
-            background: "var(--bg-2)",
-            border: "1px solid var(--line-2)",
-            borderRadius: "var(--r-lg)",
-            boxShadow: "var(--shadow-sm)",
-            padding: "20px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "18px",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <FileCheck size={15} style={{ color: "var(--accent)", flexShrink: 0 }} />
-            <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: 0 }}>
+        <div className="flex flex-col gap-[18px] rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <FileCheck size={15} className="shrink-0 text-primary" />
+            <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
               Verification Evidence
             </p>
           </div>
 
           {/* Verification method */}
           <div>
-            <label style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+            <label className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
               Verification method
             </label>
-            <div style={{ position: "relative" }}>
+            <div className="relative">
               <select
                 value={method}
                 onChange={(e) => setMethod(e.target.value as VerificationMethod)}
-                style={{ width: "100%", appearance: "none", background: "var(--field-bg)", border: `1px solid ${shouldShowBlocker && !method ? "var(--danger)" : "var(--line-2)"}`, borderRadius: "var(--r-sm)", padding: "9px 36px 9px 12px", fontSize: "13px", color: "var(--fg-1)", fontFamily: "var(--font-sans)", outline: "none", cursor: "pointer" }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+                className={cn(
+                  "w-full cursor-pointer appearance-none rounded-[var(--r-sm)] border bg-[var(--field-bg)] py-[9px] pl-3 pr-9 font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                  shouldShowBlocker && !method ? "border-destructive" : "border-[var(--line-2)]",
+                )}
               >
                 <option value="" disabled>Select verification method</option>
                 <option value="em_re_test">{methodLabels.em_re_test}</option>
@@ -210,13 +201,13 @@ export function D6VerificationPage() {
                 <option value="batch_trend">{methodLabels.batch_trend}</option>
                 <option value="re_sampling">{methodLabels.re_sampling}</option>
               </select>
-              <svg width="12" height="12" viewBox="0 0 12 12" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: "var(--fg-3)" }} fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <svg width="12" height="12" viewBox="0 0 12 12" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-foreground-tertiary" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
           </div>
 
           {/* Verification result */}
           <div>
-            <label htmlFor="verification-result" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+            <label htmlFor="verification-result" className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
               Verification result
             </label>
             <textarea
@@ -225,74 +216,41 @@ export function D6VerificationPage() {
               onChange={(e) => setResult(e.target.value)}
               rows={6}
               placeholder="Describe the outcome of the verification — what was checked, what was found, and whether it confirms the corrective actions are effective."
-              style={{
-                width: "100%",
-                background: "var(--field-bg)",
-                border: `1px solid ${shouldShowBlocker && result.trim().length < 30 ? "var(--danger)" : "var(--line-2)"}`,
-                borderRadius: "var(--r-sm)",
-                padding: "12px 14px",
-                fontSize: "13px",
-                lineHeight: "1.65",
-                color: "var(--fg-1)",
-                fontFamily: "var(--font-sans)",
-                resize: "vertical",
-                outline: "none",
-                boxSizing: "border-box",
-                transition: "border-color var(--dur-fast) var(--ease-out)",
-              }}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = shouldShowBlocker && result.trim().length < 30 ? "var(--danger)" : "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+              className={cn(
+                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                shouldShowBlocker && result.trim().length < 30 ? "border-destructive" : "border-[var(--line-2)]",
+              )}
             />
           </div>
 
           {/* Evidence file */}
           <div>
-            <label htmlFor="evidence-file" style={{ display: "block", fontSize: "12px", fontWeight: 600, color: "var(--fg-2)", marginBottom: "8px", fontFamily: "var(--font-sans)", letterSpacing: "0.02em" }}>
+            <label htmlFor="evidence-file" className="mb-2 block font-sans text-xs font-semibold tracking-[0.02em] text-foreground-secondary">
               Mock evidence upload
             </label>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div className="flex gap-2">
               <input
                 id="evidence-file"
                 value={evidenceFileName}
                 onChange={(e) => setEvidenceFileName(e.target.value)}
                 placeholder="Evidence filename.pdf"
-                style={{
-                  flex: 1,
-                  background: "var(--field-bg)",
-                  border: `1px solid ${shouldShowBlocker && !evidenceFileName.trim() ? "var(--danger)" : "var(--line-2)"}`,
-                  borderRadius: "var(--r-sm)",
-                  padding: "9px 12px",
-                  fontSize: "13px",
-                  color: "var(--fg-1)",
-                  fontFamily: "var(--font-sans)",
-                  outline: "none",
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-soft)"; }}
-                onBlur={(e) => { e.currentTarget.style.borderColor = "var(--line-2)"; e.currentTarget.style.boxShadow = "none"; }}
+                className={cn(
+                  "flex-1 rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3 py-[9px] font-sans text-[13px] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                  shouldShowBlocker && !evidenceFileName.trim() ? "border-destructive" : "border-[var(--line-2)]",
+                )}
               />
               <button
                 type="button"
                 onClick={uploadEvidence}
-                style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--field-bg)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "9px 14px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500, whiteSpace: "nowrap" }}
+                className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3.5 py-[9px] font-sans text-[13px] font-medium text-foreground-secondary"
               >
                 <Upload size={13} />
                 Upload
               </button>
             </div>
             {evidenceFileName && (
-              <div
-                style={{
-                  marginTop: "8px",
-                  padding: "8px 12px",
-                  background: "color-mix(in srgb, var(--success) 6%, transparent)",
-                  border: "1px solid color-mix(in srgb, var(--success) 28%, transparent)",
-                  borderRadius: "var(--r-sm)",
-                  fontSize: "12px",
-                  color: "var(--fg-2)",
-                  fontFamily: "var(--font-sans)",
-                }}
-              >
-                Uploaded: <span style={{ fontWeight: 600 }}>{evidenceFileName}</span>
+              <div className="mt-2 rounded-[var(--r-sm)] border border-success/30 bg-[var(--success-soft)] px-3 py-2 font-sans text-xs text-foreground-secondary">
+                Uploaded: <span className="font-semibold">{evidenceFileName}</span>
               </div>
             )}
           </div>
@@ -300,11 +258,11 @@ export function D6VerificationPage() {
 
         {/* ── Blocker banner ───────────────────────────────────────────── */}
         {shouldShowBlocker && (
-          <div style={{ display: "flex", gap: "10px", padding: "12px 14px", background: "var(--danger-soft)", border: "1px solid color-mix(in srgb, var(--danger) 38%, transparent)", borderRadius: "var(--r-sm)" }}>
-            <AlertTriangle size={15} style={{ color: "var(--danger)", flexShrink: 0, marginTop: "1px" }} />
+          <div className="flex gap-2.5 rounded-[var(--r-sm)] border border-destructive/40 bg-[var(--danger-soft)] px-3.5 py-3">
+            <AlertTriangle size={15} className="mt-px shrink-0 text-destructive" />
             <div>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--danger)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>Verification is incomplete</p>
-              <p style={{ fontSize: "12px", color: "var(--fg-3)", margin: 0, fontFamily: "var(--font-sans)" }}>
+              <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">Verification is incomplete</p>
+              <p className="m-0 font-sans text-xs text-foreground-tertiary">
                 Verification method, result, and evidence filename are required before continuing to sign-off.
               </p>
             </div>
@@ -313,34 +271,37 @@ export function D6VerificationPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p style={{ fontSize: "11px", fontFamily: "var(--font-mono)", fontWeight: 600, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--fg-3)", margin: "0 0 10px" }}>
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
             Quality Signals
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px" }}>
+          <div className="grid grid-cols-3 gap-2">
             {validation.checks.map((check) => (
               <div
                 key={check.label}
-                style={{ display: "flex", gap: "10px", padding: "10px 12px", borderRadius: "var(--r-sm)", background: check.passed ? "color-mix(in srgb, var(--success) 6%, transparent)" : "var(--bg-3)", border: `1px solid ${check.passed ? "color-mix(in srgb, var(--success) 28%, transparent)" : "var(--line-1)"}` }}
+                className={cn(
+                  "flex gap-2.5 rounded-[var(--r-sm)] border px-3 py-2.5",
+                  check.passed ? "border-success/30 bg-[var(--success-soft)]" : "border-border-subtle bg-elevated",
+                )}
               >
                 {check.passed ? (
-                  <CheckCircle2 size={14} style={{ flexShrink: 0, color: "var(--success)", marginTop: "1px" }} />
+                  <CheckCircle2 size={14} className="mt-px shrink-0 text-success" />
                 ) : (
-                  <Circle size={14} style={{ flexShrink: 0, color: "var(--fg-4)", marginTop: "1px" }} />
+                  <Circle size={14} className="mt-px shrink-0 text-foreground-faint" />
                 )}
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ fontSize: "12px", fontWeight: check.passed ? 500 : 400, color: check.passed ? "var(--fg-2)" : "var(--fg-3)", margin: "0 0 2px", fontFamily: "var(--font-sans)" }}>{check.label}</p>
-                  {!check.passed && <p style={{ fontSize: "11px", color: "var(--fg-4)", margin: 0, fontFamily: "var(--font-sans)" }}>{check.hint}</p>}
+                <div className="min-w-0">
+                  <p className={cn("mb-0.5 mt-0 font-sans text-xs", check.passed ? "font-medium text-foreground-secondary" : "font-normal text-foreground-tertiary")}>{check.label}</p>
+                  {!check.passed && <p className="m-0 font-sans text-[11px] text-foreground-faint">{check.hint}</p>}
                 </div>
               </div>
             ))}
           </div>
-          <p style={{ fontSize: "11px", color: passedCount === 3 ? "var(--accent)" : "var(--fg-4)", fontFamily: "var(--font-mono)", marginTop: "8px" }}>
+          <p className={cn("mt-2 font-sans text-[11px]", passedCount === 3 ? "text-primary" : "text-foreground-faint")}>
             {passedCount}/3 checks passing · Quality score preview: {previewScore.total}/100
           </p>
         </div>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "10px", paddingTop: "8px", borderTop: "1px solid var(--line-1)" }}>
+        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
           <button
             onClick={() => {
               if (!method || !result.trim()) {
@@ -349,14 +310,14 @@ export function D6VerificationPage() {
               }
               toast.success("Verification saved as draft");
             }}
-            style={{ display: "flex", alignItems: "center", gap: "6px", background: "var(--field-bg)", color: "var(--fg-2)", border: "1px solid var(--line-2)", borderRadius: "var(--r-sm)", padding: "8px 16px", fontSize: "13px", cursor: "pointer", fontFamily: "var(--font-sans)", fontWeight: 500 }}
+            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
           >
             <Save size={14} />
             Save Draft
           </button>
           <button
             onClick={continueToSignOff}
-            style={{ background: "var(--grad-brand)", color: "var(--on-accent)", border: "none", borderRadius: "var(--r-sm)", padding: "8px 20px", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "var(--font-sans)", letterSpacing: "0.01em" }}
+            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
           >
             Continue to D7 Sign-Off →
           </button>

@@ -20,27 +20,28 @@
    CANONICAL PALETTE — single source of truth (DARK = default)
    ------------------------------------------------------------
    To retheme the whole app, edit ONLY the HSL triples here and in
-   the matching `.light` block below. Every shadcn component AND
-   every hand-styled `var(--bg-N), var(--fg-N), var(--accent)` alias reads from
-   these tokens. HSL is space-separated so Tailwind opacity
+   the matching `.light` block below. Every shadcn component and
+   Tailwind token class reads from these values. HSL is space-separated so Tailwind opacity
    modifiers (e.g. `bg-card/50`) and `hsl(... / a)` softs work.
    ============================================================ */
 :root,
 .dark {
   color-scheme: dark;
 
-  /* ---- Surfaces (low → high elevation) ---- */
-  --void: 220 20% 3%;          /* bg-0 — page void / sidebar trough */
-  --background: 218 20% 5%;    /* bg-1 — base page */
-  --card: 218 20% 8%;          /* bg-2 — surface / card */
-  --elevated: 216 19% 11%;     /* bg-3 — popover / raised panel */
-  --field: 217 18% 14%;        /* bg-4 — input fill / deep hover */
+  /* ---- Surfaces (low → high elevation) ----
+     Neutral charcoal. Elevation reads through LIGHTNESS, not borders:
+     the page is darkest, cards sit lighter, popovers/fields lighter still. */
+  --void: 240 6% 7%;           /* bg-0 — page void / sidebar trough */
+  --background: 240 6% 9%;     /* bg-1 — base page (darkest canvas) */
+  --card: 240 5% 13%;          /* bg-2 — surface / card (clearly lifted) */
+  --elevated: 240 5% 16%;      /* bg-3 — popover / raised panel */
+  --field: 240 5% 20%;         /* bg-4 — input fill / deep hover */
 
   /* ---- Text (high → low emphasis) ---- */
-  --foreground: 210 20% 96%;            /* fg-1 */
-  --foreground-secondary: 217 11% 67%;  /* fg-2 */
-  --foreground-tertiary: 218 9% 46%;    /* fg-3 */
-  --foreground-faint: 217 12% 30%;      /* fg-4 */
+  --foreground: 240 8% 95%;             /* fg-1 */
+  --foreground-secondary: 240 6% 68%;   /* fg-2 */
+  --foreground-tertiary: 240 5% 48%;    /* fg-3 */
+  --foreground-faint: 240 5% 36%;       /* fg-4 */
 
   /* ---- Brand accent (purple) ---- */
   --primary: 284 55% 55%;              /* accent */
@@ -54,21 +55,23 @@
   --destructive: 358 73% 62%;          /* danger */
   --destructive-foreground: 280 100% 97%;
 
-  /* ---- Borders (opaque triples for Tailwind `border-*`) ---- */
-  --border-subtle: 220 12% 15%;        /* line-1 */
-  --border: 222 13% 20%;               /* line-2 */
-  --border-strong: 222 13% 27%;        /* line-3 */
+  /* ---- Borders (opaque triples for Tailwind `border-*`) ----
+     Kept low-contrast and close to the surfaces so the UI reads as
+     borderless; separation comes from elevation, not outlines. */
+  --border-subtle: 240 5% 13%;         /* line-1 — == card (invisible) */
+  --border: 240 5% 17%;                /* line-2 — barely-there hairline */
+  --border-strong: 240 5% 23%;         /* line-3 — only where truly needed */
 
   /* ---- shadcn-only tokens, retuned to the palette above ---- */
-  --card-foreground: 210 20% 96%;
-  --popover: 216 19% 11%;
-  --popover-foreground: 210 20% 96%;
-  --secondary: 220 10% 14%;
-  --secondary-foreground: 210 11% 96%;
-  --panel: 220 10% 14%;
-  --panel-foreground: 210 11% 96%;
-  --muted: 220 10% 14%;
-  --muted-foreground: 218 8% 56%;
+  --card-foreground: 240 8% 95%;
+  --popover: 240 5% 16%;
+  --popover-foreground: 240 8% 95%;
+  --secondary: 240 5% 17%;
+  --secondary-foreground: 240 8% 95%;
+  --panel: 240 5% 16%;
+  --panel-foreground: 240 8% 95%;
+  --muted: 240 5% 17%;
+  --muted-foreground: 240 5% 56%;
   --tw-accent: 284 55% 55%;
   --tw-accent-foreground: 280 100% 97%;
   --tw-accent-light: 284 63% 63%;
@@ -83,13 +86,13 @@
   --status-approval: 38 92% 56%;
   --status-closed: 153 48% 49%;
   --status-ready: 153 48% 49%;
-  --surface: 218 20% 8%;
-  --surface-subtle: 216 19% 11%;
-  --tw-success-foreground: 210 11% 96%;
-  --tw-warning-foreground: 220 11% 7%;
+  --surface: 240 5% 13%;
+  --surface-subtle: 240 5% 16%;
+  --tw-success-foreground: 240 8% 95%;
+  --tw-warning-foreground: 240 8% 7%;
   --tw-info: 284 55% 55%;
-  --border-light: 222 13% 27%;
-  --input: 220 11% 20%;
+  --border-light: 240 5% 23%;
+  --input: 240 5% 20%;
   --ring: 284 55% 55%;
   --radius: 4px;
   --chart-1: 285 57% 55%;
@@ -97,22 +100,23 @@
   --chart-3: 153 48% 49%;
   --chart-4: 38 92% 56%;
   --chart-5: 358 73% 59%;
-  --sidebar-background: 220 11% 7%;
-  --sidebar-foreground: 210 11% 96%;
+  --sidebar-background: 240 6% 7%;
+  --sidebar-foreground: 240 8% 95%;
   --sidebar-primary: 284 55% 55%;
   --sidebar-primary-foreground: 280 100% 97%;
-  --sidebar-accent: 220 10% 14%;
-  --sidebar-accent-foreground: 210 11% 96%;
-  --sidebar-border: 222 13% 20%;
+  --sidebar-accent: 240 5% 14%;
+  --sidebar-accent-foreground: 240 8% 95%;
+  --sidebar-border: 240 5% 16%;
   --sidebar-ring: 284 55% 55%;
 
   /* ---- Decorative / alpha / gradient tokens (theme-specific) ---- */
-  --line-1: rgba(255, 255, 255, 0.07);
-  --line-2: rgba(255, 255, 255, 0.11);
-  --line-3: rgba(255, 255, 255, 0.18);
+  --line-1: rgba(255, 255, 255, 0.03);
+  --line-2: rgba(255, 255, 255, 0.05);
+  --line-3: rgba(255, 255, 255, 0.09);
   --field-bg: hsl(var(--field));
   --field-bg-hover: color-mix(in srgb, hsl(var(--field)) 82%, hsl(var(--card)));
   --table-head-bg: hsl(var(--elevated));
+  --table-head-fg: hsl(var(--foreground-secondary));
   --grad-start: #9B3AC5;
   --grad-mid: #C4688C;
   --grad-end: #E07D60;
@@ -230,7 +234,8 @@
   --line-3: rgba(13, 17, 48, 0.18);
   --field-bg: #F8FAFE;
   --field-bg-hover: #FFFFFF;
-  --table-head-bg: #DDE5F2;
+  --table-head-bg: hsl(var(--primary) / 0.60);
+  --table-head-fg: hsl(var(--primary-foreground));
   --accent-soft: hsl(var(--primary) / 0.09);
   --accent-line: hsl(var(--primary) / 0.28);
   --accent-glow: hsl(var(--primary) / 0.20);
@@ -252,31 +257,6 @@
   --shadow-inset-line: inset 0 1px 0 0 rgba(255, 255, 255, 0.80);
 }
 
-/* ============================================================
-   INLINE-UI ALIASES — bridge legacy `var(--bg-N), var(--fg-N), var(--accent)`
-   names onto the canonical palette so hand-styled pages auto-theme.
-   Defined ONCE: each resolves per-theme through its canonical token.
-   These are removed page-by-page as components migrate to Tailwind.
-   ============================================================ */
-:root {
-  --bg-0: hsl(var(--void));
-  --bg-1: hsl(var(--background));
-  --bg-2: hsl(var(--card));
-  --bg-3: hsl(var(--elevated));
-  --bg-4: hsl(var(--field));
-  --fg-1: hsl(var(--foreground));
-  --fg-2: hsl(var(--foreground-secondary));
-  --fg-3: hsl(var(--foreground-tertiary));
-  --fg-4: hsl(var(--foreground-faint));
-  --accent: hsl(var(--primary));
-  --accent-hover: hsl(var(--primary-light));
-  --accent-press: hsl(var(--primary-dark));
-  --success: hsl(var(--tw-success));
-  --warning: hsl(var(--tw-warning));
-  --danger: hsl(var(--destructive));
-  --info: hsl(var(--primary));
-}
-
 .sidebar-nav-item {
   transition:
     background var(--dur-fast) var(--ease-out),
@@ -284,20 +264,20 @@
     border-color var(--dur-fast) var(--ease-out);
 }
 .sidebar-nav-item:hover:not([data-active]) {
-  background: var(--bg-3) !important;
-  color: var(--fg-1) !important;
+  background: hsl(var(--elevated)) !important;
+  color: hsl(var(--foreground)) !important;
 }
 .sidebar-nav-item[data-active] {
   background: var(--accent-soft) !important;
-  color: var(--accent) !important;
+  color: hsl(var(--primary)) !important;
 }
 
 .theme-toggle-button {
   align-items: center;
-  background: var(--bg-2);
+  background: hsl(var(--card));
   border: 1px solid var(--line-2);
   border-radius: var(--r-sm);
-  color: var(--fg-2);
+  color: hsl(var(--foreground-secondary));
   display: flex;
   font-family: var(--font-sans);
   font-size: 13px;
@@ -315,9 +295,9 @@
 }
 
 .theme-toggle-button:hover {
-  background: var(--bg-3);
+  background: hsl(var(--elevated));
   border-color: var(--line-3);
-  color: var(--fg-1);
+  color: hsl(var(--foreground));
 }
 
 .theme-toggle-button:active {
@@ -325,7 +305,7 @@
 }
 
 .theme-toggle-button svg {
-  color: var(--accent);
+  color: hsl(var(--primary));
   flex-shrink: 0;
 }
 
@@ -374,7 +354,7 @@
   align-items: center;
   border: 1px solid transparent;
   border-radius: var(--r-sm);
-  color: var(--fg-3);
+  color: hsl(var(--foreground-tertiary));
   display: flex;
   flex-direction: column;
   font-size: 11px;
@@ -391,15 +371,15 @@
 }
 
 .compact-nav-item:hover {
-  background: var(--bg-3);
+  background: hsl(var(--elevated));
   border-color: var(--line-2);
-  color: var(--fg-1);
+  color: hsl(var(--foreground));
 }
 
 .compact-nav-item[data-active] {
   background: var(--accent-soft);
   border-color: var(--accent-line);
-  color: var(--accent);
+  color: hsl(var(--primary));
 }
 
 .compact-nav-icon-wrap {
@@ -412,12 +392,12 @@
 
 .compact-nav-badge {
   align-items: center;
-  background: var(--accent);
-  border: 1px solid var(--bg-1);
+  background: hsl(var(--primary));
+  border: 1px solid hsl(var(--background));
   border-radius: var(--r-full);
   color: var(--on-accent);
   display: flex;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 9px;
   font-weight: 700;
   height: 16px;
@@ -462,12 +442,19 @@
 
 @keyframes leadSlideOver {
   from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  to   { transform: translateX(0); }
 }
-
+@keyframes leadSlideOut {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100%); }
+}
 @keyframes leadBackdropFade {
   from { opacity: 0; }
-  to { opacity: 1; }
+  to   { opacity: 1; }
+}
+@keyframes leadBackdropFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 @keyframes leadThinkingDot {
@@ -533,19 +520,23 @@
 }
 
 .lead-card {
-  background: var(--bg-2);
-  border: 1px solid var(--line-2);
+  background: hsl(var(--card));
+  border: none;
   border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .lead-card:hover {
-  border-color: var(--line-3);
+  background: hsl(var(--elevated));
 }
 
 .lead-popover {
-  background: var(--bg-3);
+  background: hsl(var(--elevated));
   border: 1px solid var(--line-2);
-  color: var(--fg-1);
+  color: hsl(var(--foreground));
 }
 
 .lead-popover:hover {
@@ -557,22 +548,26 @@
 }
 
 .eyebrow,
-.kicker,
-.mono-label {
-  color: var(--fg-3);
-  font-family: var(--font-mono);
+.kicker {
+  color: hsl(var(--foreground-tertiary));
+  font-family: var(--font-sans);
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
   line-height: 1.2;
   text-transform: uppercase;
 }
 
-[class*="uppercase"][class*="text-muted-foreground"],
-[class*="uppercase"][class*="text-foreground"] {
-  color: var(--fg-3);
+/* Opt-in monospace label — use the `.mono-label` class (or `font-mono`)
+   explicitly where you actually want monospaced text. */
+.mono-label {
+  color: hsl(var(--foreground-tertiary));
   font-family: var(--font-mono);
-  letter-spacing: 0.18em;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .motion-stagger > *:nth-child(1),
@@ -601,12 +596,18 @@ a,
   transition-timing-function: var(--ease-out);
 }
 
-.motion-slide-over {
+.motion-slide-over[data-state="open"] {
   animation: leadSlideOver var(--dur-panel) var(--ease-out) both;
 }
+.motion-slide-over[data-state="closed"] {
+  animation: leadSlideOut var(--dur-panel) var(--ease-out) both;
+}
 
-.motion-backdrop {
+.motion-backdrop[data-state="open"] {
   animation: leadBackdropFade var(--dur-panel) var(--ease-out) both;
+}
+.motion-backdrop[data-state="closed"] {
+  animation: leadBackdropFadeOut var(--dur-panel) var(--ease-out) both;
 }
 
 .motion-tab-content {
@@ -646,7 +647,7 @@ a,
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-sans);
-    color: var(--fg-1);
+    color: hsl(var(--foreground));
     font-weight: var(--w-semibold);
     letter-spacing: -0.025em;
   }
@@ -659,7 +660,7 @@ a,
   select {
     background: var(--field-bg);
     border-color: var(--line-2);
-    color: var(--fg-1);
+    color: hsl(var(--foreground));
     transition:
       border-color var(--dur-fast) var(--ease-out),
       box-shadow var(--dur-fast) var(--ease-out),
@@ -668,13 +669,13 @@ a,
 
   input::placeholder,
   textarea::placeholder {
-    color: var(--fg-3);
+    color: hsl(var(--foreground-tertiary));
   }
 
   input:focus-visible,
   textarea:focus-visible,
   select:focus-visible {
-    border-color: var(--accent);
+    border-color: hsl(var(--primary));
     box-shadow: 0 0 0 3px var(--accent-soft);
     outline: none;
   }
@@ -700,7 +701,7 @@ a,
   [role="menuitem"]:focus-visible,
   [role="option"]:focus-visible,
   [tabindex]:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid hsl(var(--primary));
     outline-offset: 2px;
     border-radius: var(--r-sm);
   }
@@ -731,21 +732,21 @@ a,
      In light mode bg-2 is pure white and pops off the page only with
      a shadow, so depth = surface color + shadow, never color alone. */
   .surface-card {
-    background: var(--bg-2);
+    background: hsl(var(--card));
     border: 1px solid var(--line-2);
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-sm);
   }
 
   .surface-raised {
-    background: var(--bg-2);
+    background: hsl(var(--card));
     border: 1px solid var(--line-2);
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-md);
   }
 
   .surface-overlay {
-    background: var(--bg-2);
+    background: hsl(var(--card));
     border: 1px solid var(--line-2);
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-lg);

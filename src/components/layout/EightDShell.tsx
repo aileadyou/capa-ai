@@ -4,6 +4,7 @@ import { ArrowLeft, Check, CircleDot, Lock } from "lucide-react";
 import { eightDSteps } from "@/routes";
 import { useCapaStore } from "@/store";
 import type { EightDStep } from "@/types";
+import { cn } from "@/lib/utils";
 
 // ── Step metadata ────────────────────────────────────────────────────────────
 
@@ -40,40 +41,25 @@ function StepItem({
 }) {
   const icon =
     state === "done" ? (
-      <Check size={13} style={{ flexShrink: 0, color: "var(--fg-3)" }} />
+      <Check size={13} className="shrink-0 text-foreground-tertiary" />
     ) : state === "active" ? (
-      <CircleDot size={13} style={{ flexShrink: 0, color: "var(--accent)" }} />
+      <CircleDot size={13} className="shrink-0 text-primary" />
     ) : (
-      <Lock size={12} style={{ flexShrink: 0, color: "var(--fg-4)" }} />
+      <Lock size={12} className="shrink-0 text-foreground-faint" />
     );
 
   const inner = (
     <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "7px 10px",
-        borderRadius: "var(--r-sm)",
-        fontSize: "12px",
-        lineHeight: "1.3",
-        fontWeight: state === "active" ? 600 : 400,
-        color:
-          state === "active"
-            ? "var(--accent)"
-            : state === "done"
-              ? "var(--fg-3)"
-              : "var(--fg-4)",
-        background: state === "active" ? "var(--accent-soft)" : "transparent",
-        borderLeft: state === "active" ? "2px solid var(--accent)" : "2px solid transparent",
-        cursor: state === "locked" ? "not-allowed" : "pointer",
-        transition: "background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out)",
-        textDecoration: "none",
-        fontFamily: "var(--font-sans)",
-      }}
+      className={cn(
+        "flex items-center gap-2 rounded-[var(--r-sm)] border-l-2 px-2.5 py-[7px] font-sans text-xs leading-[1.3] transition-[background,color,border-color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+        state === "active" && "border-l-primary bg-[var(--accent-soft)] font-semibold text-primary",
+        state === "done" && "border-l-transparent font-normal text-foreground-tertiary",
+        state === "locked" && "cursor-not-allowed border-l-transparent font-normal text-foreground-faint",
+        state !== "locked" && "cursor-pointer",
+      )}
     >
       {icon}
-      <span style={{ lineHeight: "1.3" }}>{label}</span>
+      <span className="leading-[1.3]">{label}</span>
     </div>
   );
 
@@ -82,7 +68,7 @@ function StepItem({
   }
 
   return (
-    <Link to={href} style={{ textDecoration: "none", display: "block" }}>
+    <Link to={href} className="block no-underline">
       {inner}
     </Link>
   );
@@ -139,61 +125,36 @@ export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShe
 
   if (embedded) {
     return (
-      <div key={activeStep} className="motion-tab-content" style={{ flex: 1, minWidth: 0 }}>
+      <div key={activeStep} className="motion-tab-content min-w-0 flex-1">
         {children}
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}>
+    <div className="flex items-start gap-5">
       {/* ── Left: step progress panel ──────────────────────────────────── */}
       <div
-        style={{
-          width: "176px",
-          flexShrink: 0,
-          position: "sticky",
-          top: "80px",
-          maxHeight: "calc(100vh - 100px)",
-          overflowY: "auto",
-        }}
+        className="sticky top-20 max-h-[calc(100vh-100px)] w-44 shrink-0 overflow-y-auto"
       >
         {/* Back to CAPA Hub */}
         <Link
           to={`/capa/${capaId}`}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            fontSize: "12px",
-            color: "var(--fg-3)",
-            textDecoration: "none",
-            marginBottom: "20px",
-            padding: "2px 0",
-            fontFamily: "var(--font-sans)",
-          }}
+          className="mb-5 flex items-center gap-1.5 py-0.5 font-sans text-xs text-foreground-tertiary no-underline"
         >
-          <ArrowLeft size={13} style={{ flexShrink: 0 }} />
+          <ArrowLeft size={13} className="shrink-0" />
           Back to CAPA Hub
         </Link>
 
         {/* Eyebrow label */}
         <p
-          style={{
-            fontSize: "10px",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 500,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color: "var(--fg-4)",
-            margin: "0 0 8px 10px",
-          }}
+          className="mb-2 ml-2.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
         >
           8D Workflow
         </p>
 
         {/* Step list */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+        <div className="flex flex-col gap-0.5">
           {eightDSteps.map((step) => {
             const state = getStepState(step);
             return (
@@ -209,22 +170,14 @@ export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShe
       </div>
 
       {/* ── Center + optional right sidebar ───────────────────────────── */}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "flex-start", gap: "20px" }}>
-        <div key={activeStep} className="motion-tab-content" style={{ flex: 1, minWidth: 0 }}>
+      <div className="flex min-w-0 flex-1 items-start gap-5">
+        <div key={activeStep} className="motion-tab-content min-w-0 flex-1">
           {children}
         </div>
 
         {sidebar && (
           <div
-            className="motion-reveal"
-            style={{
-              width: "280px",
-              flexShrink: 0,
-              position: "sticky",
-              top: "80px",
-              maxHeight: "calc(100vh - 100px)",
-              overflowY: "auto",
-            }}
+            className="motion-reveal sticky top-20 max-h-[calc(100vh-100px)] w-[280px] shrink-0 overflow-y-auto"
           >
             {sidebar}
           </div>

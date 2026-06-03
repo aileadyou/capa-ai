@@ -16,18 +16,12 @@ export function EmptyState({ title, description, actionLabel, onAction }: EmptyS
       aria-live="polite"
     >
       <div
-        className="flex h-10 w-10 items-center justify-center"
-        style={{
-          background: "var(--bg-3)",
-          border: "1px solid var(--line-2)",
-          borderRadius: "var(--r-sm)",
-          color: "var(--fg-3)",
-        }}
+        className="flex h-10 w-10 items-center justify-center rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated text-foreground-tertiary"
       >
         <Inbox className="h-5 w-5" aria-hidden="true" />
       </div>
-      <h3 className="mt-4 text-base font-semibold" style={{ color: "var(--fg-1)" }}>{title}</h3>
-      <p className="mt-2 max-w-md text-sm leading-6" style={{ color: "var(--fg-2)" }}>{description}</p>
+      <h3 className="mt-4 text-base font-semibold text-foreground">{title}</h3>
+      <p className="mt-2 max-w-md text-sm leading-6 text-foreground-secondary">{description}</p>
       {actionLabel && onAction && (
         <Button className="btn-brand mt-4" onClick={onAction}>
           {actionLabel}

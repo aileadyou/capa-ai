@@ -103,7 +103,7 @@ export function PersonaManagementPage() {
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <span className="font-medium text-foreground">NIK</span>
-                    <span className="font-mono text-xs">{persona.nik}</span>
+                    <span className="font-sans text-xs">{persona.nik}</span>
                   </div>
                 </div>
 
@@ -144,7 +144,7 @@ export function PersonaManagementPage() {
             The <span className="font-medium text-foreground">SME</span> persona (Dr. Ahmad Pratomo) is reserved for Critical severity cases, which require co-approval. The three primary demo cases use Major severity and do not require SME sign-off.
           </p>
           <p>
-            Active persona persists across browser refresh via localStorage. Use <span className="font-mono font-medium text-foreground">Reset Demo Data</span> to restore all CAPA workflows to their initial mock state.
+            Active persona persists across browser refresh via localStorage. Use <span className="font-sans font-medium text-foreground">Reset Demo Data</span> to restore all CAPA workflows to their initial mock state.
           </p>
         </CardContent>
       </Card>

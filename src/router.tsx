@@ -23,15 +23,20 @@ import { TopicsGroupingPage } from "@/pages/nova/TopicsGroupingPage";
 import { NotificationCenterPage } from "@/pages/nova/NotificationCenterPage";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
+import { usePersonaStore } from "@/store";
+import { isMyWorkOnlyPersona } from "@/utils/personaAccess";
 
 export function AppRouter() {
+  const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+  const dashboardAllowed = !isMyWorkOnlyPersona(activePersonaId);
+
   return (
     <Routes>
       <Route path="/" element={<MyWorkPage />} />
       <Route path="/my-work" element={<Navigate to="/" replace />} />
       <Route
         path="/dashboard"
-        element={<DashboardPage />}
+        element={dashboardAllowed ? <DashboardPage /> : <Navigate to="/" replace />}
       />
       <Route
         path="/findings"

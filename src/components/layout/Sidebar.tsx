@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ElementType } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   AlertCircle,
@@ -17,6 +17,9 @@ import {
 } from "lucide-react";
 import { useAuthStore, useNotificationStore, usePersonaStore } from "@/store";
 import { applyTheme, getInitialTheme, type ThemeMode } from "@/lib/theme";
+import { ThemeCustomizer } from "@/components/shared/ThemeCustomizer";
+import { cn } from "@/lib/utils";
+import { isMyWorkOnlyPersona } from "@/utils/personaAccess";
 import logoReal from "@/assets/logo-real.png";
 
 const navMain = [
@@ -37,13 +40,6 @@ const navSystem = [
   { title: "Help", url: "/help", icon: HelpCircle },
 ] as const;
 
-const navCompact = [
-  ...navMain,
-  ...navManagement,
-  { title: "Notifications", url: "/notifications", icon: Bell, badge: true },
-  { title: "Personas", url: "/settings/personas", icon: Settings },
-] as const;
-
 function isActive(pathname: string, url: string) {
   if (url === "/") return pathname === "/" || pathname === "/my-work";
   if (url === "/capa") return pathname === "/capa" || pathname.startsWith("/capa/");
@@ -59,7 +55,7 @@ function NavItem({
   badge,
 }: {
   to: string;
-  icon: React.ElementType;
+  icon: ElementType;
   title: string;
   badge?: number;
 }) {
@@ -70,37 +66,17 @@ function NavItem({
     <li>
       <Link
         to={to}
-        className="sidebar-nav-item"
+        className={cn(
+          "sidebar-nav-item flex items-center gap-2.5 rounded-[var(--r-sm)] bg-transparent px-3 py-2 text-sm no-underline",
+          active ? "font-semibold text-primary" : "font-normal text-foreground-secondary",
+        )}
         data-active={active ? "true" : undefined}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "10px",
-          padding: "8px 12px",
-          borderRadius: "var(--r-sm)",
-          fontSize: "14px",
-          fontWeight: active ? 600 : 400,
-          color: active ? "var(--accent)" : "var(--fg-2)",
-          background: "transparent",
-          textDecoration: "none",
-        }}
       >
-        <Icon size={18} strokeWidth={1.75} aria-hidden="true" style={{ flexShrink: 0 }} />
-        <span style={{ flex: 1 }}>{title}</span>
+        <Icon size={18} strokeWidth={1.75} aria-hidden="true" className="shrink-0" />
+        <span className="flex-1">{title}</span>
         {badge !== undefined && badge > 0 && (
           <span
-            style={{
-              background: "var(--accent)",
-              color: "var(--on-accent)",
-              fontSize: "10px",
-              fontWeight: 700,
-              fontFamily: "var(--font-mono)",
-              padding: "1px 6px",
-              borderRadius: "var(--r-full)",
-              minWidth: "18px",
-              textAlign: "center",
-              lineHeight: "16px",
-            }}
+            className="min-w-[18px] rounded-[var(--r-full)] bg-primary px-1.5 py-px text-center font-sans text-[10px] font-bold leading-4 text-primary-foreground"
           >
             {badge}
           </span>
@@ -113,6 +89,15 @@ function NavItem({
 export function CompactNav() {
   const location = useLocation();
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+  const primaryNav = navMain.filter(
+    (item) => item.url !== "/dashboard" || !isMyWorkOnlyPersona(activePersonaId),
+  );
+  const compactNav = [
+    ...primaryNav,
+    ...navManagement,
+    { title: "Notifications", url: "/notifications", icon: Bell, badge: true },
+    { title: "Personas", url: "/settings/personas", icon: Settings },
+  ];
   const unreadCount = useNotificationStore((state) =>
     state.notifications.filter(
       (n) => n.recipientPersonaId === activePersonaId && !n.read,
@@ -122,7 +107,7 @@ export function CompactNav() {
   return (
     <nav className="compact-nav xl:hidden" aria-label="Primary navigation">
       <ul className="compact-nav-list">
-        {navCompact.map((item) => {
+        {compactNav.map((item) => {
           const Icon = item.icon;
           const active = isActive(location.pathname, item.url);
           const badge = "badge" in item && item.badge ? unreadCount : undefined;
@@ -156,6 +141,10 @@ export function CompactNav() {
 export function Sidebar() {
   const persona = usePersonaStore((state) => state.activePersona());
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+  const primaryNav = navMain.filter(
+    (item) => item.url !== "/dashboard" || !isMyWorkOnlyPersona(activePersonaId),
+  );
+  const logoHref = isMyWorkOnlyPersona(activePersonaId) ? "/" : "/dashboard";
   const logout = useAuthStore((state) => state.logout);
   const [theme, setTheme] = useState<ThemeMode>(() => getInitialTheme());
   const unreadCount = useNotificationStore((state) =>
@@ -176,37 +165,21 @@ export function Sidebar() {
 
   return (
     <aside
-      className="fixed inset-y-0 left-0 z-30 hidden xl:flex xl:flex-col"
-      style={{
-        width: "240px",
-        background: "var(--bg-0)",
-        borderRight: "1px solid var(--line-2)",
-        fontFamily: "var(--font-sans)",
-      }}
+      className="fixed inset-y-0 left-0 z-30 hidden w-[240px] flex-col border-r border-[var(--line-2)] bg-card font-sans xl:flex"
     >
       {/* Logo */}
       <div
-        className="flex items-center shrink-0"
-        style={{ padding: "18px 16px 16px", borderBottom: "1px solid var(--line-1)" }}
+        className="flex shrink-0 items-center border-b border-[var(--line-1)] px-4 pb-4 pt-[18px]"
       >
-        <Link to="/dashboard">
-          <img src={logoReal} alt="CAPA AI" style={{ height: "26px", width: "auto" }} />
+        <Link to={logoHref}>
+          <img src={logoReal} alt="CAPA AI" className="h-[26px] w-auto" />
         </Link>
       </div>
 
       {/* Primary nav */}
-      <nav className="flex-1 overflow-y-auto" style={{ padding: "10px 8px 0" }}>
-        <ul
-          style={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
-            display: "flex",
-            flexDirection: "column",
-            gap: "2px",
-          }}
-        >
-          {navMain.map((item) => (
+      <nav className="flex-1 overflow-y-auto px-2 pt-2.5">
+        <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+          {primaryNav.map((item) => (
             <NavItem
               key={item.url}
               to={item.url}
@@ -218,37 +191,13 @@ export function Sidebar() {
         </ul>
 
         {/* Management section */}
-        <div
-          style={{
-            marginTop: "20px",
-            paddingTop: "10px",
-            borderTop: "1px solid var(--line-1)",
-          }}
-        >
+        <div className="mt-5 border-t border-[var(--line-1)] pt-2.5">
           <p
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              fontWeight: 500,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              padding: "0 12px 6px",
-              margin: 0,
-            }}
+            className="m-0 px-3 pb-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
           >
             Management
           </p>
-          <ul
-            style={{
-              listStyle: "none",
-              margin: 0,
-              padding: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: "2px",
-            }}
-          >
+          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
             {navManagement.map((item) => (
               <NavItem key={item.url} to={item.url} icon={item.icon} title={item.title} />
             ))}
@@ -256,37 +205,13 @@ export function Sidebar() {
         </div>
 
         {/* System section */}
-        <div
-          style={{
-            marginTop: "20px",
-            paddingTop: "10px",
-            borderTop: "1px solid var(--line-1)",
-          }}
-        >
+        <div className="mt-5 border-t border-[var(--line-1)] pt-2.5">
           <p
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              fontWeight: 500,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--fg-4)",
-              padding: "0 12px 6px",
-              margin: 0,
-            }}
+            className="m-0 px-3 pb-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
           >
             System
           </p>
-          <ul
-            style={{
-              listStyle: "none",
-              margin: 0,
-              padding: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: "2px",
-            }}
-          >
+          <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
             {navSystem.map((item) => (
               <NavItem key={item.url} to={item.url} icon={item.icon} title={item.title} />
             ))}
@@ -296,15 +221,9 @@ export function Sidebar() {
 
       {/* Bottom: persona switcher + user block */}
       <div
-        style={{
-          padding: "10px 8px 12px",
-          borderTop: "1px solid var(--line-1)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "6px",
-        }}
+        className="flex flex-col gap-1.5 border-t border-[var(--line-1)] px-2 pb-3 pt-2.5"
       >
-        <div style={{ padding: "0 4px" }}>
+        <div className="flex flex-col gap-1 px-1">
           <button
             type="button"
             className="theme-toggle-button"
@@ -315,62 +234,29 @@ export function Sidebar() {
             <ThemeIcon size={16} strokeWidth={1.8} />
             <span>{themeLabel}</span>
           </button>
+          <ThemeCustomizer />
         </div>
-
-        {/* Persona switcher */}
-        {/* <div style={{ padding: "0 4px" }}>
-          <PersonaSwitcher />
-        </div> */}
 
         {/* Active user block */}
         <div
-          className="flex items-center gap-3"
-          style={{ padding: "8px 12px" }}
+          className="flex items-center gap-3 px-3 py-2"
         >
           {/* Avatar */}
           <div
-            style={{
-              width: "32px",
-              height: "32px",
-              borderRadius: "var(--r-full)",
-              background: "var(--grad-brand)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "var(--on-accent)",
-              flexShrink: 0,
-              letterSpacing: "0.02em",
-            }}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--r-full)] bg-[image:var(--grad-brand)] text-[11px] font-bold tracking-[0.02em] text-primary-foreground"
           >
             {persona.avatarInitials}
           </div>
 
           {/* Name + role */}
-          <div style={{ minWidth: 0, flex: 1 }}>
+          <div className="min-w-0 flex-1">
             <p
-              style={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "var(--fg-1)",
-                margin: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+              className="m-0 truncate text-sm font-semibold text-foreground"
             >
               {persona.displayName}
             </p>
             <p
-              style={{
-                fontSize: "11px",
-                color: "var(--fg-3)",
-                margin: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+              className="m-0 truncate text-[11px] text-foreground-tertiary"
             >
               {persona.role} · {persona.department}
             </p>
@@ -382,30 +268,7 @@ export function Sidebar() {
             onClick={logout}
             title="Sign out"
             aria-label="Sign out"
-            style={{
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "28px",
-              height: "28px",
-              borderRadius: "var(--r-sm)",
-              background: "transparent",
-              border: "1px solid transparent",
-              color: "var(--fg-4)",
-              cursor: "pointer",
-              transition: "color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--danger)";
-              e.currentTarget.style.background = "var(--danger-soft)";
-              e.currentTarget.style.borderColor = "transparent";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--fg-4)";
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.borderColor = "transparent";
-            }}
+            className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-[var(--r-sm)] border border-transparent bg-transparent text-foreground-faint transition-[color,background,border-color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-[var(--danger-soft)] hover:text-destructive"
           >
             <LogOut size={14} strokeWidth={1.75} />
           </button>

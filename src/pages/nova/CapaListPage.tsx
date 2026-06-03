@@ -98,43 +98,21 @@ export function CapaListPage() {
   }, [dateFilter, departmentFilter, query, rows, severityFilter, statusFilter, typeFilter]);
 
   return (
-    <div className="animate-page-enter" style={{ maxWidth: "1400px" }}>
+    <div className="animate-page-enter ">
 
       {/* ── Header ──────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "24px", flexWrap: "wrap", gap: "12px" }}>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 style={{
-            fontSize: "22px",
-            fontWeight: 600,
-            letterSpacing: "-0.025em",
-            color: "var(--fg-1)",
-            fontFamily: "var(--font-sans)",
-            margin: 0,
-          }}>
+          <h1 className="m-0 font-sans text-4xl font-semibold tracking-[-0.025em] text-foreground">
             CAPA list
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--fg-3)", marginTop: "6px", lineHeight: "1.5", maxWidth: "560px" }}>
+          <p className="mt-1.5 max-w-[560px] text-sm leading-normal text-foreground-tertiary">
             Track every deviation, audit finding, and complaint CAPA with quality score, due date, and workflow status.
           </p>
         </div>
         <Link
           to="/capa/new"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "7px",
-            padding: "9px 18px",
-            background: "var(--grad-brand)",
-            color: "var(--on-accent)",
-            borderRadius: "var(--r-sm)",
-            fontSize: "13px",
-            fontWeight: 600,
-            fontFamily: "var(--font-sans)",
-            textDecoration: "none",
-            transition: "filter var(--dur-fast) var(--ease-out)",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.1)")}
-          onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
+          className="inline-flex items-center gap-[7px] rounded-[var(--r-sm)] bg-[image:var(--grad-brand)] px-[18px] py-[9px] font-sans text-sm font-semibold text-primary-foreground no-underline transition-[filter] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:brightness-110 active:scale-[0.99]"
         >
           <Plus size={14} strokeWidth={2} />
           New CAPA
@@ -142,7 +120,7 @@ export function CapaListPage() {
       </div>
 
       {/* ── Filter bar ──────────────────────────────────────────────── */}
-      <div style={{ marginBottom: "16px" }}>
+      <div className="mb-4">
         <FilterCard>
           <FilterSearchInput
             value={query}
@@ -153,61 +131,36 @@ export function CapaListPage() {
           <FilterSelect value={typeFilter} onChange={setTypeFilter} ariaLabel="Filter by type"
             options={[{ value: ALL, label: "All types" }, { value: "deviation", label: "Deviation" }, { value: "audit", label: "Audit Finding" }, { value: "complaint", label: "Complaint" }]} />
           <FilterSelect value={statusFilter} onChange={setStatusFilter} ariaLabel="Filter by status"
-            options={[{ value: ALL, label: "All statuses" }, { value: "draft", label: "Draft" }, { value: "disposisi", label: "Disposition" }, { value: "investigation", label: "Investigation" }, { value: "approval", label: "Approval" }, { value: "closed", label: "Closed" }]} />
+            options={[{ value: ALL, label: "All statuses" }, { value: "draft", label: "Draft" }, { value: "pending_review", label: "Pending Review" }, { value: "revision_requested", label: "Revision Requested" }, { value: "rejected", label: "Rejected" }, { value: "investigation", label: "Investigation" }, { value: "approval", label: "Approval" }, { value: "closed", label: "Closed" }]} />
           <FilterSelect value={departmentFilter} onChange={setDepartmentFilter} ariaLabel="Filter by department"
             options={[{ value: ALL, label: "All departments" }, ...departments.map((d) => ({ value: d, label: d }))]} />
           <FilterSelect value={severityFilter} onChange={setSeverityFilter} ariaLabel="Filter by severity"
-            options={[{ value: ALL, label: "All severities" }, { value: "Minor", label: "Minor" }, { value: "Major", label: "Major" }, { value: "Critical", label: "Critical" }]} />
+            options={[{ value: ALL, label: "All severities" }, { value: "Ungraded", label: "Ungraded" }, { value: "Minor", label: "Minor" }, { value: "Major", label: "Major" }, { value: "Critical", label: "Critical" }]} />
           <FilterSelect value={dateFilter} onChange={(v) => setDateFilter(v as DateFilter)} ariaLabel="Filter by due date"
             options={[{ value: ALL, label: "All dates" }, { value: "overdue", label: "Overdue" }, { value: "next_7_days", label: "Due next 7 days" }, { value: "updated_30_days", label: "Updated last 30 days" }]} />
         </FilterCard>
       </div>
 
       {/* ── Results count ────────────────────────────────────────────── */}
-      <div style={{
-        fontSize: "11px",
-        fontFamily: "var(--font-mono)",
-        fontWeight: 600,
-        letterSpacing: "0.18em",
-        textTransform: "uppercase",
-        color: "var(--fg-3)",
-        marginBottom: "10px",
-      }}>
+      <div className="mb-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
         {filteredRows.length} CAPA case{filteredRows.length !== 1 ? "s" : ""}
       </div>
 
       {/* ── Table ───────────────────────────────────────────────────── */}
-      <div style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--line-2)",
-        borderRadius: "var(--r-lg)",
-        boxShadow: "var(--shadow-sm)",
-        overflow: "hidden",
-        maxWidth: "100%",
-      }}>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", fontFamily: "var(--font-sans)" }}>
+      <div className="max-w-full overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse font-sans text-sm">
             <thead>
-              <tr style={{ background: "var(--table-head-bg)", borderBottom: "1px solid var(--line-2)" }}>
+              <tr className="border-b border-[var(--line-2)] bg-[var(--table-head-bg)]">
                 {["CAPA", "Type", "Severity", "Status", "Quality", "PIC", "Due date", ""].map((h) => (
-                  <th key={h} style={{
-                    padding: "10px 14px",
-                    textAlign: "left",
-                    fontSize: "10px",
-                    fontFamily: "var(--font-mono)",
-                    fontWeight: 600,
-                    letterSpacing: "0.18em",
-                    textTransform: "uppercase",
-                    color: "var(--fg-2)",
-                    whiteSpace: "nowrap",
-                  }}>{h}</th>
+                  <th key={h} className="whitespace-nowrap px-3.5 py-2.5 text-left font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--table-head-fg)]">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filteredRows.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ padding: "24px" }}>
+                  <td colSpan={8} className="p-6">
                     <EmptyState
                       title="No CAPA cases"
                       description="No CAPA cases match the current filters."
@@ -223,9 +176,7 @@ export function CapaListPage() {
                     role="link"
                     tabIndex={0}
                     aria-label={`Open CAPA ${capa.id}: ${capa.title}`}
-                    style={{ borderTop: "1px solid var(--line-1)", verticalAlign: "middle", transition: "background var(--dur-fast) var(--ease-out)", cursor: "pointer" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-3)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    className="cursor-pointer border-t border-[var(--line-1)] align-middle transition-[background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-elevated"
                     onClick={() => navigate(`/capa/${capa.id}`)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -235,76 +186,59 @@ export function CapaListPage() {
                     }}
                   >
                     {/* CAPA ID + title */}
-                    <td style={{ padding: "12px 14px", maxWidth: "320px" }}>
-                      <div style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--accent)", marginBottom: "3px" }}>
+                    <td className="max-w-[320px] px-3.5 py-3">
+                      <div className="mb-[3px] font-sans text-[11px] text-primary">
                         {capa.id}
                       </div>
-                      <div style={{ fontWeight: 500, color: "var(--fg-1)", lineHeight: "1.4" }}>
+                      <div className="font-medium leading-[1.4] text-foreground">
                         {capa.title}
                       </div>
-                      <div style={{ fontSize: "11px", color: "var(--fg-3)", marginTop: "3px" }}>
+                      <div className="mt-[3px] text-[11px] text-foreground-tertiary">
                         {capa.findingId} · {capa.department}
                       </div>
                     </td>
 
-                    <td style={{ padding: "12px 14px" }}>
+                    <td className="px-3.5 py-3">
                       <TypePill type={capa.type} />
                     </td>
 
-                    <td style={{ padding: "12px 14px" }}>
+                    <td className="px-3.5 py-3">
                       <SeverityBadge severity={capa.impact.severity} />
                     </td>
 
-                    <td style={{ padding: "12px 14px" }}>
+                    <td className="px-3.5 py-3">
                       <StatusBadge status={capa.status} />
                     </td>
 
-                    <td style={{ padding: "12px 14px" }}>
+                    <td className="px-3.5 py-3">
                       <ScorePill score={capa.score.total} compact />
                     </td>
 
-                    <td style={{ padding: "12px 14px", color: "var(--fg-2)", fontSize: "12px", whiteSpace: "nowrap" }}>
+                    <td className="whitespace-nowrap px-3.5 py-3 text-xs text-foreground-secondary">
                       {getPersonaName(capa.assignedTo as PersonaID)}
                     </td>
 
                     {/* Due date */}
-                    <td style={{ padding: "12px 14px" }}>
+                    <td className="px-3.5 py-3">
                       {nextDueDate ? (
                         <>
-                          <div style={{ color: overdue ? "var(--danger)" : "var(--fg-2)", fontSize: "13px" }}>
+                          <div className={overdue ? "text-sm text-destructive" : "text-sm text-foreground-secondary"}>
                             {formatDate(nextDueDate)}
                           </div>
-                          <div style={{ fontSize: "11px", color: overdue ? "var(--danger)" : "var(--fg-3)", marginTop: "2px" }}>
+                          <div className={overdue ? "mt-0.5 text-[11px] text-destructive" : "mt-0.5 text-[11px] text-foreground-tertiary"}>
                             {formatRelativeTime(nextDueDate)}
                           </div>
                         </>
                       ) : (
-                        <span style={{ fontSize: "12px", color: "var(--fg-3)" }}>No open action</span>
+                        <span className="text-xs text-foreground-tertiary">No open action</span>
                       )}
                     </td>
 
                     {/* Open button */}
-                    <td style={{ padding: "12px 14px" }} onClick={(e) => e.stopPropagation()}>
+                    <td className="px-3.5 py-3" onClick={(e) => e.stopPropagation()}>
                       <Link
                         to={`/capa/${capa.id}`}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          padding: "6px 12px",
-                          background: "var(--accent-soft)",
-                          border: "1px solid var(--accent-line)",
-                          borderRadius: "var(--r-sm)",
-                          color: "var(--accent)",
-                          fontSize: "12px",
-                          fontWeight: 600,
-                          fontFamily: "var(--font-sans)",
-                          textDecoration: "none",
-                          transition: "background var(--dur-fast) var(--ease-out)",
-                          whiteSpace: "nowrap",
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "color-mix(in srgb, var(--accent) 20%, transparent)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent-soft)")}
+                        className="inline-flex items-center gap-[5px] whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3 py-1.5 font-sans text-xs font-semibold text-primary no-underline transition-[background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-primary/20"
                       >
                         Open
                         <ArrowRight size={12} strokeWidth={2} />
