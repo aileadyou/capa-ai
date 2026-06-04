@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowRight,
   Check,
@@ -1489,6 +1489,7 @@ export function CapaDetailPage() {
   const rawCapa = useCapaStore((s) => s.capas.find((c) => c.id === id));
   const allCAs = useCapaStore((s) => s.correctiveActions);
   const allPAs = useCapaStore((s) => s.preventiveActions);
+  const activePersonaId = usePersonaStore((s) => s.activePersonaId);
 
   const capa = useMemo(() => {
     if (!rawCapa) return undefined;
@@ -1501,6 +1502,12 @@ export function CapaDetailPage() {
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
+  }
+
+  // Rejected CAPAs have no 8D work to show the initiator — redirect them to
+  // the finding detail where the rejection reason is displayed.
+  if (capa.status === "rejected" && activePersonaId === "initiator") {
+    return <Navigate to={`/findings/${capa.findingId}`} replace />;
   }
 
   return (

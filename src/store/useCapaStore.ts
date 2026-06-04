@@ -280,6 +280,12 @@ export const useCapaStore = create<CapaStore>()(
           return existing;
         }
 
+        // Block Andi from resubmitting while reviewers are still deliberating,
+        // and block a new proposal if the finding was already rejected at intake.
+        if (existing && (existing.status === "pending_review" || existing.status === "rejected")) {
+          return existing;
+        }
+
         const now = new Date().toISOString();
         const base = existing ?? createInitialCAPA(finding, type);
         const reviews: IntakeReview[] = INTAKE_REVIEWERS.map((reviewer) => ({ ...reviewer }));
@@ -365,7 +371,7 @@ export const useCapaStore = create<CapaStore>()(
           status === "investigation"
             ? "capa_in_progress"
             : status === "rejected"
-              ? "pending_capa"
+              ? "rejected"
               : "pending_review";
 
         set((state) => ({
@@ -375,7 +381,14 @@ export const useCapaStore = create<CapaStore>()(
               : record,
           ),
           findings: state.findings.map((record) =>
-            record.id === capa.findingId ? { ...record, status: findingStatus } : record,
+            record.id === capa.findingId
+              ? {
+                  ...record,
+                  status: findingStatus,
+                  // Clear the link so the finding no longer points at a dead CAPA
+                  ...(status === "rejected" ? { linkedCapaId: undefined } : {}),
+                }
+              : record,
           ),
         }));
 
@@ -414,7 +427,8 @@ export const useCapaStore = create<CapaStore>()(
                   : "Intake review update",
           description: initiatorMessage[status],
           capaId,
-          actionUrl: `/capa/${capaId}`,
+          // Rejected: CAPA is tombstoned — send Andi to the finding instead
+          actionUrl: status === "rejected" ? `/findings/${capa.findingId}` : `/capa/${capaId}`,
         });
       },
       updateProblemStatement: (capaId, statement, score) =>

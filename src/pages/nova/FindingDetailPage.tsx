@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Circle,
+  MessageSquareX,
   Plus,
   Sparkles,
   XCircle,
@@ -300,6 +301,80 @@ function Timeline({ finding, capa }: { finding: Finding; capa?: CAPACase }) {
   );
 }
 
+// ── Rejection reason banner ───────────────────────────────────────────────────
+
+function IntakeRejectionBanner({ capa }: { capa: CAPACase }) {
+  const reviewers = capa.intakeReviews?.filter((r) => r.decision === "rejected") ?? [];
+  if (reviewers.length === 0) {
+    // Fallback: show any reviewer who has a note
+    const withNotes = capa.intakeReviews?.filter((r) => r.notes) ?? [];
+    if (withNotes.length === 0) {
+      return (
+        <div className="rounded-[var(--r-md)] border-l-[3px] border-l-destructive bg-[var(--danger-soft)] px-5 py-4">
+          <div className="mb-1.5 flex items-center gap-2">
+            <MessageSquareX size={14} className="shrink-0 text-destructive" />
+            <p className="m-0 font-sans text-[13px] font-semibold text-destructive">
+              CAPA initiation rejected
+            </p>
+          </div>
+          <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+            Reviewers decided this finding does not warrant a full CAPA. No further 8D investigation will proceed.
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div className="rounded-[var(--r-md)] border-l-[3px] border-l-destructive bg-[var(--danger-soft)] px-5 py-4">
+        <div className="mb-2 flex items-center gap-2">
+          <MessageSquareX size={14} className="shrink-0 text-destructive" />
+          <p className="m-0 font-sans text-[13px] font-semibold text-destructive">
+            CAPA initiation rejected
+          </p>
+        </div>
+        <div className="flex flex-col gap-3">
+          {withNotes.map((r) => (
+            <div key={r.reviewerPersonaId}>
+              <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground-tertiary">
+                {r.reviewerName} · {r.role}
+              </p>
+              <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">{r.notes}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[var(--r-md)] border-l-[3px] border-l-destructive bg-[var(--danger-soft)] px-5 py-4">
+      <div className="mb-2 flex items-center gap-2">
+        <MessageSquareX size={14} className="shrink-0 text-destructive" />
+        <p className="m-0 font-sans text-[13px] font-semibold text-destructive">
+          CAPA initiation rejected
+        </p>
+      </div>
+      <p className="mb-3 mt-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+        Reviewers decided this finding does not warrant a full CAPA. No 8D investigation will proceed. Reason{reviewers.length > 1 ? "s" : ""}:
+      </p>
+      <div className="flex flex-col gap-3">
+        {reviewers.map((r) => (
+          <div
+            key={r.reviewerPersonaId}
+            className="rounded-[var(--r-sm)] border border-destructive/20 bg-card px-4 py-3"
+          >
+            <p className="mb-1 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground-tertiary">
+              {r.reviewerName} · {r.role}
+            </p>
+            <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+              {r.notes ?? "No additional notes provided."}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function FindingDetailPage() {
@@ -358,7 +433,7 @@ export function FindingDetailPage() {
           </p>
         </div>
 
-        {capa ? (
+        {capa && finding.status !== "rejected" ? (
           <Link to={`/capa/${capa.id}`} className={PRIMARY_LINK_CLASS}>
             Open linked CAPA
             <ArrowRight size={14} />
@@ -378,8 +453,13 @@ export function FindingDetailPage() {
         <StatCard label="Type" value={formatCAPAType(finding.type)} />
         <StatCard label="Department" value={finding.department} />
         <StatCard label="Reported" value={formatDateTime(finding.reportedAt)} />
-        <StatCard label="Linked CAPA" value={capa?.id ?? "Not created"} />
+        <StatCard label="Linked CAPA" value={finding.status === "rejected" ? "Rejected at intake" : (capa?.id ?? "Not created")} />
       </div>
+
+      {/* ── Rejection banner ───────────────────────────────────────────────── */}
+      {finding.status === "rejected" && capa && (
+        <IntakeRejectionBanner capa={capa} />
+      )}
 
       {/* ── Two-column body ────────────────────────────────────────────────── */}
       <div

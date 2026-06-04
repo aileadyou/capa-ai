@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Loader2, Pencil, RotateCcw, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Loader2, Pencil, RotateCcw, Sparkles, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { classifyImpact, draftGateAnswers, importSourceData, type GateDraftSet } from "@/services/novaService";
 import { useCapaStore } from "@/store";
@@ -432,6 +432,11 @@ export function CapaIntakePage() {
   const existingFinding = useCapaStore((state) =>
     state.findings.find((f) => f.id === sourceId),
   );
+  // Used to block Andi from resubmitting while reviewers are deliberating,
+  // or from starting a fresh proposal after a rejection.
+  const existingCapa = useCapaStore((state) =>
+    state.capas.find((c) => c.findingId === sourceId),
+  );
 
   // When source card selection changes, reset prefill
   useEffect(() => {
@@ -595,6 +600,78 @@ export function CapaIntakePage() {
           placeholder={q.placeholder}
           rows={rows}
         />
+      </div>
+    );
+  }
+
+  // ── Blocked: pending review or rejected ──────────────────────────────────────
+
+  if (existingCapa && existingCapa.status === "pending_review") {
+    return (
+      <div className="mx-auto flex max-w-[720px] flex-col gap-5">
+        <Link
+          to="/findings"
+          className="inline-flex items-center gap-[5px] font-sans text-xs text-foreground-tertiary no-underline hover:text-foreground-secondary"
+        >
+          <ArrowLeft size={13} />
+          Back to findings
+        </Link>
+        <div className="rounded-[var(--r-md)] border-l-[3px] border-l-warning bg-[var(--warning-soft)] px-6 py-5">
+          <div className="mb-1.5 flex items-center gap-2">
+            <AlertTriangle size={15} className="shrink-0 text-warning" />
+            <p className="m-0 font-sans text-[14px] font-semibold text-warning">
+              Intake under review — cannot submit a new proposal
+            </p>
+          </div>
+          <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+            {existingCapa.id} is currently being reviewed by Siti Rahmawati (QA) and Bambang Saputra (Department Head). You cannot submit a new intake for{" "}
+            <span className="font-semibold text-foreground">{existingCapa.findingId}</span> while their decision is pending.
+          </p>
+          <div className="mt-4">
+            <Link
+              to={`/capa/${existingCapa.id}`}
+              className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-2 font-sans text-[13px] font-semibold text-primary-foreground no-underline"
+            >
+              View pending intake
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (existingCapa && existingCapa.status === "rejected") {
+    return (
+      <div className="mx-auto flex max-w-[720px] flex-col gap-5">
+        <Link
+          to="/findings"
+          className="inline-flex items-center gap-[5px] font-sans text-xs text-foreground-tertiary no-underline hover:text-foreground-secondary"
+        >
+          <ArrowLeft size={13} />
+          Back to findings
+        </Link>
+        <div className="rounded-[var(--r-md)] border-l-[3px] border-l-destructive bg-[var(--danger-soft)] px-6 py-5">
+          <div className="mb-1.5 flex items-center gap-2">
+            <XCircle size={15} className="shrink-0 text-destructive" />
+            <p className="m-0 font-sans text-[14px] font-semibold text-destructive">
+              CAPA initiation was rejected — no new proposal allowed
+            </p>
+          </div>
+          <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+            The intake for{" "}
+            <span className="font-semibold text-foreground">{existingCapa.findingId}</span> was rejected at review. No further CAPA can be initiated for this finding. See the finding detail for the reviewer's reasoning.
+          </p>
+          <div className="mt-4">
+            <Link
+              to={`/findings/${existingCapa.findingId}`}
+              className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-card px-4 py-2 font-sans text-[13px] font-semibold text-foreground-secondary no-underline"
+            >
+              View finding detail
+              <ArrowRight size={13} />
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

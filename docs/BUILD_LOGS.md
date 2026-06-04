@@ -4,6 +4,22 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-04, 02:15 PM — Rejected intake flow: no CAPA for Andi, rejection reason on finding, block resubmit
+
+### Prompt
+- If a CAPA intake is rejected by Siti/Bambang, there should be no CAPA — Andi should land on the finding detail showing the rejection reason from both reviewers.
+- Andi cannot submit a new CAPA proposal for a finding that's still pending review or already rejected.
+
+### What changed
+- `src/store/useCapaStore.ts` — `recordIntakeDecision`: when outcome is `rejected`, finding status now correctly sets to `"rejected"` (was incorrectly `"pending_capa"`). The finding's `linkedCapaId` is cleared so it no longer points at a dead CAPA. Initiator notification `actionUrl` redirects to `/findings/<id>` instead of `/capa/<id>`.
+- `src/store/useCapaStore.ts` — `submitIntake`: added guard — if an existing CAPA for this finding has status `pending_review` or `rejected`, return the existing record unchanged (no new proposal, no state mutation).
+- `src/pages/nova/CapaDetailPage.tsx`: when `capa.status === "rejected"` and active persona is `"initiator"`, render `<Navigate to={/findings/<findingId>} replace />` so Andi is immediately redirected. `usePersonaStore` hook moved above the `!capa` guard so no conditional hook call occurs. `Navigate` imported from react-router-dom.
+- `src/pages/nova/FindingDetailPage.tsx`: added `IntakeRejectionBanner` component — when `finding.status === "rejected"` and a linked CAPA record exists (looked up by `findingId`), the banner renders below the stat strip showing each rejecting reviewer's name, role, and rejection note in a card. "Open linked CAPA" button suppressed for rejected findings; stat strip "Linked CAPA" shows "Rejected at intake".
+- `src/pages/nova/CapaIntakePage.tsx`: two early-return blockers before the wizard renders — `pending_review` shows a warning banner with a link to the pending CAPA; `rejected` shows a danger banner with a link back to the finding detail.
+
+### Verification
+- `tsc --noEmit`: clean.
+
 ## 2026-06-04, 08:01 AM — Fix "Create CAPA" appearing on closed findings (seed data gap + missing status guard)
 
 ### Prompt
