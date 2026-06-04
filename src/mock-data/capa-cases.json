@@ -78,10 +78,10 @@
     ],
     "score": {
       "problemSpecificity": 22,
-      "rootCauseDepth": 18,
-      "effectiveness": 17,
+      "rootCauseDepth": 12,
+      "effectiveness": 14,
       "containment": 20,
-      "total": 77,
+      "total": 68,
       "isAuditReady": false
     },
     "impact": {
@@ -112,61 +112,21 @@
     },
     "rca": {
       "method": "5whys",
-      "fiveWhys": [
-        {
-          "id": "5w-0341-1",
-          "level": 1,
-          "question": "Why did the particle count exceed the alert threshold?",
-          "novaSuggestion": "Airflow performance degraded around HEPA-FF-L2-07.",
-          "novaCitations": [],
-          "userAnswer": "Airflow performance degraded around HEPA-FF-L2-07.",
-          "status": "accepted"
-        },
-        {
-          "id": "5w-0341-2",
-          "level": 2,
-          "question": "Why did airflow performance degrade?",
-          "novaSuggestion": "The HEPA filter was approaching the end of its effective operating life.",
-          "novaCitations": [],
-          "userAnswer": "The HEPA filter showed deterioration earlier than the current PM interval expected.",
-          "status": "edited"
-        }
-      ],
-      "confirmedRootCauses": [
-        "HEPA filter replacement interval remained at 18 months despite trend evidence supporting 12 months."
-      ]
+      "fiveWhys": [],
+      "confirmedRootCauses": []
     },
     "correctiveActions": [],
     "preventiveActions": [],
     "verification": {
       "evidenceFileNames": []
     },
-    "approvals": [
-      {
-        "approverPersonaId": "head_of_dept",
-        "approverName": "Bambang Saputra",
-        "role": "Department Head",
-        "decision": "pending"
-      },
-      {
-        "approverPersonaId": "qa_deviation",
-        "approverName": "Siti Rahmawati",
-        "role": "QA Deviation",
-        "decision": "pending"
-      },
-      {
-        "approverPersonaId": "head_of_qa",
-        "approverName": "Dewi Anggraini",
-        "role": "Head of QA",
-        "decision": "pending"
-      }
-    ],
+    "approvals": [],
     "auditEvents": [],
     "suggestions": [],
     "status": "investigation",
-    "currentStep": "rca",
+    "currentStep": "containment",
     "createdAt": "2026-05-18T09:43:00+07:00",
-    "updatedAt": "2026-05-18T10:35:00+07:00",
+    "updatedAt": "2026-05-18T11:20:00+07:00",
     "createdBy": "initiator",
     "assignedTo": "qa_deviation",
     "department": "Fill-Finish",
@@ -249,12 +209,12 @@
       }
     ],
     "score": {
-      "problemSpecificity": 20,
-      "rootCauseDepth": 16,
-      "effectiveness": 16,
-      "containment": 18,
-      "total": 70,
-      "isAuditReady": false
+      "problemSpecificity": 22,
+      "rootCauseDepth": 21,
+      "effectiveness": 22,
+      "containment": 20,
+      "total": 85,
+      "isAuditReady": true
     },
     "impact": {
       "severity": "Major",
@@ -284,25 +244,69 @@
     },
     "rca": {
       "method": "fishbone",
-      "fishbone": [],
+      "fishbone": [
+        {
+          "category": "Method",
+          "novaEntries": ["SOP-WH-021 did not explicitly assign real-time second-person verification ownership for material transfers."],
+          "userEntries": ["Verification was deferred to an end-of-shift reconciliation step instead of being contemporaneous."],
+          "status": "edited"
+        },
+        {
+          "category": "Man",
+          "novaEntries": ["Shift handover transferred record completion without confirming who owned the verification step."],
+          "userEntries": [],
+          "status": "accepted"
+        },
+        {
+          "category": "Measurement",
+          "novaEntries": ["No in-process check flagged records completed after the handover window."],
+          "userEntries": [],
+          "status": "pending"
+        }
+      ],
       "confirmedRootCauses": [
-        "Cleaning and transfer documentation ownership was unclear during shift handover."
+        "Second-person verification ownership for material transfer records was not assigned across the shift-handover window, so records were completed retrospectively without independent verification."
       ]
     },
     "correctiveActions": [],
     "preventiveActions": [],
     "verification": {
-      "evidenceFileNames": []
+      "method": "process_review",
+      "result": "Two-month follow-up review of material transfer records confirmed 100% contemporaneous completion with documented second-person verification across all sampled transfers.",
+      "evidenceFileNames": ["material-transfer-review-AUD-0089.pdf"],
+      "verifiedAt": "2026-05-30T11:00:00+07:00",
+      "verifiedBy": "qa_deviation"
     },
-    "approvals": [],
+    "approvals": [
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "approved",
+        "notes": "Records reconciled and second-person verification reinstated. Endorsed for QA sign-off.",
+        "signedAt": "2026-05-31T09:30:00+07:00"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA Compliance",
+        "decision": "pending"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "Head of QA",
+        "decision": "pending"
+      }
+    ],
     "auditEvents": [],
     "suggestions": [],
-    "status": "investigation",
-    "currentStep": "rca",
+    "status": "approval",
+    "currentStep": "signoff",
     "createdAt": "2026-05-15T11:25:00+07:00",
-    "updatedAt": "2026-05-16T09:00:00+07:00",
+    "updatedAt": "2026-05-31T09:30:00+07:00",
     "createdBy": "qa_deviation",
-    "assignedTo": "head_of_dept",
+    "assignedTo": "head_of_qa",
     "department": "Warehouse / QA Compliance",
     "disposisi": {
       "reviewerPersonaId": "qa_deviation",
@@ -387,11 +391,11 @@
     ],
     "score": {
       "problemSpecificity": 21,
-      "rootCauseDepth": 15,
-      "effectiveness": 18,
+      "rootCauseDepth": 20,
+      "effectiveness": 21,
       "containment": 18,
-      "total": 72,
-      "isAuditReady": false
+      "total": 80,
+      "isAuditReady": true
     },
     "impact": {
       "severity": "Major",
@@ -452,17 +456,42 @@
     "correctiveActions": [],
     "preventiveActions": [],
     "verification": {
-      "evidenceFileNames": []
+      "method": "re_sampling",
+      "result": "Returned-vial and retained-sample assessment identified the particulate source; two subsequent production campaigns of the product showed no recurrence of particulate complaints.",
+      "evidenceFileNames": ["retained-sample-assessment-CMP-0112.pdf", "inspection-trend-CMP-0112.pdf"],
+      "verifiedAt": "2026-05-29T15:30:00+07:00",
+      "verifiedBy": "qa_deviation"
     },
-    "approvals": [],
+    "approvals": [
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "approved",
+        "notes": "Retained-sample assessment and strengthened inspection escalation reviewed. Endorsed for QA sign-off.",
+        "signedAt": "2026-05-30T10:00:00+07:00"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA Complaint",
+        "decision": "pending"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "Head of QA",
+        "decision": "pending"
+      }
+    ],
     "auditEvents": [],
     "suggestions": [],
-    "status": "investigation",
-    "currentStep": "rca",
+    "status": "approval",
+    "currentStep": "signoff",
     "createdAt": "2026-05-12T14:10:00+07:00",
-    "updatedAt": "2026-05-13T10:15:00+07:00",
+    "updatedAt": "2026-05-30T10:00:00+07:00",
     "createdBy": "qa_deviation",
-    "assignedTo": "head_of_dept",
+    "assignedTo": "head_of_qa",
     "department": "QA Complaint / Production",
     "disposisi": {
       "reviewerPersonaId": "qa_deviation",
@@ -473,361 +502,99 @@
     }
   },
   {
-    "id": "CAPA-2026-0312",
-    "findingId": "DEV-2026-0312",
+    "id": "CAPA-2026-0207",
+    "findingId": "DEV-2026-0207",
     "type": "deviation",
-    "title": "Autoclave Printout Completeness Improvement",
+    "title": "Cleaning Logbook Line-Number Transcription Error",
     "preFill": {
       "source": "Bizzmine",
-      "deviationId": "DEV-2026-0312",
-      "reportedAt": "2026-04-28T08:30:00+07:00",
-      "occurredAt": "2026-04-28T07:55:00+07:00",
+      "deviationId": "DEV-2026-0207",
+      "reportedAt": "2026-05-20T09:15:00+07:00",
+      "occurredAt": "2026-05-20T07:30:00+07:00",
       "location": {
-        "department": "Sterile Preparation",
-        "area": "Autoclave Room",
-        "line": "Component Prep",
-        "equipmentId": "AUTO-SP-03"
+        "department": "Production",
+        "area": "Solution Prep Room",
+        "line": "Compounding Line 2",
+        "equipmentId": "LOG-PRD-CLEAN-02"
       },
       "initiator": {
         "name": "Andi Wijaya",
         "role": "Senior Operator",
         "nik": "BF-FF-1024"
       },
-      "initialObservation": "Autoclave cycle printout was incomplete after routine sterile component preparation.",
-      "affectedBatches": ["CMP-26-0428-A"],
+      "initialObservation": "Operator recorded the wrong line number (Line 3 instead of Line 2) on the daily cleaning logbook entry; the cleaning itself was performed and verified on the correct line.",
+      "affectedBatches": [],
       "attachments": [],
-      "sopReferences": ["SOP-SP-010"],
+      "sopReferences": ["SOP-DOC-002", "SOP-CLN-005"],
       "initialSeverity": "Minor"
     },
     "gateAnswers": [
       {
         "questionId": "observation",
         "question": "What happened and when was it observed?",
-        "answer": "On 28 Apr 2026 at 07:55 (Shift A) in the Autoclave Room, the cycle printout from AUTO-SP-03 for sterile component preparation batch CMP-26-0428-A printed incompletely — the final cycle parameters were missing from the paper trace, although the electronic cycle record was complete.",
+        "answer": "On 20 May 2026 at 07:30 (Shift A), the operator completing the Solution Prep Room daily cleaning logbook recorded the wrong line identifier — Line 3 instead of Line 2 — for the morning cleaning record. The transposition was noticed during the same-shift supervisor review.",
         "novaScoreContribution": 6,
         "needsImprovement": false
       },
       {
         "questionId": "impact",
         "question": "What is the potential quality or GMP impact?",
-        "answer": "Minor GMP impact. The sterilization cycle itself met all parameters per the complete electronic record; only the paper printout was incomplete. There is no sterility-assurance risk to the components, so the impact is documentation-only and assessed as Minor.",
-        "novaScoreContribution": 5,
+        "answer": "No GMP or product impact. The cleaning was performed and independently verified on the correct line (Line 2); only the written line identifier was transposed. The entry was corrected the same shift with a single-line GMP correction (struck through, initialed, dated) per SOP-DOC-002, preserving the original entry.",
+        "novaScoreContribution": 4,
         "needsImprovement": false
       },
       {
         "questionId": "containment",
         "question": "What immediate containment is already in place?",
-        "answer": "Batch CMP-26-0428-A was held pending QA review of the electronic cycle data, which confirmed all parameters were met. The printer was inspected and the paper roll replaced before the next cycle was run.",
-        "novaScoreContribution": 5,
+        "answer": "The entry was corrected contemporaneously with a single-line correction, initialed and dated by the operator and countersigned by the shift supervisor. No batch was affected and no further containment was required.",
+        "novaScoreContribution": 4,
         "needsImprovement": false
       },
       {
         "questionId": "scope",
         "question": "Which product, batch, lot, equipment, or area is affected?",
-        "answer": "Autoclave AUTO-SP-03 in the Autoclave Room, Sterile Preparation; component prep batch CMP-26-0428-A. Governing record SOP-SP-010, with the electronic cycle archive available as backup evidence.",
-        "novaScoreContribution": 4,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "cause_confirmation",
-        "question": "What evidence is needed to confirm the root cause?",
-        "answer": "Confirm by comparing the electronic cycle record against the paper trace, inspecting the printer mechanism and paper roll, and reviewing whether the pre-cycle readiness checklist includes a printer and paper-roll check.",
+        "answer": "Single handwritten logbook entry — Solution Prep Room daily cleaning record, Shift A, 20 May 2026. No product, batch, lot, or equipment qualification affected. Governing record SOP-DOC-002 (good documentation practice).",
         "novaScoreContribution": 3,
         "needsImprovement": false
-      },
-      {
-        "questionId": "effectiveness_criteria",
-        "question": "How will effectiveness be verified?",
-        "answer": "Effective when a four-week review of autoclave printouts shows 100% complete paper traces with the printer check added to pre-cycle readiness, and no repeat incomplete-printout deviations are recorded.",
-        "novaScoreContribution": 2,
-        "needsImprovement": false
       }
     ],
     "score": {
-      "problemSpecificity": 24,
-      "rootCauseDepth": 22,
-      "effectiveness": 23,
-      "containment": 22,
-      "total": 91,
-      "isAuditReady": true
-    },
-    "impact": {
-      "severity": "Minor",
-      "totalWeight": 34,
-      "factors": [
-        {
-          "factor": "Area criticality",
-          "value": "Autoclave Room (sterile-prep support)",
-          "weight": 12,
-          "rationale": "A support area for sterile preparation carries moderate GMP significance."
-        },
-        {
-          "factor": "Record redundancy",
-          "value": "Complete electronic cycle backup",
-          "weight": 8,
-          "rationale": "A validated electronic record preserves the cycle evidence despite the paper gap."
-        },
-        {
-          "factor": "Affected batches",
-          "value": "One component-prep batch (CMP-26-0428-A)",
-          "weight": 14,
-          "rationale": "A single bounded batch keeps product-impact assessment limited."
-        }
-      ],
-      "rationale": "Minor severity: a contained documentation gap on the paper printout, with a complete electronic cycle backup confirming all sterilization parameters were met and no product sterility impact.",
-      "computedAt": "2026-04-28T08:40:00+07:00"
-    },
-    "rca": {
-      "method": "5whys",
-      "confirmedRootCauses": ["Printer roll replacement check was not included in pre-cycle readiness."]
-    },
-    "correctiveActions": [],
-    "preventiveActions": [],
-    "verification": {
-      "method": "process_review",
-      "result": "Four-week printout completeness check passed.",
-      "evidenceFileNames": ["autoclave-weekly-review.pdf"],
-      "verifiedAt": "2026-04-30T12:45:00+07:00",
-      "verifiedBy": "qa_deviation"
-    },
-    "approvals": [],
-    "auditEvents": [],
-    "suggestions": [],
-    "status": "closed",
-    "currentStep": "signoff",
-    "createdAt": "2026-04-28T08:35:00+07:00",
-    "updatedAt": "2026-04-30T13:15:00+07:00",
-    "createdBy": "initiator",
-    "assignedTo": "qa_deviation",
-    "department": "Sterile Preparation"
-  },
-  {
-    "id": "CAPA-2026-0298",
-    "findingId": "AUD-2026-0298",
-    "type": "audit",
-    "title": "Supplier Qualification File Update",
-    "preFill": {
-      "source": "Q100+",
-      "findingId": "AUD-2026-0298",
-      "auditId": "IA-2026-SUP-017",
-      "auditType": "internal",
-      "reportedAt": "2026-04-23T13:25:00+07:00",
-      "auditDate": "2026-04-22T09:00:00+07:00",
-      "auditor": {
-        "name": "Siti Rahmawati",
-        "organization": "QA Compliance"
-      },
-      "auditee": {
-        "department": "Procurement",
-        "contactPerson": "Bambang Saputra"
-      },
-      "findingCategory": "Supplier Quality",
-      "findingDescription": "Supplier qualification file lacked current quality agreement confirmation.",
-      "regulationReference": ["GMP Chapter 5"],
-      "severity": "Major",
-      "sopReferences": ["SOP-SQ-006"]
-    },
-    "gateAnswers": [
-      {
-        "questionId": "observation",
-        "question": "What happened and when was it observed?",
-        "answer": "During internal audit IA-2026-SUP-017 on 22 Apr 2026, QA Compliance found that the supplier qualification file for an approved material vendor lacked a current, signed quality agreement confirmation, contrary to SOP-SQ-006.",
-        "novaScoreContribution": 6,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "impact",
-        "question": "What is the potential quality or GMP impact?",
-        "answer": "Major compliance impact. A current quality agreement is required to demonstrate supplier control under GMP Chapter 5; the missing confirmation weakens supplier-qualification defensibility, although no material-quality failure has been linked to the gap.",
-        "novaScoreContribution": 5,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "containment",
-        "question": "What immediate containment is already in place?",
-        "answer": "The affected supplier file was flagged and Procurement was restricted from issuing new orders against the vendor until the current quality agreement confirmation was attached and QA-verified.",
-        "novaScoreContribution": 5,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "scope",
-        "question": "Which product, batch, lot, equipment, or area is affected?",
-        "answer": "Supplier qualification file for one approved material vendor; Procurement / QA Compliance. Governing record SOP-SQ-006; finding logged in Q100+ as AUD-2026-0298 under audit IA-2026-SUP-017.",
-        "novaScoreContribution": 4,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "cause_confirmation",
-        "question": "What evidence is needed to confirm the root cause?",
-        "answer": "Confirm by reviewing the supplier-file history to find when the agreement lapsed, checking whether file ownership between Procurement and QA included a periodic review trigger, and sampling other supplier files for the same gap.",
-        "novaScoreContribution": 3,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "effectiveness_criteria",
-        "question": "How will effectiveness be verified?",
-        "answer": "Effective when the current quality agreement is filed and a monthly QA review trigger is in place, and a follow-up sample of supplier files shows complete, in-date agreements with no repeat finding at the next audit.",
-        "novaScoreContribution": 2,
-        "needsImprovement": false
-      }
-    ],
-    "score": {
-      "problemSpecificity": 23,
-      "rootCauseDepth": 21,
-      "effectiveness": 21,
-      "containment": 20,
-      "total": 85,
-      "isAuditReady": true
-    },
-    "impact": {
-      "severity": "Major",
-      "totalWeight": 64,
-      "factors": [
-        {
-          "factor": "Finding category",
-          "value": "Supplier quality documentation",
-          "weight": 26,
-          "rationale": "Supplier-qualification documentation underpins GMP supplier control and audit defensibility."
-        },
-        {
-          "factor": "Regulatory reference",
-          "value": "GMP Chapter 5",
-          "weight": 20,
-          "rationale": "A referenced GMP chapter raises the compliance relevance of the gap."
-        },
-        {
-          "factor": "Audit source",
-          "value": "Internal audit (IA-2026-SUP-017)",
-          "weight": 18,
-          "rationale": "Audit findings require timely, traceable remediation before external review."
-        }
-      ],
-      "rationale": "Major: the supplier qualification file lacks a current quality agreement required under GMP Chapter 5, weakening supplier-control documentation and audit defensibility even though no material-quality failure is linked.",
-      "computedAt": "2026-04-23T13:30:00+07:00"
-    },
-    "rca": {
-      "method": "fishbone",
-      "confirmedRootCauses": ["Supplier file ownership lacked a monthly QA review trigger."]
-    },
-    "correctiveActions": [],
-    "preventiveActions": [],
-    "verification": {
-      "evidenceFileNames": ["supplier-file-review.pdf"]
-    },
-    "approvals": [],
-    "auditEvents": [],
-    "suggestions": [],
-    "status": "approval",
-    "currentStep": "signoff",
-    "createdAt": "2026-04-23T13:35:00+07:00",
-    "updatedAt": "2026-05-09T11:00:00+07:00",
-    "createdBy": "qa_deviation",
-    "assignedTo": "head_of_qa",
-    "department": "Procurement / QA Compliance"
-  },
-  {
-    "id": "CAPA-2026-0275",
-    "findingId": "CMP-2026-0275",
-    "type": "complaint",
-    "title": "Carton Label Abrasion Complaint",
-    "preFill": {
-      "source": "Bizzmine-Complaint",
-      "complaintId": "CMP-2026-0275",
-      "reportedAt": "2026-04-17T12:15:00+07:00",
-      "customer": {
-        "name": "National Distributor West Java",
-        "type": "distributor"
-      },
-      "product": {
-        "name": "Vaccine Carton",
-        "lotNumber": "VAC-26-0402-D",
-        "expiryDate": "2027-04-30"
-      },
-      "complaintType": "Label Abrasion",
-      "description": "Outer carton label abrasion observed at distributor receipt.",
-      "initialSeverity": "Minor",
-      "attachments": []
-    },
-    "gateAnswers": [
-      {
-        "questionId": "observation",
-        "question": "What happened and when was it observed?",
-        "answer": "On 17 Apr 2026, National Distributor West Java reported outer carton label abrasion on Vaccine Carton lot VAC-26-0402-D at goods receipt. About 6 of 240 cartons showed scuffed lot/expiry text that remained legible; no primary packaging or product contact was involved.",
-        "novaScoreContribution": 16,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "impact",
-        "question": "What is the potential quality or GMP impact?",
-        "answer": "Cosmetic damage to secondary (outer) packaging only. Lot and expiry stay legible and product sterility and integrity are unaffected, so quality/GMP impact is limited and assessed as Minor. No patient-safety or efficacy risk identified.",
-        "novaScoreContribution": 8,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "containment",
-        "question": "What immediate containment is already in place?",
-        "answer": "Lot VAC-26-0402-D placed on distribution hold at the distributor pending QA disposition. Retained samples pulled for inspection and the remaining shipment cartons visually screened for the same defect.",
-        "novaScoreContribution": 14,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "scope",
-        "question": "Which product, batch, lot, equipment, or area is affected?",
-        "answer": "Vaccine Carton, lot VAC-26-0402-D (expiry 2027-04-30), single shipment to National Distributor West Java. Source record CMP-2026-0275. Shipper carton configuration and packaging line under review as the possible origin.",
-        "novaScoreContribution": 6,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "cause_confirmation",
-        "question": "What evidence is needed to confirm the root cause?",
-        "answer": "Review packaging/labelling batch record, shipper carton fit and stacking configuration, and transport handling records; inspect retained samples and trend recent label-abrasion complaints for the same shipper format.",
-        "novaScoreContribution": 4,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "effectiveness_criteria",
-        "question": "How will effectiveness be verified?",
-        "answer": "No recurrence of label-abrasion complaints for the revised shipper configuration across the next three distribution lots, confirmed through incoming inspection and complaint-trend review over 90 days.",
-        "novaScoreContribution": 0,
-        "needsImprovement": false
-      }
-    ],
-    "score": {
-      "problemSpecificity": 16,
-      "rootCauseDepth": 10,
-      "effectiveness": 8,
-      "containment": 14,
-      "total": 48,
+      "problemSpecificity": 18,
+      "rootCauseDepth": 6,
+      "effectiveness": 4,
+      "containment": 12,
+      "total": 40,
       "isAuditReady": false
     },
     "impact": {
       "severity": "Minor",
-      "totalWeight": 38,
+      "totalWeight": 12,
       "factors": [
         {
-          "factor": "Customer type",
-          "value": "Distributor — National Distributor West Java",
-          "weight": 14,
-          "rationale": "Distributor complaint with no direct patient exposure carries moderate quality visibility."
+          "factor": "Record type",
+          "value": "Documentation-only (cleaning logbook)",
+          "weight": 6,
+          "rationale": "A handwritten identifier transposition with no effect on the cleaning performed."
         },
         {
-          "factor": "Complaint type",
-          "value": "Secondary carton label abrasion (cosmetic)",
-          "weight": 16,
-          "rationale": "Cosmetic damage to outer packaging with legible lot/expiry does not affect product quality."
+          "factor": "Correction",
+          "value": "Single-line GMP correction, same shift",
+          "weight": 4,
+          "rationale": "Contemporaneous self-correction preserves the original entry and audit trail."
         },
         {
-          "factor": "Lot traceability",
-          "value": "VAC-26-0402-D",
-          "weight": 8,
-          "rationale": "Lot number enables focused retained-sample and shipper-configuration review."
+          "factor": "Product contact",
+          "value": "None",
+          "weight": 2,
+          "rationale": "No batch, lot, or equipment qualification was affected."
         }
       ],
-      "rationale": "Minor due to secondary packaging cosmetic damage without product impact signal.",
-      "computedAt": "2026-04-17T12:25:00+07:00"
+      "rationale": "Minor: an isolated good-documentation-practice slip on a cleaning logbook, corrected contemporaneously, with no product, batch, or data-integrity impact.",
+      "computedAt": "2026-05-20T09:18:00+07:00"
     },
     "rca": {
-      "method": "decision_tree",
+      "method": "5whys",
+      "fiveWhys": [],
       "confirmedRootCauses": []
     },
     "correctiveActions": [],
@@ -839,285 +606,29 @@
       {
         "reviewerPersonaId": "qa_deviation",
         "reviewerName": "Siti Rahmawati",
-        "role": "QA Deviation / QA Complaint",
-        "decision": "accepted",
-        "notes": "Compliant intake. Label abrasion confirmed as Minor — proceed to 8D.",
-        "reviewedAt": "2026-04-17T14:10:00+07:00"
+        "role": "QA Deviation",
+        "decision": "rejected",
+        "notes": "Reviewed as an isolated, contemporaneously corrected documentation entry (single-line correction per SOP-DOC-002) with no product, batch, or data-integrity impact — the cleaning was performed and independently verified on the correct line. This is a documented correction, not a quality event, so a full 8D CAPA is disproportionate to the risk. Recommend closing as a logged correction with no CAPA and trending the logbook for any repeat transcription errors.",
+        "reviewedAt": "2026-05-21T10:20:00+07:00"
       },
       {
         "reviewerPersonaId": "head_of_dept",
         "reviewerName": "Bambang Saputra",
         "role": "Department Head",
-        "decision": null,
-        "notes": null,
-        "reviewedAt": null
+        "decision": "rejected",
+        "notes": "Concur with QA Compliance. Root cause is a one-off transcription slip self-corrected within the shift; there is no recurrence trend for this logbook over the past 12 months. Initiating a CAPA would not be proportionate to the risk. Approved to reject CAPA initiation — record retained for periodic logbook trending only.",
+        "reviewedAt": "2026-05-21T11:05:00+07:00"
       }
     ],
     "approvals": [],
     "auditEvents": [],
     "suggestions": [],
-    "status": "pending_review",
+    "status": "rejected",
     "currentStep": "problem",
-    "createdAt": "2026-04-17T12:20:00+07:00",
-    "updatedAt": "2026-04-17T14:10:00+07:00",
+    "createdAt": "2026-05-20T09:20:00+07:00",
+    "updatedAt": "2026-05-21T11:05:00+07:00",
     "createdBy": "initiator",
     "assignedTo": "qa_deviation",
-    "department": "QA Complaint / Packaging"
-  },
-  {
-    "id": "CAPA-2026-0251",
-    "findingId": "DEV-2026-0251",
-    "type": "deviation",
-    "title": "HEPA Differential Pressure Drift Trend",
-    "preFill": {
-      "source": "Bizzmine",
-      "deviationId": "DEV-2026-0251",
-      "reportedAt": "2026-03-19T10:10:00+07:00",
-      "occurredAt": "2026-03-19T09:45:00+07:00",
-      "location": {
-        "department": "Engineering",
-        "area": "Grade B Corridor",
-        "line": "HVAC Zone 4",
-        "equipmentId": "HVAC-GB-04"
-      },
-      "initiator": {
-        "name": "Andi Wijaya",
-        "role": "Senior Operator",
-        "nik": "BF-FF-1024"
-      },
-      "initialObservation": "Repeated HEPA differential pressure drift observed in Grade B corridor.",
-      "affectedBatches": [],
-      "attachments": [],
-      "sopReferences": ["SOP-HVAC-002"],
-      "initialSeverity": "Major"
-    },
-    "gateAnswers": [
-      {
-        "questionId": "observation",
-        "question": "What happened and when was it observed?",
-        "answer": "On 19 Mar 2026 at 09:45, Engineering recorded repeated HEPA differential-pressure drift on HVAC-GB-04 serving the Grade B corridor, with readings trending toward the action limit over successive monitoring rounds per SOP-HVAC-002.",
-        "novaScoreContribution": 6,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "impact",
-        "question": "What is the potential quality or GMP impact?",
-        "answer": "Major GMP impact. Sustained differential-pressure drift in a classified Grade B area can degrade cascade air control and cleanliness if uncorrected; no environmental excursion was confirmed at detection, which keeps this Major rather than Critical.",
-        "novaScoreContribution": 5,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "containment",
-        "question": "What immediate containment is already in place?",
-        "answer": "HVAC-GB-04 was placed under heightened monitoring and an engineering inspection was scheduled; the Grade B corridor remained within EM limits while the filter and airflow were assessed.",
-        "novaScoreContribution": 5,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "scope",
-        "question": "Which product, batch, lot, equipment, or area is affected?",
-        "answer": "HVAC Zone 4 (HVAC-GB-04) serving the Grade B corridor, Engineering. No specific product batch is implicated. Governing record SOP-HVAC-002 and the HEPA differential-pressure trend log.",
-        "novaScoreContribution": 4,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "cause_confirmation",
-        "question": "What evidence is needed to confirm the root cause?",
-        "answer": "Confirm by trending the differential-pressure data across adjacent HVAC zones, inspecting filter loading and seal integrity, and reviewing whether the engineering review process trends repeat drift across neighbouring areas.",
-        "novaScoreContribution": 3,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "effectiveness_criteria",
-        "question": "How will effectiveness be verified?",
-        "answer": "Effective when post-remediation differential pressures hold within limits across at least three monitoring cycles and the cross-zone trend review is in place. Verification later flagged related drift in an adjacent zone, which was routed to a follow-up review.",
-        "novaScoreContribution": 2,
-        "needsImprovement": false
-      }
-    ],
-    "score": {
-      "problemSpecificity": 23,
-      "rootCauseDepth": 21,
-      "effectiveness": 20,
-      "containment": 20,
-      "total": 84,
-      "isAuditReady": true
-    },
-    "impact": {
-      "severity": "Major",
-      "totalWeight": 62,
-      "factors": [
-        {
-          "factor": "Area criticality",
-          "value": "Grade B corridor (classified)",
-          "weight": 26,
-          "rationale": "Drift in a classified cleanroom corridor carries significant GMP weight."
-        },
-        {
-          "factor": "Signal type",
-          "value": "Repeat differential-pressure drift trend",
-          "weight": 22,
-          "rationale": "A recurring measurable trend is more significant than a single isolated reading."
-        },
-        {
-          "factor": "Affected batches",
-          "value": "No specific batch implicated",
-          "weight": 14,
-          "rationale": "Absence of a directly affected batch bounds the immediate product impact."
-        }
-      ],
-      "rationale": "Major: a repeat HEPA differential-pressure drift trend in a classified Grade B corridor risks degrading cascade air control if uncorrected, though no environmental excursion or batch impact was confirmed at detection.",
-      "computedAt": "2026-03-19T10:15:00+07:00"
-    },
-    "rca": {
-      "method": "5whys",
-      "confirmedRootCauses": ["Engineering review did not trend repeat HEPA pressure drift across adjacent areas."]
-    },
-    "correctiveActions": [],
-    "preventiveActions": [],
-    "verification": {
-      "method": "em_re_test",
-      "result": "Initial verification passed, but related drift recurred in adjacent zone.",
-      "evidenceFileNames": ["hepa-drift-verification.pdf"],
-      "verifiedAt": "2026-04-02T10:00:00+07:00",
-      "verifiedBy": "qa_deviation"
-    },
-    "approvals": [],
-    "auditEvents": [],
-    "suggestions": [],
-    "status": "closed",
-    "currentStep": "signoff",
-    "createdAt": "2026-03-19T10:20:00+07:00",
-    "updatedAt": "2026-04-02T10:30:00+07:00",
-    "createdBy": "initiator",
-    "assignedTo": "qa_deviation",
-    "department": "Engineering"
-  },
-  {
-    "id": "CAPA-2026-0188",
-    "findingId": "DEV-2026-0188",
-    "type": "deviation",
-    "title": "Cold Room Temperature Alarm Escalation",
-    "preFill": {
-      "source": "Bizzmine",
-      "deviationId": "DEV-2026-0188",
-      "reportedAt": "2026-02-06T06:45:00+07:00",
-      "occurredAt": "2026-02-06T04:20:00+07:00",
-      "location": {
-        "department": "Warehouse",
-        "area": "Cold Room 2",
-        "line": "Vaccine Storage",
-        "equipmentId": "CR-WH-02"
-      },
-      "initiator": {
-        "name": "Andi Wijaya",
-        "role": "Senior Operator",
-        "nik": "BF-FF-1024"
-      },
-      "initialObservation": "Cold room temperature exceeded alert limit during weekend monitoring.",
-      "affectedBatches": ["VAC-26-0206-A"],
-      "attachments": [],
-      "sopReferences": ["SOP-WH-008"],
-      "initialSeverity": "Critical"
-    },
-    "gateAnswers": [
-      {
-        "questionId": "observation",
-        "question": "What happened and when was it observed?",
-        "answer": "On 6 Feb 2026 at 04:20 during weekend monitoring, Cold Room 2 (CR-WH-02) vaccine storage exceeded its high-temperature alert limit. The local alarm did not escalate to weekend duty personnel, so the excursion ran for an extended period before detection per SOP-WH-008.",
-        "novaScoreContribution": 6,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "impact",
-        "question": "What is the potential quality or GMP impact?",
-        "answer": "Critical impact. A temperature excursion in vaccine cold storage can compromise the potency and shelf life of the stored batch, and the delayed alarm escalation extended the exposure — a potential patient-safety and product-quality risk requiring immediate stability assessment.",
-        "novaScoreContribution": 6,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "containment",
-        "question": "What immediate containment is already in place?",
-        "answer": "Stored batch VAC-26-0206-A was quarantined and placed on a stability hold pending QA potency assessment; the cold-room load was transferred to a qualified backup unit and the alarm relay isolated for engineering inspection.",
-        "novaScoreContribution": 5,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "scope",
-        "question": "Which product, batch, lot, equipment, or area is affected?",
-        "answer": "Cold Room 2 (CR-WH-02), Vaccine Storage, Warehouse; stored vaccine batch VAC-26-0206-A. Governing record SOP-WH-008; the temperature-logger trace and alarm event log are under review.",
-        "novaScoreContribution": 4,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "cause_confirmation",
-        "question": "What evidence is needed to confirm the root cause?",
-        "answer": "Confirm by reviewing the temperature-logger trace to quantify the exposure window, testing the alarm relay and escalation path, assessing batch VAC-26-0206-A stability and potency data, and checking weekend duty-roster alarm coverage.",
-        "novaScoreContribution": 3,
-        "needsImprovement": false
-      },
-      {
-        "questionId": "effectiveness_criteria",
-        "question": "How will effectiveness be verified?",
-        "answer": "Effective when the repaired alarm passes a documented challenge test, escalation reaches weekend duty personnel within the defined response time across a monitored period, and the affected batch disposition is supported by stability data with no recurrence.",
-        "novaScoreContribution": 2,
-        "needsImprovement": true,
-        "improvementHint": "Add the confirmed temperature-exposure duration and the batch stability/potency disposition once the assessment completes."
-      }
-    ],
-    "score": {
-      "problemSpecificity": 19,
-      "rootCauseDepth": 15,
-      "effectiveness": 12,
-      "containment": 14,
-      "total": 60,
-      "isAuditReady": false
-    },
-    "impact": {
-      "severity": "Critical",
-      "totalWeight": 88,
-      "factors": [
-        {
-          "factor": "Area criticality",
-          "value": "Vaccine cold storage (Cold Room 2)",
-          "weight": 34,
-          "rationale": "Cold-chain storage directly governs vaccine potency and shelf life."
-        },
-        {
-          "factor": "Product impact",
-          "value": "Stored vaccine batch VAC-26-0206-A potency risk",
-          "weight": 32,
-          "rationale": "A temperature excursion can compromise a stored batch and trigger stability assessment."
-        },
-        {
-          "factor": "Escalation failure",
-          "value": "Alarm did not reach weekend duty personnel",
-          "weight": 22,
-          "rationale": "A failed escalation path extended the exposure window before detection."
-        }
-      ],
-      "rationale": "Critical: a high-temperature excursion in vaccine cold storage, compounded by an alarm that failed to escalate to weekend duty personnel, extends product exposure and poses a potency and patient-safety risk requiring immediate stability assessment.",
-      "computedAt": "2026-02-06T07:00:00+07:00"
-    },
-    "rca": {
-      "method": "5whys",
-      "confirmedRootCauses": ["Alarm relay failure delayed escalation to weekend duty personnel."]
-    },
-    "correctiveActions": [],
-    "preventiveActions": [],
-    "verification": {
-      "evidenceFileNames": []
-    },
-    "approvals": [],
-    "auditEvents": [],
-    "suggestions": [],
-    "status": "investigation",
-    "currentStep": "ca",
-    "createdAt": "2026-02-06T07:05:00+07:00",
-    "updatedAt": "2026-02-13T08:00:00+07:00",
-    "createdBy": "initiator",
-    "assignedTo": "head_of_dept",
-    "department": "Warehouse"
+    "department": "Production"
   }
 ]
-

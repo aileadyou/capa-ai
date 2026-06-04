@@ -57,6 +57,7 @@ export function formatFindingStatus(status: FindingStatus): string {
     capa_in_progress: "CAPA In Progress",
     capa_closed: "CAPA Closed",
     overdue: "Overdue",
+    rejected: "Rejected",
   };
   return labels[status];
 }

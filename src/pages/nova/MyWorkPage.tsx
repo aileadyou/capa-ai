@@ -38,12 +38,9 @@ function getLifecycleStage(status: string): LifecycleStage {
    ════════════════════════════════════════════════════════════ */
 
 const MOCK_DUE: Record<string, string> = {
-  "CAPA-2026-0341": "2026-06-06",
-  "CAPA-2026-0089": "2026-05-28", // 3d overdue
-  "CAPA-2026-0112": "2026-06-12",
-  "CAPA-2026-0298": "2026-06-04",
-  "CAPA-2026-0275": "2026-06-17",
-  "CAPA-2026-0188": "2026-03-07", // very overdue (investigation since Feb)
+  "CAPA-2026-0341": "2026-06-06", // D2 containment in progress
+  "CAPA-2026-0089": "2026-06-03", // D7 sign-off pending
+  "CAPA-2026-0112": "2026-06-12", // D7 sign-off pending
 };
 
 const TODAY = new Date("2026-05-31");
@@ -312,27 +309,33 @@ function IntakeReviewCard({ capa }: { capa: CAPACase }) {
 }
 
 function ClosedCard({ capa }: { capa: CAPACase }) {
+  const rejected = capa.status === "rejected";
   return (
-    <div className={cn(CARD_CLASS, "items-center opacity-45")}>
+    <Link
+      to={`/capa/${capa.id}`}
+      className={cn(CARD_CLASS, "items-center no-underline opacity-60 transition-opacity duration-200 hover:opacity-100")}
+    >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="font-sans text-xs font-semibold text-foreground-secondary line-through">
             {capa.id}
           </span>
-          <span
-            className="rounded-[var(--r-full)] bg-field px-[7px] py-0.5 font-sans text-[10px] text-foreground-faint"
-          >
-            Closed
-          </span>
-          <span
-            className="font-sans text-[11px] font-semibold text-foreground-tertiary"
-          >
-            Score {capa.score.total}
+          {rejected ? (
+            <span className="rounded-[var(--r-full)] bg-[var(--danger-soft)] px-[7px] py-0.5 font-sans text-[10px] font-medium text-destructive">
+              Rejected
+            </span>
+          ) : (
+            <span className="rounded-[var(--r-full)] bg-field px-[7px] py-0.5 font-sans text-[10px] text-foreground-faint">
+              Closed
+            </span>
+          )}
+          <span className="font-sans text-[11px] font-semibold text-foreground-tertiary">
+            {rejected ? "No CAPA needed" : `Score ${capa.score.total}`}
           </span>
         </div>
         <p className="mb-0 mt-0.5 truncate text-sm text-foreground-tertiary">{capa.title}</p>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -341,6 +344,7 @@ function FindingCard({ finding }: { finding: Finding }) {
   const noCapa = finding.status === "pending_capa";
   const underReview = finding.status === "pending_review";
   const overdue = finding.status === "overdue";
+  const rejected = finding.status === "rejected";
   return (
     <div
       className={cn(CARD_CLASS, overdue && "border-l-[3px] border-l-destructive")}
@@ -363,11 +367,19 @@ function FindingCard({ finding }: { finding: Finding }) {
             className={cn(
               "rounded-[var(--r-full)] px-2 py-0.5 font-sans text-[10px]",
               noCapa && "bg-[var(--warning-soft)] text-warning",
-              underReview && "bg-[var(--accent-soft)] text-primary",
-              !noCapa && !underReview && "bg-[var(--accent-soft)] text-primary",
+              rejected && "bg-[var(--danger-soft)] text-destructive",
+              !noCapa && !rejected && "bg-[var(--accent-soft)] text-primary",
             )}
           >
-            {noCapa ? "No CAPA yet" : underReview ? "Intake under review" : overdue ? "Overdue" : "CAPA in progress"}
+            {noCapa
+              ? "No CAPA yet"
+              : underReview
+                ? "Intake under review"
+                : overdue
+                  ? "Overdue"
+                  : rejected
+                    ? "Rejected — no CAPA"
+                    : "CAPA in progress"}
           </span>
           <span
             className="font-sans text-[10px] text-foreground-faint"
@@ -401,7 +413,7 @@ function QADeviationView() {
 
   const { pendingIntake, overdue, active, closed } = useMemo(() => {
     const mine = capas.filter((c) => c.assignedTo === activePersonaId);
-    const open = mine.filter((c) => c.status !== "closed");
+    const open = mine.filter((c) => c.status !== "closed" && c.status !== "rejected");
     const pendingIntake = capas.filter(
       (c) => c.status === "pending_review" &&
         c.intakeReviews?.some((r) => r.reviewerPersonaId === activePersonaId && !r.decision),
@@ -410,7 +422,7 @@ function QADeviationView() {
       pendingIntake,
       overdue: open.filter((c) => isOverdue(c.id)),
       active: open.filter((c) => !isOverdue(c.id) && c.status !== "pending_review"),
-      closed: mine.filter((c) => c.status === "closed").slice(0, 3),
+      closed: mine.filter((c) => c.status === "closed" || c.status === "rejected").slice(0, 3),
     };
   }, [capas, activePersonaId]);
 
@@ -436,7 +448,7 @@ function QADeviationView() {
         )}
       </Section>
       {closed.length > 0 && (
-        <Section label="Recently closed" count={closed.length}>
+        <Section label="Closed & rejected" count={closed.length}>
           {closed.map((c) => <ClosedCard key={c.id} capa={c} />)}
         </Section>
       )}
@@ -647,7 +659,10 @@ export function MyWorkPage() {
       return capas.filter((c) => c.status === "approval" || isOverdue(c.id)).length;
     }
     return capas.filter(
-      (c) => c.assignedTo === activePersonaId && c.status !== "closed",
+      (c) =>
+        c.assignedTo === activePersonaId &&
+        c.status !== "closed" &&
+        c.status !== "rejected",
     ).length;
   }, [capas, findings, activePersonaId, persona.department]);
 

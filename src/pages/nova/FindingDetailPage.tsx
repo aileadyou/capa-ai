@@ -6,6 +6,7 @@ import {
   Circle,
   Plus,
   Sparkles,
+  XCircle,
 } from "lucide-react";
 import NotFound from "@/pages/NotFound";
 import { useCapaStore } from "@/store";
@@ -197,41 +198,76 @@ function SourceDataGrid({ prefill, finding }: { prefill?: PreFillContext; findin
 
 // ── Timeline ──────────────────────────────────────────────────────────────────
 
+type TimelineTone = "success" | "danger";
+type TimelineItem = {
+  label: string;
+  description: string;
+  active: boolean;
+  tone?: TimelineTone;
+};
+
 function Timeline({ finding, capa }: { finding: Finding; capa?: CAPACase }) {
-  const items = [
-    {
-      label: "Finding reported",
-      description: `${finding.id} imported from ${finding.source}.`,
-      active: true,
-    },
-    {
-      label: "CAPA linked",
-      description: capa ? `${capa.id} is connected to this finding.` : "CAPA has not been created yet.",
-      active: Boolean(capa),
-    },
-    {
-      label: "Investigation started",
-      description: capa
-        ? `Current step is ${STEP_LABELS[capa.currentStep]}.`
-        : "Create CAPA with Nova to start the investigation.",
-      active: Boolean(capa && capa.status !== "draft"),
-    },
-    {
-      label: "Audit Ready closure",
-      description: capa?.status === "closed" ? "CAPA was closed as Audit Ready." : "Closure is pending.",
-      active: capa?.status === "closed",
-    },
-  ];
+  const rejected = capa?.status === "rejected";
+
+  const items: TimelineItem[] = rejected
+    ? [
+        {
+          label: "Finding reported",
+          description: `${finding.id} imported from ${finding.source}.`,
+          active: true,
+        },
+        {
+          label: "Intake reviewed",
+          description: "QA Compliance and the Department Head reviewed the intake.",
+          active: true,
+        },
+        {
+          label: "CAPA initiation rejected",
+          description:
+            "Reviewers agreed no CAPA is required — logged as a correction for trending.",
+          active: true,
+          tone: "danger",
+        },
+      ]
+    : [
+        {
+          label: "Finding reported",
+          description: `${finding.id} imported from ${finding.source}.`,
+          active: true,
+        },
+        {
+          label: "CAPA linked",
+          description: capa
+            ? `${capa.id} is connected to this finding.`
+            : "CAPA has not been created yet.",
+          active: Boolean(capa),
+        },
+        {
+          label: "Investigation started",
+          description: capa
+            ? `Current step is ${STEP_LABELS[capa.currentStep]}.`
+            : "Create CAPA with Nova to start the investigation.",
+          active: Boolean(capa && capa.status !== "draft"),
+        },
+        {
+          label: "Audit Ready closure",
+          description:
+            capa?.status === "closed" ? "CAPA was closed as Audit Ready." : "Closure is pending.",
+          active: capa?.status === "closed",
+        },
+      ];
 
   return (
     <div className="flex flex-col">
       {items.map((item, index) => (
         <div key={item.label} className="flex gap-3">
           <div className="flex flex-col items-center">
-            {item.active ? (
-              <CheckCircle2 size={16} className="shrink-0 text-success" />
+            {item.active && item.tone === "danger" ? (
+              <XCircle size={16} className="shrink-0 text-destructive" aria-hidden="true" />
+            ) : item.active ? (
+              <CheckCircle2 size={16} className="shrink-0 text-success" aria-hidden="true" />
             ) : (
-              <Circle size={16} className="shrink-0 text-foreground-faint" />
+              <Circle size={16} className="shrink-0 text-foreground-faint" aria-hidden="true" />
             )}
             {index < items.length - 1 && (
               <div
@@ -243,7 +279,11 @@ function Timeline({ finding, capa }: { finding: Finding; capa?: CAPACase }) {
             <p
               className={cn(
                 "mb-0.5 mt-0 font-sans text-[13px] font-semibold leading-[1.3]",
-                item.active ? "text-foreground" : "text-foreground-tertiary",
+                item.active && item.tone === "danger"
+                  ? "text-destructive"
+                  : item.active
+                    ? "text-foreground"
+                    : "text-foreground-tertiary",
               )}
             >
               {item.label}
@@ -280,6 +320,7 @@ export function FindingDetailPage() {
   }
 
   const createCAPAUrl = `/capa/new?type=${finding.type}&sourceId=${finding.id}`;
+  const canCreateCapa = finding.status === "pending_capa" || finding.status === "overdue";
 
   return (
     <div className="flex flex-col gap-5">
@@ -322,12 +363,12 @@ export function FindingDetailPage() {
             Open linked CAPA
             <ArrowRight size={14} />
           </Link>
-        ) : (
+        ) : canCreateCapa ? (
           <Link to={createCAPAUrl} className={PRIMARY_LINK_CLASS}>
             <Plus size={14} />
             Create CAPA with Nova
           </Link>
-        )}
+        ) : null}
       </div>
 
       {/* ── Stat strip ─────────────────────────────────────────────────────── */}

@@ -4,6 +4,21 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-04, 08:01 AM — Fix "Create CAPA" appearing on closed findings (seed data gap + missing status guard)
+
+### Prompt
+- Findings with status `capa_closed` were still showing "Create CAPA" in both the findings list and detail page. Two root causes: seed data missing `linkedCapaId` on some closed findings, and the Create button logic only checked for a linked CAPA object instead of also gating on finding status.
+
+### What changed
+- `src/mock-data/findings.json`: added `linkedCapaId` to the two orphaned closed findings — `AUD-2026-0204` (`CAPA-2026-0204`) and `CMP-2026-0219` (`CAPA-2026-0219`).
+- `src/mock-data/capa-cases.json`: added two new closed CAPA stubs — `CAPA-2026-0204` (audit, Minor, Training — training record reconciliation before SOP effective date) and `CAPA-2026-0219` (complaint, Major, Supply Chain — temperature logger retrieval delay at hospital delivery). Both have full gate answers, impact assessment, RCA, verification, and `status: "closed"`.
+- `src/pages/nova/FindingDetailPage.tsx`: introduced `canCreateCapa` (`status === "pending_capa" || "overdue"`) and wired it into the header CTA — Create only shows for genuinely open findings; closed/in-progress/under-review findings render nothing or "Open linked CAPA" if a CAPA is found.
+- `src/pages/nova/FindingsListPage.tsx`: applied the same `canCreateCapa` guard in both the table-row action column and the slide-over footer, replacing the `linkedCapaId`-only check.
+
+### Verification
+- `tsc --noEmit`: clean.
+- Browser (Findings list): `AUD-2026-0204` and `CMP-2026-0219` now show **"Open CAPA"**; `DEV-2026-0144`, `AUD-2026-0127`, `CMP-2026-0098` (`pending_capa`) still show **"Create CAPA"** — all correct.
+
 ## 2026-06-04, 02:02 AM — Stop styling sentence-length gate questions as letter-spaced eyebrows
 
 ### Prompt

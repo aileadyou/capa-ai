@@ -1,53 +1,24 @@
 [
   {
-    "id": "PA-2026-0341-01",
-    "capaId": "CAPA-2026-0341",
-    "description": "Revise SOP-PM-HEPA-001 to set Grade A/B HEPA replacement interval to 12 months when trend signals deterioration.",
-    "targetDate": "2026-06-05T17:00:00+07:00",
-    "pic": "Bambang Saputra",
-    "status": "open",
-    "novaGenerated": true,
-    "novaSuggestionStatus": "accepted"
-  },
-  {
-    "id": "PA-2026-0341-02",
-    "capaId": "CAPA-2026-0341",
-    "description": "Add automated reminders and QA escalation for HEPA replacement deadlines within the maintenance planner.",
-    "targetDate": "2026-06-08T17:00:00+07:00",
-    "pic": "Andi Wijaya",
-    "status": "open",
-    "novaGenerated": true,
-    "novaSuggestionStatus": "pending"
-  },
-  {
     "id": "PA-2026-0089-01",
     "capaId": "CAPA-2026-0089",
-    "description": "Revise material transfer documentation SOP to define real-time recording and second-person verification ownership.",
-    "targetDate": "2026-06-03T17:00:00+07:00",
+    "description": "Revise SOP-WH-021 to require contemporaneous recording and explicit second-person verification ownership for all material transfers, and retrain warehouse staff on the revised procedure.",
+    "targetDate": "2026-05-28T17:00:00+07:00",
     "pic": "Siti Rahmawati",
-    "status": "open",
+    "status": "completed",
+    "completedAt": "2026-05-28T16:00:00+07:00",
     "novaGenerated": true,
     "novaSuggestionStatus": "accepted"
   },
   {
     "id": "PA-2026-0112-01",
     "capaId": "CAPA-2026-0112",
-    "description": "Strengthen visual inspection reconciliation review and escalation criteria for repeated borderline observations.",
-    "targetDate": "2026-06-04T17:00:00+07:00",
+    "description": "Strengthen the batch visual-inspection reconciliation review and define explicit escalation criteria for repeated borderline observations within a lot family.",
+    "targetDate": "2026-05-28T17:00:00+07:00",
     "pic": "Siti Rahmawati",
-    "status": "open",
+    "status": "completed",
+    "completedAt": "2026-05-28T14:45:00+07:00",
     "novaGenerated": true,
     "novaSuggestionStatus": "accepted"
-  },
-  {
-    "id": "PA-2026-0312-01",
-    "capaId": "CAPA-2026-0312",
-    "description": "Add weekly review of autoclave printout completeness to sterile preparation shift huddle.",
-    "targetDate": "2026-05-15T17:00:00+07:00",
-    "pic": "Andi Wijaya",
-    "status": "verified",
-    "completedAt": "2026-05-14T16:10:00+07:00",
-    "novaGenerated": false
   }
 ]
-

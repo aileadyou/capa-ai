@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Plus, X } from "lucide-react";
 import { useCapaStore } from "@/store";
 import type { CAPAType } from "@/types";
@@ -78,6 +78,7 @@ function FindingSlideOver({
   finding: Finding;
   onClose: () => void;
 }) {
+  const navigate = useNavigate();
   const getCAPAById = useCapaStore((state) => state.getCAPAById);
   const capa = finding.linkedCapaId ? getCAPAById(finding.linkedCapaId) : undefined;
 
@@ -192,6 +193,19 @@ function FindingSlideOver({
               {novaText(finding)}
             </p>
           </div>
+
+          {/* Details → full detail page (source grid, timeline, linked CAPA) */}
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              navigate(`/findings/${finding.id}`);
+            }}
+            className="mt-1 inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-4 py-[9px] font-sans text-[13px] font-medium text-foreground-secondary transition-colors duration-200 hover:bg-elevated hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
+          >
+            Details
+            <ArrowRight size={14} strokeWidth={1.75} aria-hidden="true" />
+          </button>
         </div>
 
         {/* Action footer */}
@@ -207,7 +221,7 @@ function FindingSlideOver({
               Open CAPA
               <ArrowRight size={14} />
             </Link>
-          ) : (
+          ) : (finding.status === "pending_capa" || finding.status === "overdue") ? (
             <Link
               to={`/capa/new?type=${finding.type}&sourceId=${finding.id}`}
               className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-[9px] font-sans text-sm font-semibold tracking-[0.01em] text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
@@ -216,7 +230,7 @@ function FindingSlideOver({
               Create CAPA
               <ArrowRight size={14} />
             </Link>
-          )}
+          ) : null}
           <button
             onClick={onClose}
             className="cursor-pointer rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-4 py-[9px] font-sans text-sm text-foreground-tertiary"
@@ -235,6 +249,7 @@ const allValue = "all";
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function FindingsListPage() {
+  const navigate = useNavigate();
   const findings = useCapaStore((state) => state.findings);
 
   // Filters
@@ -338,6 +353,7 @@ export function FindingsListPage() {
               { value: "pending_review", label: "Under review" },
               { value: "overdue", label: "Overdue" },
               { value: "capa_closed", label: "CAPA closed" },
+              { value: "rejected", label: "Rejected — no CAPA" },
             ]}
           />
         </FilterCard>
@@ -397,9 +413,10 @@ export function FindingsListPage() {
                     key={finding.id}
                     role="button"
                     tabIndex={0}
-                    aria-label={`View finding ${finding.id}`}
+                    aria-haspopup="dialog"
+                    aria-label={`Preview finding ${finding.id}`}
                     className={cn(
-                      "cursor-pointer border-t border-[var(--line-1)] transition-[background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-elevated",
+                      "cursor-pointer border-t border-[var(--line-1)] transition-[background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:bg-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ring)]",
                       dimmed && "opacity-55",
                     )}
                     onClick={() => setSelectedId(finding.id)}
@@ -473,12 +490,15 @@ export function FindingsListPage() {
                       onClick={(e) => e.stopPropagation()} // don't let actions bubble to row click
                     >
                       <div className="flex items-center gap-1.5">
-                        {/* View (opens slide-over) */}
+                        {/* Details → full detail page. (The row itself opens the
+                            quick-preview sheet.) */}
                         <button
-                          onClick={() => setSelectedId(finding.id)}
-                          className="cursor-pointer whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-2.5 py-[5px] font-sans text-xs text-foreground-tertiary"
+                          onClick={() => navigate(`/findings/${finding.id}`)}
+                          aria-label={`Open details for finding ${finding.id}`}
+                          title="Open details"
+                          className="cursor-pointer whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-2.5 py-[5px] font-sans text-xs text-foreground-tertiary transition-colors duration-200 hover:bg-elevated hover:text-foreground-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
                         >
-                          View
+                          Details
                         </button>
 
                         {/* Open CAPA or Create CAPA */}
@@ -490,7 +510,7 @@ export function FindingsListPage() {
                             Open CAPA
                             <ArrowRight size={12} />
                           </Link>
-                        ) : (
+                        ) : (finding.status === "pending_capa" || finding.status === "overdue") ? (
                           <Link
                             to={`/capa/new?type=${finding.type}&sourceId=${finding.id}`}
                             className="inline-flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-2.5 py-[5px] font-sans text-xs font-semibold text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
@@ -498,7 +518,7 @@ export function FindingsListPage() {
                             Create CAPA
                             <ArrowRight size={12} />
                           </Link>
-                        )}
+                        ) : null}
                       </div>
                     </td>
                   </tr>

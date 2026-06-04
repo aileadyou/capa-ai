@@ -2,21 +2,21 @@
   {
     "id": "NOTIF-2026-001",
     "recipientPersonaId": "qa_deviation",
-    "type": "approval",
-    "title": "CAPA submitted for QA review",
-    "description": "CAPA-2026-0341 is ready for QA deviation review.",
-    "createdAt": "2026-05-18T10:45:00+07:00",
+    "type": "capa_update",
+    "title": "Containment recorded",
+    "description": "CAPA-2026-0341 containment is recorded and the 8D investigation is in progress.",
+    "createdAt": "2026-05-18T10:50:00+07:00",
     "read": false,
     "capaId": "CAPA-2026-0341",
     "actionUrl": "/capa/CAPA-2026-0341"
   },
   {
     "id": "NOTIF-2026-002",
-    "recipientPersonaId": "head_of_dept",
+    "recipientPersonaId": "head_of_qa",
     "type": "approval",
-    "title": "Department approval required",
-    "description": "CAPA-2026-0089 requires department approval before QA sign-off.",
-    "createdAt": "2026-05-16T09:10:00+07:00",
+    "title": "Final QA sign-off waiting",
+    "description": "CAPA-2026-0089 is waiting for Head of QA final sign-off after department approval.",
+    "createdAt": "2026-05-31T09:35:00+07:00",
     "read": false,
     "capaId": "CAPA-2026-0089",
     "actionUrl": "/capa/CAPA-2026-0089"
@@ -26,33 +26,32 @@
     "recipientPersonaId": "head_of_qa",
     "type": "approval",
     "title": "Final QA sign-off waiting",
-    "description": "CAPA-2026-0298 is waiting for Head of QA final approval.",
-    "createdAt": "2026-05-09T11:00:00+07:00",
-    "read": true,
-    "capaId": "CAPA-2026-0298",
-    "actionUrl": "/capa/CAPA-2026-0298"
+    "description": "CAPA-2026-0112 is waiting for QA sign-off after department approval.",
+    "createdAt": "2026-05-30T10:05:00+07:00",
+    "read": false,
+    "capaId": "CAPA-2026-0112",
+    "actionUrl": "/capa/CAPA-2026-0112"
   },
   {
     "id": "NOTIF-2026-004",
     "recipientPersonaId": "initiator",
-    "type": "overdue",
-    "title": "Action overdue",
-    "description": "CAPA-2026-0188 has an overdue corrective action.",
-    "createdAt": "2026-02-13T08:00:00+07:00",
+    "type": "rejected",
+    "title": "CAPA initiation rejected",
+    "description": "CAPA-2026-0207 intake was rejected by QA and the Department Head — no CAPA required for this documentation correction.",
+    "createdAt": "2026-05-21T11:10:00+07:00",
     "read": false,
-    "capaId": "CAPA-2026-0188",
-    "actionUrl": "/capa/CAPA-2026-0188"
+    "capaId": "CAPA-2026-0207",
+    "actionUrl": "/capa/CAPA-2026-0207"
   },
   {
     "id": "NOTIF-2026-005",
-    "recipientPersonaId": "qa_deviation",
-    "type": "closed",
-    "title": "CAPA closed",
-    "description": "CAPA-2026-0312 was closed as Audit Ready.",
-    "createdAt": "2026-04-30T13:20:00+07:00",
+    "recipientPersonaId": "head_of_dept",
+    "type": "capa_update",
+    "title": "Effectiveness verification completed",
+    "description": "Effectiveness verification for CAPA-2026-0089 is complete and ready for your records.",
+    "createdAt": "2026-05-30T11:05:00+07:00",
     "read": true,
-    "capaId": "CAPA-2026-0312",
-    "actionUrl": "/capa/CAPA-2026-0312"
+    "capaId": "CAPA-2026-0089",
+    "actionUrl": "/capa/CAPA-2026-0089"
   }
 ]
-

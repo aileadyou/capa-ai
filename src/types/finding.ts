@@ -1,6 +1,12 @@
 import type { CAPAType, ISO8601, Severity } from "@/types/capa";
 
-export type FindingStatus = "pending_capa" | "pending_review" | "capa_in_progress" | "capa_closed" | "overdue";
+export type FindingStatus =
+  | "pending_capa"
+  | "pending_review"
+  | "capa_in_progress"
+  | "capa_closed"
+  | "overdue"
+  | "rejected";
 
 export type SourceSystem = "Bizzmine" | "Q100+" | "Bizzmine-Complaint" | "eQMS";
 

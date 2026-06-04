@@ -20,21 +20,34 @@ import { D5PreventiveActionPage } from "@/pages/nova/eight-d/D5PreventiveActionP
 import { D6VerificationPage } from "@/pages/nova/eight-d/D6VerificationPage";
 import { D7SignOffPage } from "@/pages/nova/eight-d/D7SignOffPage";
 import { eightDSteps } from "@/routes";
-import { useCapaStore, usePersonaStore } from "@/store";
-import type { CAPACase, EightDStep, IntakeDecision, PersonaID, PreFillContext } from "@/types";
+import { useAuditTrailStore, useCapaStore, usePersonaStore } from "@/store";
+import type {
+  AuditDomain,
+  AuditEvent,
+  AuditEventType,
+  CAPACase,
+  EightDStep,
+  IntakeDecision,
+  PersonaID,
+  PreFillContext,
+} from "@/types";
 import { formatCAPAType, formatDate, formatDateTime } from "@/utils/formatters";
 import { getScoreLiftTips } from "@/utils/scoring";
 import { canFillCAPA } from "@/utils/personaAccess";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 /* ── Mock due dates (no dueDate field in data) ───────────────────── */
 const MOCK_DUE: Record<string, string> = {
   "CAPA-2026-0341": "2026-06-06",
-  "CAPA-2026-0089": "2026-05-28",
+  "CAPA-2026-0089": "2026-06-03",
   "CAPA-2026-0112": "2026-06-12",
-  "CAPA-2026-0298": "2026-06-04",
-  "CAPA-2026-0275": "2026-06-17",
-  "CAPA-2026-0188": "2026-03-07",
 };
 
 /* ── Step labels ─────────────────────────────────────────────────── */
@@ -975,6 +988,163 @@ function IntakeStatusBanner({ capa }: { capa: CAPACase }) {
   );
 }
 
+/* ── Per-CAPA audit trail modal ──────────────────────────────────── */
+
+const AUDIT_DOMAIN_CLASSES: Record<AuditDomain, string> = {
+  system: "border-[var(--accent-line)] bg-[var(--accent-soft)] text-primary",
+  ai_decision: "border-[var(--accent-line)] bg-[var(--accent-soft)] text-primary",
+  integration: "border-success/40 bg-[var(--success-soft)] text-success",
+  clear_labeling: "border-success/40 bg-[var(--success-soft)] text-success",
+};
+
+const AUDIT_DOMAIN_LABELS: Record<AuditDomain, string> = {
+  system: "System",
+  ai_decision: "AI Decision",
+  integration: "Integration",
+  clear_labeling: "Clear Labeling",
+};
+
+function formatAuditEventType(eventType: AuditEventType): string {
+  return eventType
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function AuditTrailEventRow({ evt, isLast }: { evt: AuditEvent; isLast: boolean }) {
+  return (
+    <li className="relative flex gap-3">
+      {/* timeline rail */}
+      <div className="flex flex-col items-center">
+        <span
+          className={cn(
+            "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border",
+            AUDIT_DOMAIN_CLASSES[evt.domain],
+          )}
+        >
+          <CircleDot size={12} strokeWidth={2} aria-hidden="true" />
+        </span>
+        {!isLast && <span className="mt-1 w-px flex-1 bg-[var(--line-2)]" aria-hidden="true" />}
+      </div>
+
+      {/* event body */}
+      <div className="min-w-0 flex-1 pb-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              "inline-block whitespace-nowrap rounded-[20px] border px-2 py-[2px] font-sans text-[10px] font-semibold",
+              AUDIT_DOMAIN_CLASSES[evt.domain],
+            )}
+          >
+            {AUDIT_DOMAIN_LABELS[evt.domain]}
+          </span>
+          <span className="font-sans text-[11px] font-medium text-foreground-secondary">
+            {formatAuditEventType(evt.eventType)}
+          </span>
+          <time
+            dateTime={evt.timestamp}
+            className="ml-auto font-sans text-[11px] text-foreground-tertiary"
+          >
+            {formatDateTime(evt.timestamp)}
+          </time>
+        </div>
+
+        <p className="mb-0 mt-1 font-sans text-[13px] leading-[1.5] text-foreground-secondary">
+          {evt.action}
+        </p>
+
+        <div className="mt-1 flex flex-wrap items-center gap-x-1.5 font-sans text-[11px] text-foreground-tertiary">
+          <span className="font-semibold text-foreground-secondary">{evt.actorName}</span>
+          <span aria-hidden="true">·</span>
+          <span>{evt.actorRole}</span>
+          <span className="text-foreground-faint">· {evt.id}</span>
+        </div>
+
+        {(evt.before || evt.after) && (
+          <div className="mt-2 flex flex-col gap-1">
+            {evt.before && (
+              <div className="rounded-md bg-field px-2 py-1.5 text-[11px] leading-[1.4] text-foreground-tertiary">
+                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+                  Before
+                </span>
+                <div className="mt-0.5">{evt.before}</div>
+              </div>
+            )}
+            {evt.after && (
+              <div className="rounded-md bg-field px-2 py-1.5 text-[11px] leading-[1.4] text-foreground-secondary">
+                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+                  After
+                </span>
+                <div className="mt-0.5">{evt.after}</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {evt.novaMetadata && (
+          <div className="mt-2 inline-flex flex-wrap items-center gap-x-2 rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-2.5 py-1.5 text-[11px]">
+            <Sparkles size={11} strokeWidth={2} className="text-primary" aria-hidden="true" />
+            <span className="font-semibold text-primary">{evt.novaMetadata.modelName}</span>
+            <span className="text-foreground-tertiary">{evt.novaMetadata.modelVersion}</span>
+            <span className="text-foreground-secondary">Confidence {evt.novaMetadata.confidenceScore}%</span>
+          </div>
+        )}
+      </div>
+    </li>
+  );
+}
+
+function CapaAuditTrailDialog({
+  capaId,
+  open,
+  onOpenChange,
+}: {
+  capaId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const allEvents = useAuditTrailStore((s) => s.events);
+  const events = useMemo(
+    () =>
+      allEvents
+        .filter((e) => e.capaId === capaId)
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    [allEvents, capaId],
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl gap-0 p-0">
+        <DialogHeader className="border-b border-[var(--line-2)] px-6 py-4 pr-12 text-left">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <ScrollText size={16} strokeWidth={1.75} className="text-primary" aria-hidden="true" />
+            Audit trail — {capaId}
+          </DialogTitle>
+          <DialogDescription className="text-[13px]">
+            {events.length > 0
+              ? `${events.length} logged ${events.length === 1 ? "event" : "events"} for this CAPA · read-only, ALCOA+ compliant.`
+              : "Read-only event log for this CAPA · ALCOA+ compliant."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[60vh] overflow-y-auto px-6 py-5">
+          {events.length === 0 ? (
+            <p className="m-0 py-6 text-center font-sans text-sm text-foreground-tertiary">
+              No audit events have been recorded for this CAPA yet.
+            </p>
+          ) : (
+            <ol className="m-0 list-none p-0">
+              {events.map((evt, i) => (
+                <AuditTrailEventRow key={evt.id} evt={evt} isLast={i === events.length - 1} />
+              ))}
+            </ol>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function MiddleColumn({
   capa,
   selectedStep,
@@ -988,6 +1158,7 @@ function MiddleColumn({
 }) {
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
   const canEdit = canFillCAPA(activePersonaId);
+  const [auditOpen, setAuditOpen] = useState(false);
 
   if (selectedStep && !isIntakeBlocked(capa.status)) {
     // Closed cases are read-only for everyone; for open cases, only the
@@ -1083,12 +1254,21 @@ function MiddleColumn({
           Export PDF
         </button>
         <button
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground"
+          type="button"
+          onClick={() => setAuditOpen(true)}
+          aria-haspopup="dialog"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)]"
         >
           <ScrollText size={14} strokeWidth={1.75} />
           Audit trail
         </button>
       </div>
+
+      <CapaAuditTrailDialog
+        capaId={capa.id}
+        open={auditOpen}
+        onOpenChange={setAuditOpen}
+      />
 
       </div>
 

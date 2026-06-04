@@ -1,22 +1,22 @@
 [
   {
-    "id": "topic-hepa-maintenance",
-    "name": "HEPA Filter Maintenance",
-    "findingIds": ["DEV-2026-0341", "DEV-2026-0251"],
+    "id": "topic-aseptic-environment",
+    "name": "Aseptic Environmental Control",
+    "findingIds": ["DEV-2026-0341"],
     "trend": "up",
     "riskLevel": "High",
     "severityDistribution": {
       "Ungraded": 0,
       "Minor": 0,
-      "Major": 2,
+      "Major": 1,
       "Critical": 0
     },
-    "summary": "Repeat classified-area airflow findings indicate preventive maintenance intervals need tighter trending."
+    "summary": "Grade A airflow and environmental excursions in the fill suite remain the highest-risk theme and warrant tighter HEPA maintenance trending."
   },
   {
     "id": "topic-documentation",
-    "name": "GMP Documentation",
-    "findingIds": ["AUD-2026-0089", "AUD-2026-0204", "AUD-2026-0127"],
+    "name": "GMP Documentation Practices",
+    "findingIds": ["AUD-2026-0089", "AUD-2026-0127", "DEV-2026-0207"],
     "trend": "stable",
     "riskLevel": "Medium",
     "severityDistribution": {
@@ -25,25 +25,25 @@
       "Major": 1,
       "Critical": 0
     },
-    "summary": "Documentation execution and verification remain recurring audit themes."
+    "summary": "Record completion, verification evidence, and good-documentation-practice corrections are recurring audit and deviation themes."
   },
   {
-    "id": "topic-cold-chain",
-    "name": "Cold Chain Escalation",
-    "findingIds": ["DEV-2026-0188", "CMP-2026-0182", "CMP-2026-0219"],
-    "trend": "up",
-    "riskLevel": "High",
+    "id": "topic-packaging-line-clearance",
+    "name": "Packaging & Line Clearance",
+    "findingIds": ["DEV-2026-0144", "CMP-2026-0098"],
+    "trend": "stable",
+    "riskLevel": "Low",
     "severityDistribution": {
-      "Ungraded": 0,
+      "Ungraded": 2,
       "Minor": 0,
-      "Major": 1,
-      "Critical": 2
+      "Major": 0,
+      "Critical": 0
     },
-    "summary": "Temperature alarm response and escalation timing need consolidated management review."
+    "summary": "Secondary packaging and line-clearance checklist gaps point to checklist completeness improvements during changeover."
   },
   {
-    "id": "topic-visual-inspection",
-    "name": "Visual Inspection Reconciliation",
+    "id": "topic-product-quality-complaints",
+    "name": "Product Quality Complaints",
     "findingIds": ["CMP-2026-0112"],
     "trend": "stable",
     "riskLevel": "Medium",
@@ -53,7 +53,6 @@
       "Major": 1,
       "Critical": 0
     },
-    "summary": "Complaint trend suggests inspection reconciliation thresholds should be more explicit."
+    "summary": "Visible particulate complaints suggest visual-inspection reconciliation thresholds should be more explicit."
   }
 ]
-
