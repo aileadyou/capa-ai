@@ -4,7 +4,6 @@ import {
   capaCases as initialCapaCases,
   correctiveActions as initialCorrectiveActions,
   findings as initialFindings,
-  prefills,
   preventiveActions as initialPreventiveActions,
 } from "@/mock-data";
 import type {
@@ -18,6 +17,7 @@ import type {
   ImpactClassification,
   IntakeDecision,
   IntakeReview,
+  PreFillContext,
   PreventiveAction,
   QualityScore,
   RCAData,
@@ -103,6 +103,60 @@ const INTAKE_DECISION_LABEL: Record<IntakeDecision, string> = {
   rejected: "Reject",
 };
 
+// The static per-type prefill templates carry sample IDs/locations. A freshly
+// intaken finding only has the fields on the Finding record, so derive the
+// preFill from the finding itself — identity, date, department, severity, and
+// the observation all reflect the real finding. Fields the Finding doesn't
+// carry (line/equipment, initiator, auditor, customer, etc.) are left blank
+// rather than inheriting an unrelated sample.
+function buildPreFillFromFinding(finding: Finding, type: CAPAType): PreFillContext {
+  if (type === "audit") {
+    return {
+      source: "Q100+",
+      findingId: finding.id,
+      auditId: "",
+      auditType: "internal",
+      reportedAt: finding.reportedAt,
+      auditDate: finding.reportedAt,
+      auditor: { name: "", organization: "" },
+      auditee: { department: finding.department, contactPerson: "" },
+      findingCategory: "",
+      findingDescription: finding.shortDescription,
+      regulationReference: [],
+      severity: finding.severity,
+      sopReferences: [],
+    };
+  }
+
+  if (type === "complaint") {
+    return {
+      source: "Bizzmine-Complaint",
+      complaintId: finding.id,
+      reportedAt: finding.reportedAt,
+      customer: { name: "", type: "distributor" },
+      product: { name: "", lotNumber: "", expiryDate: "" },
+      complaintType: "",
+      description: finding.shortDescription,
+      initialSeverity: finding.severity,
+      attachments: [],
+    };
+  }
+
+  return {
+    source: "Bizzmine",
+    deviationId: finding.id,
+    reportedAt: finding.reportedAt,
+    occurredAt: finding.reportedAt,
+    location: { department: finding.department, area: "", line: "", equipmentId: "" },
+    initiator: { name: "", role: "", nik: "" },
+    initialObservation: finding.shortDescription,
+    affectedBatches: [],
+    attachments: [],
+    sopReferences: [],
+    initialSeverity: finding.severity,
+  };
+}
+
 function createInitialCAPA(finding: Finding, type: CAPAType): CAPACase {
   const now = new Date().toISOString();
   const id = `CAPA-${finding.id.replace(/^(DEV|AUD|CMP)-/, "")}`;
@@ -112,7 +166,7 @@ function createInitialCAPA(finding: Finding, type: CAPAType): CAPACase {
     findingId: finding.id,
     type,
     title: finding.shortDescription,
-    preFill: prefills[type],
+    preFill: buildPreFillFromFinding(finding, type),
     gateAnswers: [],
     score: {
       problemSpecificity: 0,

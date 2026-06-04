@@ -4,6 +4,69 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-04, 02:02 AM — Stop styling sentence-length gate questions as letter-spaced eyebrows
+
+### Prompt
+- Disliked that eyebrow/tracked text style (uppercase + wide letter-spacing) was reused for actual content text. Long gate-question labels rendered with the same tracking as short eyebrow labels, so within one Q&A block you read two different letter-spacings — hard to read. Fix it.
+
+### What changed
+- Letter-spacing (tracking) now stays on SHORT eyebrow labels only (section headers like "SOURCE DATA" / "GATE QUESTIONS", field labels like "DEVIATION ID", impact factors like "AREA CRITICALITY"). Sentence-length text no longer gets the eyebrow treatment.
+- `src/pages/nova/CapaDetailPage.tsx` (Intake Submission card): each gate question label changed from `text-[10px] uppercase tracking-[0.14em] text-foreground-faint` to `text-[12px] font-semibold leading-[1.5] text-foreground-secondary` — sentence case, normal tracking, readable, still a clear label above its answer.
+- `src/pages/nova/CapaIntakePage.tsx` (Review & submit step): added a `longLabel` prop to `ReviewField`. When set, the label drops uppercase + tracking and uses the same readable `text-[12px] font-semibold` style; short metadata fields (CAPA type, Source ID, Severity, etc.) keep the eyebrow style. Passed `longLabel` for the gate-question rows so the questions read normally.
+
+### Verification
+- `tsc --noEmit`: clean.
+- Browser (CAPA-2026-0341 detail): gate questions now render sentence-case at 12px, `letter-spacing: normal`, `text-transform: none` (confirmed via computed style) — e.g. "What happened and when was it observed?" reads cleanly above its answer, while the "GATE QUESTIONS" eyebrow header keeps its tracked-uppercase look.
+
+## 2026-06-04, 01:53 AM — Intake review gate: Initiator submits for dual approval (Siti + Bambang) before 8D unlocks
+
+### Prompt
+- Verify and fix the CAPA intake → review → 8D flow. Only the Initiator (Andi) creates a CAPA; QA, Department Head, Head of QA, and SME only approve. After Andi submits, he must NOT be able to keep filling the CAPA — it waits for approval from Siti Rahmawati (QA) AND Bambang Saputra (Department Head). Reviewers get three responses: Continue to CAPA / Send for Re-work / Reject, plus notes. Re-work bounces back to Andi to revise; Reject means no CAPA needed; both Continue unlocks the 8D. Fix two bugs: (A) Andi could create another CAPA on the same finding while a review was pending; (B) Siti/Bambang had no surface to record a decision.
+
+### What changed
+- `src/store/useCapaStore.ts`: added two actions. `submitIntake` builds/updates the case to `pending_review`, stamps `createdBy: initiator` + `assignedTo: qa_deviation`, seeds two `intakeReviews` (Siti + Bambang), links the finding (`linkedCapaId`, status `pending_review`), and is idempotent — once a case has cleared review (investigation/approval/closed) it returns the live case instead of spawning a duplicate or resetting progress. `recordIntakeDecision` writes the active reviewer's decision/notes, then aggregates: any Reject → `rejected`, any Re-work → `revision_requested`, both Continue → `investigation`, otherwise stays `pending_review`; it also moves the finding status and notifies the initiator with a status-specific message.
+- `src/pages/nova/CapaIntakePage.tsx`: the wizard now calls `submitIntake` (was `createCAPAFromFinding`), so submitting sends the case for review rather than dropping the Initiator straight into the 8D. Step 1/4 copy and the submit button ("Submit for review") were updated to say the intake goes to Siti + Bambang and the 8D unlocks only after both approve.
+- `src/pages/nova/CapaDetailPage.tsx`: 8D steps are gated `locked` while the case is `pending_review` / `revision_requested` / `rejected`. The overview now renders a read-only Intake Submission card plus an interactive Intake Review card: each reviewer row shows a "You" chip when active, a notes textarea, and the three decision buttons (Continue to CAPA / Send for Re-work / Reject). Added an Intake Status banner — for the Initiator on a re-worked case it offers "Revise & resubmit intake" back into the wizard for the same finding.
+
+### Verification
+- `tsc --noEmit`: clean.
+- Browser (persona-switched end to end): Andi submits DEV-2026-0144 → case `pending_review`, D1–D7 all locked, finding linked (Bug A: Findings entry flips to "Open linked CAPA", no duplicate). Siti/Bambang see "Intake review needed" in My Work and the three decision buttons on the case (Bug B fixed). Send for Re-work → `revision_requested` + Siti's note saved; Andi sees the "Revise & resubmit intake" banner. Resubmit → fresh `pending_review`. One Continue stays `pending_review`; both Continue → `investigation`, finding `capa_in_progress`, D1 "Problem statement" unlocks (D2–D7 still sequentially locked). D7 final sign-off chain (Siti → Bambang → Dewi, + Dr. Ahmad when Major/Critical) already matched the spec — no change needed.
+
+## 2026-06-04, 12:00 AM — Nova backend: server-side OpenRouter proxy + live provider wiring (mock fallback)
+
+### Prompt
+- From ~12:00 AM to ~1:40 AM, worked on Nova's backend so it can actually run on OpenRouter (the June 3 prototype only had the provider layer + mock fallback; now wire it to a real OpenRouter call).
+
+### What changed
+- **`server/novaProxy.ts` (new)** — a `/api/nova` proxy mounted as Vite dev middleware (`vite.config.ts` → `configureServer: configureNovaProxy`). Keeps the OpenRouter API key server-side: reads `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` (default `openai/gpt-4o-mini`) / `OPENROUTER_REFERER` / `OPENROUTER_APP_TITLE` from env, forwards `{ task, messages, temperature, maxTokens }` to `https://openrouter.ai/api/v1/chat/completions`, and returns `{ ok, task, model, content, usage }`. Hardened with POST-only (405), missing-key (503), invalid-body (400), upstream-failure/empty-content (502) responses and a 1MB request-body guard.
+- **`api/nova.js` (new)** — Express handler mirroring the same proxy for a deployed/serverless target, so the OpenRouter call works outside the Vite dev server too.
+- **`src/services/nova/providers.ts`** — wired the client to the proxy: `requestOpenRouter` POSTs to `/api/nova`; `requestJsonWithRepair` adds a one-shot repair retry (re-asks the model to return valid JSON) before Zod parsing. `openRouterNovaProvider` now implements every Nova task (classify impact, draft gate answers, containment/RCA/CA/PA suggestions, verification coaching, Ask Nova chat) by building messages and validating responses against the schemas.
+- **Mode gating + graceful degradation** — `shouldUseOpenRouter` / `shouldFallbackToMock` read `VITE_NOVA_AI_MODE` (`openrouter` = live only, `fallback` = live with mock backup, anything else = mock). `getNovaProvider` wraps each live call in `withFallback`, so a failed OpenRouter request silently falls back to the mock provider (except in strict `openrouter` mode).
+
+### Verification
+- `tsc --noEmit`: clean.
+- Proxy contract exercised by the provider layer: live path hits `/api/nova` → OpenRouter; missing key returns 503 and the client falls back to mock under `fallback` mode; default (no `VITE_NOVA_AI_MODE`) keeps the app on the mock provider so the demo runs with no key.
+
+## 2026-06-03, 09:20 PM — Enriched 3 main case packets + Nova service async wiring for D2–D6 suggestions
+
+### Prompt
+- Enriched the 3 main case packets and wired the Nova service async for D2–D6 suggestions.
+
+### What changed
+- Enriched the three primary demo case packets (CAPA-2026-0341, CAPA-2026-0089, CAPA-2026-0112) with fuller context so the 8D walkthrough has realistic source material at each step.
+- Wired the Nova service to resolve D2–D6 suggestions asynchronously, so each step requests its assist content on demand instead of relying on static pre-fill.
+
+## 2026-06-03, 04:56 PM — Nova OpenRouter prototype: provider layer, prompt builder, Zod validation, fallback mock
+
+### Prompt
+- Planning and implementation of the Nova OpenRouter prototype: provider layer, prompt builder, Zod validation, fallback mock.
+
+### What changed
+- Stood up a provider layer for Nova backed by OpenRouter to drive model calls.
+- Added a prompt builder that assembles step-specific context into structured prompts.
+- Added Zod schemas to validate the model's structured response before it reaches the UI.
+- Added a fallback mock path so the flow degrades gracefully when the live provider is unavailable.
+
 ## 2026-06-03, 3:56 PM — D7 case summary: one static card, no per-section collapsibles
 
 ### Prompt

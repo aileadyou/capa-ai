@@ -29,6 +29,8 @@ const methodLabel: Record<RCAMethod, string> = {
   decision_tree: "Decision Tree",
 };
 
+const disabledRCAMethods = new Set<RCAMethod>(["fishbone", "decision_tree"]);
+
 const defaultMethodByType = {
   deviation: "5whys",
   audit: "fishbone",
@@ -797,7 +799,8 @@ export function D3RCAPage() {
 
   const initialMethod = useMemo<RCAMethod>(() => {
     if (!capa) return "5whys";
-    return capa.rca.method ?? defaultMethodByType[capa.type];
+    const preferredMethod = capa.rca.method ?? defaultMethodByType[capa.type];
+    return disabledRCAMethods.has(preferredMethod) ? "5whys" : preferredMethod;
   }, [capa]);
 
   const [method, setMethod] = useState<RCAMethod>(initialMethod);
@@ -994,26 +997,34 @@ export function D3RCAPage() {
             RCA method
           </label>
           <div className="flex flex-wrap gap-2">
-            {(["5whys", "fishbone", "decision_tree"] as RCAMethod[]).map((m) => (
-              <button
-                key={m}
-                onClick={() => {
-                  setMethod(m);
-                  setConfirmedRootCause(confirmedRootCauseByMethod[m]);
-                }}
-                className={cn(
-                  "cursor-pointer rounded-[var(--r-sm)] border px-4 py-[7px] font-sans text-xs transition-[background,border-color,color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
-                  method === m
-                    ? "border-[var(--accent-line)] bg-[var(--accent-soft)] font-semibold text-primary"
-                    : "border-[var(--line-2)] bg-field font-normal text-foreground-secondary",
-                )}
-              >
-                {methodLabel[m]}
-              </button>
-            ))}
+            {(["5whys", "fishbone", "decision_tree"] as RCAMethod[]).map((m) => {
+              const isDisabled = disabledRCAMethods.has(m);
+
+              return (
+                <button
+                  key={m}
+                  disabled={isDisabled}
+                  onClick={() => {
+                    setMethod(m);
+                    setConfirmedRootCause(confirmedRootCauseByMethod[m]);
+                  }}
+                  className={cn(
+                    "rounded-[var(--r-sm)] border px-4 py-[7px] font-sans text-xs transition-[background,border-color,color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",
+                    method === m
+                      ? "border-[var(--accent-line)] bg-[var(--accent-soft)] font-semibold text-primary"
+                      : "border-[var(--line-2)] bg-field font-normal text-foreground-secondary",
+                    isDisabled
+                      ? "cursor-not-allowed border-[var(--line-2)] bg-field font-normal text-foreground-faint opacity-60"
+                      : "cursor-pointer",
+                  )}
+                >
+                  {methodLabel[m]}
+                </button>
+              );
+            })}
           </div>
           <p className="mb-0 mt-2 font-sans text-[11px] text-foreground-faint">
-            Nova defaults: Deviation → 5-Whys · Audit → Fishbone · Complaint → Decision Tree
+            Fishbone and Decision Tree are temporarily disabled.
           </p>
         </div>
 

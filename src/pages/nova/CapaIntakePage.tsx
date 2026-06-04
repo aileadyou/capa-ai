@@ -286,12 +286,25 @@ function StyledTextarea({
   );
 }
 
-function ReviewField({ label, value }: { label: string; value?: string | null }) {
+function ReviewField({
+  label,
+  value,
+  longLabel,
+}: {
+  label: string;
+  value?: string | null;
+  /** Use for sentence-length labels (e.g. gate questions) where eyebrow letter-spacing hurts readability. */
+  longLabel?: boolean;
+}) {
   if (!value) return null;
   return (
     <div>
       <p
-        className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+        className={
+          longLabel
+            ? "mb-1 mt-0 font-sans text-[12px] font-semibold leading-[1.5] text-foreground-secondary"
+            : "mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+        }
       >
         {label}
       </p>
@@ -1029,7 +1042,7 @@ export function CapaIntakePage() {
               </p>
               <div className="flex flex-col gap-2.5">
                 {GATE_QUESTIONS.filter((q) => gateAnswers[q.id].trim()).map((q) => (
-                  <ReviewField key={q.id} label={q.question} value={gateAnswers[q.id]} />
+                  <ReviewField key={q.id} label={q.question} value={gateAnswers[q.id]} longLabel />
                 ))}
                 {!Object.values(gateAnswers).some((v) => v.trim()) && (
                   <p className="m-0 font-sans text-xs text-foreground-faint">

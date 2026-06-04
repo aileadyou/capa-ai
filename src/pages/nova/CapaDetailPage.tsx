@@ -98,7 +98,7 @@ function getSourceSystem(prefill: PreFillContext): string {
 }
 
 /* ── Shared class shortcuts ──────────────────────────────────────── */
-const MONO_EYEBROW_CLASS = "font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint";
+const MONO_EYEBROW_CLASS = "font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary font-extrabold";
 
 /* ════════════════════════════════════════════════════════════════════
    LEFT COLUMN — 8D Progress + CAPA Info + Score
@@ -322,7 +322,7 @@ function SourceDataCard({ prefill }: { prefill: PreFillContext }) {
       { label: "Area", value: prefill.location?.area ?? "" },
       { label: "Line", value: prefill.location?.line ?? "" },
       { label: "Equipment", value: prefill.location?.equipmentId ?? "" },
-      { label: "Initiator", value: prefill.initiator ? `${prefill.initiator.name} · ${prefill.initiator.role}` : "" },
+      { label: "Initiator", value: prefill.initiator?.name ? `${prefill.initiator.name} · ${prefill.initiator.role}` : "" },
       { label: "Affected batches", value: prefill.affectedBatches?.join(", ") ?? "" },
       { label: "SOP references", value: prefill.sopReferences?.join(", ") ?? "" },
       { label: "Initial observation", value: prefill.initialObservation ?? "", span: true },
@@ -333,7 +333,7 @@ function SourceDataCard({ prefill }: { prefill: PreFillContext }) {
       { label: "Audit ID", value: (prefill as any).auditId ?? "" },
       { label: "Audit type", value: (prefill as any).auditType ?? "" },
       { label: "Audit date", value: (prefill as any).auditDate ? formatDateTime((prefill as any).auditDate) : "" },
-      { label: "Auditor", value: (prefill as any).auditor ? `${(prefill as any).auditor.name} · ${(prefill as any).auditor.organization}` : "" },
+      { label: "Auditor", value: (prefill as any).auditor?.name ? `${(prefill as any).auditor.name} · ${(prefill as any).auditor.organization}` : "" },
       { label: "Auditee dept", value: (prefill as any).auditee?.department ?? "" },
       { label: "Category", value: (prefill as any).findingCategory ?? "" },
       { label: "Regulation", value: (prefill as any).regulationReference?.join(", ") ?? "" },
@@ -343,7 +343,7 @@ function SourceDataCard({ prefill }: { prefill: PreFillContext }) {
     rows = [
       { label: "Complaint ID", value: (prefill as any).complaintId ?? "" },
       { label: "Reported", value: prefill.reportedAt ? formatDateTime(prefill.reportedAt) : "" },
-      { label: "Customer", value: (prefill as any).customer ? `${(prefill as any).customer.name} · ${(prefill as any).customer.type}` : "" },
+      { label: "Customer", value: (prefill as any).customer?.name ? `${(prefill as any).customer.name} · ${(prefill as any).customer.type}` : "" },
       { label: "Product", value: (prefill as any).product?.name ?? "" },
       { label: "Lot number", value: (prefill as any).product?.lotNumber ?? "" },
       { label: "Complaint type", value: (prefill as any).complaintType ?? "" },
@@ -561,13 +561,13 @@ function IntakeSubmissionCard({ capa }: { capa: CAPACase }) {
       <p className="mb-2.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
         Gate questions
       </p>
-      <div className="flex flex-col gap-3">
-        {capa.gateAnswers.map((answer) => (
+      <div className="flex flex-col gap-5">
+        {capa.gateAnswers.map((answer, index) => (
           <div key={answer.questionId}>
-            <p className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground-faint">
-              {answer.question}
+            <p className="mb-1 mt-0 font-sans text-[12px] font-bold leading-[1.5] text-primary ">
+              <span>{index +1}. </span>{answer.question}
             </p>
-            <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+            <p className="m-0 pl-4 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
               {answer.answer}
             </p>
           </div>
