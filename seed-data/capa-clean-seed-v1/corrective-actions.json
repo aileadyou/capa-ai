@@ -1,0 +1,79 @@
+[
+  {
+    "id": "CA-2026-0150-01",
+    "capaId": "CAPA-2026-0150",
+    "description": "Hold and reconcile the dispensed lactose monohydrate for AZC-26-0603-A against the pressure excursion window, then document QA material disposition.",
+    "pic": "Siti Rahmawati",
+    "dueDate": "2026-06-06T17:00:00+07:00",
+    "linkedRootCause": "Supply air damper actuator response was slow after preventive maintenance because the PM check did not include a pressure recovery challenge under dispensing-door open conditions.",
+    "verificationMethod": "QA hold record and material impact assessment",
+    "status": "completed",
+    "completedAt": "2026-06-05T16:10:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0150-02",
+    "capaId": "CAPA-2026-0150",
+    "description": "Repair or replace the WGH-01 supply air damper actuator and run a documented pressure recovery challenge before releasing the room for dispensing.",
+    "pic": "Bambang Saputra",
+    "dueDate": "2026-06-07T17:00:00+07:00",
+    "linkedRootCause": "Supply air damper actuator response was slow after preventive maintenance because the PM check did not include a pressure recovery challenge under dispensing-door open conditions.",
+    "verificationMethod": "Engineering response test and QA review of pressure trend",
+    "status": "in_progress",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "edited"
+  },
+  {
+    "id": "CA-2026-0162-01",
+    "capaId": "CAPA-2026-0162",
+    "description": "Assign and complete SOP-WH-030 retraining for the two missed warehouse operators, including documented competency checks before independent cold-chain picking resumes.",
+    "pic": "Bambang Saputra",
+    "dueDate": "2026-06-04T17:00:00+07:00",
+    "linkedRootCause": "Q100+ SOP revision workflow allowed a saved training group to be reused without reconciling the current warehouse role matrix, so two active cold-chain picking operators were missed.",
+    "verificationMethod": "Training completion record and competency check review",
+    "status": "completed",
+    "completedAt": "2026-06-04T14:20:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0162-02",
+    "capaId": "CAPA-2026-0162",
+    "description": "Review dispatch records handled by the two operators after the SOP effective date and document whether any cold-chain picking error occurred.",
+    "pic": "Siti Rahmawati",
+    "dueDate": "2026-06-04T17:00:00+07:00",
+    "linkedRootCause": "Q100+ SOP revision workflow allowed a saved training group to be reused without reconciling the current warehouse role matrix, so two active cold-chain picking operators were missed.",
+    "verificationMethod": "QA dispatch record sampling report",
+    "status": "completed",
+    "completedAt": "2026-06-04T16:05:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0106-01",
+    "capaId": "CAPA-2026-0106",
+    "description": "Inspect the returned complaint vial, retained samples, and warehouse stock for lot CSI-26-0509-A for crimp edge lift, stopper seating, and leakage indicators.",
+    "pic": "Siti Rahmawati",
+    "dueDate": "2026-06-03T17:00:00+07:00",
+    "linkedRootCause": "Capping torque drift after capper change-parts replacement was not challenged with requalification samples at the upper packaging speed range.",
+    "verificationMethod": "Returned-vial assessment and retained-sample inspection report",
+    "status": "completed",
+    "completedAt": "2026-06-03T15:45:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0106-02",
+    "capaId": "CAPA-2026-0106",
+    "description": "Requalify Packaging Capper Line CP-01 after change-parts maintenance using start-up, nominal-speed, and upper-speed torque challenge samples.",
+    "pic": "Bambang Saputra",
+    "dueDate": "2026-06-07T17:00:00+07:00",
+    "linkedRootCause": "Capping torque drift after capper change-parts replacement was not challenged with requalification samples at the upper packaging speed range.",
+    "verificationMethod": "Capper challenge protocol and torque trend review",
+    "status": "in_progress",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "edited"
+  }
+]
+

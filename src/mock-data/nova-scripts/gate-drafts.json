@@ -11,6 +11,18 @@
       "effectiveness_criteria": "Effectiveness is verified when post-remediation EM monitoring shows no Grade A alert or action excursions across at least three consecutive filling campaigns, the requalified HEPA passes integrity testing, and the revised maintenance interval is reflected in the planner with no recurrence over 90 days."
     }
   },
+  "DEV-2026-0144": {
+    "sourceLabel": "Bizzmine · DEV-2026-0144",
+    "confidence": 87,
+    "answers": {
+      "observation": "On 2 Jun 2026 at 14:10, during changeover from Hepavax-B export cartons to domestic cartons on Cartoner Line C2 in Secondary Packaging Room PKG-02, the line clearance checklist did not include leaflet code LFT-HBV-ID-06. QA found no wrong leaflet on the line, but the missing checklist item weakens documented mix-up prevention for batch HBV-26-0602-D.",
+      "impact": "Potential Major GMP documentation and packaging-control impact. The event involves line clearance during a packaging changeover, where leaflet mix-up prevention is a critical control. No wrong leaflet was found during QA sweep, so there is no confirmed product mix-up, but the evidence package is incomplete for one commercial batch.",
+      "containment": "Packaging Line C2 remained on QA hold for the domestic-carton changeover until QA completed a line sweep, reconciled leaflet code LFT-HBV-ID-06 against issued and returned quantities, and verified batch HBV-26-0602-D packaging records before release of further packaging activity.",
+      "scope": "Scope is limited to Secondary Packaging Room PKG-02, Cartoner Line C2, checklist SOP-PKG-006 / SOP-LC-002, leaflet code LFT-HBV-ID-06, and Hepavax-B batch HBV-26-0602-D during the export-to-domestic carton changeover window.",
+      "cause_confirmation": "Confirm the root cause by reviewing the approved line clearance checklist version, changeover material master data, leaflet issuance and return reconciliation, QA line-sweep record, operator interview notes, and whether SOP-LC-002 requires independent QA verification for leaflet-code checklist updates.",
+      "effectiveness_criteria": "Effectiveness is verified when the revised line clearance checklist includes leaflet-code verification, QA observes three consecutive Cartoner Line C2 changeovers with 100% material-code checklist completion, and no leaflet reconciliation discrepancies or repeated checklist omissions occur for 90 days."
+    }
+  },
   "audit": {
     "sourceLabel": "Q100+ · AUD-2026-0089",
     "confidence": 84,

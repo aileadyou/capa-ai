@@ -1,0 +1,247 @@
+[
+  {
+    "sourceRecordId": "SRC-BM-DEV-2026-0144",
+    "findingId": "DEV-2026-0144",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "sourceStatus": "open",
+    "capturedAt": "2026-06-02T15:30:00+07:00",
+    "prefill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0144",
+      "reportedAt": "2026-06-02T15:30:00+07:00",
+      "occurredAt": "2026-06-02T14:10:00+07:00",
+      "location": {
+        "department": "Packaging",
+        "area": "Secondary Packaging Room PKG-02",
+        "line": "Cartoner Line C2",
+        "equipmentId": "CTN-C2-04"
+      },
+      "initiator": {
+        "name": "Rina Marlina",
+        "role": "Packaging Line Leader",
+        "nik": "BF-PKG-1187"
+      },
+      "initialObservation": "During changeover from Hepavax-B export cartons to domestic cartons, the line clearance checklist did not include leaflet code LFT-HBV-ID-06. QA found no wrong leaflet on the line, but the missing checklist item weakens mix-up prevention evidence.",
+      "affectedBatches": ["HBV-26-0602-D"],
+      "attachments": [
+        {
+          "name": "dev-2026-0144-line-clearance-checklist.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/dev-2026-0144-line-clearance-checklist.pdf"
+        },
+        {
+          "name": "pkg-c2-changeover-photo-log.zip",
+          "type": "ZIP",
+          "url": "/mock/attachments/pkg-c2-changeover-photo-log.zip"
+        }
+      ],
+      "sopReferences": ["SOP-PKG-006", "SOP-LC-002", "SOP-DOC-004"],
+      "initialSeverity": "Ungraded"
+    },
+    "qualitySignals": [
+      "Packaging material mix-up prevention control was incomplete.",
+      "No wrong leaflet was found during QA sweep.",
+      "One commercial batch was inside the changeover window."
+    ]
+  },
+  {
+    "sourceRecordId": "SRC-BM-DEV-2026-0150",
+    "findingId": "DEV-2026-0150",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "sourceStatus": "capa_open",
+    "capturedAt": "2026-06-03T08:50:00+07:00",
+    "prefill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0150",
+      "reportedAt": "2026-06-03T08:50:00+07:00",
+      "occurredAt": "2026-06-03T08:32:00+07:00",
+      "location": {
+        "department": "Production",
+        "area": "Weighing Room WGH-01",
+        "line": "Dispensing Booth DB-01",
+        "equipmentId": "DP-MON-WGH-01"
+      },
+      "initiator": {
+        "name": "Andi Wijaya",
+        "role": "Senior Production Operator",
+        "nik": "BF-PRD-1024"
+      },
+      "initialObservation": "Differential pressure in WGH-01 dropped 4 Pa below the lower alert limit for 4 minutes during lactose monohydrate dispensing for AzithroClear granules batch AZC-26-0603-A. The booth recovered after the door was secured; dispensed material was placed on QA hold.",
+      "affectedBatches": ["AZC-26-0603-A"],
+      "attachments": [
+        {
+          "name": "dev-2026-0150-pressure-trend.csv",
+          "type": "CSV",
+          "url": "/mock/attachments/dev-2026-0150-pressure-trend.csv"
+        },
+        {
+          "name": "wgh-01-dispensing-log.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/wgh-01-dispensing-log.pdf"
+        }
+      ],
+      "sopReferences": ["SOP-PRD-014", "SOP-HVAC-009", "SOP-QA-HOLD-003"],
+      "initialSeverity": "Major"
+    },
+    "qualitySignals": [
+      "Pressure cascade was outside alert limit during active dispensing.",
+      "One batch component was exposed within the event window.",
+      "No action-limit breach or visible contamination was observed."
+    ]
+  },
+  {
+    "sourceRecordId": "SRC-Q100-AUD-2026-0127",
+    "findingId": "AUD-2026-0127",
+    "type": "audit",
+    "source": "Q100+",
+    "sourceStatus": "awaiting_intake_review",
+    "capturedAt": "2026-06-01T10:40:00+07:00",
+    "prefill": {
+      "source": "Q100+",
+      "findingId": "AUD-2026-0127",
+      "auditId": "IA-2026-PRD-031",
+      "auditType": "internal",
+      "reportedAt": "2026-06-01T10:40:00+07:00",
+      "auditDate": "2026-05-31T09:00:00+07:00",
+      "auditor": {
+        "name": "Siti Rahmawati",
+        "organization": "QA Compliance"
+      },
+      "auditee": {
+        "department": "Production",
+        "contactPerson": "Hendra Gunawan"
+      },
+      "findingCategory": "Cleaning Verification Evidence",
+      "findingDescription": "Manual cleaning verification evidence for Compression Suite CS-01 was referenced in the batch release checklist but the swab map attachment and reviewer sign-off were not attached to the cleaning record package.",
+      "regulationReference": ["PIC/S GMP Chapter 4", "PIC/S GMP Chapter 5", "BPOM CPOB 2024 Annex 15"],
+      "severity": "Major",
+      "sopReferences": ["SOP-CLN-011", "SOP-DOC-004", "SOP-QA-REL-008"]
+    },
+    "qualitySignals": [
+      "Cleaning verification evidence was missing from the controlled record package.",
+      "The audit trail showed the batch release checklist referenced the missing attachment.",
+      "No cleaning failure is confirmed, but release defensibility is weakened."
+    ]
+  },
+  {
+    "sourceRecordId": "SRC-Q100-AUD-2026-0162",
+    "findingId": "AUD-2026-0162",
+    "type": "audit",
+    "source": "Q100+",
+    "sourceStatus": "closed",
+    "capturedAt": "2026-06-02T13:15:00+07:00",
+    "prefill": {
+      "source": "Q100+",
+      "findingId": "AUD-2026-0162",
+      "auditId": "IA-2026-WH-044",
+      "auditType": "internal",
+      "reportedAt": "2026-06-02T13:15:00+07:00",
+      "auditDate": "2026-06-02T09:30:00+07:00",
+      "auditor": {
+        "name": "Yulianto Nugroho",
+        "organization": "QA Compliance"
+      },
+      "auditee": {
+        "department": "Warehouse",
+        "contactPerson": "Bambang Saputra"
+      },
+      "findingCategory": "Training Record Control",
+      "findingDescription": "Two warehouse operators assigned to cold-chain picking were not included in the Q100+ retraining task after SOP-WH-030 was revised. Both operators had performed GMP picking activities after the effective date.",
+      "regulationReference": ["PIC/S GMP Chapter 2", "BPOM CPOB 2024 Chapter 2"],
+      "severity": "Major",
+      "sopReferences": ["SOP-WH-030", "SOP-TRN-002", "SOP-QA-014"]
+    },
+    "qualitySignals": [
+      "Training assignment was incomplete after an effective SOP revision.",
+      "Two operators performed GMP tasks after the effective date.",
+      "No product dispatch error was identified in the sample."
+    ]
+  },
+  {
+    "sourceRecordId": "SRC-BMC-CMP-2026-0098",
+    "findingId": "CMP-2026-0098",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "sourceStatus": "open",
+    "capturedAt": "2026-05-30T10:05:00+07:00",
+    "prefill": {
+      "source": "Bizzmine-Complaint",
+      "complaintId": "CMP-2026-0098",
+      "reportedAt": "2026-05-30T10:05:00+07:00",
+      "customer": {
+        "name": "Klinik Medika Pratama Bekasi",
+        "type": "end_user"
+      },
+      "product": {
+        "name": "Hepavax-B Pediatric Vial Carton",
+        "lotNumber": "HBV-26-0529-C",
+        "expiryDate": "2027-05-31"
+      },
+      "complaintType": "Missing Package Insert",
+      "description": "Clinic pharmacist reported one sealed secondary carton without the Indonesian package insert. The vial label, carton label, tamper seal, and batch number were intact and readable. The carton was retained by the clinic pending QA instruction.",
+      "initialSeverity": "Ungraded",
+      "attachments": [
+        {
+          "name": "cmp-2026-0098-customer-photo.jpg",
+          "type": "Image",
+          "url": "/mock/attachments/cmp-2026-0098-customer-photo.jpg"
+        },
+        {
+          "name": "cmp-2026-0098-intake-form.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/cmp-2026-0098-intake-form.pdf"
+        }
+      ]
+    },
+    "qualitySignals": [
+      "Patient information leaflet may be missing from one distributed carton.",
+      "Tamper evidence and product identity remain intact.",
+      "Packaging reconciliation for the lot has not yet been reviewed."
+    ]
+  },
+  {
+    "sourceRecordId": "SRC-BMC-CMP-2026-0106",
+    "findingId": "CMP-2026-0106",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "sourceStatus": "capa_open",
+    "capturedAt": "2026-05-31T16:25:00+07:00",
+    "prefill": {
+      "source": "Bizzmine-Complaint",
+      "complaintId": "CMP-2026-0106",
+      "reportedAt": "2026-05-31T16:25:00+07:00",
+      "customer": {
+        "name": "RS Kencana Surabaya",
+        "type": "hospital"
+      },
+      "product": {
+        "name": "Cardiostat Injection 10 mL",
+        "lotNumber": "CSI-26-0509-A",
+        "expiryDate": "2027-05-31"
+      },
+      "complaintType": "Container Closure Defect",
+      "description": "Hospital pharmacy found one unopened vial with a lifted aluminum crimp edge during incoming inspection. The flip-off cap was present, the stopper was seated, and no leakage was observed. The hospital quarantined the vial and provided photos before returning it.",
+      "initialSeverity": "Major",
+      "attachments": [
+        {
+          "name": "cmp-2026-0106-crimp-photo-set.zip",
+          "type": "ZIP",
+          "url": "/mock/attachments/cmp-2026-0106-crimp-photo-set.zip"
+        },
+        {
+          "name": "returned-vial-chain-of-custody.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/returned-vial-chain-of-custody.pdf"
+        }
+      ]
+    },
+    "qualitySignals": [
+      "Potential container closure integrity risk was reported by a hospital.",
+      "No leakage was observed, but visual cap defect is confirmed by photo.",
+      "Complaint lot was produced after capper change-parts maintenance."
+    ]
+  }
+]
+

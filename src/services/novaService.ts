@@ -20,8 +20,8 @@ export async function classifyImpact(prefill: PreFillContext): Promise<ImpactCla
  * Nova reads the imported finding and drafts answers to every gate question so
  * the initiator can review and refine instead of starting from scratch.
  */
-export async function draftGateAnswers(type: CAPAType): Promise<GateDraftSet> {
-  return getNovaProvider().draftGateAnswers(type);
+export async function draftGateAnswers(type: CAPAType, sourceId?: string): Promise<GateDraftSet> {
+  return getNovaProvider().draftGateAnswers(type, sourceId);
 }
 
 export async function getContainmentSuggestion(capaId: string) {

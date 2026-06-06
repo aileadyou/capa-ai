@@ -133,6 +133,7 @@ export function ApprovalChainPanel({
   stage: ApprovalStage;
 }) {
   const personas = usePersonaStore((state) => state.personas);
+  const activePersonaId = usePersonaStore((state) => state.activePersonaId);
   const recordApproval = useCapaStore((state) => state.recordApproval);
   const addNotification = useNotificationStore((state) => state.addNotification);
   const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
@@ -181,10 +182,15 @@ export function ApprovalChainPanel({
   const activeGates = (cycle.gated ?? []).filter((g) => g.when(capa));
 
   function openESignature(approver: ResolvedApprover) {
-    if (requiresScore && !scoreReady) {
-      setTriedBlocked(true);
+    if (approver.personaId !== activePersonaId) {
+      toast.error("Approval belongs to another persona", {
+        description: `Switch to ${approver.name} to sign this approval gate.`,
+      });
+      return;
+    }
+    if (nextApprover?.personaId !== approver.personaId) {
       toast.error("Approval blocked", {
-        description: "Quality score must reach 80 before this closing cycle can be signed.",
+        description: `${nextApprover?.name ?? "The next approver"} must sign before this gate can proceed.`,
       });
       return;
     }
@@ -204,7 +210,14 @@ export function ApprovalChainPanel({
       stage,
     };
 
-    recordApproval(capa.id, stage, approval);
+    const recorded = recordApproval(capa.id, stage, approval);
+    if (!recorded) {
+      toast.error("Approval blocked", {
+        description: "This approval can only be signed by the active persona assigned to the current approval gate.",
+      });
+      setSelected(undefined);
+      return;
+    }
 
     addAuditEvent({
       actorPersonaId: selected.personaId,
@@ -301,8 +314,8 @@ export function ApprovalChainPanel({
             <ShieldAlert size={14} className="mt-px shrink-0 text-destructive" />
             <p className="m-0 font-sans text-[11px] text-foreground-tertiary">
               {scoreReady
-                ? "Improve the CAPA through D1–D6 before attempting electronic sign-off."
-                : `Quality score is ${capa.score.total}; it must reach 80 before this closing cycle can be signed.`}
+                ? "All required e-signatures are recorded. This CAPA can close as Audit Ready."
+                : `Quality score is ${capa.score.total}; e-signatures can be recorded, but closure as Audit Ready waits until the score reaches 80.`}
             </p>
           </div>
         )}
@@ -312,11 +325,19 @@ export function ApprovalChainPanel({
             const approval = stageApprovalFor(approver.personaId);
             const isApproved = approval?.decision === "approved";
             const isRejected = approval?.decision === "rejected";
+            const isNextApprover = nextApprover?.personaId === approver.personaId;
+            const isActivePersonaApprover = activePersonaId === approver.personaId;
             const canAct =
-              (!requiresScore || scoreReady) &&
               !isClosed &&
               !approval &&
-              nextApprover?.personaId === approver.personaId;
+              isNextApprover &&
+              isActivePersonaApprover;
+            const pendingLabel = isNextApprover
+              ? isActivePersonaApprover
+                ? "Awaiting you"
+                : "Awaiting owner"
+              : "Pending";
+            const buttonLabel = isNextApprover && !isActivePersonaApprover ? "Not your gate" : "Approve with E-Sig";
 
             return (
               <div
@@ -380,13 +401,18 @@ export function ApprovalChainPanel({
                             : "border-border-subtle bg-elevated text-foreground-faint",
                         )}
                       >
-                        {canAct ? "Awaiting" : "Pending"}
+                        {pendingLabel}
                       </span>
                     )}
                     <button
                       type="button"
                       disabled={!canAct}
                       onClick={() => openESignature(approver)}
+                      title={
+                        !isActivePersonaApprover && isNextApprover
+                          ? `Switch to ${approver.name} to sign this gate.`
+                          : undefined
+                      }
                       className={cn(
                         "flex items-center gap-1.5 rounded-[var(--r-sm)] px-3.5 py-[7px] font-sans text-xs font-semibold",
                         canAct
@@ -395,7 +421,7 @@ export function ApprovalChainPanel({
                       )}
                     >
                       <PenLine size={13} />
-                      Approve with E-Sig
+                      {buttonLabel}
                     </button>
                   </div>
                 </div>

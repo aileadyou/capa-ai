@@ -23,14 +23,35 @@ import { TopicsGroupingPage } from "@/pages/nova/TopicsGroupingPage";
 import { NotificationCenterPage } from "@/pages/nova/NotificationCenterPage";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
-import { usePersonaStore } from "@/store";
-import { canFillCAPA, isMyWorkOnlyPersona } from "@/utils/personaAccess";
+import { useCapaStore, usePersonaStore } from "@/store";
+import { canEditCAPA, canFillCAPA, isMyWorkOnlyPersona } from "@/utils/personaAccess";
+
+function CreateGuard({ children }: { children: React.ReactNode }) {
+  const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+
+  // Role gate: only the Initiator can open the CAPA intake wizard. Every other
+  // persona that deep-links to /capa/new is bounced to the findings list (the
+  // Create affordances are already hidden for them in the UI).
+  if (!canFillCAPA(activePersonaId)) {
+    return <Navigate to="/findings" replace />;
+  }
+  return <>{children}</>;
+}
 
 function FillGuard({ children }: { children: React.ReactNode }) {
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
   const { id } = useParams();
+  const capa = useCapaStore((state) => (id ? state.capas.find((c) => c.id === id) : undefined));
+
+  // Role gate: only the Initiator can reach the 8D fill workspace.
   if (!canFillCAPA(activePersonaId)) {
     return <Navigate to={id ? `/capa/${id}` : "/capa"} replace />;
+  }
+  // Lifecycle gate: even the Initiator can't fill until intake clears (QA +
+  // Department Head accepted) and not after the case is closed. Bounce to the
+  // CAPA hub, which surfaces the correct banner / read-only view.
+  if (capa && !canEditCAPA(activePersonaId, capa)) {
+    return <Navigate to={`/capa/${id}`} replace />;
   }
   return <>{children}</>;
 }
@@ -61,7 +82,7 @@ export function AppRouter() {
       />
       <Route
         path="/capa/new"
-        element={<CapaIntakePage />}
+        element={<CreateGuard><CapaIntakePage /></CreateGuard>}
       />
       <Route
         path="/capa/:id"

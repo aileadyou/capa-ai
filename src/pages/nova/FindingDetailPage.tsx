@@ -4,13 +4,15 @@ import {
   ArrowRight,
   CheckCircle2,
   Circle,
+  Lock,
   MessageSquareX,
   Plus,
   Sparkles,
   XCircle,
 } from "lucide-react";
 import NotFound from "@/pages/NotFound";
-import { useCapaStore } from "@/store";
+import { useCapaStore, usePersonaStore } from "@/store";
+import { canFillCAPA } from "@/utils/personaAccess";
 import type { CAPACase, PreFillContext } from "@/types";
 import type { Finding } from "@/types/finding";
 import type { CAPAType, EightDStep } from "@/types";
@@ -389,6 +391,7 @@ export function FindingDetailPage() {
         )
       : undefined,
   );
+  const activePersonaId = usePersonaStore((state) => state.activePersonaId);
 
   if (!finding) {
     return <NotFound message={`Finding ${id ?? ""} is not available in the demo dataset.`} />;
@@ -396,6 +399,7 @@ export function FindingDetailPage() {
 
   const createCAPAUrl = `/capa/new?type=${finding.type}&sourceId=${finding.id}`;
   const canCreateCapa = finding.status === "pending_capa" || finding.status === "overdue";
+  const isInitiator = canFillCAPA(activePersonaId);
 
   return (
     <div className="flex flex-col gap-5">
@@ -439,10 +443,20 @@ export function FindingDetailPage() {
             <ArrowRight size={14} />
           </Link>
         ) : canCreateCapa ? (
-          <Link to={createCAPAUrl} className={PRIMARY_LINK_CLASS}>
-            <Plus size={14} />
-            Create CAPA with Nova
-          </Link>
+          isInitiator ? (
+            <Link to={createCAPAUrl} className={PRIMARY_LINK_CLASS}>
+              <Plus size={14} />
+              Create CAPA with Nova
+            </Link>
+          ) : (
+            <div
+              title="Only the Initiator role can create a CAPA from a finding."
+              className="inline-flex cursor-not-allowed items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-4 py-[9px] font-sans text-[13px] font-medium text-foreground-faint"
+            >
+              <Lock size={13} aria-hidden="true" />
+              Initiator only — read-only
+            </div>
+          )
         ) : null}
       </div>
 

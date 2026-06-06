@@ -71,11 +71,23 @@ workflow. The key relabels:
 - `initiator` → the *Auditee* when the finding came from an audit.
 - `sme` → the *Lead Auditor* when reviewing an internal-audit finding up front.
 
-**Access rules that shape the UI:**
+**Access rules that shape the UI — a two-layer authoring gate.** Authoring the 8D is gated by
+*who you are* **and** *where the case is in its lifecycle*. Keep these distinct:
 
-- **Only the `initiator` (the finding's owner / Auditee) can edit/fill the 8D investigation.**
-  Every other persona sees the same CAPA workspace **read-only** (they review and approve,
-  they don't author).
+- **Role gate — only the `initiator` (the finding's owner / Auditee) authors the 8D.** Every
+  other persona sees the same CAPA workspace **read-only** (they review and approve, they don't
+  author). A **closed** CAPA is read-only for *everyone*, including the initiator.
+- **Intake-clearance gate — even the `initiator` cannot start the 8D until the finding clears
+  intake review.** A finding becomes fillable only after **both** the QA reviewer *and* the
+  Department Head **accept** it (the universal disposition / accept gate behind §5.7). Until
+  then the 8D stays **locked**: the workspace shows an intake-status banner — e.g. *"Draft —
+  not yet submitted"*, *"Submitted — awaiting intake review"*, *"Re-work requested"*, or
+  *"Rejected at intake review"* — and **no step can be authored**. A re-work request bounces the
+  case back to the initiator to revise & resubmit; a rejection closes it without any 8D.
+- **Both gates are enforced at the route level, not just by hiding buttons.** Deep-linking to a
+  step route (e.g. `…/8d/problem`) as the wrong persona, before intake has cleared, or after
+  closure **redirects to the CAPA hub** — so the rule can't be bypassed by typing a URL. (RBAC
+  here is demo-simulated via the persona switcher; there is no real auth.)
 - **`initiator` and `sme` are "My Work only" personas** — they do **not** get the analytics
   Dashboard; their landing page is the personal **My Work** task list. The QA/management
   approver personas (`qa_deviation`, `head_of_dept`, `head_of_qa`) get the Dashboard.
@@ -251,6 +263,12 @@ The entry point to create a CAPA. Flow:
 5. A **live Quality Score sidebar** updates as the form is filled.
 6. **Submit to QA** — blocked with a clear message if the score is too low; otherwise creates
    the CAPA and navigates to its detail page.
+
+After submission the CAPA enters an **intake-review** state and the 8D stays **locked** until
+**both** reviewers — the **QA reviewer** *and* the **Department Head** — accept (see §2's
+intake-clearance gate). Either reviewer may instead **send it back for re-work** (returns to the
+initiator to revise & resubmit) or **reject** it (closed, no 8D). Only a double-accept unlocks
+authoring. The per-type flavors below are how this same accept gate is *labelled* per type:
 
 **Intake differs by type** (the gate that precedes the 8D work):
 - **Deviation** → after submit, QA performs a **disposition** (confirm classification + assign
@@ -634,10 +652,16 @@ You don't need to copy field names exactly, but the UI implies these entities:
   and validation-blocked states without crashing.
 - **Blockers are actionable.** When a step is blocked, say exactly what's missing and how to
   fix it.
-- **Progress persists.** Workflow progress, accepted/edited Nova suggestions, actions,
-  verification, approvals, statuses, audit events, and notification read-state all survive a
-  page refresh (persist to local storage). Include a **"Reset Demo Data"** action that
-  confirms, clears state, reloads the seeded data, and toasts success.
+- **Edits are real and persist.** Every change the presenter makes — not just forward progress,
+  but **edits to the pre-seeded golden cases themselves** — is genuinely written to state and
+  survives a page refresh (persist to local storage): workflow progress, accepted/edited Nova
+  suggestions, actions, verification, approvals, statuses, the active persona, audit events, and
+  notification read-state. Nothing is throwaway; if you change it, it stays changed.
+- **Reset Demo Data.** Provide an always-reachable **"Reset Demo Data"** action (e.g. a top-bar
+  control) that confirms, clears all persisted state, **reloads the original seeded dataset**,
+  and toasts success — so a presenter can always return to a known-good starting point between
+  runs. Bump a persisted-store version when the seed shape changes so returning users reflow
+  from the fresh seed rather than stale local data.
 
 ---
 

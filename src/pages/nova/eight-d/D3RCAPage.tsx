@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, ChevronRight, Circle, ExternalLink, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +17,6 @@ import type {
   RCAMethod,
 } from "@/types";
 import { computeRootCauseDepth, computeTotalQualityScore } from "@/utils/scoring";
-import { getRCASuggestions } from "@/services/novaService";
 
 // ── Static data ──────────────────────────────────────────────────────────────
 
@@ -168,15 +167,6 @@ const decisionTreePlan: DecisionNode[] = [
   },
 ];
 
-const confirmedRootCauseByMethod: Record<RCAMethod, string> = {
-  "5whys":
-    "Preventive maintenance SOP PM-HEPA-001 used an outdated HEPA filter replacement interval for Grade A filling operations.",
-  fishbone:
-    "The material transfer documentation process lacked a clear real-time verification control and did not prevent late or incomplete record closure.",
-  decision_tree:
-    "Final visual inspection reconciliation did not sufficiently escalate a short reject reconciliation variance during batch release review.",
-};
-
 function getCitations(ids: string[]): KGCitation[] {
   return kgCitations.filter((c) => ids.includes(c.capaId)) as KGCitation[];
 }
@@ -310,9 +300,7 @@ function FiveWhysChain({
     return firstEmpty === -1 ? fiveWhysPlan.length : firstEmpty;
   });
   const activeIndex = Math.min(lockedCount, fiveWhysPlan.length - 1);
-  const [draft, setDraft] = useState(
-    answers[activeIndex] || fiveWhysPlan[activeIndex]?.suggestion || "",
-  );
+  const [draft, setDraft] = useState(answers[activeIndex] || "");
   const isDone = lockedCount >= fiveWhysPlan.length;
 
   function confirmLevel() {
@@ -321,7 +309,7 @@ function FiveWhysChain({
     const next = activeIndex + 1;
     if (next < fiveWhysPlan.length) {
       setLockedCount(next);
-      setDraft(answers[next] || fiveWhysPlan[next]?.suggestion || "");
+      setDraft(answers[next] || "");
     } else {
       setLockedCount(fiveWhysPlan.length);
     }
@@ -449,7 +437,7 @@ function FiveWhysChain({
             onClick={() => {
               onClearAfter?.(-1);  // clear ALL parent answers (index > -1 = all)
               setLockedCount(0);
-              setDraft(fiveWhysPlan[0]?.suggestion || "");
+              setDraft("");
             }}
             className="cursor-pointer rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-2.5 py-1 font-sans text-[11px] text-foreground-secondary"
           >
@@ -805,7 +793,7 @@ export function D3RCAPage() {
 
   const [method, setMethod] = useState<RCAMethod>(initialMethod);
   const [whyAnswers, setWhyAnswers] = useState<string[]>(
-    fiveWhysPlan.map((item, index) => capa?.rca.fiveWhys?.[index]?.userAnswer ?? item.suggestion),
+    fiveWhysPlan.map((_, index) => capa?.rca.fiveWhys?.[index]?.userAnswer ?? ""),
   );
   const [fishboneAnswers, setFishboneAnswers] = useState<Record<FishboneName, string>>(() =>
     fishbonePlan.reduce(
@@ -813,7 +801,7 @@ export function D3RCAPage() {
         ...current,
         [item.category]:
           capa?.rca.fishbone?.find((cat) => cat.category === item.category)?.userEntries.join("\n") ??
-          item.suggestion,
+          "",
       }),
       {} as Record<FishboneName, string>,
     ),
@@ -822,55 +810,8 @@ export function D3RCAPage() {
     capa?.rca.decisionTree?.nodes?.length ? capa.rca.decisionTree.nodes : decisionTreePlan,
   );
   const [confirmedRootCause, setConfirmedRootCause] = useState(
-    capa?.rca.confirmedRootCauses[0] ?? confirmedRootCauseByMethod[initialMethod],
+    capa?.rca.confirmedRootCauses[0] ?? "",
   );
-
-  useEffect(() => {
-    if (!capa) return;
-    let cancelled = false;
-
-    void getRCASuggestions(capa.id, method).then((response) => {
-      if (cancelled || !response || typeof response !== "object") return;
-      const result = response as {
-        fiveWhys?: FiveWhysNode[];
-        fishbone?: FishboneCategory[];
-        decisionTree?: { nodes: DecisionNode[]; rootNodeId: string };
-        confirmedRootCauses?: string[];
-      };
-
-      if (method === "5whys" && result.fiveWhys?.length) {
-        setWhyAnswers(
-          fiveWhysPlan.map((item, index) => result.fiveWhys?.[index]?.novaSuggestion ?? item.suggestion),
-        );
-      }
-
-      if (method === "fishbone" && result.fishbone?.length) {
-        setFishboneAnswers(
-          fishbonePlan.reduce(
-            (current, item) => ({
-              ...current,
-              [item.category]:
-                result.fishbone?.find((cat) => cat.category === item.category)?.novaEntries.join("\n") ??
-                item.suggestion,
-            }),
-            {} as Record<FishboneName, string>,
-          ),
-        );
-      }
-
-      if (method === "decision_tree" && result.decisionTree?.nodes?.length) {
-        setDecisionNodes(result.decisionTree.nodes);
-      }
-
-      if (result.confirmedRootCauses?.[0]) {
-        setConfirmedRootCause(result.confirmedRootCauses[0]);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [capa, method]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -893,6 +834,8 @@ export function D3RCAPage() {
   const relevantCitations = getRelevantCitations(capa.type);
 
   function buildRCAData(): RCAData {
+    const confirmedRootCauses = confirmedRootCause.trim() ? [confirmedRootCause.trim()] : [];
+
     if (method === "5whys") {
       const fiveWhys: FiveWhysNode[] = fiveWhysPlan.map((item, index) => ({
         id: `5w-${capa.id}-${item.level}`,
@@ -903,7 +846,7 @@ export function D3RCAPage() {
         userAnswer: whyAnswers[index],
         status: "accepted" as const,
       }));
-      return { method, fiveWhys, confirmedRootCauses: [confirmedRootCause] };
+      return { method, fiveWhys, confirmedRootCauses };
     }
 
     if (method === "fishbone") {
@@ -913,7 +856,7 @@ export function D3RCAPage() {
         userEntries: fishboneAnswers[item.category].split("\n").filter(Boolean),
         status: "accepted" as const,
       }));
-      return { method, fishbone, confirmedRootCauses: [confirmedRootCause] };
+      return { method, fishbone, confirmedRootCauses };
     }
 
     return {
@@ -922,7 +865,7 @@ export function D3RCAPage() {
         nodes: decisionNodes,
         rootNodeId: decisionNodes[0]?.id ?? "dt-plan-1",
       },
-      confirmedRootCauses: [confirmedRootCause],
+      confirmedRootCauses,
     };
   }
 
@@ -1006,7 +949,7 @@ export function D3RCAPage() {
                   disabled={isDisabled}
                   onClick={() => {
                     setMethod(m);
-                    setConfirmedRootCause(confirmedRootCauseByMethod[m]);
+                    setConfirmedRootCause(capa.rca.confirmedRootCauses[0] ?? "");
                   }}
                   className={cn(
                     "rounded-[var(--r-sm)] border px-4 py-[7px] font-sans text-xs transition-[background,border-color,color] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",

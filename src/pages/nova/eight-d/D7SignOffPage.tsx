@@ -387,7 +387,7 @@ export function D7SignOffPage() {
             )}
           </div>
           <p className="m-0 max-w-[600px] text-[13px] leading-[1.55] text-foreground-tertiary">
-            Complete the e-signature approval chain for {capa.id}. Final closure requires quality score 80 or higher and all required approvals.
+            Complete the e-signature approval chain for {capa.id}. Approvals can be recorded by each assigned persona; final Audit Ready closure requires quality score 80 or higher.
           </p>
         </div>
 
@@ -397,10 +397,10 @@ export function D7SignOffPage() {
             <AlertTriangle size={15} aria-hidden="true" className="mt-px shrink-0 text-destructive" />
             <div>
               <p className="mb-0.5 mt-0 font-sans text-[13px] font-semibold text-destructive">
-                Sign-off blocked by quality score
+                Closure blocked by quality score
               </p>
               <p className="m-0 font-sans text-xs text-foreground-tertiary">
-                Quality score must reach 80 before this CAPA can be approved and closed as Audit Ready.
+                Quality score must reach 80 before this CAPA can be closed as Audit Ready. Assigned approvers can still record their e-signatures.
               </p>
             </div>
           </div>

@@ -2,7 +2,7 @@ import { kgCitations, prefills, novaScripts } from "@/mock-data";
 import type { CAPAType, ImpactClassification, PreFillContext, RCAMethod } from "@/types";
 import { computeImpact } from "@/utils/impact";
 import { mockAICall } from "@/utils/mockAI";
-import { getAnalysisPacketByCapaId, getAnalysisPacketByType, getPrefillForType, getPrimarySourceId } from "./contextPackets";
+import { getAnalysisPacketByCapaId, getAnalysisPacketByFindingId, getAnalysisPacketByType, getPrefillForType, getPrimarySourceId } from "./contextPackets";
 import { buildNovaMessages } from "./prompts";
 import {
   containmentSuggestionsSchema,
@@ -85,10 +85,14 @@ export const mockNovaProvider: NovaProvider = {
     });
   },
 
-  async draftGateAnswers(type) {
-    return mockAICall<GateDraftSet>(`gateDrafts.${type}`, {
+  async draftGateAnswers(type, sourceId) {
+    const sourceDraft = sourceId
+      ? (novaScripts.gateDrafts as Record<string, GateDraftSet | undefined>)[sourceId]
+      : undefined;
+
+    return mockAICall<GateDraftSet>(sourceId ? `gateDrafts.${sourceId}` : `gateDrafts.${type}`, {
       delayMs: 1200,
-      fallback: novaScripts.gateDrafts[type] as GateDraftSet,
+      fallback: sourceDraft ?? (novaScripts.gateDrafts[type] as GateDraftSet),
     });
   },
 
@@ -174,8 +178,8 @@ export const openRouterNovaProvider: NovaProvider = {
     return requestJsonWithRepair("classify_impact", messages, (value) => impactClassificationSchema.parse(value), 1200);
   },
 
-  async draftGateAnswers(type) {
-    const packet = getAnalysisPacketByType(type);
+  async draftGateAnswers(type, sourceId) {
+    const packet = sourceId ? getAnalysisPacketByFindingId(sourceId) : getAnalysisPacketByType(type);
     const messages = buildNovaMessages("draft_gate_answers", { packet, type, prefill: packet?.sourceData ?? getPrefillForType(type) });
     return requestJsonWithRepair("draft_gate_answers", messages, (value) => gateDraftSchema.parse(value) as GateDraftSet, 1800);
   },
@@ -266,10 +270,10 @@ export function getNovaProvider(): NovaProvider {
         () => openRouterNovaProvider.classifyImpact(prefill),
         () => mockNovaProvider.classifyImpact(prefill),
       ),
-    draftGateAnswers: (type) =>
+    draftGateAnswers: (type, sourceId) =>
       withFallback(
-        () => openRouterNovaProvider.draftGateAnswers(type),
-        () => mockNovaProvider.draftGateAnswers(type),
+        () => openRouterNovaProvider.draftGateAnswers(type, sourceId),
+        () => mockNovaProvider.draftGateAnswers(type, sourceId),
       ),
     getContainmentSuggestion: (capaId) =>
       withFallback(

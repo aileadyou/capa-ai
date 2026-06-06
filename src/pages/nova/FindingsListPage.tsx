@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Plus, X } from "lucide-react";
-import { useCapaStore } from "@/store";
+import { ArrowRight, Lock, Plus, X } from "lucide-react";
+import { useCapaStore, usePersonaStore } from "@/store";
 import type { CAPAType } from "@/types";
 import type { Finding } from "@/types/finding";
 import { formatDate, formatDateTime } from "@/utils/formatters";
+import { canFillCAPA } from "@/utils/personaAccess";
 import { useDialog } from "@/hooks/use-dialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { FilterCard, FilterSearchInput, FilterSelect } from "@/components/shared/FilterControls";
@@ -80,6 +81,8 @@ function FindingSlideOver({
 }) {
   const navigate = useNavigate();
   const getCAPAById = useCapaStore((state) => state.getCAPAById);
+  const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+  const canCreate = canFillCAPA(activePersonaId);
   const capa = finding.linkedCapaId ? getCAPAById(finding.linkedCapaId) : undefined;
 
   // Enrich with CAPA pre-fill data
@@ -222,14 +225,24 @@ function FindingSlideOver({
               <ArrowRight size={14} />
             </Link>
           ) : (finding.status === "pending_capa" || finding.status === "overdue") ? (
-            <Link
-              to={`/capa/new?type=${finding.type}&sourceId=${finding.id}`}
-              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-[9px] font-sans text-sm font-semibold tracking-[0.01em] text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
-              onClick={onClose}
-            >
-              Create CAPA
-              <ArrowRight size={14} />
-            </Link>
+            canCreate ? (
+              <Link
+                to={`/capa/new?type=${finding.type}&sourceId=${finding.id}`}
+                className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-[9px] font-sans text-sm font-semibold tracking-[0.01em] text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
+                onClick={onClose}
+              >
+                Create CAPA
+                <ArrowRight size={14} />
+              </Link>
+            ) : (
+              <div
+                title="Only the Initiator role can create a CAPA from a finding."
+                className="flex flex-1 cursor-not-allowed items-center justify-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-4 py-[9px] font-sans text-sm font-medium text-foreground-faint"
+              >
+                <Lock size={13} aria-hidden="true" />
+                Initiator only
+              </div>
+            )
           ) : null}
           <button
             onClick={onClose}
@@ -251,6 +264,8 @@ const allValue = "all";
 export function FindingsListPage() {
   const navigate = useNavigate();
   const findings = useCapaStore((state) => state.findings);
+  const activePersonaId = usePersonaStore((state) => state.activePersonaId);
+  const canCreate = canFillCAPA(activePersonaId);
 
   // Filters
   const [query, setQuery] = useState("");
@@ -302,13 +317,15 @@ export function FindingsListPage() {
             </p>
           </div>
 
-          <Link
-            to="/capa/new"
-            className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-2 font-sans text-sm font-semibold tracking-[0.01em] text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
-          >
-            <Plus size={14} />
-            New CAPA
-          </Link>
+          {canCreate && (
+            <Link
+              to="/capa/new"
+              className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-2 font-sans text-sm font-semibold tracking-[0.01em] text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"
+            >
+              <Plus size={14} />
+              New CAPA
+            </Link>
+          )}
         </div>
 
         {/* ── Filter bar ─────────────────────────────────────────────────── */}
@@ -510,7 +527,7 @@ export function FindingsListPage() {
                             Open CAPA
                             <ArrowRight size={12} />
                           </Link>
-                        ) : (finding.status === "pending_capa" || finding.status === "overdue") ? (
+                        ) : canCreate && (finding.status === "pending_capa" || finding.status === "overdue") ? (
                           <Link
                             to={`/capa/new?type=${finding.type}&sourceId=${finding.id}`}
                             className="inline-flex cursor-pointer items-center gap-1 whitespace-nowrap rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-2.5 py-[5px] font-sans text-xs font-semibold text-primary-foreground no-underline hover:brightness-110 active:scale-[0.99]"

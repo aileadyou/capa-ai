@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { classifyImpact, draftGateAnswers, importSourceData, type GateDraftSet } from "@/services/novaService";
 import { useCapaStore } from "@/store";
 import type { CAPAType, GateQuestionID, ImpactClassification, PreFillContext, Severity } from "@/types";
-import { computeIntakeScore, getPrefillSummary, getSuggestedTitle } from "@/utils/intakeHelpers";
+import { buildPreFillFromFinding, computeIntakeScore, getPrefillSummary, getSuggestedTitle } from "@/utils/intakeHelpers";
 import { formatDateTime } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 
@@ -135,6 +135,14 @@ const STEP_COPY_CLASS = "font-sans text-[13px] text-foreground-tertiary";
 
 function isCAPAType(value: string | null): value is CAPAType {
   return value === "deviation" || value === "audit" || value === "complaint";
+}
+
+// The three SOURCE_CARDS map to pre-seeded golden cases that ship with an
+// enriched mock source record (batches, SOPs, auditor, etc.). Any other finding
+// is a real pending intake whose source record is just the Finding itself, so
+// its prefill must be built from the finding — not the golden template.
+function isGoldenSource(id: string): boolean {
+  return SOURCE_CARDS.some((card) => card.sourceId === id);
 }
 
 function getPrefillSource(prefill: PreFillContext) {
@@ -442,6 +450,11 @@ export function CapaIntakePage() {
     state.capas.find((c) => c.findingId === sourceId),
   );
 
+  // When the wizard is opened from a real pending finding (not one of the three
+  // pre-seeded golden cases), the single source card represents that finding and
+  // imports its own data rather than the golden template.
+  const importFromRealFinding = Boolean(querySourceId) && !isGoldenSource(querySourceId ?? "");
+
   // When source card selection changes, reset prefill
   useEffect(() => {
     if (!querySourceId) {
@@ -492,23 +505,64 @@ export function CapaIntakePage() {
     setSelectedType(type);
     setSourceId(id);
     try {
-      const imported = await importSourceData(type, id);
+      if (isGoldenSource(id)) {
+        // Pre-seeded golden case: pull the enriched mock source record and let
+        // Nova draft every gate answer from it.
+        const imported = await importSourceData(type, id);
+        setPrefill(imported);
+        setTitle(getSuggestedTitle(type, imported));
+        const classification = await classifyImpact(imported);
+        setImpactClassification(classification);
+        setSelectedSeverity(classification.severity);
+
+        // Nova reads the imported finding and drafts every gate answer so Andi
+        // reviews and refines instead of writing from a blank page.
+        const draft = await draftGateAnswers(type, id);
+        setGateAnswers({ ...EMPTY_GATE_ANSWERS, ...draft.answers });
+        setNovaDraft({ ...EMPTY_GATE_ANSWERS, ...draft.answers });
+        setDraftMeta({ sourceLabel: draft.sourceLabel, confidence: draft.confidence });
+
+        toast("Source imported · gate answers drafted", {
+          description: `Nova read ${getPrefillSource(imported)} and drafted the gate answers for your review.`,
+        });
+        setStep(2);
+        return;
+      }
+
+      // Real pending finding: there is no enriched source record to import, so
+      // the prefill is derived from the finding itself. Nova seeds only the
+      // observation it can actually read; Andi classifies the severity and writes
+      // the remaining gate answers, which keeps the intake score honestly tied to
+      // real input rather than an unrelated golden sample.
+      const finding = useCapaStore.getState().findings.find((record) => record.id === id);
+      if (!finding) {
+        throw new Error(`Finding ${id} is not available in the demo dataset.`);
+      }
+      const imported = buildPreFillFromFinding(finding, type);
       setPrefill(imported);
-      const suggestedTitle = getSuggestedTitle(type, imported);
-      setTitle(suggestedTitle);
-      const classification = await classifyImpact(imported);
-      setImpactClassification(classification);
-      setSelectedSeverity(classification.severity);
+      setTitle(finding.shortDescription);
+      // An ungraded pending finding is exactly what Andi must classify, so the
+      // severity selector starts empty instead of inheriting a golden grade.
+      setImpactClassification(undefined);
+      setSelectedSeverity(undefined);
 
-      // Nova reads the imported finding and drafts every gate answer so Andi
-      // reviews and refines instead of writing from a blank page.
-      const draft = await draftGateAnswers(type);
-      setGateAnswers({ ...EMPTY_GATE_ANSWERS, ...draft.answers });
-      setNovaDraft({ ...EMPTY_GATE_ANSWERS, ...draft.answers });
-      setDraftMeta({ sourceLabel: draft.sourceLabel, confidence: draft.confidence });
+      const draft = await draftGateAnswers(type, id);
+      const hasSourceSpecificDraft = draft.sourceLabel.includes(finding.id);
+      const seeded = hasSourceSpecificDraft
+        ? { ...EMPTY_GATE_ANSWERS, ...draft.answers }
+        : { ...EMPTY_GATE_ANSWERS, observation: finding.shortDescription };
+      setGateAnswers(seeded);
+      setNovaDraft(seeded);
+      setDraftMeta(
+        hasSourceSpecificDraft
+          ? { sourceLabel: draft.sourceLabel, confidence: draft.confidence }
+          : { sourceLabel: `${getPrefillSource(imported)} · ${finding.id}`, confidence: 62 },
+      );
 
-      toast("Source imported · gate answers drafted", {
-        description: `Nova read ${getPrefillSource(imported)} and drafted the gate answers for your review.`,
+      toast("Finding imported", {
+        description: hasSourceSpecificDraft
+          ? `Nova read ${finding.id} and drafted the gate answers for your review.`
+          : `Nova read ${finding.id} and pre-filled the observation. Complete the remaining gate answers.`,
       });
       setStep(2);
     } catch (err) {
@@ -729,6 +783,10 @@ export function CapaIntakePage() {
           <div className={cn("mb-3 grid gap-3", visibleSourceCards.length === 1 ? "grid-cols-1" : "grid-cols-3")}>
             {visibleSourceCards.map((card) => {
               const isImported = selectedType === card.type && Boolean(prefill);
+              const importTargetId = importFromRealFinding ? (querySourceId as string) : card.sourceId;
+              const importDescription = importFromRealFinding
+                ? existingFinding?.shortDescription ?? card.description
+                : card.description;
               return (
               <div
                 key={card.type}
@@ -766,17 +824,17 @@ export function CapaIntakePage() {
                 <p
                   className="m-0 rounded-[var(--r-sm)] border border-border-subtle bg-[var(--field-bg)] px-2 py-1 font-sans text-[11px] text-foreground-tertiary"
                 >
-                  {card.sourceId}
+                  {importTargetId}
                 </p>
 
                 {/* Description */}
                 <p className="m-0 font-sans text-[11px] leading-[1.4] text-foreground-faint">
-                  {card.description}
+                  {importDescription}
                 </p>
 
                 {/* Import button */}
                 <button
-                  onClick={() => handleImport(card.type, card.sourceId)}
+                  onClick={() => handleImport(card.type, importTargetId)}
                   disabled={isLoading}
                   className={cn(
                     "mt-auto flex w-full items-center justify-center gap-[5px] rounded-[var(--r-sm)] border px-0 py-[7px] font-sans text-xs font-semibold transition-[background,border-color,color,filter] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)]",

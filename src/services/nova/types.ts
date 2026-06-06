@@ -48,7 +48,7 @@ export interface NovaFindingAnalysisPacket {
 export interface NovaProvider {
   importSourceData(type: CAPAType, sourceId: string): Promise<PreFillContext>;
   classifyImpact(prefill: PreFillContext): Promise<ImpactClassification>;
-  draftGateAnswers(type: CAPAType): Promise<GateDraftSet>;
+  draftGateAnswers(type: CAPAType, sourceId?: string): Promise<GateDraftSet>;
   getContainmentSuggestion(capaId: string): Promise<Array<{ id: string; content: string }>>;
   getRCASuggestions(capaId: string, method: RCAMethod): Promise<unknown>;
   getCorrectiveActionSuggestions(capaId: string): Promise<string[]>;

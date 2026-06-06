@@ -1,6 +1,63 @@
 import type { CAPAType, GateQuestionID, PreFillContext, QualityScore } from "@/types";
+import type { Finding } from "@/types/finding";
 import { formatCAPAType, formatDateTime } from "@/utils/formatters";
 import { computeProblemSpecificity, computeTotalQualityScore } from "@/utils/scoring";
+
+// ── Pre-fill construction from a real finding ─────────────────────────────────
+
+// The static per-type prefill templates carry sample IDs/locations. A freshly
+// intaken finding only has the fields on the Finding record, so derive the
+// preFill from the finding itself — identity, date, department, severity, and
+// the observation all reflect the real finding. Fields the Finding doesn't
+// carry (line/equipment, initiator, auditor, customer, etc.) are left blank
+// rather than inheriting an unrelated sample.
+export function buildPreFillFromFinding(finding: Finding, type: CAPAType): PreFillContext {
+  if (type === "audit") {
+    return {
+      source: "Q100+",
+      findingId: finding.id,
+      auditId: "",
+      auditType: "internal",
+      reportedAt: finding.reportedAt,
+      auditDate: finding.reportedAt,
+      auditor: { name: "", organization: "" },
+      auditee: { department: finding.department, contactPerson: "" },
+      findingCategory: "",
+      findingDescription: finding.shortDescription,
+      regulationReference: [],
+      severity: finding.severity,
+      sopReferences: [],
+    };
+  }
+
+  if (type === "complaint") {
+    return {
+      source: "Bizzmine-Complaint",
+      complaintId: finding.id,
+      reportedAt: finding.reportedAt,
+      customer: { name: "", type: "distributor" },
+      product: { name: "", lotNumber: "", expiryDate: "" },
+      complaintType: "",
+      description: finding.shortDescription,
+      initialSeverity: finding.severity,
+      attachments: [],
+    };
+  }
+
+  return {
+    source: "Bizzmine",
+    deviationId: finding.id,
+    reportedAt: finding.reportedAt,
+    occurredAt: finding.reportedAt,
+    location: { department: finding.department, area: "", line: "", equipmentId: "" },
+    initiator: { name: "", role: "", nik: "" },
+    initialObservation: finding.shortDescription,
+    affectedBatches: [],
+    attachments: [],
+    sopReferences: [],
+    initialSeverity: finding.severity,
+  };
+}
 
 // ── Title suggestion ──────────────────────────────────────────────────────────
 

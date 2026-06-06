@@ -11,6 +11,7 @@ import { ArrowRight, Plus } from "lucide-react";
 import { useCapaStore, usePersonaStore } from "@/store";
 import type { CAPACase, CorrectiveAction, PersonaID, PreventiveAction } from "@/types";
 import { formatDate, formatRelativeTime } from "@/utils/formatters";
+import { canFillCAPA } from "@/utils/personaAccess";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { FilterCard, FilterSearchInput, FilterSelect } from "@/components/shared/FilterControls";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
@@ -55,6 +56,8 @@ export function CapaListPage() {
   const correctiveActions = useCapaStore((s) => s.correctiveActions);
   const preventiveActions = useCapaStore((s) => s.preventiveActions);
   const personas = usePersonaStore((s) => s.personas);
+  const activePersonaId = usePersonaStore((s) => s.activePersonaId);
+  const canCreate = canFillCAPA(activePersonaId);
   const getPersonaName = (id: PersonaID) => personas.find((p) => p.id === id)?.displayName ?? id;
 
   const [query, setQuery] = useState("");
@@ -110,13 +113,15 @@ export function CapaListPage() {
             Track every deviation, audit finding, and complaint CAPA with quality score, due date, and workflow status.
           </p>
         </div>
-        <Link
-          to="/capa/new"
-          className="inline-flex items-center gap-[7px] rounded-[var(--r-sm)] bg-[image:var(--grad-brand)] px-[18px] py-[9px] font-sans text-sm font-semibold text-primary-foreground no-underline transition-[filter] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:brightness-110 active:scale-[0.99]"
-        >
-          <Plus size={14} strokeWidth={2} />
-          New CAPA
-        </Link>
+        {canCreate && (
+          <Link
+            to="/capa/new"
+            className="inline-flex items-center gap-[7px] rounded-[var(--r-sm)] bg-[image:var(--grad-brand)] px-[18px] py-[9px] font-sans text-sm font-semibold text-primary-foreground no-underline transition-[filter] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:brightness-110 active:scale-[0.99]"
+          >
+            <Plus size={14} strokeWidth={2} />
+            New CAPA
+          </Link>
+        )}
       </div>
 
       {/* ── Filter bar ──────────────────────────────────────────────── */}

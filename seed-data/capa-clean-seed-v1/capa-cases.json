@@ -1,0 +1,791 @@
+[
+  {
+    "id": "CAPA-2026-0150",
+    "findingId": "DEV-2026-0150",
+    "type": "deviation",
+    "title": "Pressure Cascade Alert During Weighing Room Dispensing",
+    "preFill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0150",
+      "reportedAt": "2026-06-03T08:50:00+07:00",
+      "occurredAt": "2026-06-03T08:32:00+07:00",
+      "location": {
+        "department": "Production",
+        "area": "Weighing Room WGH-01",
+        "line": "Dispensing Booth DB-01",
+        "equipmentId": "DP-MON-WGH-01"
+      },
+      "initiator": {
+        "name": "Andi Wijaya",
+        "role": "Senior Production Operator",
+        "nik": "BF-PRD-1024"
+      },
+      "initialObservation": "Differential pressure in WGH-01 dropped 4 Pa below the lower alert limit for 4 minutes during lactose monohydrate dispensing for AzithroClear granules batch AZC-26-0603-A. The booth recovered after the door was secured; dispensed material was placed on QA hold.",
+      "affectedBatches": ["AZC-26-0603-A"],
+      "attachments": [
+        {
+          "name": "dev-2026-0150-pressure-trend.csv",
+          "type": "CSV",
+          "url": "/mock/attachments/dev-2026-0150-pressure-trend.csv"
+        },
+        {
+          "name": "wgh-01-dispensing-log.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/wgh-01-dispensing-log.pdf"
+        }
+      ],
+      "sopReferences": ["SOP-PRD-014", "SOP-HVAC-009", "SOP-QA-HOLD-003"],
+      "initialSeverity": "Major"
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "On 3 Jun 2026 at 08:32, WGH-01 differential pressure dropped 4 Pa below the lower alert limit for 4 minutes during lactose monohydrate dispensing for AzithroClear batch AZC-26-0603-A.",
+        "novaScoreContribution": 6,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Potential Major GMP impact because the pressure cascade protects exposed material during dispensing. The event was short, recovered quickly, and no visible contamination was observed, but the dispensed material requires QA hold and assessment.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "The dispensed lactose monohydrate for AZC-26-0603-A was placed on QA hold, WGH-01 was restricted from further dispensing, and Engineering was assigned to inspect DP-MON-WGH-01 and the supply air damper.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "Scope is limited to Weighing Room WGH-01, Dispensing Booth DB-01, pressure monitor DP-MON-WGH-01, and batch AZC-26-0603-A during the 08:32 to 08:36 event window.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "cause_confirmation",
+        "question": "What evidence is needed to confirm the root cause?",
+        "answer": "Confirm through HVAC trend review, damper actuator response test, alarm acknowledgement log, door-position history, and a PM record review for DP-MON-WGH-01.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "effectiveness_criteria",
+        "question": "How will effectiveness be verified?",
+        "answer": "Effectiveness requires a successful pressure recovery challenge after repair, no WGH-01 pressure alerts across five consecutive dispensing sessions, and QA release of the held material based on documented impact assessment.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 23,
+      "rootCauseDepth": 17,
+      "effectiveness": 17,
+      "containment": 21,
+      "total": 78,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 70,
+      "factors": [
+        {
+          "factor": "Process exposure",
+          "value": "Dispensed material exposed inside weighing room",
+          "weight": 28,
+          "rationale": "Pressure cascade protects exposed material during dispensing."
+        },
+        {
+          "factor": "Duration",
+          "value": "4 minutes below alert limit",
+          "weight": 16,
+          "rationale": "Short duration reduces but does not remove GMP risk."
+        },
+        {
+          "factor": "Batch impact",
+          "value": "One batch component on QA hold",
+          "weight": 26,
+          "rationale": "Material impact must be assessed before use."
+        }
+      ],
+      "rationale": "Major classification is appropriate because the event affected an environmental control protecting exposed material, but there is no confirmed contamination or action-limit breach.",
+      "computedAt": "2026-06-03T09:05:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "fiveWhys": [
+        {
+          "id": "WHY-0150-1",
+          "level": 1,
+          "question": "Why did the pressure cascade drop during dispensing?",
+          "novaSuggestion": "The supply air response lagged while the dispensing room door was opened for material staging.",
+          "novaCitations": [],
+          "userAnswer": "Pressure trend shows slow recovery after door closure, not a sensor outage.",
+          "status": "edited"
+        },
+        {
+          "id": "WHY-0150-2",
+          "level": 2,
+          "question": "Why was recovery slow after the door was closed?",
+          "novaSuggestion": "The supply air damper actuator may have responded slowly after the last PM.",
+          "novaCitations": [],
+          "userAnswer": "Engineering found the actuator response time outside the internal target.",
+          "status": "accepted"
+        },
+        {
+          "id": "WHY-0150-3",
+          "level": 3,
+          "question": "Why did PM not detect the slow actuator response?",
+          "novaSuggestion": "The PM check confirmed open-close movement but did not challenge pressure recovery under dispensing conditions.",
+          "novaCitations": [],
+          "userAnswer": "PM record only documents visual actuator movement and static room pressure.",
+          "status": "accepted"
+        }
+      ],
+      "confirmedRootCauses": [
+        "Supply air damper actuator response was slow after preventive maintenance because the PM check did not include a pressure recovery challenge under dispensing-door open conditions."
+      ]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "method": "process_review",
+      "evidenceFileNames": ["wgh-01-damper-response-test-draft.pdf"]
+    },
+    "intakeReviews": [
+      {
+        "reviewerPersonaId": "qa_deviation",
+        "reviewerName": "Siti Rahmawati",
+        "role": "QA Deviation",
+        "decision": "accepted",
+        "notes": "Major deviation. Continue with full 8D and hold material until QA impact assessment is complete.",
+        "reviewedAt": "2026-06-03T10:10:00+07:00"
+      },
+      {
+        "reviewerPersonaId": "head_of_dept",
+        "reviewerName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "accepted",
+        "notes": "Production accepts investigation ownership with Engineering support.",
+        "reviewedAt": "2026-06-03T10:34:00+07:00"
+      }
+    ],
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "investigation",
+    "currentStep": "rca",
+    "createdAt": "2026-06-03T09:06:00+07:00",
+    "updatedAt": "2026-06-05T14:20:00+07:00",
+    "createdBy": "initiator",
+    "assignedTo": "qa_deviation",
+    "department": "Production",
+    "disposisi": {
+      "reviewerPersonaId": "qa_deviation",
+      "assignedTo": "initiator",
+      "severity": "Major",
+      "rationale": "Pressure cascade deviation during active dispensing requires full investigation and documented material impact assessment.",
+      "dispositionAt": "2026-06-03T10:10:00+07:00"
+    }
+  },
+  {
+    "id": "CAPA-2026-0127",
+    "findingId": "AUD-2026-0127",
+    "type": "audit",
+    "title": "Missing Cleaning Verification Evidence for Compression Suite CS-01",
+    "preFill": {
+      "source": "Q100+",
+      "findingId": "AUD-2026-0127",
+      "auditId": "IA-2026-PRD-031",
+      "auditType": "internal",
+      "reportedAt": "2026-06-01T10:40:00+07:00",
+      "auditDate": "2026-05-31T09:00:00+07:00",
+      "auditor": {
+        "name": "Siti Rahmawati",
+        "organization": "QA Compliance"
+      },
+      "auditee": {
+        "department": "Production",
+        "contactPerson": "Hendra Gunawan"
+      },
+      "findingCategory": "Cleaning Verification Evidence",
+      "findingDescription": "Manual cleaning verification evidence for Compression Suite CS-01 was referenced in the batch release checklist but the swab map attachment and reviewer sign-off were not attached to the cleaning record package.",
+      "regulationReference": ["PIC/S GMP Chapter 4", "PIC/S GMP Chapter 5", "BPOM CPOB 2024 Annex 15"],
+      "severity": "Major",
+      "sopReferences": ["SOP-CLN-011", "SOP-DOC-004", "SOP-QA-REL-008"]
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "During internal audit IA-2026-PRD-031 on 31 May 2026, QA found the CS-01 cleaning verification package referenced a swab map attachment and reviewer sign-off that were not present in the controlled record package.",
+        "novaScoreContribution": 6,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Major GMP documentation impact. Cleaning effectiveness is not proven defective, but release defensibility and data completeness are weakened for records tied to Compression Suite CS-01.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "QA placed the affected cleaning package under document hold, blocked further use of the referenced record as release evidence, and requested Production to retrieve the original swab map and reviewer sign-off.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "Scope is Compression Suite CS-01 cleaning record package for the audit sample window. No additional suites are included until document reconciliation confirms whether this is repeated.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "cause_confirmation",
+        "question": "What evidence is needed to confirm the root cause?",
+        "answer": "Review document routing history, batch release checklist cross-references, QA reviewer comments, and SOP-CLN-011 attachment control requirements.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "effectiveness_criteria",
+        "question": "How will effectiveness be verified?",
+        "answer": "Effectiveness will be verified by a QA review of 20 consecutive cleaning record packages with 100% attachment completeness and reviewer sign-off before release checklist closure.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 22,
+      "rootCauseDepth": 14,
+      "effectiveness": 18,
+      "containment": 19,
+      "total": 73,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 66,
+      "factors": [
+        {
+          "factor": "Record criticality",
+          "value": "Cleaning verification evidence",
+          "weight": 30,
+          "rationale": "Cleaning verification records support equipment release."
+        },
+        {
+          "factor": "Confirmed product impact",
+          "value": "Not confirmed",
+          "weight": 12,
+          "rationale": "The issue is a record completeness gap, not a confirmed cleaning failure."
+        },
+        {
+          "factor": "Audit visibility",
+          "value": "Internal audit major finding",
+          "weight": 24,
+          "rationale": "The gap could become a regulatory observation if repeated."
+        }
+      ],
+      "rationale": "Major classification fits because cleaning verification evidence is a GMP-critical record, even without confirmed cleaning failure.",
+      "computedAt": "2026-06-01T11:05:00+07:00"
+    },
+    "rca": {
+      "method": "fishbone",
+      "fishbone": [],
+      "confirmedRootCauses": []
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "intakeReviews": [
+      {
+        "reviewerPersonaId": "qa_deviation",
+        "reviewerName": "Siti Rahmawati",
+        "role": "QA Compliance"
+      },
+      {
+        "reviewerPersonaId": "head_of_dept",
+        "reviewerName": "Bambang Saputra",
+        "role": "Department Head"
+      }
+    ],
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "pending_review",
+    "currentStep": "problem",
+    "createdAt": "2026-06-01T11:07:00+07:00",
+    "updatedAt": "2026-06-01T11:07:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "qa_deviation",
+    "department": "Production",
+    "auditPhase": "plan",
+    "auditContext": {
+      "variant": "internal",
+      "schedule": {
+        "dateRange": {
+          "start": "2026-05-31T09:00:00+07:00",
+          "end": "2026-05-31T15:00:00+07:00"
+        },
+        "auditTeam": [
+          {
+            "name": "Siti Rahmawati",
+            "role": "QA Compliance Auditor"
+          }
+        ],
+        "scope": "Cleaning verification record completeness for Compression Suite CS-01.",
+        "auditee": "Production"
+      }
+    }
+  },
+  {
+    "id": "CAPA-2026-0162",
+    "findingId": "AUD-2026-0162",
+    "type": "audit",
+    "title": "Warehouse Retraining Assignment Gap After SOP-WH-030 Revision",
+    "preFill": {
+      "source": "Q100+",
+      "findingId": "AUD-2026-0162",
+      "auditId": "IA-2026-WH-044",
+      "auditType": "internal",
+      "reportedAt": "2026-06-02T13:15:00+07:00",
+      "auditDate": "2026-06-02T09:30:00+07:00",
+      "auditor": {
+        "name": "Yulianto Nugroho",
+        "organization": "QA Compliance"
+      },
+      "auditee": {
+        "department": "Warehouse",
+        "contactPerson": "Bambang Saputra"
+      },
+      "findingCategory": "Training Record Control",
+      "findingDescription": "Two warehouse operators assigned to cold-chain picking were not included in the Q100+ retraining task after SOP-WH-030 was revised. Both operators had performed GMP picking activities after the effective date.",
+      "regulationReference": ["PIC/S GMP Chapter 2", "BPOM CPOB 2024 Chapter 2"],
+      "severity": "Major",
+      "sopReferences": ["SOP-WH-030", "SOP-TRN-002", "SOP-QA-014"]
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "On 2 Jun 2026, internal audit IA-2026-WH-044 found two warehouse operators assigned to cold-chain picking were not included in the Q100+ retraining task after SOP-WH-030 revision.",
+        "novaScoreContribution": 6,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Major GMP training compliance impact. The two operators performed GMP picking activities after the effective date without documented retraining, although sampled dispatch records showed no picking error.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "The two operators were removed from independent cold-chain picking until retraining and competency checks were completed. Their post-effective-date picking records were reviewed by QA.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "Scope is cold-chain warehouse picking governed by SOP-WH-030, two operators, and dispatch records between the SOP effective date and the audit date.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "cause_confirmation",
+        "question": "What evidence is needed to confirm the root cause?",
+        "answer": "Confirm through Q100+ training assignment history, SOP revision workflow, warehouse role matrix, and operator roster mapping.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "effectiveness_criteria",
+        "question": "How will effectiveness be verified?",
+        "answer": "Effectiveness is met when the next two SOP revisions show 100% role-based training assignment before effective date and QA monthly roster reconciliation shows no missing warehouse roles.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 24,
+      "rootCauseDepth": 22,
+      "effectiveness": 21,
+      "containment": 21,
+      "total": 88,
+      "isAuditReady": true
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 64,
+      "factors": [
+        {
+          "factor": "Training criticality",
+          "value": "Cold-chain GMP task",
+          "weight": 28,
+          "rationale": "Operators performed GMP work after SOP effective date."
+        },
+        {
+          "factor": "Scope",
+          "value": "Two operators",
+          "weight": 16,
+          "rationale": "The scope is limited and traceable."
+        },
+        {
+          "factor": "Product impact",
+          "value": "No dispatch error found",
+          "weight": 20,
+          "rationale": "Record review reduced direct product risk."
+        }
+      ],
+      "rationale": "Major classification is justified because required training was missing for GMP tasks after SOP effectivity, even though product impact was not identified.",
+      "computedAt": "2026-06-02T13:40:00+07:00"
+    },
+    "rca": {
+      "method": "fishbone",
+      "fishbone": [
+        {
+          "category": "Method",
+          "novaEntries": ["SOP revision workflow did not force role-matrix reconciliation before training task release."],
+          "userEntries": ["The SOP owner copied the prior training group and did not refresh the warehouse role list."],
+          "status": "edited"
+        },
+        {
+          "category": "Man",
+          "novaEntries": ["Two operators changed role after the previous SOP revision and were absent from the saved training group."],
+          "userEntries": [],
+          "status": "accepted"
+        },
+        {
+          "category": "Measurement",
+          "novaEntries": ["No monthly QA check compared active GMP roles to open training assignments."],
+          "userEntries": [],
+          "status": "accepted"
+        }
+      ],
+      "confirmedRootCauses": [
+        "Q100+ SOP revision workflow allowed a saved training group to be reused without reconciling the current warehouse role matrix, so two active cold-chain picking operators were missed."
+      ]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "method": "process_review",
+      "result": "QA verified two subsequent SOP revision training tasks against the active warehouse role matrix with 100% assignment completeness.",
+      "evidenceFileNames": ["aud-2026-0162-training-reconciliation.pdf", "q100-role-matrix-june-2026.xlsx"],
+      "verifiedAt": "2026-06-05T15:30:00+07:00",
+      "verifiedBy": "qa_deviation"
+    },
+    "intakeReviews": [
+      {
+        "reviewerPersonaId": "qa_deviation",
+        "reviewerName": "Siti Rahmawati",
+        "role": "QA Compliance",
+        "decision": "accepted",
+        "notes": "Major training-control CAPA required.",
+        "reviewedAt": "2026-06-02T14:05:00+07:00"
+      },
+      {
+        "reviewerPersonaId": "head_of_dept",
+        "reviewerName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "accepted",
+        "notes": "Warehouse accepts corrective ownership.",
+        "reviewedAt": "2026-06-02T14:22:00+07:00"
+      }
+    ],
+    "approvals": [
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "approved",
+        "notes": "Corrective and preventive actions completed.",
+        "signedAt": "2026-06-05T16:05:00+07:00",
+        "stage": "closure"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "Head of QA",
+        "decision": "approved",
+        "notes": "Closure accepted. Training control effectiveness evidence is sufficient.",
+        "signedAt": "2026-06-05T17:10:00+07:00",
+        "stage": "closure"
+      }
+    ],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "closed",
+    "currentStep": "signoff",
+    "createdAt": "2026-06-02T13:42:00+07:00",
+    "updatedAt": "2026-06-05T17:10:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "head_of_qa",
+    "department": "Warehouse",
+    "auditPhase": "actual",
+    "auditContext": {
+      "variant": "internal",
+      "schedule": {
+        "dateRange": {
+          "start": "2026-06-02T09:30:00+07:00",
+          "end": "2026-06-02T13:00:00+07:00"
+        },
+        "auditTeam": [
+          {
+            "name": "Yulianto Nugroho",
+            "role": "QA Compliance Auditor"
+          },
+          {
+            "name": "Siti Rahmawati",
+            "role": "QA Reviewer"
+          }
+        ],
+        "scope": "Warehouse training records after SOP-WH-030 revision.",
+        "auditee": "Warehouse"
+      },
+      "leadAuditorReviewedAt": "2026-06-05T16:20:00+07:00"
+    },
+    "closingCompleteness": {
+      "complete": true
+    }
+  },
+  {
+    "id": "CAPA-2026-0106",
+    "findingId": "CMP-2026-0106",
+    "type": "complaint",
+    "title": "Lifted Aluminum Crimp Edge on Returned Cardiostat Vial",
+    "preFill": {
+      "source": "Bizzmine-Complaint",
+      "complaintId": "CMP-2026-0106",
+      "reportedAt": "2026-05-31T16:25:00+07:00",
+      "customer": {
+        "name": "RS Kencana Surabaya",
+        "type": "hospital"
+      },
+      "product": {
+        "name": "Cardiostat Injection 10 mL",
+        "lotNumber": "CSI-26-0509-A",
+        "expiryDate": "2027-05-31"
+      },
+      "complaintType": "Container Closure Defect",
+      "description": "Hospital pharmacy found one unopened vial with a lifted aluminum crimp edge during incoming inspection. The flip-off cap was present, the stopper was seated, and no leakage was observed. The hospital quarantined the vial and provided photos before returning it.",
+      "initialSeverity": "Major",
+      "attachments": [
+        {
+          "name": "cmp-2026-0106-crimp-photo-set.zip",
+          "type": "ZIP",
+          "url": "/mock/attachments/cmp-2026-0106-crimp-photo-set.zip"
+        },
+        {
+          "name": "returned-vial-chain-of-custody.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/returned-vial-chain-of-custody.pdf"
+        }
+      ]
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "On 31 May 2026, RS Kencana Surabaya reported one unopened Cardiostat Injection 10 mL vial, lot CSI-26-0509-A, with a lifted aluminum crimp edge during incoming inspection.",
+        "novaScoreContribution": 6,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Potential Major complaint impact because a crimp defect can indicate container closure integrity risk. No leakage was observed and the stopper was seated, so impact remains potential pending returned-sample assessment.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "The complaint vial was quarantined by the hospital and returned under chain of custody. Retained samples and remaining warehouse stock for lot CSI-26-0509-A were placed under QA visual inspection hold.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "Scope includes Cardiostat Injection 10 mL lot CSI-26-0509-A, the returned hospital vial, retained samples, warehouse stock, and Packaging Capper Line CP-01 used after change-parts maintenance.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "cause_confirmation",
+        "question": "What evidence is needed to confirm the root cause?",
+        "answer": "Confirm through returned-vial visual assessment, retained-sample inspection, capper torque trend, change-parts maintenance record, and in-process crimp challenge records.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "effectiveness_criteria",
+        "question": "How will effectiveness be verified?",
+        "answer": "Effectiveness requires no crimp defects in the next three Cardiostat packaging campaigns, acceptable torque challenge results at start-up and upper speed, and no repeat complaints for 90 days.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 23,
+      "rootCauseDepth": 20,
+      "effectiveness": 19,
+      "containment": 22,
+      "total": 84,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 74,
+      "factors": [
+        {
+          "factor": "Defect type",
+          "value": "Container closure visual defect",
+          "weight": 34,
+          "rationale": "Crimp integrity is relevant to sterile product protection."
+        },
+        {
+          "factor": "Customer type",
+          "value": "Hospital",
+          "weight": 16,
+          "rationale": "Hospital complaint requires timely medical customer response."
+        },
+        {
+          "factor": "Confirmed leakage",
+          "value": "No leakage observed",
+          "weight": 24,
+          "rationale": "No leakage lowers immediate patient risk but does not remove CCI concern."
+        }
+      ],
+      "rationale": "Major classification is appropriate because the complaint involves a sterile injectable container closure defect, although leakage and product exposure are not confirmed.",
+      "computedAt": "2026-05-31T17:00:00+07:00"
+    },
+    "rca": {
+      "method": "decision_tree",
+      "decisionTree": {
+        "rootNodeId": "DT-0106-1",
+        "nodes": [
+          {
+            "id": "DT-0106-1",
+            "question": "Is the returned vial defect confirmed by QA visual inspection?",
+            "yesNodeId": "DT-0106-2",
+            "noNodeId": "DT-0106-5",
+            "isLeaf": false
+          },
+          {
+            "id": "DT-0106-2",
+            "question": "Do retained samples show the same crimp defect pattern?",
+            "yesNodeId": "DT-0106-3",
+            "noNodeId": "DT-0106-4",
+            "isLeaf": false
+          },
+          {
+            "id": "DT-0106-3",
+            "question": "Was the lot packaged after capper change-parts maintenance?",
+            "yesNodeId": "DT-0106-6",
+            "noNodeId": "DT-0106-7",
+            "isLeaf": false
+          },
+          {
+            "id": "DT-0106-4",
+            "question": "Single returned-vial defect; continue distribution assessment.",
+            "isLeaf": true,
+            "conclusion": "Treat as isolated complaint unless distribution inspection finds recurrence."
+          },
+          {
+            "id": "DT-0106-5",
+            "question": "Defect not confirmed.",
+            "isLeaf": true,
+            "conclusion": "Close as unconfirmed customer observation after QA review."
+          },
+          {
+            "id": "DT-0106-6",
+            "question": "Change-parts maintenance link confirmed.",
+            "isLeaf": true,
+            "conclusion": "Investigate capper setup challenge and upper-speed torque verification."
+          },
+          {
+            "id": "DT-0106-7",
+            "question": "Maintenance link not confirmed.",
+            "isLeaf": true,
+            "conclusion": "Investigate component lot and operator inspection controls."
+          }
+        ]
+      },
+      "confirmedRootCauses": [
+        "Capping torque drift after capper change-parts replacement was not challenged with requalification samples at the upper packaging speed range."
+      ]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "method": "batch_trend",
+      "evidenceFileNames": ["csi-26-0509-a-retained-sample-inspection.pdf"]
+    },
+    "intakeReviews": [
+      {
+        "reviewerPersonaId": "qa_deviation",
+        "reviewerName": "Siti Rahmawati",
+        "role": "QA Complaint",
+        "decision": "accepted",
+        "notes": "Major complaint CAPA required due to potential container closure integrity risk.",
+        "reviewedAt": "2026-05-31T17:20:00+07:00"
+      },
+      {
+        "reviewerPersonaId": "head_of_dept",
+        "reviewerName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "accepted",
+        "notes": "Packaging accepts investigation and capper requalification ownership.",
+        "reviewedAt": "2026-05-31T17:45:00+07:00"
+      }
+    ],
+    "approvals": [
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "approved",
+        "notes": "Plan approved with Engineering participation.",
+        "signedAt": "2026-06-01T09:15:00+07:00",
+        "stage": "plan"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "Head of QA",
+        "decision": "approved",
+        "notes": "Proceed with retained-sample assessment and capper challenge.",
+        "signedAt": "2026-06-01T10:05:00+07:00",
+        "stage": "plan"
+      }
+    ],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "investigation",
+    "currentStep": "verification",
+    "createdAt": "2026-05-31T17:02:00+07:00",
+    "updatedAt": "2026-06-05T11:40:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "qa_deviation",
+    "department": "QA Complaint / Packaging",
+    "customerResponse": {
+      "responseSentAt": "2026-06-01T11:25:00+07:00",
+      "customerReplied": true,
+      "replyDueAt": "2026-06-07T17:00:00+07:00"
+    }
+  }
+]
+

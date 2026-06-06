@@ -1,0 +1,89 @@
+{
+  "version": "clean-capa-seed-v1",
+  "createdFor": "No-DB live mock CAPA data",
+  "rules": [
+    "sourceRecordId is the canonical import key",
+    "findingId is always one-to-one with sourceRecordId",
+    "capaId must be deterministic from findingId",
+    "pending_capa findings intentionally have no currentCapaId",
+    "actions and notifications link only by capaId"
+  ],
+  "records": [
+    {
+      "sourceRecordId": "SRC-BM-DEV-2026-0144",
+      "findingId": "DEV-2026-0144",
+      "source": "Bizzmine",
+      "type": "deviation",
+      "findingStatus": "pending_capa",
+      "expectedCapaId": "CAPA-2026-0144",
+      "currentCapaId": null,
+      "correctiveActionIds": [],
+      "preventiveActionIds": [],
+      "auditEventIds": ["AE-SEED-0001"],
+      "notes": "Primary test case for creating CAPA from the selected finding without falling back to DEV-2026-0341."
+    },
+    {
+      "sourceRecordId": "SRC-BM-DEV-2026-0150",
+      "findingId": "DEV-2026-0150",
+      "source": "Bizzmine",
+      "type": "deviation",
+      "findingStatus": "capa_in_progress",
+      "expectedCapaId": "CAPA-2026-0150",
+      "currentCapaId": "CAPA-2026-0150",
+      "correctiveActionIds": ["CA-2026-0150-01", "CA-2026-0150-02"],
+      "preventiveActionIds": ["PA-2026-0150-01"],
+      "auditEventIds": ["AE-SEED-0002", "AE-SEED-0003", "AE-SEED-0004", "AE-SEED-0005"]
+    },
+    {
+      "sourceRecordId": "SRC-Q100-AUD-2026-0127",
+      "findingId": "AUD-2026-0127",
+      "source": "Q100+",
+      "type": "audit",
+      "findingStatus": "pending_review",
+      "expectedCapaId": "CAPA-2026-0127",
+      "currentCapaId": "CAPA-2026-0127",
+      "correctiveActionIds": [],
+      "preventiveActionIds": [],
+      "auditEventIds": ["AE-SEED-0006", "AE-SEED-0007"],
+      "notes": "Submitted CAPA waiting for two intake reviewers."
+    },
+    {
+      "sourceRecordId": "SRC-Q100-AUD-2026-0162",
+      "findingId": "AUD-2026-0162",
+      "source": "Q100+",
+      "type": "audit",
+      "findingStatus": "capa_closed",
+      "expectedCapaId": "CAPA-2026-0162",
+      "currentCapaId": "CAPA-2026-0162",
+      "correctiveActionIds": ["CA-2026-0162-01", "CA-2026-0162-02"],
+      "preventiveActionIds": ["PA-2026-0162-01"],
+      "auditEventIds": ["AE-SEED-0008", "AE-SEED-0009", "AE-SEED-0010"]
+    },
+    {
+      "sourceRecordId": "SRC-BMC-CMP-2026-0098",
+      "findingId": "CMP-2026-0098",
+      "source": "Bizzmine-Complaint",
+      "type": "complaint",
+      "findingStatus": "pending_capa",
+      "expectedCapaId": "CAPA-2026-0098",
+      "currentCapaId": null,
+      "correctiveActionIds": [],
+      "preventiveActionIds": [],
+      "auditEventIds": ["AE-SEED-0011"],
+      "notes": "Second on-demand CAPA creation test case, from complaint source."
+    },
+    {
+      "sourceRecordId": "SRC-BMC-CMP-2026-0106",
+      "findingId": "CMP-2026-0106",
+      "source": "Bizzmine-Complaint",
+      "type": "complaint",
+      "findingStatus": "capa_in_progress",
+      "expectedCapaId": "CAPA-2026-0106",
+      "currentCapaId": "CAPA-2026-0106",
+      "correctiveActionIds": ["CA-2026-0106-01", "CA-2026-0106-02"],
+      "preventiveActionIds": ["PA-2026-0106-01"],
+      "auditEventIds": ["AE-SEED-0012", "AE-SEED-0013", "AE-SEED-0014"]
+    }
+  ]
+}
+

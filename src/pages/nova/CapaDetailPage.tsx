@@ -33,7 +33,7 @@ import type {
 } from "@/types";
 import { formatCAPAType, formatDate, formatDateTime } from "@/utils/formatters";
 import { getScoreLiftTips } from "@/utils/scoring";
-import { canFillCAPA } from "@/utils/personaAccess";
+import { canEditCAPA, isIntakeCleared } from "@/utils/personaAccess";
 import {
   Dialog,
   DialogContent,
@@ -84,18 +84,17 @@ const EMBEDDED_STEP_COMPONENTS: Record<EightDStep, React.ComponentType> = {
 /* ── Helpers ─────────────────────────────────────────────────────── */
 
 // While a CAPA sits in the intake review gate, the 8D investigation is locked —
-// Andi cannot start filling steps until both reviewers approve.
-const INTAKE_BLOCKED_STATUSES = ["pending_review", "revision_requested", "rejected"];
-const isIntakeBlocked = (status: string) => INTAKE_BLOCKED_STATUSES.includes(status);
+// the Initiator cannot start filling steps until both reviewers accept. The
+// access rule itself lives in `personaAccess` (isIntakeCleared / canEditCAPA);
+// this page only reads it for the stepper visuals and CTA.
 
 function getStepState(
   step: EightDStep,
-  currentStep: EightDStep,
-  status: string,
+  capa: CAPACase,
 ): "done" | "active" | "locked" {
-  if (status === "closed") return "done";
-  if (isIntakeBlocked(status)) return "locked";
-  const ci = eightDSteps.indexOf(currentStep);
+  if (capa.status === "closed") return "done";
+  if (!isIntakeCleared(capa)) return "locked";
+  const ci = eightDSteps.indexOf(capa.currentStep);
   const si = eightDSteps.indexOf(step);
   if (si < ci) return "done";
   if (si === ci) return "active";
@@ -234,7 +233,7 @@ function LeftColumn({
             <StepItem
               key={step}
               step={step}
-              state={getStepState(step, capa.currentStep, capa.status)}
+              state={getStepState(step, capa)}
               isSelected={selectedStep === step}
               onSelect={() => onSelectStep(step)}
             />
@@ -390,7 +389,13 @@ function IntakeDecisionControls({
   const [notes, setNotes] = useState("");
 
   function decide(decision: IntakeDecision, label: string) {
-    recordIntakeDecision(capaId, reviewerPersonaId, decision, notes);
+    const recorded = recordIntakeDecision(capaId, reviewerPersonaId, decision, notes);
+    if (!recorded) {
+      toast.error("Decision blocked", {
+        description: "This intake decision can only be recorded by the active reviewer assigned to this gate.",
+      });
+      return;
+    }
     toast.success(`Decision recorded: ${label}`, {
       description:
         decision === "accepted"
@@ -655,7 +660,7 @@ function StepDetailView({
   step: EightDStep;
   onBackToOverview: () => void;
 }) {
-  const stepState = getStepState(step, capa.currentStep, capa.status);
+  const stepState = getStepState(step, capa);
   const containmentAnswer = capa.gateAnswers.find((answer) => answer.questionId === "containment");
   const problemAnswer = capa.gateAnswers.find((answer) => answer.questionId === "observation");
   const stepTone = stepState === "done"
@@ -936,6 +941,26 @@ function IntakeStatusBanner({ capa }: { capa: CAPACase }) {
   const myReview = capa.intakeReviews?.find((r) => r.reviewerPersonaId === activePersonaId);
   const editIntakeUrl = `/capa/new?type=${capa.type}&sourceId=${capa.findingId}`;
 
+  if (capa.status === "draft") {
+    return (
+      <div className="rounded-[var(--r-md)] border-l-[3px] border-l-warning bg-[var(--warning-soft)] px-5 py-4">
+        <p className="mb-1 mt-0 font-sans text-[13px] font-semibold text-warning">Draft — not yet submitted</p>
+        <p className="m-0 mb-3 font-sans text-[13px] leading-[1.6] text-foreground-secondary">
+          This CAPA hasn't been submitted for intake review yet. The 8D investigation unlocks only once Siti Rahmawati (QA) and Bambang Saputra (Department Head) both accept the intake.
+        </p>
+        {activePersonaId === "initiator" && (
+          <Link
+            to={editIntakeUrl}
+            className="inline-flex items-center gap-2 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-4 py-2 font-sans text-[13px] font-semibold text-primary-foreground no-underline"
+          >
+            Submit for intake review
+            <ArrowRight size={14} />
+          </Link>
+        )}
+      </div>
+    );
+  }
+
   if (capa.status === "pending_review") {
     const isReviewer = Boolean(myReview);
     const reviewerActed = Boolean(myReview?.decision);
@@ -1157,10 +1182,10 @@ function MiddleColumn({
   onBackToOverview: () => void;
 }) {
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
-  const canEdit = canFillCAPA(activePersonaId);
+  const canEdit = canEditCAPA(activePersonaId, capa);
   const [auditOpen, setAuditOpen] = useState(false);
 
-  if (selectedStep && !isIntakeBlocked(capa.status)) {
+  if (selectedStep && isIntakeCleared(capa)) {
     // Closed cases are read-only for everyone; for open cases, only the
     // initiator gets the editable workspace — other personas view it read-only.
     if (capa.status === "closed" || !canEdit) {
@@ -1289,7 +1314,7 @@ function MiddleColumn({
       <NovaSummaryCard capa={capa} />
 
       {/* CTA — gated behind intake review, then behind initiator-only editing */}
-      {isIntakeBlocked(capa.status) ? (
+      {!isIntakeCleared(capa) ? (
         <div className="pb-8">
           <IntakeStatusBanner capa={capa} />
         </div>

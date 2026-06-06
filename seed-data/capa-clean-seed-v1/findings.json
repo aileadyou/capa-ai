@@ -1,0 +1,67 @@
+[
+  {
+    "id": "DEV-2026-0144",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Line clearance checklist missed the domestic leaflet code during carton changeover on Packaging Line C2.",
+    "severity": "Ungraded",
+    "department": "Packaging",
+    "reportedAt": "2026-06-02T15:30:00+07:00",
+    "status": "pending_capa"
+  },
+  {
+    "id": "DEV-2026-0150",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Weighing-room pressure cascade dropped below alert limit during active dispensing.",
+    "severity": "Major",
+    "department": "Production",
+    "reportedAt": "2026-06-03T08:50:00+07:00",
+    "status": "capa_in_progress",
+    "linkedCapaId": "CAPA-2026-0150"
+  },
+  {
+    "id": "AUD-2026-0127",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "Internal audit found missing manual cleaning verification evidence for Compression Suite CS-01.",
+    "severity": "Major",
+    "department": "Production",
+    "reportedAt": "2026-06-01T10:40:00+07:00",
+    "status": "pending_review",
+    "linkedCapaId": "CAPA-2026-0127"
+  },
+  {
+    "id": "AUD-2026-0162",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "Warehouse retraining task missed two operators after SOP-WH-030 revision.",
+    "severity": "Major",
+    "department": "Warehouse",
+    "reportedAt": "2026-06-02T13:15:00+07:00",
+    "status": "capa_closed",
+    "linkedCapaId": "CAPA-2026-0162"
+  },
+  {
+    "id": "CMP-2026-0098",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "shortDescription": "End user reported one sealed carton missing the Indonesian package insert.",
+    "severity": "Ungraded",
+    "department": "Packaging",
+    "reportedAt": "2026-05-30T10:05:00+07:00",
+    "status": "pending_capa"
+  },
+  {
+    "id": "CMP-2026-0106",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "shortDescription": "Hospital customer reported lifted aluminum crimp edge on one unopened Cardiostat vial.",
+    "severity": "Major",
+    "department": "QA Complaint / Packaging",
+    "reportedAt": "2026-05-31T16:25:00+07:00",
+    "status": "capa_in_progress",
+    "linkedCapaId": "CAPA-2026-0106"
+  }
+]
+

@@ -1,0 +1,179 @@
+[
+  {
+    "id": "AE-SEED-0001",
+    "timestamp": "2026-06-02T15:30:00+07:00",
+    "actorPersonaId": "initiator",
+    "actorName": "Rina Marlina",
+    "actorRole": "Packaging Line Leader",
+    "domain": "integration",
+    "eventType": "source_imported",
+    "action": "Imported Bizzmine source record SRC-BM-DEV-2026-0144 for finding DEV-2026-0144.",
+    "findingId": "DEV-2026-0144"
+  },
+  {
+    "id": "AE-SEED-0002",
+    "timestamp": "2026-06-03T08:50:00+07:00",
+    "actorPersonaId": "initiator",
+    "actorName": "Andi Wijaya",
+    "actorRole": "Senior Production Operator",
+    "domain": "integration",
+    "eventType": "source_imported",
+    "action": "Imported Bizzmine source record SRC-BM-DEV-2026-0150 for finding DEV-2026-0150.",
+    "findingId": "DEV-2026-0150"
+  },
+  {
+    "id": "AE-SEED-0003",
+    "timestamp": "2026-06-03T09:06:00+07:00",
+    "actorName": "Nova",
+    "actorRole": "AI Coach",
+    "domain": "system",
+    "eventType": "source_imported",
+    "action": "Created CAPA-2026-0150 from finding DEV-2026-0150.",
+    "capaId": "CAPA-2026-0150",
+    "findingId": "DEV-2026-0150",
+    "novaMetadata": {
+      "modelName": "Nova Mock Engine",
+      "modelVersion": "nova-demo-v1",
+      "confidenceScore": 0.89
+    }
+  },
+  {
+    "id": "AE-SEED-0004",
+    "timestamp": "2026-06-03T10:10:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Deviation",
+    "domain": "system",
+    "eventType": "nova_classification",
+    "action": "Classified DEV-2026-0150 as Major and accepted CAPA-2026-0150 for full 8D investigation.",
+    "capaId": "CAPA-2026-0150",
+    "findingId": "DEV-2026-0150"
+  },
+  {
+    "id": "AE-SEED-0005",
+    "timestamp": "2026-06-05T14:20:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Deviation",
+    "domain": "system",
+    "eventType": "root_cause_confirmed",
+    "action": "Confirmed WGH-01 damper actuator response and PM challenge gap as the root cause for CAPA-2026-0150.",
+    "capaId": "CAPA-2026-0150",
+    "findingId": "DEV-2026-0150"
+  },
+  {
+    "id": "AE-SEED-0006",
+    "timestamp": "2026-06-01T10:40:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Compliance Auditor",
+    "domain": "integration",
+    "eventType": "source_imported",
+    "action": "Imported Q100+ source record SRC-Q100-AUD-2026-0127 for finding AUD-2026-0127.",
+    "findingId": "AUD-2026-0127"
+  },
+  {
+    "id": "AE-SEED-0007",
+    "timestamp": "2026-06-01T11:07:00+07:00",
+    "actorName": "Nova",
+    "actorRole": "AI Coach",
+    "domain": "system",
+    "eventType": "source_imported",
+    "action": "Created CAPA-2026-0127 from finding AUD-2026-0127 and submitted it for intake review.",
+    "capaId": "CAPA-2026-0127",
+    "findingId": "AUD-2026-0127",
+    "novaMetadata": {
+      "modelName": "Nova Mock Engine",
+      "modelVersion": "nova-demo-v1",
+      "confidenceScore": 0.86
+    }
+  },
+  {
+    "id": "AE-SEED-0008",
+    "timestamp": "2026-06-02T13:15:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Yulianto Nugroho",
+    "actorRole": "QA Compliance Auditor",
+    "domain": "integration",
+    "eventType": "source_imported",
+    "action": "Imported Q100+ source record SRC-Q100-AUD-2026-0162 for finding AUD-2026-0162.",
+    "findingId": "AUD-2026-0162"
+  },
+  {
+    "id": "AE-SEED-0009",
+    "timestamp": "2026-06-02T13:42:00+07:00",
+    "actorName": "Nova",
+    "actorRole": "AI Coach",
+    "domain": "system",
+    "eventType": "source_imported",
+    "action": "Created CAPA-2026-0162 from finding AUD-2026-0162.",
+    "capaId": "CAPA-2026-0162",
+    "findingId": "AUD-2026-0162",
+    "novaMetadata": {
+      "modelName": "Nova Mock Engine",
+      "modelVersion": "nova-demo-v1",
+      "confidenceScore": 0.9
+    }
+  },
+  {
+    "id": "AE-SEED-0010",
+    "timestamp": "2026-06-05T17:10:00+07:00",
+    "actorPersonaId": "head_of_qa",
+    "actorName": "Dewi Anggraini",
+    "actorRole": "Head of QA",
+    "domain": "system",
+    "eventType": "capa_closed",
+    "action": "Closed CAPA-2026-0162 after verification of role-matrix reconciliation and completed retraining.",
+    "capaId": "CAPA-2026-0162",
+    "findingId": "AUD-2026-0162"
+  },
+  {
+    "id": "AE-SEED-0011",
+    "timestamp": "2026-05-30T10:05:00+07:00",
+    "actorName": "Bizzmine Complaint Import",
+    "actorRole": "Integration",
+    "domain": "integration",
+    "eventType": "source_imported",
+    "action": "Imported Bizzmine-Complaint source record SRC-BMC-CMP-2026-0098 for finding CMP-2026-0098.",
+    "findingId": "CMP-2026-0098"
+  },
+  {
+    "id": "AE-SEED-0012",
+    "timestamp": "2026-05-31T16:25:00+07:00",
+    "actorName": "Bizzmine Complaint Import",
+    "actorRole": "Integration",
+    "domain": "integration",
+    "eventType": "source_imported",
+    "action": "Imported Bizzmine-Complaint source record SRC-BMC-CMP-2026-0106 for finding CMP-2026-0106.",
+    "findingId": "CMP-2026-0106"
+  },
+  {
+    "id": "AE-SEED-0013",
+    "timestamp": "2026-05-31T17:02:00+07:00",
+    "actorName": "Nova",
+    "actorRole": "AI Coach",
+    "domain": "system",
+    "eventType": "source_imported",
+    "action": "Created CAPA-2026-0106 from complaint finding CMP-2026-0106.",
+    "capaId": "CAPA-2026-0106",
+    "findingId": "CMP-2026-0106",
+    "novaMetadata": {
+      "modelName": "Nova Mock Engine",
+      "modelVersion": "nova-demo-v1",
+      "confidenceScore": 0.91
+    }
+  },
+  {
+    "id": "AE-SEED-0014",
+    "timestamp": "2026-06-03T15:45:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Complaint",
+    "domain": "system",
+    "eventType": "corrective_action_added",
+    "action": "Completed returned-vial and retained-sample inspection for CAPA-2026-0106.",
+    "capaId": "CAPA-2026-0106",
+    "findingId": "CMP-2026-0106"
+  }
+]
+

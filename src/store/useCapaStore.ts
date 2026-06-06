@@ -30,11 +30,13 @@ import type { PersonaID } from "@/types/persona";
 import type { Finding } from "@/types/finding";
 import { useAuditTrailStore } from "@/store/useAuditTrailStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
+import { usePersonaStore } from "@/store/usePersonaStore";
 import {
   getCycleByStage,
   getFinalStage,
   resolveCycleApprovers,
 } from "@/config/workflows";
+import { buildPreFillFromFinding } from "@/utils/intakeHelpers";
 
 interface CapaStore {
   capas: CAPACase[];
@@ -48,7 +50,7 @@ interface CapaStore {
     reviewerPersonaId: PersonaID,
     decision: IntakeDecision,
     notes?: string,
-  ) => void;
+  ) => boolean;
   updateProblemStatement: (capaId: string, statement: string, score: QualityScore) => void;
   updateContainmentAction: (
     capaId: string,
@@ -69,8 +71,8 @@ interface CapaStore {
   updatePAStatus: (actionId: string, status: PreventiveAction["status"]) => void;
   removePA: (actionId: string) => void;
   completeVerification: (capaId: string, verification: VerificationData) => void;
-  recordApproval: (capaId: string, stage: ApprovalStage, approval: ApprovalEvent) => void;
-  approveSignOff: (capaId: string, approval: ApprovalEvent) => void;
+  recordApproval: (capaId: string, stage: ApprovalStage, approval: ApprovalEvent) => boolean;
+  approveSignOff: (capaId: string, approval: ApprovalEvent) => boolean;
   closeCAPA: (capaId: string) => void;
   getCAPAById: (capaId: string) => CAPACase | undefined;
   getFindingById: (findingId: string) => Finding | undefined;
@@ -110,60 +112,6 @@ const INTAKE_DECISION_LABEL: Record<IntakeDecision, string> = {
   revision_requested: "Send for Re-work",
   rejected: "Reject",
 };
-
-// The static per-type prefill templates carry sample IDs/locations. A freshly
-// intaken finding only has the fields on the Finding record, so derive the
-// preFill from the finding itself — identity, date, department, severity, and
-// the observation all reflect the real finding. Fields the Finding doesn't
-// carry (line/equipment, initiator, auditor, customer, etc.) are left blank
-// rather than inheriting an unrelated sample.
-function buildPreFillFromFinding(finding: Finding, type: CAPAType): PreFillContext {
-  if (type === "audit") {
-    return {
-      source: "Q100+",
-      findingId: finding.id,
-      auditId: "",
-      auditType: "internal",
-      reportedAt: finding.reportedAt,
-      auditDate: finding.reportedAt,
-      auditor: { name: "", organization: "" },
-      auditee: { department: finding.department, contactPerson: "" },
-      findingCategory: "",
-      findingDescription: finding.shortDescription,
-      regulationReference: [],
-      severity: finding.severity,
-      sopReferences: [],
-    };
-  }
-
-  if (type === "complaint") {
-    return {
-      source: "Bizzmine-Complaint",
-      complaintId: finding.id,
-      reportedAt: finding.reportedAt,
-      customer: { name: "", type: "distributor" },
-      product: { name: "", lotNumber: "", expiryDate: "" },
-      complaintType: "",
-      description: finding.shortDescription,
-      initialSeverity: finding.severity,
-      attachments: [],
-    };
-  }
-
-  return {
-    source: "Bizzmine",
-    deviationId: finding.id,
-    reportedAt: finding.reportedAt,
-    occurredAt: finding.reportedAt,
-    location: { department: finding.department, area: "", line: "", equipmentId: "" },
-    initiator: { name: "", role: "", nik: "" },
-    initialObservation: finding.shortDescription,
-    affectedBatches: [],
-    attachments: [],
-    sopReferences: [],
-    initialSeverity: finding.severity,
-  };
-}
 
 function createInitialCAPA(finding: Finding, type: CAPAType): CAPACase {
   const now = new Date().toISOString();
@@ -363,11 +311,16 @@ export const useCapaStore = create<CapaStore>()(
       },
       recordIntakeDecision: (capaId, reviewerPersonaId, decision, notes) => {
         const capa = get().capas.find((record) => record.id === capaId);
-        if (!capa || !capa.intakeReviews) return;
+        if (!capa || !capa.intakeReviews) return false;
+
+        const activePersonaId = usePersonaStore.getState().activePersonaId;
+        if (activePersonaId !== reviewerPersonaId) return false;
 
         const now = new Date().toISOString();
         const trimmedNotes = notes?.trim() ? notes.trim() : undefined;
         const reviewer = INTAKE_REVIEWERS.find((r) => r.reviewerPersonaId === reviewerPersonaId);
+        const currentReview = capa.intakeReviews.find((review) => review.reviewerPersonaId === reviewerPersonaId);
+        if (!reviewer || !currentReview || currentReview.decision || capa.status !== "pending_review") return false;
 
         const reviews = capa.intakeReviews.map((review) =>
           review.reviewerPersonaId === reviewerPersonaId
@@ -473,6 +426,8 @@ export const useCapaStore = create<CapaStore>()(
           // Rejected: CAPA is tombstoned — send Andi to the finding instead
           actionUrl: status === "rejected" ? `/findings/${capa.findingId}` : `/capa/${capaId}`,
         });
+
+        return true;
       },
       updateProblemStatement: (capaId, statement, score) =>
         set((state) => ({
@@ -694,7 +649,31 @@ export const useCapaStore = create<CapaStore>()(
       recordApproval: (capaId, stage, approval) => {
         const now = new Date().toISOString();
         const capa = get().capas.find((record) => record.id === capaId);
-        if (!capa) return;
+        if (!capa) return false;
+
+        const cycle = getCycleByStage(capa, stage);
+        if (!cycle) return false;
+
+        const required = resolveCycleApprovers(cycle, capa);
+        const activePersonaId = usePersonaStore.getState().activePersonaId;
+        const stageApprovalsBefore = capa.approvals.filter(
+          (event) => (event.stage ?? getFinalStage(capa)) === stage,
+        );
+        const approvedIdsBefore = new Set(
+          stageApprovalsBefore
+            .filter((event) => event.decision === "approved")
+            .map((event) => event.approverPersonaId),
+        );
+        const nextApprover = required.find((personaId) => !approvedIdsBefore.has(personaId));
+        const alreadyActed = stageApprovalsBefore.some(
+          (event) => event.approverPersonaId === approval.approverPersonaId,
+        );
+
+        if (capa.status === "closed" || capa.status === "revision_requested") return false;
+        if (!required.includes(approval.approverPersonaId)) return false;
+        if (activePersonaId !== approval.approverPersonaId) return false;
+        if (nextApprover !== approval.approverPersonaId) return false;
+        if (alreadyActed) return false;
 
         const stamped: ApprovalEvent = {
           ...approval,
@@ -752,15 +731,13 @@ export const useCapaStore = create<CapaStore>()(
             capaId,
             actionUrl: `/capa/${capaId}`,
           });
-          return;
+          return true;
         }
 
         // Has every required approver in this cycle now signed off?
         const updated = get().capas.find((record) => record.id === capaId);
-        const cycle = updated ? getCycleByStage(updated, stage) : undefined;
-        if (!updated || !cycle) return;
+        if (!updated) return true;
 
-        const required = resolveCycleApprovers(cycle, updated);
         const stageApprovals = updated.approvals.filter(
           (event) => (event.stage ?? getFinalStage(updated)) === stage,
         );
@@ -770,12 +747,13 @@ export const useCapaStore = create<CapaStore>()(
               event.approverPersonaId === personaId && event.decision === "approved",
           ),
         );
-        if (!cycleComplete) return;
+        if (!cycleComplete) return true;
 
         // Cycle complete — advance the lifecycle at the right seam.
         if (cycle.final) {
+          if (updated.score.total < 80) return true;
           get().closeCAPA(capaId);
-          return;
+          return true;
         }
         if (stage === "plan") {
           // Audit: CAPA Plan approved → enter the CAPA Actual phase.
@@ -789,12 +767,13 @@ export const useCapaStore = create<CapaStore>()(
         }
         // "analysis" (complaint Round 1) and "actual" (audit) simply unlock the
         // next manual step; the user continues through the 8D spine as normal.
+        return true;
       },
       // Deprecated: legacy single-chain entry point. Resolves to the closing
       // cycle and delegates to recordApproval.
       approveSignOff: (capaId, approval) => {
         const capa = get().capas.find((record) => record.id === capaId);
-        get().recordApproval(capaId, capa ? getFinalStage(capa) : "signoff", approval);
+        return get().recordApproval(capaId, capa ? getFinalStage(capa) : "signoff", approval);
       },
       closeCAPA: (capaId) => {
         const capa = get().capas.find((record) => record.id === capaId);
@@ -860,7 +839,10 @@ export const useCapaStore = create<CapaStore>()(
       // v3: expanded seed — closed CAPAs (per type), pending_review intake,
       // Critical deviation, external audit (reportBack), rejected complaint,
       // plus a wider findings stream.
-      version: 3,
+      // v4: seed live-data fix — CAPA-2026-0089 status corrected to
+      // "investigation" (was an impossible "approval" + currentStep:verification
+      // pairing). Forces returning demo users off the stale buggy state.
+      version: 4,
       migrate: () => ({
         capas: structuredClone(initialCapaCases),
         findings: structuredClone(initialFindings),

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "NTF-SEED-0001",
+    "recipientPersonaId": "qa_deviation",
+    "type": "capa_update",
+    "title": "Intake review needed",
+    "description": "CAPA-2026-0127 was submitted from AUD-2026-0127 and needs QA intake decision.",
+    "createdAt": "2026-06-01T11:08:00+07:00",
+    "read": false,
+    "capaId": "CAPA-2026-0127",
+    "actionUrl": "/capa/CAPA-2026-0127"
+  },
+  {
+    "id": "NTF-SEED-0002",
+    "recipientPersonaId": "head_of_dept",
+    "type": "capa_update",
+    "title": "Intake review needed",
+    "description": "CAPA-2026-0127 needs department review before the cleaning verification CAPA can proceed.",
+    "createdAt": "2026-06-01T11:09:00+07:00",
+    "read": false,
+    "capaId": "CAPA-2026-0127",
+    "actionUrl": "/capa/CAPA-2026-0127"
+  },
+  {
+    "id": "NTF-SEED-0003",
+    "recipientPersonaId": "qa_deviation",
+    "type": "capa_update",
+    "title": "RCA ready for review",
+    "description": "CAPA-2026-0150 has a confirmed WGH-01 damper actuator root cause and open Engineering action.",
+    "createdAt": "2026-06-05T14:25:00+07:00",
+    "read": false,
+    "capaId": "CAPA-2026-0150",
+    "actionUrl": "/capa/CAPA-2026-0150"
+  },
+  {
+    "id": "NTF-SEED-0004",
+    "recipientPersonaId": "head_of_qa",
+    "type": "closed",
+    "title": "CAPA closed",
+    "description": "CAPA-2026-0162 was closed after successful role-matrix reconciliation effectiveness verification.",
+    "createdAt": "2026-06-05T17:12:00+07:00",
+    "read": true,
+    "capaId": "CAPA-2026-0162",
+    "actionUrl": "/capa/CAPA-2026-0162"
+  },
+  {
+    "id": "NTF-SEED-0005",
+    "recipientPersonaId": "qa_deviation",
+    "type": "capa_update",
+    "title": "Complaint verification in progress",
+    "description": "CAPA-2026-0106 is waiting for capper upper-speed torque challenge evidence.",
+    "createdAt": "2026-06-05T11:45:00+07:00",
+    "read": false,
+    "capaId": "CAPA-2026-0106",
+    "actionUrl": "/capa/CAPA-2026-0106"
+  }
+]
+
