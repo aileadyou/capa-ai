@@ -4,6 +4,126 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-06, 09:18 AM — Refresh the demo walkthrough, then commit + push
+
+### Prompt
+- "make sure dulu demo walktrough masih up to date. terus commit dan push"
+
+### What changed
+- `docs/DEMO_WALKTHROUGH.md` — two stale spots fixed:
+  - "Sebelum Demo Dimulai" pointed the browser at `http://localhost:5173`; the dev server is configured to `port: 8080` in `vite.config.ts`. Updated the URL.
+  - A corrupted CJK glyph in the Audit section (`men挟`) replaced with the intended word `mengapit` ("two approval phases that flank the 8D process").
+- The three golden cases the script is built on (`CAPA-2026-0341`, `CAPA-2026-0089`, `CAPA-2026-0112`) were untouched by the seed expansion, so every flow step, the persona cheat sheet, and the approval-chain summary still hold — no other edits needed.
+
+### Verification
+- Confirmed `port: 8080` in `vite.config.ts` (not the Vite default 5173).
+- Confirmed `/dashboard` route + "Dashboard" nav item exist for approver personas (`Sidebar.tsx`), so the walkthrough's "Buka Dashboard" steps are valid.
+- Confirmed the seed expansion added no case that lands in Bambang's awaiting-approval queue (new cases sit at `investigation`/`rca`, QA intake, `closed`, or `rejected`), so the "1 pending" count claim is unchanged.
+
+## 2026-06-06, 09:12 AM — Expand the seed so every demo state has a representative case
+
+### Prompt
+- "apakah seed data kita yg sekarang udah cukup proper?" → analysis + prioritized gap table.
+- "lengkapi seed sampai proper" → execute every recommendation.
+
+### What changed
+- `src/mock-data/capa-cases.json` — 4 → 11 cases. Added:
+  - **3 closed CAPAs, one per type, in different months** so All CAPAs / My Work have history: `CAPA-2026-0210` (deviation, Major, cold-chain excursion, Apr — full `signoff` chain incl. SME), `CAPA-2026-0156` (audit, Major, overdue calibration, Mar — `plan`→`actual`→`closure` chain, `closingCompleteness.complete`), `CAPA-2026-0073` (complaint, Major, unscannable barcode, Feb — `analysis`→`closure` chain, `customerResponse.closedAt`).
+  - `CAPA-2026-0352` — **pending_review** deviation (no disposisi yet; `intakeReviews` has an undecided `qa_deviation` entry) so Siti's intake queue isn't empty.
+  - `CAPA-2026-0349` — **Critical** deviation in `investigation`/`rca` (aseptic breach) so the SME gate + SME consultation view have a Critical case.
+  - `CAPA-2026-0301` — **external** audit (`auditType: external`, BPOM, `auditContext.reportBackAt`) to cover the regulator report-back loop.
+  - `CAPA-2026-0061` — **rejected** complaint (cosmetic smudge, both intake reviewers rejected) to show the complaint accept/reject gate.
+- `src/mock-data/corrective-actions.json` (+6) and `preventive-actions.json` (+3) — completed CA/PA records for the three closed CAPAs (joined by `capaId`).
+- `src/mock-data/findings.json` — 7 → 16. Backing finding per new CAPA with correct `linkedCapaId` + status (`capa_closed` / `pending_review` / `capa_in_progress` / `rejected`), plus 2 standalone `pending_capa` findings for a fuller stream. Severity mix now spans Ungraded/Minor/Major/Critical.
+- `src/store/useCapaStore.ts` — persist `version` 2 → 3 so returning demo users reflow from the expanded golden seed (the store's documented reflow-on-bump behaviour).
+
+### Verification
+- `node` JSON parse + cross-checks: every `findingId`/`linkedCapaId`/CA·PA `capaId` resolves; score sub-scores sum to `total`; impact factor weights sum to `totalWeight`; all status/step/finding-status values are valid enum members.
+- `tsc --noEmit`: clean.
+- Live preview (8080): all 7 new IDs render in All CAPAs; closed complaint detail shows Closed + Audit Ready + joined corrective actions + approvers (no crash); `CAPA-2026-0352` appears under Siti's "Intake review needed"; `CAPA-2026-0349` + `CAPA-2026-0301` populate the previously-empty SME "awaiting root cause input" view.
+
+## 2026-06-06, 08:11 AM — Filter source-import cards by CAPA type on the intake wizard
+
+### Prompt
+- "make sure jg masing2 tuh cuma bisa import dari specific source. Misal Deviation, berarti tombol importnya dari yang Bizzmine doang. yang 2 lagi hide aja"
+
+### What changed
+- `src/pages/nova/CapaIntakePage.tsx` — added `visibleSourceCards` derived from `queryType`:
+  - When the intake wizard is opened from a specific finding (`?type=deviation/audit/complaint` in the URL), only the single matching source card is rendered.
+  - When the wizard is opened directly (`/capa/new`, no type param), all three cards remain visible so the user can pick any type.
+  - Grid class is now dynamic: `grid-cols-1` for a single card, `grid-cols-3` for all three.
+
+### Verification
+- `tsc --noEmit`: clean.
+- Live preview (dev server): Deviation → Bizzmine card only; Audit → Q100+ card only; Complaint → Bizzmine/Complaint card only; direct `/capa/new` → all three cards.
+
+## 2026-06-06, 07:29 AM — Merge the roster back to five personas (keep every approval chain three deep)
+
+### Prompt
+- "btwww... do you think we can just merge Rina Kusuma to Bambang Saputra, and Hendra Gunawan to Dewi Anggraini? On a second thought, I don't think I'm adding more persona."
+- Clarifying choice (AskUserQuestion): **Keep 3 approvers** — keep each chain three-deep, filling the vacated junior tier with an existing persona rather than collapsing to two tiers.
+
+### Why this isn't a 1:1 relabel
+The two new personas added in the prior entry each shared a chain with their merge target: `section_head` (Rina) sat *above* `head_of_dept` (Bambang) in the **audit** plan/actual cycle, and `qa_manager` (Hendra) sat *above* `head_of_qa` (Dewi) in the **complaint** rounds. A literal merge would make one person sign the same cycle twice. So instead of collapsing the tiers, both the audit and complaint cycles now reuse the **same three personas as the deviation sign-off** — `head_of_dept → qa_deviation → head_of_qa` — drawing the third approver from the existing five-person roster and varying only the *labels* per workflow.
+
+### What changed — code
+- `src/types/persona.ts` — `PersonaID` union back to five: removed `section_head`, `qa_manager`.
+- `src/mock-data/personas.json` — removed the Rina Kusuma (BF-MGT-2890) and Hendra Gunawan (BF-QA-3340) objects; roster is the original five (initiator, qa_deviation, head_of_dept, head_of_qa, sme).
+- `src/config/workflows.ts` — audit **plan**/**actual** and complaint **analysis**/**closure** cycles re-based to `["head_of_dept", "qa_deviation", "head_of_qa"]`. Labels stay workflow-specific: audit → *Department Head / QA — GMP & DIRA Compliance / QA Division Head*; complaint → *QA Head of Department / QA — Complaint Handling / QA Head of Division*. Deviation sign-off + SME gating (`isMajorOrCritical`) untouched; audit closure (`[qa_deviation]`, final) untouched.
+- `src/mock-data/capa-cases.json` — re-pointed the pre-advanced approvers: **0089** `plan` approvals now Bambang Saputra (Department Head) → Siti Rahmawati (QA — GMP & DIRA Compliance) → Dewi Anggraini (QA Division Head); **0112** `analysis` approvals now Bambang Saputra (QA Head of Department) → Siti Rahmawati (QA — Complaint Handling) → Dewi Anggraini (QA Head of Division). All approved; stages unchanged. 0341 deviation untouched.
+- `Record<PersonaID, …>` maps pruned to the five keys (else TS errors on the dropped union members): `PERSONA_CONTEXT` (`LoginPage.tsx`), `PERSONA_VIEWS` + `PERSONA_SUBTITLES` (`MyWorkPage.tsx`), `personaDemoRoles` (`PersonaManagementPage.tsx`).
+
+### What changed — Lovable brief
+- `docs/LOVABLE_PROJECT_BRIEF.md` reverted to five personas: dropped the two added rows, added framing that every CAPA type draws its three approvers from the *same* five-person roster (labels differ, people don't), updated the §6 audit & complaint diagrams and the §8 golden-case chains to the new `head_of_dept → qa_deviation → head_of_qa` order, and fixed the §5.16 "seven personas" wording. Still zero visual-design guidance.
+
+### Verification
+- `grep` sweep: no `section_head` / `qa_manager` / `Rina Kusuma` / `Hendra Gunawan` / "seven personas" references remain in `src/` or the brief.
+- `tsc --noEmit`: clean.
+- Golden flows re-checked under the `initiator` persona — audit D6 and complaint D7 Round-2 chains now render Bambang → Siti → Dewi with the workflow-specific labels; no console errors.
+
+## 2026-06-06, 06:42 AM — Lovable brief + golden seed now model the full Audit & Complaint (and gated Deviation) workflows
+
+### Prompt
+- "ready to continue. but before that, update the lovable brief first to handle the whole audit and complaint flow as well."
+- Two halves under one prompt: (1) update the Lovable brief, then (2) resume the approved plan's remaining work (golden-seed migration to the advanced per-type states).
+
+### What changed — part 1: Lovable brief
+Rewrote `docs/LOVABLE_PROJECT_BRIEF.md` so a fresh prototype would model the three genuinely different per-type approval shapes (per `src/config/workflows.ts` + the RFI BPMN Gambar 1–4), not the old single generic pipeline. Still **zero visual-design guidance** (per the standing design-tool-brief rule).
+- **§1** — added a sentence foreshadowing the three approval shapes (deviation single gated sign-off; audit two-phase plan/actual; complaint two-round + customer loop).
+- **§2 Personas** — five → **seven**: added `section_head` (Rina Kusuma, Kepala Seksi) and `qa_manager` (Hendra Gunawan, QA Manager). Added a **context-dependent role labels** note (same human, different hat per workflow: `qa_deviation`→QA Deviation/GMP&DIRA/QA Staff, `head_of_dept`→Dept Head/QA Head of Dept, `head_of_qa`→Head of QA Division/QA Head of Division, `initiator`→Auditee, `sme`→Lead Auditor). Generalised the access rules from a single "severity cascade" to "per-type approval cycles"; new approver personas get the Dashboard.
+- **§3 Glossary** — split Disposition to deviation-only; added Accept gate (complaints), Audit schedule context, Two-phase audit lifecycle (CAPA Plan→Actual), Approval cycle/round (reject-loop), Customer-response loop (reply or 14-day timeout), Closing-completeness check. Made the Severity entry accurate (only deviations are severity-gated).
+- **§5.7 Intake** — added the per-type intake gate (deviation disposition / audit schedule + internal Lead-Auditor review / complaint accept-reject gate).
+- **§5.8 CAPA Detail** — audit overview gets a read-only schedule card; workspace gets a CAPA Plan / CAPA Actual **phase badge**.
+- **§5.9 D5/D6/D7** — documented where each cycle surfaces: D5 (`pa`) = audit CAPA Plan & complaint Round-1 Analysis; D6 (`verification`) = audit CAPA Actual; D7 (`signoff`) closing chain now branches by type (deviation gated cascade w/ SME on Major/Critical; audit closing-completeness→QA verify→close + external report-back; complaint Round-2 after the customer loop).
+- **§6** — replaced the "single pipeline" framing with one shared 8D backbone + three per-type diagrams (deviation, audit two-phase, complaint two-round).
+- **§8 Golden cases** — Case 1 sign-off now shows the SME (Major triggers the gate, aligning the brief to `isMajorOrCritical` in code); Case 2 (audit) rewritten with schedule context, Lead-Auditor review, and the Plan→Actual→QA-closure lifecycle; Case 3 (complaint) rewritten with accept-gate, Round-1 analysis, customer-response loop, Round-2 closure (+ added CA/PA for completeness).
+
+Docs-only change; re-read §2/§5.9/§6/§8 to confirm clean markdown and internal consistency (no stray "five personas" / "severity cascade" references remain).
+
+### What changed — part 2: golden seed migrated to the advanced workflow states
+With the brief aligned, picked up the approved plan's remaining group so the demo opens directly on each per-type advanced state (the earlier groups — types, 7 personas, store cycle logic, `ApprovalChainPanel`, D5/D6/D7 + `EightDShell` audit header — were already in place).
+- `src/mock-data/capa-cases.json` — **CAPA-2026-0089 (audit, Major)** advanced to the CAPA-Actual phase: its approvals are now three stage-tagged **`plan`** approvals (Rina Kusuma/Section Head → Bambang Saputra/Dept Head → Siti Rahmawati/QA, all approved); `currentStep` `signoff`→`verification`; `auditPhase: "actual"`; added `auditContext` (variant `internal`; schedule 18–20 May 2026 with scope, three-member audit team led by Dr. Ahmad Pratomo, auditee Fill-Finish Dept; `leadAuditorReviewedAt`); `closingCompleteness.complete: true`.
+- `src/mock-data/capa-cases.json` — **CAPA-2026-0112 (complaint, Major)** advanced to Round-2 closure: its approvals are now three stage-tagged **`analysis`** (Round-1) approvals (Hendra Gunawan/QA Manager → Bambang Saputra/QA Head of Dept → Dewi Anggraini/QA Head of Division, all approved); `currentStep` stays `signoff`; added a resolved `customerResponse` (sent 25 May, customer replied, reply-due 8 Jun, loop closed 29 May).
+- **CAPA-2026-0341 (deviation, Major)** deliberately left unchanged (currentStep `containment`, score 68) — a documented deviation from the plan's literal group-5 text. Its severity-gated sign-off cascade renders live from `workflows.ts` (Major → SME inserted), so leaving it early preserves the full-walkthrough showcase case.
+- `src/store/useCapaStore.ts` — bumped persist `version` 1→2 (the existing `migrate` reflows from `initialCapaCases`) so returning demo users with stale `localStorage` key `"ai-coach-nova-capa"` reflow the new audit/complaint seed fields instead of the old shape.
+
+### Verification — golden flows (preview MCP, `npm run dev`)
+- `tsc --noEmit`: clean. No browser console errors across all three cases.
+- **Audit 0089** (as `initiator`): D1 renders the **Phase: CAPA Actual** + **Internal Audit** badges and the full **Audit Schedule** card (date range, auditee, scope, 3-member team); D6 renders the **CAPA Actual** approval cycle — Rina Kusuma *Awaiting*, Bambang Saputra/Siti Rahmawati *Pending* (sequential e-sign); Quality Score **85 · Audit ready**.
+- **Complaint 0112** (as `initiator`): D7 renders the customer-loop chips (**response sent 25 May / replied / loop closed 29 May**), the Final Quality Gate (**80 · Audit Ready**, closure Approval Pending), and the **Round-2 closure** chain — Hendra Gunawan *Awaiting*, Bambang Saputra/Dewi Anggraini *Pending* — with context-dependent labels (QA Manager → QA Head of Department → QA Head of Division).
+- **Deviation 0341**: loads clean, Major severity (SME gate will fire at D7), D2-containment showcase state intact.
+- Note: the editable 8D workspace + approval panels are initiator-only via `canFillCAPA`; non-initiator personas see a read-only step summary, so verification was done under the `initiator` persona.
+
+## 2026-06-04, 03:02 PM — Apply primary color to all eyebrow/field labels project-wide
+
+### Prompt
+- Eyebrow labels (uppercase + letter-spacing) and field question labels should use primary color, not muted foreground tokens. Apply to the whole project.
+
+### What changed
+- Python script swept all `*.tsx`/`*.ts` under `src/` — any line containing `tracking-[0.1` with `text-foreground-faint`, `text-foreground-tertiary`, or `text-foreground-secondary` had those tokens replaced with `text-primary`.
+- 22 files modified: `CapaDetailPage.tsx`, `CapaIntakePage.tsx`, `CapaListPage.tsx`, `ConsolidatedActionPlanPage.tsx`, `DashboardPage.tsx`, `FindingDetailPage.tsx`, `FindingsListPage.tsx`, `MyWorkPage.tsx`, `SimilarityExplorerPage.tsx`, `AuditTrailPage.tsx`, `LoginPage.tsx`, `eight-d/D1–D7` pages, `components/layout/EightDShell.tsx`, `components/layout/Sidebar.tsx`, `components/nova/NovaBlock.tsx`, `components/shared/ThemeCustomizer.tsx`.
+- `tsc --noEmit`: clean.
+
 ## 2026-06-04, 02:15 PM — Rejected intake flow: no CAPA for Andi, rejection reason on finding, block resubmit
 
 ### Prompt

@@ -249,6 +249,8 @@ export interface VerificationData {
   verifiedBy?: PersonaID;
 }
 
+export type ApprovalStage = "plan" | "actual" | "analysis" | "closure" | "signoff";
+
 export interface ApprovalEvent {
   approverPersonaId: PersonaID;
   approverName: string;
@@ -256,6 +258,7 @@ export interface ApprovalEvent {
   decision: "approved" | "rejected" | "pending";
   notes?: string;
   signedAt?: ISO8601;
+  stage?: ApprovalStage;
 }
 
 export interface Disposisi {
@@ -264,6 +267,32 @@ export interface Disposisi {
   severity: Severity;
   rationale: string;
   dispositionAt: ISO8601;
+}
+
+export interface AuditSchedule {
+  dateRange: { start: ISO8601; end: ISO8601 };
+  auditTeam: { name: string; role: string }[];
+  scope: string;
+  auditee: string;
+}
+
+export interface AuditContext {
+  variant: "internal" | "external";
+  schedule: AuditSchedule;
+  leadAuditorReviewedAt?: ISO8601;
+  reportBackAt?: ISO8601;
+}
+
+export interface CustomerResponse {
+  responseSentAt?: ISO8601;
+  customerReplied?: boolean;
+  replyDueAt?: ISO8601;
+  closedAt?: ISO8601;
+}
+
+export interface ClosingCompleteness {
+  complete: boolean;
+  pendingDocs?: string[];
 }
 
 export interface CAPACase {
@@ -291,5 +320,9 @@ export interface CAPACase {
   assignedTo: PersonaID;
   department: string;
   disposisi?: Disposisi;
+  auditPhase?: "plan" | "actual";
+  auditContext?: AuditContext;
+  customerResponse?: CustomerResponse;
+  closingCompleteness?: ClosingCompleteness;
 }
 

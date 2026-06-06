@@ -81,7 +81,7 @@ function KpiCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-5 py-4 shadow-sm">
       <div
-        className="mb-1.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
+        className="mb-1.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
       >
         {label}
       </div>
@@ -239,7 +239,7 @@ export function AuditTrailPage() {
 
       {/* ── Results count ─────────────────────────────────────────────── */}
       <div
-        className="mb-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
+        className="mb-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
       >
         {filteredEvents.length} audit events
       </div>
@@ -342,7 +342,7 @@ export function AuditTrailPage() {
                           <div
                             className="rounded-md bg-field px-2 py-1.5 text-[11px] leading-[1.4] text-foreground-tertiary"
                           >
-                            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+                            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
                               Before
                             </span>
                             <div className="mt-0.5">{evt.before}</div>
@@ -352,7 +352,7 @@ export function AuditTrailPage() {
                           <div
                             className="rounded-md bg-field px-2 py-1.5 text-[11px] leading-[1.4] text-foreground-secondary"
                           >
-                            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+                            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
                               After
                             </span>
                             <div className="mt-0.5">{evt.after}</div>

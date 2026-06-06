@@ -72,5 +72,102 @@
     "reportedAt": "2026-05-20T09:15:00+07:00",
     "status": "rejected",
     "linkedCapaId": "CAPA-2026-0207"
+  },
+  {
+    "id": "DEV-2026-0349",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Aseptic intervention breach on Grade A Filling Line 2; sterility assurance of two vaccine batches under review.",
+    "severity": "Critical",
+    "department": "Fill-Finish",
+    "reportedAt": "2026-06-04T16:20:00+07:00",
+    "status": "capa_in_progress",
+    "linkedCapaId": "CAPA-2026-0349"
+  },
+  {
+    "id": "DEV-2026-0352",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "In-process fill-volume check returned three consecutive under-fill vials on Line 1; awaiting QA intake review.",
+    "severity": "Major",
+    "department": "Fill-Finish",
+    "reportedAt": "2026-06-05T13:45:00+07:00",
+    "status": "pending_review",
+    "linkedCapaId": "CAPA-2026-0352"
+  },
+  {
+    "id": "AUD-2026-0301",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "BPOM inspection finding: EM trend review not documented at the defined frequency for Q1 2026.",
+    "severity": "Major",
+    "department": "Fill-Finish / QA Compliance",
+    "reportedAt": "2026-05-29T15:00:00+07:00",
+    "status": "capa_in_progress",
+    "linkedCapaId": "CAPA-2026-0301"
+  },
+  {
+    "id": "DEV-2026-0210",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Cold-chain 2-8 C excursion in finished-goods cold room CR-FF-03; alarm escalation reconfigured.",
+    "severity": "Major",
+    "department": "Fill-Finish",
+    "reportedAt": "2026-04-12T07:20:00+07:00",
+    "status": "capa_closed",
+    "linkedCapaId": "CAPA-2026-0210"
+  },
+  {
+    "id": "AUD-2026-0156",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "QC analytical balance found in service three weeks past calibration due date; tracking migrated to central register.",
+    "severity": "Major",
+    "department": "Quality Control",
+    "reportedAt": "2026-03-18T11:00:00+07:00",
+    "status": "capa_closed",
+    "linkedCapaId": "CAPA-2026-0156"
+  },
+  {
+    "id": "CMP-2026-0073",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "shortDescription": "Distributor could not scan secondary-carton barcode at goods-in; scan-grade verification added to packaging.",
+    "severity": "Major",
+    "department": "Packaging",
+    "reportedAt": "2026-02-14T10:30:00+07:00",
+    "status": "capa_closed",
+    "linkedCapaId": "CAPA-2026-0073"
+  },
+  {
+    "id": "CMP-2026-0061",
+    "type": "complaint",
+    "source": "Bizzmine-Complaint",
+    "shortDescription": "Cosmetic ink smudge on one outer carton; vial, label, seal and product conforming. Closed without CAPA at intake.",
+    "severity": "Minor",
+    "department": "Packaging",
+    "reportedAt": "2026-04-08T09:40:00+07:00",
+    "status": "rejected",
+    "linkedCapaId": "CAPA-2026-0061"
+  },
+  {
+    "id": "DEV-2026-0150",
+    "type": "deviation",
+    "source": "Bizzmine",
+    "shortDescription": "Weighing-room differential pressure dipped below the lower alert limit for two minutes during dispensing.",
+    "severity": "Ungraded",
+    "department": "Production",
+    "reportedAt": "2026-06-03T08:50:00+07:00",
+    "status": "pending_capa"
+  },
+  {
+    "id": "AUD-2026-0162",
+    "type": "audit",
+    "source": "Q100+",
+    "shortDescription": "Internal audit noted a gap in retraining records for two warehouse staff after an SOP revision.",
+    "severity": "Ungraded",
+    "department": "Warehouse",
+    "reportedAt": "2026-06-02T13:15:00+07:00",
+    "status": "pending_capa"
   }
 ]

@@ -142,7 +142,7 @@ export function CapaListPage() {
       </div>
 
       {/* ── Results count ────────────────────────────────────────────── */}
-      <div className="mb-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+      <div className="mb-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
         {filteredRows.length} CAPA case{filteredRows.length !== 1 ? "s" : ""}
       </div>
 

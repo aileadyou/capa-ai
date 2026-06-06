@@ -93,7 +93,7 @@ function KpiCard({ label, value, sub }: { label: string; value: number | string;
       className="rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-5 py-4 shadow-sm"
     >
       <div
-        className="mb-1.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
+        className="mb-1.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
       >
         {label}
       </div>

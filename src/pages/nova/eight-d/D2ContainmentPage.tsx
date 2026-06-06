@@ -222,7 +222,7 @@ export function D2ContainmentPage() {
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-primary">
             {capa.id} · D2
           </p>
           <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
@@ -236,7 +236,7 @@ export function D2ContainmentPage() {
         {/* ── Containment form ─────────────────────────────────────────── */}
         <div className="flex flex-col gap-[18px] rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5 shadow-sm">
           {/* Section label */}
-          <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+          <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             Containment Form
           </p>
 
@@ -337,7 +337,7 @@ export function D2ContainmentPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             Quality Signals
           </p>
           <div className="grid grid-cols-2 gap-2">

@@ -196,7 +196,7 @@ export function Sidebar() {
         <div className="mt-5 border-t border-[var(--line-1)] pt-2.5">
           <p
             id="nav-management-heading"
-            className="m-0 px-3 pb-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
+            className="m-0 px-3 pb-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-primary"
           >
             Management
           </p>
@@ -211,7 +211,7 @@ export function Sidebar() {
         <div className="mt-5 border-t border-[var(--line-1)] pt-2.5">
           <p
             id="nav-system-heading"
-            className="m-0 px-3 pb-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
+            className="m-0 px-3 pb-1.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-primary"
           >
             System
           </p>

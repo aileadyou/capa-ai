@@ -120,7 +120,7 @@ const MONO_EYEBROW_CLASS = "font-sans text-[10px] font-semibold uppercase tracki
 function EyebrowLeft({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="mb-2 mt-0 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-secondary font-semibold"
+      className="mb-2 mt-0 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-primary font-semibold"
     >
       {children}
     </p>
@@ -318,7 +318,7 @@ function Card({
 function CardLabel({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="mb-3 mt-0 font-sans text-xs font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
+      className="mb-3 mt-0 font-sans text-xs font-semibold uppercase tracking-[0.18em] text-primary"
     >
       {children}
     </p>
@@ -403,7 +403,7 @@ function IntakeDecisionControls({
 
   return (
     <div className="mt-3 border-t border-border-subtle pt-3">
-      <p className="mb-1.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+      <p className="mb-1.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
         Your intake decision
       </p>
       <textarea
@@ -526,7 +526,7 @@ function IntakeSubmissionCard({ capa }: { capa: CAPACase }) {
           reviewers can judge whether the severity level is appropriate. */}
       <div className="mb-4 rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3.5">
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+          <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
             Severity set by initiator
           </span>
           <span
@@ -557,7 +557,7 @@ function IntakeSubmissionCard({ capa }: { capa: CAPACase }) {
                 key={factor.factor}
                 className="rounded-[var(--r-sm)] border border-border-subtle bg-[var(--field-bg)] px-2.5 py-2"
               >
-                <p className="mb-[3px] mt-0 font-sans text-[10px] uppercase tracking-[0.18em] text-foreground-tertiary">
+                <p className="mb-[3px] mt-0 font-sans text-[10px] uppercase tracking-[0.18em] text-primary">
                   {factor.factor}
                 </p>
                 <p className="mb-1 mt-0 font-sans text-xs text-foreground-secondary">
@@ -571,7 +571,7 @@ function IntakeSubmissionCard({ capa }: { capa: CAPACase }) {
       </div>
 
       {/* Gate question answers filled by Andi */}
-      <p className="mb-2.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+      <p className="mb-2.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
         Gate questions
       </p>
       <div className="flex flex-col gap-5">
@@ -611,7 +611,7 @@ function NovaSummaryCard({ capa }: { capa: CAPACase }) {
         <div
           className="rounded-[var(--r-sm)] bg-field px-3 py-2.5 text-xs text-foreground-tertiary"
         >
-          <span className="font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-tertiary">
+          <span className="font-sans text-[9px] uppercase tracking-[0.18em] text-primary">
             Confirmed root cause
           </span>
           <p className="mt-1 text-[13px] leading-[1.6] text-foreground-secondary">
@@ -1064,7 +1064,7 @@ function AuditTrailEventRow({ evt, isLast }: { evt: AuditEvent; isLast: boolean 
           <div className="mt-2 flex flex-col gap-1">
             {evt.before && (
               <div className="rounded-md bg-field px-2 py-1.5 text-[11px] leading-[1.4] text-foreground-tertiary">
-                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.18em] text-primary">
                   Before
                 </span>
                 <div className="mt-0.5">{evt.before}</div>
@@ -1072,7 +1072,7 @@ function AuditTrailEventRow({ evt, isLast }: { evt: AuditEvent; isLast: boolean 
             )}
             {evt.after && (
               <div className="rounded-md bg-field px-2 py-1.5 text-[11px] leading-[1.4] text-foreground-secondary">
-                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+                <span className="font-sans text-[9px] font-semibold uppercase tracking-[0.18em] text-primary">
                   After
                 </span>
                 <div className="mt-0.5">{evt.after}</div>
@@ -1362,7 +1362,7 @@ function RightColumn({
           ].map(({ label, value, isDanger }) => (
             <div key={label}>
               <p
-                className="mb-0.5 mt-0 font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-secondary font-bold"
+                className="mb-0.5 mt-0 font-sans text-[9px] uppercase tracking-[0.18em] text-primary font-bold"
               >
                 {label}
               </p>
@@ -1411,7 +1411,7 @@ function RightColumn({
             </span>
           </div>
           <p
-            className="mb-3 mt-1.5 font-sans text-[10px] uppercase tracking-[0.18em] text-foreground-tertiary"
+            className="mb-3 mt-1.5 font-sans text-[10px] uppercase tracking-[0.18em] text-primary"
           >
             Total / 100
           </p>
@@ -1453,7 +1453,7 @@ function RightColumn({
               className="mt-3 flex flex-col gap-2 border-t border-border-subtle pt-3"
             >
               <p
-                className="m-0 font-sans text-[9px] uppercase tracking-[0.18em] text-foreground-tertiary"
+                className="m-0 font-sans text-[9px] uppercase tracking-[0.18em] text-primary"
               >
                 Lift tips
               </p>

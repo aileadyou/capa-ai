@@ -119,7 +119,7 @@ function ActionList({ actions, onRemove }: { actions: CorrectiveAction[]; onRemo
   return (
     <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
       <div className="border-b border-border-subtle bg-elevated px-4 py-3.5">
-        <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+        <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
           Added Corrective Actions
         </p>
       </div>
@@ -142,15 +142,15 @@ function ActionList({ actions, onRemove }: { actions: CorrectiveAction[]; onRemo
                 </p>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">PIC</p>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">PIC</p>
                     <p className="m-0 text-xs text-foreground-secondary">{action.pic}</p>
                   </div>
                   <div>
-                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">Due Date</p>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Due Date</p>
                     <p className="m-0 text-xs text-foreground-secondary">{formatDate(action.dueDate)}</p>
                   </div>
                   <div>
-                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">Verification</p>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Verification</p>
                     <p className="m-0 text-xs text-foreground-secondary">{action.verificationMethod}</p>
                   </div>
                 </div>
@@ -328,7 +328,7 @@ export function D4CorrectiveActionPage() {
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-primary">
             {capa.id} · D4
           </p>
           <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
@@ -346,7 +346,7 @@ export function D4CorrectiveActionPage() {
         <div className="flex flex-col gap-[18px] rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5">
           <div className="flex items-center gap-2">
             <ListPlus size={15} className="shrink-0 text-primary" />
-            <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+            <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Add Corrective Action
             </p>
           </div>
@@ -460,7 +460,7 @@ export function D4CorrectiveActionPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             Quality Signals
           </p>
           <div className="grid grid-cols-2 gap-2">

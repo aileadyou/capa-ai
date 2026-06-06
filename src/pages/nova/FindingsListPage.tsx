@@ -58,7 +58,7 @@ function FieldPair({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
       <p
-        className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+        className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"
       >
         {label}
       </p>
@@ -130,7 +130,7 @@ function FindingSlideOver({
         >
           <div>
             <p
-              className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+              className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"
             >
               Finding detail
             </p>
@@ -360,7 +360,7 @@ export function FindingsListPage() {
 
         {/* ── Results count ───────────────────────────────────────────────── */}
         <p
-          className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+          className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
         >
           {filtered.length} {filtered.length === 1 ? "finding" : "findings"}
         </p>

@@ -40,7 +40,7 @@ import {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="m-0 mb-2 font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-foreground-faint">
+    <p className="m-0 mb-2 font-sans text-[10px] font-medium uppercase tracking-[0.16em] text-primary">
       {children}
     </p>
   );

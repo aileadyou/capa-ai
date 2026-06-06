@@ -283,26 +283,33 @@
         "approverName": "Bambang Saputra",
         "role": "Department Head",
         "decision": "approved",
-        "notes": "Records reconciled and second-person verification reinstated. Endorsed for QA sign-off.",
-        "signedAt": "2026-05-31T09:30:00+07:00"
+        "notes": "Planned corrective and preventive actions endorsed for QA submission.",
+        "signedAt": "2026-05-22T13:40:00+07:00",
+        "stage": "plan"
       },
       {
         "approverPersonaId": "qa_deviation",
         "approverName": "Siti Rahmawati",
-        "role": "QA Compliance",
-        "decision": "pending"
+        "role": "QA — GMP & DIRA Compliance",
+        "decision": "approved",
+        "notes": "CAPA Plan reviewed — documentation SOP revision and end-of-shift verification checklist are appropriate. Endorsed.",
+        "signedAt": "2026-05-23T08:50:00+07:00",
+        "stage": "plan"
       },
       {
         "approverPersonaId": "head_of_qa",
         "approverName": "Dewi Anggraini",
-        "role": "Head of QA",
-        "decision": "pending"
+        "role": "QA Division Head",
+        "decision": "approved",
+        "notes": "CAPA Plan approved at division level. Execute the actions, then submit the CAPA Actual phase for approval.",
+        "signedAt": "2026-05-23T15:30:00+07:00",
+        "stage": "plan"
       }
     ],
     "auditEvents": [],
     "suggestions": [],
     "status": "approval",
-    "currentStep": "signoff",
+    "currentStep": "verification",
     "createdAt": "2026-05-15T11:25:00+07:00",
     "updatedAt": "2026-05-31T09:30:00+07:00",
     "createdBy": "qa_deviation",
@@ -314,6 +321,24 @@
       "severity": "Major",
       "rationale": "Documentation gaps spanning multiple material transfer records indicate systemic non-compliance risk. Major severity confirmed per internal audit classification criteria. 8D workflow assigned to QA Compliance.",
       "dispositionAt": "2026-05-15T12:00:00+07:00"
+    },
+    "auditPhase": "actual",
+    "auditContext": {
+      "variant": "internal",
+      "schedule": {
+        "dateRange": { "start": "2026-05-18T00:00:00+07:00", "end": "2026-05-20T00:00:00+07:00" },
+        "auditTeam": [
+          { "name": "Dr. Ahmad Pratomo", "role": "Lead Auditor" },
+          { "name": "Siti Rahmawati", "role": "QA Auditor — GMP & DIRA Compliance" },
+          { "name": "Yulianto Nugroho", "role": "QA Auditor" }
+        ],
+        "scope": "Documentation practices — second-person verification on cleaning and material-transfer logbooks (Fill-Finish & Warehouse).",
+        "auditee": "Fill-Finish Department (contact: Bambang Saputra)"
+      },
+      "leadAuditorReviewedAt": "2026-05-20T16:00:00+07:00"
+    },
+    "closingCompleteness": {
+      "complete": true
     }
   },
   {
@@ -466,22 +491,29 @@
       {
         "approverPersonaId": "head_of_dept",
         "approverName": "Bambang Saputra",
-        "role": "Department Head",
+        "role": "QA Head of Department",
         "decision": "approved",
-        "notes": "Retained-sample assessment and strengthened inspection escalation reviewed. Endorsed for QA sign-off.",
-        "signedAt": "2026-05-30T10:00:00+07:00"
+        "notes": "Round 1 — analysis and proposed actions reviewed. Visual-inspection escalation rule is sound. Endorsed for division-level review.",
+        "signedAt": "2026-05-24T10:20:00+07:00",
+        "stage": "analysis"
       },
       {
         "approverPersonaId": "qa_deviation",
         "approverName": "Siti Rahmawati",
-        "role": "QA Complaint",
-        "decision": "pending"
+        "role": "QA — Complaint Handling",
+        "decision": "approved",
+        "notes": "Complaint analysis and proposed corrective/preventive actions reviewed and endorsed.",
+        "signedAt": "2026-05-24T14:05:00+07:00",
+        "stage": "analysis"
       },
       {
         "approverPersonaId": "head_of_qa",
         "approverName": "Dewi Anggraini",
-        "role": "Head of QA",
-        "decision": "pending"
+        "role": "QA Head of Division",
+        "decision": "approved",
+        "notes": "Round 1 analysis approved. Send the customer response, then proceed to closure once the reply window resolves.",
+        "signedAt": "2026-05-25T09:00:00+07:00",
+        "stage": "analysis"
       }
     ],
     "auditEvents": [],
@@ -499,6 +531,12 @@
       "severity": "Major",
       "rationale": "Visible particulate matter in a vaccine vial constitutes a critical external complaint requiring batch traceability and root cause investigation. Major severity confirmed. Full 8D CAPA workflow required.",
       "dispositionAt": "2026-05-12T15:30:00+07:00"
+    },
+    "customerResponse": {
+      "responseSentAt": "2026-05-25T11:00:00+07:00",
+      "customerReplied": true,
+      "replyDueAt": "2026-06-08T11:00:00+07:00",
+      "closedAt": "2026-05-29T15:30:00+07:00"
     }
   },
   {
@@ -630,5 +668,1276 @@
     "createdBy": "initiator",
     "assignedTo": "qa_deviation",
     "department": "Production"
+  },
+  {
+    "id": "CAPA-2026-0210",
+    "findingId": "DEV-2026-0210",
+    "type": "deviation",
+    "title": "Cold-Chain Temperature Excursion in Vaccine Cold Room CR-FF-03",
+    "preFill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0210",
+      "reportedAt": "2026-04-12T07:20:00+07:00",
+      "occurredAt": "2026-04-12T02:35:00+07:00",
+      "location": {
+        "department": "Fill-Finish",
+        "area": "Finished-Goods Cold Store",
+        "line": "Cold Room CR-FF-03",
+        "equipmentId": "CR-FF-03"
+      },
+      "initiator": {
+        "name": "Andi Wijaya",
+        "role": "Senior Operator",
+        "nik": "BF-FF-1024"
+      },
+      "initialObservation": "Cold room CR-FF-03 logged a 2-8 C excursion (peak 10.4 C) for about 95 minutes overnight; the morning shift found the high-temperature alarm active and unacknowledged.",
+      "affectedBatches": ["VAC-26-0402-A", "VAC-26-0402-B"],
+      "attachments": [
+        {
+          "name": "coldroom-temp-trend-dev-2026-0210.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/coldroom-temp-trend-dev-2026-0210.pdf"
+        }
+      ],
+      "sopReferences": ["SOP-WH-030", "SOP-EM-014"],
+      "initialSeverity": "Major"
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "On 12 Apr 2026 at 02:35, cold room CR-FF-03 (finished-goods cold store) exceeded the 2-8 C storage range, peaking at 10.4 C for about 95 minutes. The high-temperature alarm annunciated locally but was found active and unacknowledged by the morning shift at 07:10, confirmed against the SOP-WH-030 temperature trend.",
+        "novaScoreContribution": 6,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Potential Major GMP impact. Two vaccine batches in finished-goods storage were exposed to an out-of-range temperature, so a stability and temperature-impact assessment against the labelled 2-8 C range is required before disposition. No stability failure is confirmed yet, which keeps this Major rather than Critical pending the assessment.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "The affected batches VAC-26-0402-A and VAC-26-0402-B were quarantined on QA hold, product was transferred to a qualified backup cold room, and CR-FF-03 was placed on engineering hold pending compressor and alarm inspection.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "Finished-goods cold room CR-FF-03 and the two vaccine batches stored inside during the excursion window (VAC-26-0402-A, VAC-26-0402-B). Source records: cold-room temperature trend (SOP-WH-030) and the alarm event log.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "cause_confirmation",
+        "question": "What evidence is needed to confirm the root cause?",
+        "answer": "Confirm via the compressor fault log, the alarm-system escalation configuration for CR-FF-03, the on-call response record for the overnight window, and a review of whether the SOP-WH-030 preventive-maintenance check covers after-hours alarm escalation.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "effectiveness_criteria",
+        "question": "How will effectiveness be verified?",
+        "answer": "Effective when the reconfigured after-hours escalation passes a documented test alarm, the revised maintenance checklist is in place, and no unacknowledged cold-room excursion recurs across a 90-day monitoring window for all GMP cold rooms.",
+        "novaScoreContribution": 2,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 24,
+      "rootCauseDepth": 22,
+      "effectiveness": 22,
+      "containment": 20,
+      "total": 88,
+      "isAuditReady": true
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 70,
+      "factors": [
+        {
+          "factor": "Area criticality",
+          "value": "Finished-goods cold store",
+          "weight": 26,
+          "rationale": "An out-of-range excursion in qualified cold storage affects product disposition."
+        },
+        {
+          "factor": "Excursion magnitude",
+          "value": "10.4 C peak / 95 min",
+          "weight": 22,
+          "rationale": "The magnitude and duration must be assessed against the labelled storage range."
+        },
+        {
+          "factor": "Affected material",
+          "value": "Two vaccine batches",
+          "weight": 22,
+          "rationale": "Potential batch impact requires a stability and QA assessment."
+        }
+      ],
+      "rationale": "Nova detected a Major deviation because two vaccine batches in qualified cold storage were exposed to an out-of-range temperature requiring stability assessment and containment.",
+      "computedAt": "2026-04-12T07:25:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "fiveWhys": [
+        {
+          "id": "fw-0210-1",
+          "level": 1,
+          "question": "Why did cold room CR-FF-03 exceed 8 C overnight?",
+          "novaSuggestion": "The compressor cut out and the temperature rose without intervention.",
+          "novaCitations": [],
+          "userAnswer": "The lead compressor faulted overnight and the temperature drifted up without any corrective intervention.",
+          "status": "accepted"
+        },
+        {
+          "id": "fw-0210-2",
+          "level": 2,
+          "question": "Why was the rising temperature not addressed for 95 minutes?",
+          "novaSuggestion": "The high-temperature alarm was not acknowledged because no one was alerted after hours.",
+          "novaCitations": [],
+          "userAnswer": "The alarm annunciated locally in an unstaffed area after hours, so no one was alerted to respond.",
+          "status": "accepted"
+        },
+        {
+          "id": "fw-0210-3",
+          "level": 3,
+          "question": "Why was no one alerted to the after-hours alarm?",
+          "novaSuggestion": "The alarm annunciated locally but did not escalate to the on-call engineer.",
+          "novaCitations": [],
+          "userAnswer": "The alarm did not escalate beyond the local panel to the on-call engineer's pager.",
+          "status": "edited"
+        },
+        {
+          "id": "fw-0210-4",
+          "level": 4,
+          "question": "Why did the alarm not escalate to on-call?",
+          "novaSuggestion": "The escalation path for CR-FF-03 was never configured after a controller upgrade.",
+          "novaCitations": [],
+          "userAnswer": "The escalation route for CR-FF-03 was not reconfigured in the alarm system after the 2025 controller upgrade.",
+          "status": "accepted"
+        },
+        {
+          "id": "fw-0210-5",
+          "level": 5,
+          "question": "Why was the missing escalation not detected before the excursion?",
+          "novaSuggestion": "After-hours escalation was not part of the preventive-maintenance test checklist for cold rooms.",
+          "novaCitations": [],
+          "userAnswer": "After-hours alarm-escalation testing was not included in the preventive-maintenance checklist for GMP cold rooms, so the gap went undetected.",
+          "status": "accepted"
+        }
+      ],
+      "confirmedRootCauses": [
+        "The cold-room compressor's high-temperature alarm was not configured to escalate to the on-call engineer after hours, so a 2-8 C excursion ran unaddressed until the morning shift."
+      ]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "method": "process_review",
+      "result": "After-hours alarm escalation was reconfigured and passed a documented test alarm; a 90-day monitoring window across all GMP cold rooms showed no recurrence of unacknowledged excursions.",
+      "evidenceFileNames": ["coldroom-alarm-escalation-test-DEV-0210.pdf"],
+      "verifiedAt": "2026-04-24T11:00:00+07:00",
+      "verifiedBy": "initiator"
+    },
+    "approvals": [
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "approved",
+        "notes": "Containment, corrective and preventive actions for the cold-chain excursion are appropriate. Endorsed for QA sign-off.",
+        "signedAt": "2026-04-22T10:10:00+07:00",
+        "stage": "signoff"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA Deviation",
+        "decision": "approved",
+        "notes": "Stability assessment, alarm-escalation fix and SOP revision reviewed and endorsed.",
+        "signedAt": "2026-04-23T09:30:00+07:00",
+        "stage": "signoff"
+      },
+      {
+        "approverPersonaId": "sme",
+        "approverName": "Dr. Ahmad Pratomo",
+        "role": "SME Microbiology",
+        "decision": "approved",
+        "notes": "SME co-approval (Major): the stability-impact rationale and the escalation remediation adequately address sterility-unrelated cold-chain risk. Concur.",
+        "signedAt": "2026-04-24T13:15:00+07:00",
+        "stage": "signoff"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "Division Head - QA",
+        "decision": "approved",
+        "notes": "CAPA approved and closed as Audit Ready. Effectiveness verification complete.",
+        "signedAt": "2026-04-25T09:45:00+07:00",
+        "stage": "signoff"
+      }
+    ],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "closed",
+    "currentStep": "signoff",
+    "createdAt": "2026-04-12T07:30:00+07:00",
+    "updatedAt": "2026-04-25T10:00:00+07:00",
+    "createdBy": "initiator",
+    "assignedTo": "head_of_qa",
+    "department": "Fill-Finish",
+    "disposisi": {
+      "reviewerPersonaId": "qa_deviation",
+      "assignedTo": "initiator",
+      "severity": "Major",
+      "rationale": "Out-of-range excursion affecting two vaccine batches in qualified cold storage warrants a full 8D investigation. Major severity confirmed; assigned to Fill-Finish for structured corrective action.",
+      "dispositionAt": "2026-04-12T08:30:00+07:00"
+    }
+  },
+  {
+    "id": "CAPA-2026-0156",
+    "findingId": "AUD-2026-0156",
+    "type": "audit",
+    "title": "Overdue Calibration on QC Balance Not Flagged",
+    "preFill": {
+      "source": "Q100+",
+      "findingId": "AUD-2026-0156",
+      "auditId": "IA-2026-QA-031",
+      "auditType": "internal",
+      "reportedAt": "2026-03-18T11:00:00+07:00",
+      "auditDate": "2026-03-17T09:00:00+07:00",
+      "auditor": {
+        "name": "Siti Rahmawati",
+        "organization": "QA Compliance"
+      },
+      "auditee": {
+        "department": "Quality Control",
+        "contactPerson": "Bambang Saputra"
+      },
+      "findingCategory": "Equipment Calibration",
+      "findingDescription": "A QC analytical balance was found in service three weeks past its calibration due date; the overdue status was not flagged by the manual tracking spreadsheet.",
+      "regulationReference": ["GMP Chapter 3", "GMP Annex 15"],
+      "severity": "Major",
+      "sopReferences": ["SOP-QC-012", "SOP-CAL-002"]
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "During internal audit IA-2026-QA-031 on 17 Mar 2026, QA Compliance found a QC analytical balance in active use three weeks past its calibration due date. The overdue status had not been flagged by the manual calibration-tracking spreadsheet, contrary to SOP-QC-012 and SOP-CAL-002.",
+        "novaScoreContribution": 6,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Major GMP impact. A balance used for QC release testing operating past its calibration due date places the reliability of results generated in that window in question under GMP Chapter 3 and Annex 15, requiring a retrospective data review even though no out-of-trend result has yet been identified.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "The balance was removed from service and recalibrated, and QC results generated since the last valid calibration were placed under a data-integrity review while all QC balance statuses were reconciled against the master schedule.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "One QC analytical balance and the QC results it generated between its calibration due date and removal from service. Governing records: SOP-QC-012 (calibration tracking) and SOP-CAL-002; finding logged in Q100+ as AUD-2026-0156.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "cause_confirmation",
+        "question": "What evidence is needed to confirm the root cause?",
+        "answer": "Confirm by comparing the manual tracking spreadsheet against the master calibration schedule, reviewing the post-calibration verification result to bound any data impact, and assessing whether the tracking method has an automated overdue flag.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "effectiveness_criteria",
+        "question": "How will effectiveness be verified?",
+        "answer": "Effective when calibration tracking is migrated to the centralised register with automated due/overdue flags, monthly reconciliation is evidenced, and no overdue-calibration instrument is found in service at the next internal audit.",
+        "novaScoreContribution": 2,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 23,
+      "rootCauseDepth": 22,
+      "effectiveness": 21,
+      "containment": 20,
+      "total": 86,
+      "isAuditReady": true
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 66,
+      "factors": [
+        {
+          "factor": "Equipment criticality",
+          "value": "QC release balance",
+          "weight": 30,
+          "rationale": "A balance used for release testing directly affects result reliability."
+        },
+        {
+          "factor": "Calibration status",
+          "value": "Three weeks past due",
+          "weight": 20,
+          "rationale": "Operating past the due date requires a retrospective data review."
+        },
+        {
+          "factor": "Data impact",
+          "value": "Results since last calibration under review",
+          "weight": 16,
+          "rationale": "The window of affected results must be bounded and assessed."
+        }
+      ],
+      "rationale": "Nova classified this audit finding as Major because an overdue-calibration QC instrument affects the reliability of release-test data and indicates a tracking-control gap.",
+      "computedAt": "2026-03-18T11:02:00+07:00"
+    },
+    "rca": {
+      "method": "fishbone",
+      "fishbone": [
+        {
+          "category": "Method",
+          "novaEntries": ["Calibration due dates were tracked in a manual spreadsheet with no automated overdue flag."],
+          "userEntries": ["The spreadsheet was not reconciled against the master calibration schedule on a defined cadence."],
+          "status": "edited"
+        },
+        {
+          "category": "Man",
+          "novaEntries": ["Ownership for updating the spreadsheet was unclear after a QC scheduling change."],
+          "userEntries": [],
+          "status": "accepted"
+        },
+        {
+          "category": "Measurement",
+          "novaEntries": ["No periodic cross-check compared in-service instruments against their calibration status."],
+          "userEntries": [],
+          "status": "pending"
+        }
+      ],
+      "confirmedRootCauses": [
+        "Calibration due-date tracking for QC balances relied on a manual spreadsheet that was not reconciled against the master calibration schedule, so an overdue balance stayed in service without a flag."
+      ]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "method": "process_review",
+      "result": "Calibration tracking was migrated to the centralised register with automated overdue flags; two monthly reconciliations were evidenced and no overdue-calibration instrument was found in service on follow-up review.",
+      "evidenceFileNames": ["calibration-register-review-AUD-0156.pdf"],
+      "verifiedAt": "2026-03-30T11:00:00+07:00",
+      "verifiedBy": "qa_deviation"
+    },
+    "approvals": [
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "approved",
+        "notes": "CAPA Plan - recalibration, data review and register migration endorsed for QA submission.",
+        "signedAt": "2026-03-21T10:00:00+07:00",
+        "stage": "plan"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA - GMP & DIRA Compliance",
+        "decision": "approved",
+        "notes": "CAPA Plan reviewed - the register migration and reconciliation cadence address the tracking gap. Endorsed.",
+        "signedAt": "2026-03-21T15:20:00+07:00",
+        "stage": "plan"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "QA Division Head",
+        "decision": "approved",
+        "notes": "CAPA Plan approved at division level. Execute the actions, then submit the CAPA Actual phase.",
+        "signedAt": "2026-03-22T09:10:00+07:00",
+        "stage": "plan"
+      },
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "approved",
+        "notes": "CAPA Actual - executed recalibration, completed data review and register migration confirmed.",
+        "signedAt": "2026-03-28T10:30:00+07:00",
+        "stage": "actual"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA - GMP & DIRA Compliance",
+        "decision": "approved",
+        "notes": "CAPA Actual reviewed - executed actions and evidence are complete. Endorsed for closure.",
+        "signedAt": "2026-03-28T14:40:00+07:00",
+        "stage": "actual"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "QA Division Head",
+        "decision": "approved",
+        "notes": "CAPA Actual approved. Proceed to QA final verification and closure.",
+        "signedAt": "2026-03-29T11:00:00+07:00",
+        "stage": "actual"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA - GMP & DIRA Compliance",
+        "decision": "approved",
+        "notes": "Closing-completeness check passed and effectiveness verified. CAPA closed as Audit Ready.",
+        "signedAt": "2026-03-31T09:20:00+07:00",
+        "stage": "closure"
+      }
+    ],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "closed",
+    "currentStep": "signoff",
+    "createdAt": "2026-03-18T11:05:00+07:00",
+    "updatedAt": "2026-03-31T09:30:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "qa_deviation",
+    "department": "Quality Control / QA Compliance",
+    "disposisi": {
+      "reviewerPersonaId": "qa_deviation",
+      "assignedTo": "qa_deviation",
+      "severity": "Major",
+      "rationale": "An overdue-calibration QC release instrument indicates a systemic tracking-control gap with potential data impact. Major severity confirmed; 8D workflow assigned to QA Compliance.",
+      "dispositionAt": "2026-03-18T11:40:00+07:00"
+    },
+    "auditPhase": "actual",
+    "auditContext": {
+      "variant": "internal",
+      "schedule": {
+        "dateRange": { "start": "2026-03-16T00:00:00+07:00", "end": "2026-03-18T00:00:00+07:00" },
+        "auditTeam": [
+          { "name": "Siti Rahmawati", "role": "Lead Auditor - QA Compliance" },
+          { "name": "Yulianto Nugroho", "role": "QA Auditor" }
+        ],
+        "scope": "Equipment calibration control - QC instruments calibration tracking and status (Quality Control).",
+        "auditee": "Quality Control Department (contact: Bambang Saputra)"
+      },
+      "leadAuditorReviewedAt": "2026-03-18T16:00:00+07:00"
+    },
+    "closingCompleteness": {
+      "complete": true
+    }
+  },
+  {
+    "id": "CAPA-2026-0073",
+    "findingId": "CMP-2026-0073",
+    "type": "complaint",
+    "title": "Unscannable Secondary-Carton Barcode - Distributor Complaint",
+    "preFill": {
+      "source": "Bizzmine-Complaint",
+      "complaintId": "CMP-2026-0073",
+      "reportedAt": "2026-02-14T10:30:00+07:00",
+      "customer": {
+        "name": "PT Kimia Farma Trading & Distribution",
+        "type": "distributor"
+      },
+      "product": {
+        "name": "Vaccine Multi-dose Vial",
+        "lotNumber": "VAC-26-0118-B",
+        "expiryDate": "2027-01-31"
+      },
+      "complaintType": "Labelling / Barcode",
+      "description": "Distributor warehouse scanners could not read the secondary-carton barcode on multiple units from the lot during goods-in; manual entry was required for receipt.",
+      "initialSeverity": "Major",
+      "attachments": [
+        {
+          "name": "distributor-barcode-photo-cmp-2026-0073.jpg",
+          "type": "Image",
+          "url": "/mock/attachments/distributor-barcode-photo-cmp-2026-0073.jpg"
+        }
+      ]
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "On 14 Feb 2026, PT Kimia Farma Trading & Distribution reported that warehouse scanners could not read the secondary-carton barcode on multiple units of lot VAC-26-0118-B during goods-in, forcing manual data entry to complete receipt.",
+        "novaScoreContribution": 6,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Major distribution and traceability impact. The secondary-carton barcode is the scan key for lot tracking through the supply chain; an unscannable print degrades traceability and goods-in control, though the vial, label, seal and product remain conforming.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "Remaining distributed stock of lot VAC-26-0118-B was placed on a scan-grade re-inspection hold, and the distributor was provided an interim manual-receipt instruction while affected cartons are reworked and re-verified.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "Vaccine Multi-dose Vial, lot VAC-26-0118-B (expiry 31 Jan 2027) secondary cartons distributed to PT Kimia Farma. Source records: distributor scanner report, complaint intake form, and packaging line-setup records logged in Bizzmine as CMP-2026-0073.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "cause_confirmation",
+        "question": "What evidence is needed to confirm the root cause?",
+        "answer": "Confirm by measuring the ANSI scan-grade / print contrast on retained cartons of the lot, reviewing the packaging line-setup record for a barcode verification step, and checking whether in-process scan checks were performed during the run.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "effectiveness_criteria",
+        "question": "How will effectiveness be verified?",
+        "answer": "Effective when an ANSI scan-grade verification is added at line setup and in-process, the distributor confirms successful scanning of reworked stock, and no barcode-readability complaint recurs over the following two packaging campaigns.",
+        "novaScoreContribution": 2,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 22,
+      "rootCauseDepth": 21,
+      "effectiveness": 21,
+      "containment": 20,
+      "total": 84,
+      "isAuditReady": true
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 64,
+      "factors": [
+        {
+          "factor": "Distribution impact",
+          "value": "Goods-in scanning blocked",
+          "weight": 26,
+          "rationale": "An unscannable barcode disrupts distributor receipt and handling."
+        },
+        {
+          "factor": "Traceability",
+          "value": "Barcode is the lot scan key",
+          "weight": 22,
+          "rationale": "Readability underpins supply-chain track-and-trace."
+        },
+        {
+          "factor": "Scope",
+          "value": "Single lot, reworkable",
+          "weight": 16,
+          "rationale": "Initial scope is bounded to one lot and can be reworked."
+        }
+      ],
+      "rationale": "Nova classified this complaint as Major because an unscannable secondary-carton barcode degrades supply-chain traceability and goods-in control for a distributed vaccine lot.",
+      "computedAt": "2026-02-14T10:33:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "fiveWhys": [
+        {
+          "id": "fw-0073-1",
+          "level": 1,
+          "question": "Why could the distributor not scan the secondary-carton barcode?",
+          "novaSuggestion": "The barcode print contrast was below the scan-grade threshold.",
+          "novaCitations": [],
+          "userAnswer": "The printed barcode had low contrast / print-quality grade below the readable scan-grade threshold.",
+          "status": "accepted"
+        },
+        {
+          "id": "fw-0073-2",
+          "level": 2,
+          "question": "Why was a low-contrast barcode produced on the run?",
+          "novaSuggestion": "The carton printer settings drifted and were not caught at setup.",
+          "novaCitations": [],
+          "userAnswer": "The carton coder ribbon/contrast had drifted and the print quality was not verified at line setup.",
+          "status": "accepted"
+        },
+        {
+          "id": "fw-0073-3",
+          "level": 3,
+          "question": "Why was the print quality not verified at setup?",
+          "novaSuggestion": "Line setup had no scan-grade barcode verification step.",
+          "novaCitations": [],
+          "userAnswer": "The packaging line-setup checklist had no ANSI scan-grade barcode verification, only a visual presence check.",
+          "status": "edited"
+        },
+        {
+          "id": "fw-0073-4",
+          "level": 4,
+          "question": "Why was scan-grade verification not part of the setup control?",
+          "novaSuggestion": "Barcode acceptance criteria were not defined as a verifiable in-process check.",
+          "novaCitations": [],
+          "userAnswer": "The SOP defined a readable-barcode requirement but not a measurable scan-grade acceptance check at setup and in-process.",
+          "status": "accepted"
+        }
+      ],
+      "confirmedRootCauses": [
+        "Secondary-carton barcode print contrast was not verified against the scan-grade acceptance criteria at line setup, so a low-contrast print batch passed to distribution."
+      ]
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "method": "process_review",
+      "result": "An ANSI scan-grade verification was added at setup and in-process; the distributor confirmed successful scanning of reworked stock and no readability complaint recurred over the following two packaging campaigns.",
+      "evidenceFileNames": ["barcode-verification-log-CMP-0073.pdf"],
+      "verifiedAt": "2026-02-26T15:00:00+07:00",
+      "verifiedBy": "qa_deviation"
+    },
+    "approvals": [
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "QA Head of Department",
+        "decision": "approved",
+        "notes": "Round 1 - analysis and proposed actions reviewed. Scan-grade verification at setup is the right control. Endorsed for division-level review.",
+        "signedAt": "2026-02-19T10:00:00+07:00",
+        "stage": "analysis"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA - Complaint Handling",
+        "decision": "approved",
+        "notes": "Complaint analysis and proposed corrective/preventive actions reviewed and endorsed.",
+        "signedAt": "2026-02-19T14:30:00+07:00",
+        "stage": "analysis"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "QA Head of Division",
+        "decision": "approved",
+        "notes": "Round 1 analysis approved. Send the customer response, then proceed to closure once the reply window resolves.",
+        "signedAt": "2026-02-20T09:15:00+07:00",
+        "stage": "analysis"
+      },
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "QA Head of Department",
+        "decision": "approved",
+        "notes": "Round 2 - closure reviewed. Rework verified and the in-process control is in place. Endorsed.",
+        "signedAt": "2026-02-26T16:00:00+07:00",
+        "stage": "closure"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA - Complaint Handling",
+        "decision": "approved",
+        "notes": "Closure evidence and effectiveness verification complete. Endorsed for final closure.",
+        "signedAt": "2026-02-26T16:40:00+07:00",
+        "stage": "closure"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "QA Head of Division",
+        "decision": "approved",
+        "notes": "Round 2 closure approved. CAPA closed as Audit Ready.",
+        "signedAt": "2026-02-27T09:30:00+07:00",
+        "stage": "closure"
+      }
+    ],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "closed",
+    "currentStep": "signoff",
+    "createdAt": "2026-02-14T10:35:00+07:00",
+    "updatedAt": "2026-02-27T10:00:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "head_of_qa",
+    "department": "Packaging / QA Complaint",
+    "disposisi": {
+      "reviewerPersonaId": "qa_deviation",
+      "assignedTo": "qa_deviation",
+      "severity": "Major",
+      "rationale": "An unscannable secondary-carton barcode on a distributed vaccine lot affects traceability and distributor receipt. Major severity confirmed; full 8D complaint workflow required.",
+      "dispositionAt": "2026-02-14T11:30:00+07:00"
+    },
+    "customerResponse": {
+      "responseSentAt": "2026-02-22T11:00:00+07:00",
+      "customerReplied": true,
+      "replyDueAt": "2026-03-08T11:00:00+07:00",
+      "closedAt": "2026-02-26T15:00:00+07:00"
+    }
+  },
+  {
+    "id": "CAPA-2026-0352",
+    "findingId": "DEV-2026-0352",
+    "type": "deviation",
+    "title": "Out-of-Specification Fill Volume at In-Process Check - Line 1",
+    "preFill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0352",
+      "reportedAt": "2026-06-05T13:45:00+07:00",
+      "occurredAt": "2026-06-05T13:10:00+07:00",
+      "location": {
+        "department": "Fill-Finish",
+        "area": "Grade A Fill Suite",
+        "line": "Vaccine Filling Line 1",
+        "equipmentId": "FILLER-FF-L1-03"
+      },
+      "initiator": {
+        "name": "Andi Wijaya",
+        "role": "Senior Operator",
+        "nik": "BF-FF-1024"
+      },
+      "initialObservation": "A routine in-process fill-volume check on Line 1 returned three consecutive vials below the lower fill-volume limit; the line was paused for investigation.",
+      "affectedBatches": ["VAC-26-0605-A"],
+      "attachments": [
+        {
+          "name": "ipc-fillvolume-dev-2026-0352.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/ipc-fillvolume-dev-2026-0352.pdf"
+        }
+      ],
+      "sopReferences": ["SOP-FF-006", "SOP-IPC-003"],
+      "initialSeverity": "Major"
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "On 5 Jun 2026 at 13:10, a routine in-process fill-volume check on Vaccine Filling Line 1 returned three consecutive vials below the lower fill-volume limit. The operator paused the line and flagged batch VAC-26-0605-A for investigation.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Potential under-fill affecting dose delivery for the units in the check window. Batch impact is being assessed; classification pending QA review.",
+        "novaScoreContribution": 4,
+        "needsImprovement": true,
+        "improvementHint": "Quantify the deviation magnitude (how far below the limit) and bound the number of vials potentially affected to strengthen the impact statement."
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "Line 1 was paused and batch VAC-26-0605-A placed on hold pending investigation.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "Vaccine Filling Line 1, filler FILLER-FF-L1-03, batch VAC-26-0605-A. Source record: in-process fill-volume check log (SOP-IPC-003).",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "cause_confirmation",
+        "question": "What evidence is needed to confirm the root cause?",
+        "answer": "Pending - the filler dosing setup and recent changeover records still need review.",
+        "novaScoreContribution": 2,
+        "needsImprovement": true,
+        "improvementHint": "List the specific evidence to gather (pump calibration, changeover record, fill-weight trend) so the investigation has a clear confirmation path."
+      }
+    ],
+    "score": {
+      "problemSpecificity": 20,
+      "rootCauseDepth": 12,
+      "effectiveness": 12,
+      "containment": 18,
+      "total": 62,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 60,
+      "factors": [
+        {
+          "factor": "Dose delivery",
+          "value": "Under-fill below lower limit",
+          "weight": 28,
+          "rationale": "Under-fill can affect delivered dose and must be assessed."
+        },
+        {
+          "factor": "Process area",
+          "value": "Grade A filling line",
+          "weight": 18,
+          "rationale": "The event occurred during active aseptic filling."
+        },
+        {
+          "factor": "Scope",
+          "value": "Single batch under hold",
+          "weight": 14,
+          "rationale": "Initial scope is bounded to one batch pending review."
+        }
+      ],
+      "rationale": "Nova flagged a potential Major deviation: an in-process under-fill on an active filling line affecting a vaccine batch. Final classification pending QA intake review.",
+      "computedAt": "2026-06-05T13:48:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "fiveWhys": [],
+      "confirmedRootCauses": []
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "intakeReviews": [
+      {
+        "reviewerPersonaId": "qa_deviation",
+        "reviewerName": "Siti Rahmawati",
+        "role": "QA Deviation"
+      }
+    ],
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "pending_review",
+    "currentStep": "problem",
+    "createdAt": "2026-06-05T13:50:00+07:00",
+    "updatedAt": "2026-06-05T13:50:00+07:00",
+    "createdBy": "initiator",
+    "assignedTo": "qa_deviation",
+    "department": "Fill-Finish"
+  },
+  {
+    "id": "CAPA-2026-0349",
+    "findingId": "DEV-2026-0349",
+    "type": "deviation",
+    "title": "Suspected Loss of Sterility Assurance - Aseptic Intervention Breach",
+    "preFill": {
+      "source": "Bizzmine",
+      "deviationId": "DEV-2026-0349",
+      "reportedAt": "2026-06-04T16:20:00+07:00",
+      "occurredAt": "2026-06-04T15:05:00+07:00",
+      "location": {
+        "department": "Fill-Finish",
+        "area": "Grade A Fill Suite",
+        "line": "Vaccine Filling Line 2",
+        "equipmentId": "ISO-FF-L2-01"
+      },
+      "initiator": {
+        "name": "Andi Wijaya",
+        "role": "Senior Operator",
+        "nik": "BF-FF-1024"
+      },
+      "initialObservation": "During a manual intervention on Line 2, an operator's gauntlet contacted a non-sterile surface inside the Grade A zone; the breach was observed and the batch flagged for sterility-assurance review.",
+      "affectedBatches": ["VAC-26-0604-A", "VAC-26-0604-B"],
+      "attachments": [
+        {
+          "name": "intervention-log-dev-2026-0349.pdf",
+          "type": "PDF",
+          "url": "/mock/attachments/intervention-log-dev-2026-0349.pdf"
+        }
+      ],
+      "sopReferences": ["SOP-FF-009", "SOP-ASEPTIC-002", "SOP-EM-014"],
+      "initialSeverity": "Critical"
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "On 4 Jun 2026 at 15:05, during a manual intervention on Vaccine Filling Line 2, an operator's gauntlet contacted a non-sterile surface inside the Grade A zone. The breach was observed in real time by the line monitor and the intervention was logged.",
+        "novaScoreContribution": 6,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Critical GMP impact. A loss of aseptic conditions in a Grade A filling zone places sterility assurance for the units filled around the intervention window in question. Sterility is a patient-safety-critical attribute for a parenteral vaccine and cannot be assured by testing alone, so the affected units require full sterility-assurance assessment.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "Filling on Line 2 was stopped, batches VAC-26-0604-A and VAC-26-0604-B were quarantined on QA hold, and the affected zone was flagged for environmental monitoring and line re-clearance before any further filling.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "Grade A Fill Suite, Vaccine Filling Line 2 (isolator ISO-FF-L2-01) and the two vaccine batches filled around the intervention window (VAC-26-0604-A, VAC-26-0604-B). Source records: aseptic intervention log (SOP-ASEPTIC-002) and the EM record for the session.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 24,
+      "rootCauseDepth": 14,
+      "effectiveness": 6,
+      "containment": 20,
+      "total": 64,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Critical",
+      "totalWeight": 92,
+      "factors": [
+        {
+          "factor": "Sterility assurance",
+          "value": "Aseptic breach in Grade A",
+          "weight": 44,
+          "rationale": "Loss of aseptic conditions directly challenges sterility assurance."
+        },
+        {
+          "factor": "Patient safety",
+          "value": "Parenteral vaccine, sterility-critical",
+          "weight": 30,
+          "rationale": "Sterility is a patient-safety-critical attribute and cannot be assured by testing alone."
+        },
+        {
+          "factor": "Batch scope",
+          "value": "Two vaccine batches",
+          "weight": 18,
+          "rationale": "Both batches in the intervention window require assessment."
+        }
+      ],
+      "rationale": "Nova classified this deviation as Critical because an aseptic breach in a Grade A filling zone challenges sterility assurance for a parenteral vaccine, requiring SME (microbiology) consultation and full 8D investigation.",
+      "computedAt": "2026-06-04T16:25:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "fiveWhys": [
+        {
+          "id": "fw-0349-1",
+          "level": 1,
+          "question": "Why is sterility assurance of the affected units in question?",
+          "novaSuggestion": "An operator gauntlet contacted a non-sterile surface during a manual intervention.",
+          "novaCitations": [],
+          "userAnswer": "An operator's gauntlet contacted a non-sterile surface during a manual intervention on Line 2.",
+          "status": "accepted"
+        },
+        {
+          "id": "fw-0349-2",
+          "level": 2,
+          "question": "Why did the gauntlet contact a non-sterile surface during the intervention?",
+          "novaSuggestion": "The intervention required reaching across the Grade A zone without a defined no-touch path.",
+          "novaCitations": [],
+          "userAnswer": "",
+          "status": "pending"
+        },
+        {
+          "id": "fw-0349-3",
+          "level": 3,
+          "question": "Why was a validated no-touch reach path not available for this intervention?",
+          "novaSuggestion": "The aseptic intervention procedure may not map a validated reach path for this stoppage type.",
+          "novaCitations": [],
+          "userAnswer": "",
+          "status": "pending"
+        }
+      ],
+      "confirmedRootCauses": []
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "investigation",
+    "currentStep": "rca",
+    "createdAt": "2026-06-04T16:30:00+07:00",
+    "updatedAt": "2026-06-05T09:15:00+07:00",
+    "createdBy": "initiator",
+    "assignedTo": "qa_deviation",
+    "department": "Fill-Finish",
+    "disposisi": {
+      "reviewerPersonaId": "qa_deviation",
+      "assignedTo": "initiator",
+      "severity": "Critical",
+      "rationale": "An aseptic breach in a Grade A filling zone places sterility assurance of two vaccine batches in question. Critical severity confirmed; full 8D with SME (microbiology) consultation required.",
+      "dispositionAt": "2026-06-04T17:00:00+07:00"
+    }
+  },
+  {
+    "id": "CAPA-2026-0301",
+    "findingId": "AUD-2026-0301",
+    "type": "audit",
+    "title": "BPOM Inspection Finding - EM Data Trending Not Documented per Schedule",
+    "preFill": {
+      "source": "Q100+",
+      "findingId": "AUD-2026-0301",
+      "auditId": "EXT-2026-BPOM-007",
+      "auditType": "external",
+      "reportedAt": "2026-05-29T15:00:00+07:00",
+      "auditDate": "2026-05-28T09:00:00+07:00",
+      "auditor": {
+        "name": "Tim Inspeksi BPOM",
+        "organization": "BPOM RI"
+      },
+      "auditee": {
+        "department": "Fill-Finish / QA Compliance",
+        "contactPerson": "Dewi Anggraini"
+      },
+      "findingCategory": "Environmental Monitoring",
+      "findingDescription": "Periodic environmental-monitoring trend review for the Grade A/B filling areas was not documented at the frequency defined in the EM program during Q1 2026.",
+      "regulationReference": ["GMP Annex 1", "BPOM CPOB Aneks 1"],
+      "severity": "Major",
+      "sopReferences": ["SOP-EM-014", "SOP-EM-TREND-002"]
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "During the BPOM inspection on 28 May 2026 (EXT-2026-BPOM-007), the inspector found that the periodic environmental-monitoring trend review for the Grade A/B filling areas was not documented at the frequency defined in the EM program for the Q1 2026 period.",
+        "novaScoreContribution": 6,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "Major regulatory and GMP impact. EM trend review is a required element of contamination-control oversight under Annex 1; missing the documented review frequency weakens the ability to detect adverse trends early, even though individual EM results in the period were within limits.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "containment",
+        "question": "What immediate containment is already in place?",
+        "answer": "A retrospective EM trend review for Q1 2026 was completed and confirmed no adverse trend, and a named owner with a calendar trigger was temporarily assigned to the periodic review pending the SOP fix.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "EM trend-review documentation for the Grade A/B filling areas across the Q1 2026 period. Governing records: SOP-EM-014 and SOP-EM-TREND-002; finding logged in Q100+ as AUD-2026-0301 against BPOM inspection EXT-2026-BPOM-007.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "cause_confirmation",
+        "question": "What evidence is needed to confirm the root cause?",
+        "answer": "Confirm by reviewing the EM trend-review SOP for an assigned owner and frequency trigger, and by mapping the Q1 staffing change to identify where review ownership was lost.",
+        "novaScoreContribution": 3,
+        "needsImprovement": true,
+        "improvementHint": "Attach the SOP ownership extract and the staffing-change handover record as evidence to close the confirmation loop."
+      }
+    ],
+    "score": {
+      "problemSpecificity": 22,
+      "rootCauseDepth": 16,
+      "effectiveness": 8,
+      "containment": 18,
+      "total": 64,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Major",
+      "totalWeight": 72,
+      "factors": [
+        {
+          "factor": "Regulatory exposure",
+          "value": "External BPOM finding",
+          "weight": 32,
+          "rationale": "An external regulatory finding requires a documented, time-bound response."
+        },
+        {
+          "factor": "Program compliance",
+          "value": "EM trend frequency missed",
+          "weight": 22,
+          "rationale": "Missing the defined review frequency weakens contamination-control oversight."
+        },
+        {
+          "factor": "Scope",
+          "value": "Q1 2026 trend reviews",
+          "weight": 18,
+          "rationale": "Scope is bounded to the Q1 review period for the filling areas."
+        }
+      ],
+      "rationale": "Nova classified this external audit finding as Major because a missed EM trend-review frequency is an Annex 1 contamination-control oversight gap raised by BPOM and requires a time-bound regulatory response.",
+      "computedAt": "2026-05-29T15:05:00+07:00"
+    },
+    "rca": {
+      "method": "fishbone",
+      "fishbone": [
+        {
+          "category": "Method",
+          "novaEntries": ["The EM trend-review SOP defined the frequency but did not assign a named owner or a calendar trigger for the periodic review."],
+          "userEntries": [],
+          "status": "pending"
+        },
+        {
+          "category": "Man",
+          "novaEntries": ["Trend-review responsibility shifted during a Q1 staffing change without a documented handover."],
+          "userEntries": [],
+          "status": "accepted"
+        }
+      ],
+      "confirmedRootCauses": []
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "investigation",
+    "currentStep": "rca",
+    "createdAt": "2026-05-29T15:10:00+07:00",
+    "updatedAt": "2026-06-03T10:00:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "qa_deviation",
+    "department": "Fill-Finish / QA Compliance",
+    "disposisi": {
+      "reviewerPersonaId": "qa_deviation",
+      "assignedTo": "qa_deviation",
+      "severity": "Major",
+      "rationale": "An external BPOM finding on EM trend-review frequency requires a time-bound CAPA with a documented report-back to the regulator. Major severity confirmed; 8D workflow assigned to QA Compliance.",
+      "dispositionAt": "2026-05-29T16:00:00+07:00"
+    },
+    "auditPhase": "plan",
+    "auditContext": {
+      "variant": "external",
+      "schedule": {
+        "dateRange": { "start": "2026-05-28T00:00:00+07:00", "end": "2026-05-29T00:00:00+07:00" },
+        "auditTeam": [
+          { "name": "Tim Inspeksi BPOM", "role": "External Inspector - BPOM RI" },
+          { "name": "Dewi Anggraini", "role": "QA Division Head (Host)" },
+          { "name": "Siti Rahmawati", "role": "QA Escort - Compliance" }
+        ],
+        "scope": "Environmental-monitoring program - trend review frequency and documentation for Grade A/B filling areas.",
+        "auditee": "Fill-Finish / QA Compliance (contact: Dewi Anggraini)"
+      },
+      "reportBackAt": "2026-06-26T17:00:00+07:00"
+    }
+  },
+  {
+    "id": "CAPA-2026-0061",
+    "findingId": "CMP-2026-0061",
+    "type": "complaint",
+    "title": "Cosmetic Carton Print Smudge - Complaint Intake Review",
+    "preFill": {
+      "source": "Bizzmine-Complaint",
+      "complaintId": "CMP-2026-0061",
+      "reportedAt": "2026-04-08T09:40:00+07:00",
+      "customer": {
+        "name": "Apotek Sehat Sentosa",
+        "type": "end_user"
+      },
+      "product": {
+        "name": "Vaccine Multi-dose Vial",
+        "lotNumber": "VAC-26-0312-D",
+        "expiryDate": "2027-03-31"
+      },
+      "complaintType": "Cosmetic / Packaging Appearance",
+      "description": "Pharmacy reported a faint ink smudge on the outer carton print of one unit. The vial, label, seal, and product were unaffected and within specification.",
+      "initialSeverity": "Minor",
+      "attachments": [
+        {
+          "name": "carton-smudge-photo-cmp-2026-0061.jpg",
+          "type": "Image",
+          "url": "/mock/attachments/carton-smudge-photo-cmp-2026-0061.jpg"
+        }
+      ]
+    },
+    "gateAnswers": [
+      {
+        "questionId": "observation",
+        "question": "What happened and when was it observed?",
+        "answer": "On 8 Apr 2026, Apotek Sehat Sentosa reported a faint ink smudge on the outer carton print of a single Vaccine Multi-dose Vial unit (lot VAC-26-0312-D). The vial, primary label, seal, and product were unaffected.",
+        "novaScoreContribution": 5,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "impact",
+        "question": "What is the potential quality or GMP impact?",
+        "answer": "No product-quality or GMP impact. The observation is limited to a cosmetic mark on the outer carton; the vial, label, seal, and product conform to specification and remain fully usable.",
+        "novaScoreContribution": 4,
+        "needsImprovement": false
+      },
+      {
+        "questionId": "scope",
+        "question": "Which product, batch, lot, equipment, or area is affected?",
+        "answer": "A single reported outer carton from lot VAC-26-0312-D. No primary packaging, label content, seal, or product attribute is affected. Source record: customer photo and complaint intake form CMP-2026-0061.",
+        "novaScoreContribution": 3,
+        "needsImprovement": false
+      }
+    ],
+    "score": {
+      "problemSpecificity": 16,
+      "rootCauseDepth": 6,
+      "effectiveness": 4,
+      "containment": 10,
+      "total": 36,
+      "isAuditReady": false
+    },
+    "impact": {
+      "severity": "Minor",
+      "totalWeight": 12,
+      "factors": [
+        {
+          "factor": "Defect type",
+          "value": "Cosmetic outer-carton print",
+          "weight": 6,
+          "rationale": "A cosmetic mark on secondary packaging with no functional effect."
+        },
+        {
+          "factor": "Product impact",
+          "value": "None - vial/label/seal conforming",
+          "weight": 4,
+          "rationale": "No primary packaging, label content, or product attribute affected."
+        },
+        {
+          "factor": "Scope",
+          "value": "Single reported carton",
+          "weight": 2,
+          "rationale": "Isolated to one reported unit with no recurrence signal."
+        }
+      ],
+      "rationale": "Minor: an isolated cosmetic outer-carton print observation with no product, label, seal, or data-integrity impact.",
+      "computedAt": "2026-04-08T09:43:00+07:00"
+    },
+    "rca": {
+      "method": "5whys",
+      "fiveWhys": [],
+      "confirmedRootCauses": []
+    },
+    "correctiveActions": [],
+    "preventiveActions": [],
+    "verification": {
+      "evidenceFileNames": []
+    },
+    "intakeReviews": [
+      {
+        "reviewerPersonaId": "qa_deviation",
+        "reviewerName": "Siti Rahmawati",
+        "role": "QA - Complaint Handling",
+        "decision": "rejected",
+        "notes": "Cosmetic outer-carton print smudge with no impact to the vial, label, seal, or product quality; the unit conforms to specification. Logged and acknowledged to the customer as a cosmetic observation. A full complaint CAPA is disproportionate to the risk - recommend closing without CAPA and trending carton-print appearance for any recurrence.",
+        "reviewedAt": "2026-04-09T10:15:00+07:00"
+      },
+      {
+        "reviewerPersonaId": "head_of_dept",
+        "reviewerName": "Bambang Saputra",
+        "role": "QA Head of Department",
+        "decision": "rejected",
+        "notes": "Concur with QA. Isolated cosmetic print observation with no product or safety impact and no recurrence trend for the lot family. Approved to reject CAPA initiation; retain for periodic carton-print appearance trending only.",
+        "reviewedAt": "2026-04-09T11:00:00+07:00"
+      }
+    ],
+    "approvals": [],
+    "auditEvents": [],
+    "suggestions": [],
+    "status": "rejected",
+    "currentStep": "problem",
+    "createdAt": "2026-04-08T09:45:00+07:00",
+    "updatedAt": "2026-04-09T11:00:00+07:00",
+    "createdBy": "qa_deviation",
+    "assignedTo": "qa_deviation",
+    "department": "Packaging / QA Complaint"
   }
 ]

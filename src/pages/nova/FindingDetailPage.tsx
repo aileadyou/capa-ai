@@ -64,7 +64,7 @@ const STEP_LABELS: Record<EightDStep, string> = {
 
 // ── Shared building blocks ────────────────────────────────────────────────────
 
-const EYEBROW_CLASS = "mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint";
+const EYEBROW_CLASS = "mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary";
 const PRIMARY_LINK_CLASS =
   "inline-flex items-center gap-1.5 whitespace-nowrap rounded-[var(--r-sm)] bg-[image:var(--grad-brand)] px-4 py-[9px] font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground no-underline";
 
@@ -334,7 +334,7 @@ function IntakeRejectionBanner({ capa }: { capa: CAPACase }) {
         <div className="flex flex-col gap-3">
           {withNotes.map((r) => (
             <div key={r.reviewerPersonaId}>
-              <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground-tertiary">
+              <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
                 {r.reviewerName} · {r.role}
               </p>
               <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">{r.notes}</p>
@@ -362,7 +362,7 @@ function IntakeRejectionBanner({ capa }: { capa: CAPACase }) {
             key={r.reviewerPersonaId}
             className="rounded-[var(--r-sm)] border border-destructive/20 bg-card px-4 py-3"
           >
-            <p className="mb-1 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-foreground-tertiary">
+            <p className="mb-1 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
               {r.reviewerName} · {r.role}
             </p>
             <p className="m-0 font-sans text-[13px] leading-[1.6] text-foreground-secondary">

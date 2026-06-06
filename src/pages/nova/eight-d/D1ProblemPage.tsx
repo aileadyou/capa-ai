@@ -197,7 +197,7 @@ export function D1ProblemPage() {
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
           {/* CAPA ID breadcrumb */}
-          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-primary">
             {capa.id} · D1
           </p>
           <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
@@ -255,7 +255,7 @@ export function D1ProblemPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             Quality Signals
           </p>
           <div className="grid grid-cols-2 gap-2">

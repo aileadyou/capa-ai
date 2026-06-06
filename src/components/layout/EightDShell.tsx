@@ -1,9 +1,10 @@
 import { createContext, ReactNode, useContext } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Check, CircleDot, Lock } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, CircleDot, Lock, Users } from "lucide-react";
 import { eightDSteps } from "@/routes";
 import { useCapaStore } from "@/store";
-import type { EightDStep } from "@/types";
+import type { CAPACase, EightDStep } from "@/types";
+import { formatDate } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 
 // ── Step metadata ────────────────────────────────────────────────────────────
@@ -74,6 +75,83 @@ function StepItem({
   );
 }
 
+// ── Audit context header ──────────────────────────────────────────────────────
+// Audit CAPAs run a two-phase CAPA Plan → CAPA Actual lifecycle. The phase badge
+// shows on every 8D step; the read-only schedule card surfaces on D1.
+
+function AuditContextHeader({
+  capa,
+  activeStep,
+}: {
+  capa: CAPACase;
+  activeStep: EightDStep;
+}) {
+  if (capa.type !== "audit" || !capa.auditContext) return null;
+  const { variant, schedule } = capa.auditContext;
+  const phase = capa.auditPhase ?? "plan";
+  const showSchedule = activeStep === "problem";
+
+  return (
+    <div className="mb-4 flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-[var(--r-full)] border border-primary/30 bg-[var(--accent-soft)] px-2.5 py-[3px] font-sans text-[11px] font-semibold text-primary">
+          Phase: {phase === "plan" ? "CAPA Plan" : "CAPA Actual"}
+        </span>
+        <span className="rounded-[var(--r-full)] border border-border-subtle bg-elevated px-2.5 py-[3px] font-sans text-[11px] font-medium capitalize text-foreground-secondary">
+          {variant} audit
+        </span>
+      </div>
+
+      {showSchedule && (
+        <div className="rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card px-4 py-3.5 shadow-sm">
+          <div className="mb-2.5 flex items-center gap-2">
+            <CalendarDays size={13} className="shrink-0 text-primary" />
+            <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              Audit Schedule
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <ScheduleField label="Date range">
+              {formatDate(schedule.dateRange.start)} – {formatDate(schedule.dateRange.end)}
+            </ScheduleField>
+            <ScheduleField label="Auditee">{schedule.auditee || "—"}</ScheduleField>
+            <ScheduleField label="Scope" full>
+              {schedule.scope || "—"}
+            </ScheduleField>
+            {schedule.auditTeam.length > 0 && (
+              <ScheduleField label="Audit team" full>
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  <Users size={11} className="shrink-0 text-foreground-faint" />
+                  {schedule.auditTeam.map((m) => `${m.name} (${m.role})`).join(", ")}
+                </span>
+              </ScheduleField>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScheduleField({
+  label,
+  children,
+  full = false,
+}: {
+  label: string;
+  children: ReactNode;
+  full?: boolean;
+}) {
+  return (
+    <div className={cn(full && "col-span-2")}>
+      <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-faint">
+        {label}
+      </p>
+      <p className="m-0 font-sans text-[12px] leading-[1.5] text-foreground-secondary">{children}</p>
+    </div>
+  );
+}
+
 // ── EightDShell ───────────────────────────────────────────────────────────────
 
 interface EightDShellProps {
@@ -126,6 +204,7 @@ export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShe
   if (embedded) {
     return (
       <div key={activeStep} className="motion-tab-content min-w-0 flex-1">
+        {capa && <AuditContextHeader capa={capa} activeStep={activeStep} />}
         {children}
       </div>
     );
@@ -148,7 +227,7 @@ export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShe
 
         {/* Eyebrow label */}
         <p
-          className="mb-2 ml-2.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
+          className="mb-2 ml-2.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-primary"
         >
           8D Workflow
         </p>
@@ -172,6 +251,7 @@ export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShe
       {/* ── Center + optional right sidebar ───────────────────────────── */}
       <div className="flex min-w-0 flex-1 items-start gap-5">
         <div key={activeStep} className="motion-tab-content min-w-0 flex-1">
+          {capa && <AuditContextHeader capa={capa} activeStep={activeStep} />}
           {children}
         </div>
 

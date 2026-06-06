@@ -28,7 +28,7 @@ const OUTCOME_CLASSES: Record<KGCitation["outcome"], string> = {
   Ongoing: "border-[var(--accent-line)] bg-[var(--accent-soft)] text-primary",
 };
 
-const EYEBROW_CLASS = "font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary";
+const EYEBROW_CLASS = "font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -240,7 +240,7 @@ export function SimilarityExplorerPage() {
         className="mb-4 rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5 shadow-sm"
       >
         <div
-          className="mb-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
+          className="mb-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
         >
           AI search
         </div>
@@ -295,7 +295,7 @@ export function SimilarityExplorerPage() {
           {/* Similarity slider */}
           <div>
             <div className="mb-1.5 flex justify-between">
-              <span className="font-sans text-[11px] font-medium uppercase tracking-[0.18em] text-foreground-tertiary">
+              <span className="font-sans text-[11px] font-medium uppercase tracking-[0.18em] text-primary">
                 Min similarity
               </span>
               <span className="font-sans text-xs font-semibold text-foreground">
@@ -363,7 +363,7 @@ export function SimilarityExplorerPage() {
         <>
           {/* Result count */}
           <div
-            className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary"
+            className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
           >
             {filteredResults.length} match{filteredResults.length !== 1 ? "es" : ""}
           </div>

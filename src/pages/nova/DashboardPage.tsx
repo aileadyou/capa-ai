@@ -106,7 +106,7 @@ function KpiCard({
 
         {/* Eyebrow */}
         <p
-          className="mb-2 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+          className="mb-2 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"
         >
           {eyebrow}
         </p>
@@ -154,7 +154,7 @@ function Card({
       <div>
         {eyebrow && (
           <p
-            className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+            className="mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"
           >
             {eyebrow}
           </p>

@@ -359,7 +359,7 @@ function FiveWhysChain({
             )}
           </div>
           <div className="flex-1 pb-3">
-            <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground-faint">
+            <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-primary">
               {index === 4 ? "Root Cause · Why 5" : `Why ${item.level}`}
             </p>
             <p className="mb-1.5 mt-0 text-[12px] text-foreground-tertiary">{item.question}</p>
@@ -591,7 +591,7 @@ function FishboneVisual({
                 "h-2 w-2 rounded-full",
                 i < 3 ? "bg-primary/50" : "bg-warning/50",
               )} />
-              <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+              <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                 {item.category}
               </p>
             </div>
@@ -704,7 +704,7 @@ function DecisionTreeVisual({ nodes }: { nodes: DecisionNode[] }) {
             </>
           ) : (
             <>
-              <p className="mb-1.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-foreground-faint">
+              <p className="mb-1.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-primary">
                 Step {path.length}
                 {nodes.filter((n) => !n.isLeaf).length > 0
                   ? ` of ${nodes.filter((n) => !n.isLeaf).length}`
@@ -977,7 +977,7 @@ export function D3RCAPage() {
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-primary">
             {capa.id} · D3
           </p>
           <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
@@ -1031,7 +1031,7 @@ export function D3RCAPage() {
         {/* ── RCA content (method-specific) ───────────────────────────── */}
         {method === "5whys" && (
           <div>
-            <p className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+            <p className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               5-Whys Causal Chain
             </p>
             <FiveWhysChain
@@ -1053,7 +1053,7 @@ export function D3RCAPage() {
 
         {method === "fishbone" && (
           <div>
-            <p className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+            <p className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Fishbone (Ishikawa) Diagram
             </p>
             <FishboneVisual
@@ -1069,7 +1069,7 @@ export function D3RCAPage() {
 
         {method === "decision_tree" && (
           <div>
-            <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+            <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Decision Tree
             </p>
             <DecisionTreeVisual nodes={decisionNodes} />
@@ -1080,7 +1080,7 @@ export function D3RCAPage() {
         {relevantCitations.length > 0 && (
           <div>
             <div className="mb-3 flex items-baseline gap-2">
-              <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+              <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                 Similar Past CAPAs
               </p>
               <span className="font-sans text-[11px] text-foreground-faint">
@@ -1136,7 +1136,7 @@ export function D3RCAPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             Quality Signals
           </p>
           <div className="grid grid-cols-2 gap-2">

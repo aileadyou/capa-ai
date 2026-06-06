@@ -164,7 +164,7 @@ export function LoginPage() {
           >
             <div className="h-px flex-1 bg-[var(--line-2)]" />
             <span
-              className="whitespace-nowrap font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+              className="whitespace-nowrap font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
             >
               Or sign in as demo persona
             </span>
@@ -212,7 +212,7 @@ export function LoginPage() {
                   {/* Context chip */}
                   <span
                     className={cn(
-                      "hidden shrink-0 whitespace-nowrap bg-transparent font-sans text-[10px] font-semibold tracking-[0.1em] text-foreground-faint",
+                      "hidden shrink-0 whitespace-nowrap bg-transparent font-sans text-[10px] font-semibold tracking-[0.1em] text-primary",
                       meta.text,
                     )}
                   >

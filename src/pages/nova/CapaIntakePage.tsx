@@ -127,7 +127,7 @@ const SEVERITY_OPTIONS: Array<{
 ];
 
 const STEP_LABELS = ["Source import", "Gate questions", "Impact assessment", "Review & submit"];
-const STEP_EYEBROW_CLASS = "mb-1 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint";
+const STEP_EYEBROW_CLASS = "mb-1 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary";
 const STEP_TITLE_CLASS = "mb-1.5 mt-0 font-sans text-[17px] font-bold text-foreground";
 const STEP_COPY_CLASS = "font-sans text-[13px] text-foreground-tertiary";
 
@@ -302,8 +302,8 @@ function ReviewField({
       <p
         className={
           longLabel
-            ? "mb-1 mt-0 font-sans text-[12px] font-semibold leading-[1.5] text-foreground-secondary"
-            : "mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+            ? "mb-1 mt-0 font-sans text-[12px] font-semibold leading-[1.5] text-primary"
+            : "mb-1 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"
         }
       >
         {label}
@@ -398,6 +398,10 @@ export function CapaIntakePage() {
   const queryType = searchParams.get("type");
   const querySourceId = searchParams.get("sourceId");
   const initialType = isCAPAType(queryType) ? queryType : "deviation";
+  // When a type is specified in the URL (i.e., intake was opened from a specific finding),
+  // show only the source card that matches that type. On direct /capa/new nav (no type param)
+  // all three cards are shown so the user can pick any source.
+  const visibleSourceCards = queryType ? SOURCE_CARDS.filter((c) => c.type === initialType) : SOURCE_CARDS;
 
   // Wizard state
   const [step, setStep] = useState(1);
@@ -722,8 +726,8 @@ export function CapaIntakePage() {
           </p>
 
           {/* Source system cards */}
-          <div className="mb-3 grid grid-cols-3 gap-3">
-            {SOURCE_CARDS.map((card) => {
+          <div className={cn("mb-3 grid gap-3", visibleSourceCards.length === 1 ? "grid-cols-1" : "grid-cols-3")}>
+            {visibleSourceCards.map((card) => {
               const isImported = selectedType === card.type && Boolean(prefill);
               return (
               <div
@@ -880,7 +884,7 @@ export function CapaIntakePage() {
               className="border-t border-border-subtle pt-[18px]"
             >
               <p
-                className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint"
+                className="mb-4 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary"
               >
                 Additional context (recommended)
               </p>
@@ -957,7 +961,7 @@ export function CapaIntakePage() {
                     key={factor.factor}
                     className="rounded-[var(--r-sm)] border border-border-subtle bg-[var(--field-bg)] px-2.5 py-2"
                   >
-                    <p className="mb-[3px] mt-0 font-sans text-[10px] uppercase tracking-[0.18em] text-foreground-tertiary">
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] uppercase tracking-[0.18em] text-primary">
                       {factor.factor}
                     </p>
                     <p className="mb-1 mt-0 font-sans text-xs text-foreground-secondary">
@@ -1082,7 +1086,7 @@ export function CapaIntakePage() {
 
             {/* Source summary */}
             <div className="rounded-[var(--r-md)] border border-border-subtle bg-elevated p-4">
-              <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+              <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                 Source data
               </p>
               <div className="grid grid-cols-2 gap-3">
@@ -1101,7 +1105,7 @@ export function CapaIntakePage() {
             {/* Imported source detail */}
             {prefill && (
               <div className="rounded-[var(--r-md)] border border-border-subtle bg-elevated p-4">
-                <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+                <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                   Imported from {getPrefillSource(prefill)}
                 </p>
                 <div className="grid grid-cols-2 gap-2.5">
@@ -1114,7 +1118,7 @@ export function CapaIntakePage() {
 
             {/* Gate answers */}
             <div className="rounded-[var(--r-md)] border border-border-subtle bg-elevated p-4">
-              <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+              <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                 Gate questions
               </p>
               <div className="flex flex-col gap-2.5">
@@ -1131,7 +1135,7 @@ export function CapaIntakePage() {
 
             {/* Readiness checklist */}
             <div className="rounded-[var(--r-md)] border border-border-subtle bg-elevated p-4">
-              <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+              <p className="mb-3 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
                 Readiness check
               </p>
               <div className="flex flex-col gap-2">

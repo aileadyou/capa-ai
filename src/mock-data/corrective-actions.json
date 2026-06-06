@@ -50,5 +50,83 @@
     "completedAt": "2026-05-26T13:20:00+07:00",
     "novaGenerated": true,
     "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0210-01",
+    "capaId": "CAPA-2026-0210",
+    "description": "Quarantine the vaccine batches stored in cold room CR-FF-03 during the excursion window and complete a temperature-impact and stability assessment against the product's labelled 2–8 °C storage range.",
+    "pic": "Andi Wijaya",
+    "dueDate": "2026-04-17T17:00:00+07:00",
+    "linkedRootCause": "The cold-room compressor's high-temperature alarm was not configured to escalate to the on-call engineer after hours, so a 2–8 °C excursion ran unaddressed until the morning shift.",
+    "verificationMethod": "Batch quarantine record and QA stability-impact assessment",
+    "status": "completed",
+    "completedAt": "2026-04-16T15:10:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0210-02",
+    "capaId": "CAPA-2026-0210",
+    "description": "Reconfigure the CR-FF-03 alarm to escalate after-hours high-temperature excursions to the on-call engineer and validate the escalation path with a documented test alarm.",
+    "pic": "Bambang Saputra",
+    "dueDate": "2026-04-19T17:00:00+07:00",
+    "linkedRootCause": "The cold-room compressor's high-temperature alarm was not configured to escalate to the on-call engineer after hours, so a 2–8 °C excursion ran unaddressed until the morning shift.",
+    "verificationMethod": "Alarm escalation test record and on-call response verification",
+    "status": "completed",
+    "completedAt": "2026-04-18T16:40:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "edited"
+  },
+  {
+    "id": "CA-2026-0156-01",
+    "capaId": "CAPA-2026-0156",
+    "description": "Remove the overdue QC balance from service, recalibrate it, and reconcile the calibration status of all QC balances against the master calibration schedule.",
+    "pic": "Siti Rahmawati",
+    "dueDate": "2026-03-24T17:00:00+07:00",
+    "linkedRootCause": "Calibration due-date tracking for QC balances relied on a manual spreadsheet that was not reconciled against the master calibration schedule, so an overdue balance stayed in service without a flag.",
+    "verificationMethod": "Calibration certificate review and master-schedule reconciliation",
+    "status": "completed",
+    "completedAt": "2026-03-23T14:20:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0156-02",
+    "capaId": "CAPA-2026-0156",
+    "description": "Migrate QC calibration due-date tracking from the manual spreadsheet to the centralised calibration register with automated due and overdue flags.",
+    "pic": "Bambang Saputra",
+    "dueDate": "2026-03-26T17:00:00+07:00",
+    "linkedRootCause": "Calibration due-date tracking for QC balances relied on a manual spreadsheet that was not reconciled against the master calibration schedule, so an overdue balance stayed in service without a flag.",
+    "verificationMethod": "Register configuration review and QA verification of automated flags",
+    "status": "completed",
+    "completedAt": "2026-03-25T16:05:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0073-01",
+    "capaId": "CAPA-2026-0073",
+    "description": "Re-inspect and rework the affected distributed secondary cartons for lot VAC-26-0118-B and confirm barcode scan-grade with the distributor before release for further distribution.",
+    "pic": "Siti Rahmawati",
+    "dueDate": "2026-02-21T17:00:00+07:00",
+    "linkedRootCause": "Secondary-carton barcode print contrast was not verified against the scan-grade acceptance criteria at line setup, so a low-contrast print batch passed to distribution.",
+    "verificationMethod": "Carton re-inspection record and distributor scan-grade confirmation",
+    "status": "completed",
+    "completedAt": "2026-02-20T13:30:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0073-02",
+    "capaId": "CAPA-2026-0073",
+    "description": "Add an ANSI scan-grade barcode verification check at packaging line setup and at defined in-process intervals for the secondary cartoning line.",
+    "pic": "Bambang Saputra",
+    "dueDate": "2026-02-24T17:00:00+07:00",
+    "linkedRootCause": "Secondary-carton barcode print contrast was not verified against the scan-grade acceptance criteria at line setup, so a low-contrast print batch passed to distribution.",
+    "verificationMethod": "In-process barcode verification log review over two packaging campaigns",
+    "status": "completed",
+    "completedAt": "2026-02-23T15:50:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "edited"
   }
 ]

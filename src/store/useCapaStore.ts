@@ -8,10 +8,12 @@ import {
 } from "@/mock-data";
 import type {
   ApprovalEvent,
+  ApprovalStage,
   CAPACase,
   CAPAStatus,
   CAPAType,
   CorrectiveAction,
+  Disposisi,
   EightDStep,
   GateAnswer,
   ImpactClassification,
@@ -28,6 +30,11 @@ import type { PersonaID } from "@/types/persona";
 import type { Finding } from "@/types/finding";
 import { useAuditTrailStore } from "@/store/useAuditTrailStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
+import {
+  getCycleByStage,
+  getFinalStage,
+  resolveCycleApprovers,
+} from "@/config/workflows";
 
 interface CapaStore {
   capas: CAPACase[];
@@ -62,6 +69,7 @@ interface CapaStore {
   updatePAStatus: (actionId: string, status: PreventiveAction["status"]) => void;
   removePA: (actionId: string) => void;
   completeVerification: (capaId: string, verification: VerificationData) => void;
+  recordApproval: (capaId: string, stage: ApprovalStage, approval: ApprovalEvent) => void;
   approveSignOff: (capaId: string, approval: ApprovalEvent) => void;
   closeCAPA: (capaId: string) => void;
   getCAPAById: (capaId: string) => CAPACase | undefined;
@@ -202,6 +210,20 @@ function createInitialCAPA(finding: Finding, type: CAPAType): CAPACase {
     createdBy: type === "deviation" ? "initiator" : "qa_deviation",
     assignedTo: "qa_deviation",
     department: finding.department,
+    ...(type === "audit"
+      ? {
+          auditPhase: "plan" as const,
+          auditContext: {
+            variant: "internal" as const,
+            schedule: {
+              dateRange: { start: finding.reportedAt, end: finding.reportedAt },
+              auditTeam: [],
+              scope: finding.shortDescription,
+              auditee: finding.department,
+            },
+          },
+        }
+      : {}),
   };
 }
 
@@ -374,10 +396,31 @@ export const useCapaStore = create<CapaStore>()(
               ? "rejected"
               : "pending_review";
 
+        // RFI deviation flow: QA's intake acceptance IS the disposisi —
+        // it classifies severity and routes the case for investigation.
+        const disposisi: Disposisi | undefined =
+          capa.type === "deviation" &&
+          reviewerPersonaId === "qa_deviation" &&
+          decision === "accepted"
+            ? {
+                reviewerPersonaId: "qa_deviation",
+                assignedTo: capa.assignedTo,
+                severity: capa.impact.severity,
+                rationale: trimmedNotes ?? "Classified by QA for full CAPA investigation.",
+                dispositionAt: now,
+              }
+            : undefined;
+
         set((state) => ({
           capas: state.capas.map((record) =>
             record.id === capaId
-              ? { ...record, intakeReviews: reviews, status, updatedAt: now }
+              ? {
+                  ...record,
+                  intakeReviews: reviews,
+                  status,
+                  updatedAt: now,
+                  ...(disposisi ? { disposisi } : {}),
+                }
               : record,
           ),
           findings: state.findings.map((record) =>
@@ -648,24 +691,37 @@ export const useCapaStore = create<CapaStore>()(
           capaId,
         });
       },
-      approveSignOff: (capaId, approval) => {
+      recordApproval: (capaId, stage, approval) => {
+        const now = new Date().toISOString();
+        const capa = get().capas.find((record) => record.id === capaId);
+        if (!capa) return;
+
+        const stamped: ApprovalEvent = {
+          ...approval,
+          stage,
+          signedAt: approval.signedAt ?? now,
+        };
+
+        // Upsert keyed by persona + stage: the same persona can approve several
+        // cycles (e.g. Dept Head signs both an audit's Plan and Actual phases).
         set((state) => ({
-          capas: state.capas.map((capa) =>
-            capa.id === capaId
+          capas: state.capas.map((record) =>
+            record.id === capaId
               ? {
-                  ...capa,
+                  ...record,
                   approvals: [
-                    ...capa.approvals.filter(
-                      (event) => event.approverPersonaId !== approval.approverPersonaId,
+                    ...record.approvals.filter(
+                      (event) =>
+                        !(
+                          event.approverPersonaId === approval.approverPersonaId &&
+                          (event.stage ?? getFinalStage(record)) === stage
+                        ),
                     ),
-                    {
-                      ...approval,
-                      signedAt: approval.signedAt ?? new Date().toISOString(),
-                    },
+                    stamped,
                   ],
-                  updatedAt: new Date().toISOString(),
+                  updatedAt: now,
                 }
-              : capa,
+              : record,
           ),
         }));
 
@@ -675,9 +731,70 @@ export const useCapaStore = create<CapaStore>()(
           actorRole: approval.role,
           domain: "system",
           eventType: "esignature_submitted",
-          action: `${approval.approverName} ${approval.decision} ${capaId} with electronic signature.`,
+          action: `${approval.approverName} ${approval.decision} the ${stage} cycle of ${capaId} with electronic signature.`,
           capaId,
         });
+
+        // A rejection bounces the cycle back to the case owner for revision.
+        if (approval.decision === "rejected") {
+          set((state) => ({
+            capas: state.capas.map((record) =>
+              record.id === capaId
+                ? { ...record, status: "revision_requested", updatedAt: now }
+                : record,
+            ),
+          }));
+          useNotificationStore.getState().addNotification({
+            recipientPersonaId: capa.assignedTo,
+            type: "capa_update",
+            title: "Approval rejected",
+            description: `${approval.approverName} rejected the ${stage} approval for ${capaId}. Revision requested.`,
+            capaId,
+            actionUrl: `/capa/${capaId}`,
+          });
+          return;
+        }
+
+        // Has every required approver in this cycle now signed off?
+        const updated = get().capas.find((record) => record.id === capaId);
+        const cycle = updated ? getCycleByStage(updated, stage) : undefined;
+        if (!updated || !cycle) return;
+
+        const required = resolveCycleApprovers(cycle, updated);
+        const stageApprovals = updated.approvals.filter(
+          (event) => (event.stage ?? getFinalStage(updated)) === stage,
+        );
+        const cycleComplete = required.every((personaId) =>
+          stageApprovals.some(
+            (event) =>
+              event.approverPersonaId === personaId && event.decision === "approved",
+          ),
+        );
+        if (!cycleComplete) return;
+
+        // Cycle complete — advance the lifecycle at the right seam.
+        if (cycle.final) {
+          get().closeCAPA(capaId);
+          return;
+        }
+        if (stage === "plan") {
+          // Audit: CAPA Plan approved → enter the CAPA Actual phase.
+          set((state) => ({
+            capas: state.capas.map((record) =>
+              record.id === capaId
+                ? { ...record, auditPhase: "actual", updatedAt: now }
+                : record,
+            ),
+          }));
+        }
+        // "analysis" (complaint Round 1) and "actual" (audit) simply unlock the
+        // next manual step; the user continues through the 8D spine as normal.
+      },
+      // Deprecated: legacy single-chain entry point. Resolves to the closing
+      // cycle and delegates to recordApproval.
+      approveSignOff: (capaId, approval) => {
+        const capa = get().capas.find((record) => record.id === capaId);
+        get().recordApproval(capaId, capa ? getFinalStage(capa) : "signoff", approval);
       },
       closeCAPA: (capaId) => {
         const capa = get().capas.find((record) => record.id === capaId);
@@ -736,6 +853,20 @@ export const useCapaStore = create<CapaStore>()(
     }),
     {
       name: "ai-coach-nova-capa",
+      // Bumped when the seeded data shape changes (workflow cycles, audit
+      // phase, etc.). Returning demo users reflow from the fresh golden seed.
+      // v2: audit two-phase (auditContext/auditPhase/closingCompleteness) +
+      // complaint two-round (customerResponse) + stage-tagged approvals.
+      // v3: expanded seed — closed CAPAs (per type), pending_review intake,
+      // Critical deviation, external audit (reportBack), rejected complaint,
+      // plus a wider findings stream.
+      version: 3,
+      migrate: () => ({
+        capas: structuredClone(initialCapaCases),
+        findings: structuredClone(initialFindings),
+        correctiveActions: structuredClone(initialCorrectiveActions),
+        preventiveActions: structuredClone(initialPreventiveActions),
+      }),
     },
   ),
 );

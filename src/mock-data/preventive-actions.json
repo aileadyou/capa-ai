@@ -20,5 +20,38 @@
     "completedAt": "2026-05-28T14:45:00+07:00",
     "novaGenerated": true,
     "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "PA-2026-0210-01",
+    "capaId": "CAPA-2026-0210",
+    "description": "Revise SOP-WH-030 (cold-chain monitoring) to require after-hours alarm-escalation testing during preventive maintenance, and add the escalation check to the planned-maintenance schedule for all GMP cold rooms.",
+    "targetDate": "2026-04-22T17:00:00+07:00",
+    "pic": "Siti Rahmawati",
+    "status": "completed",
+    "completedAt": "2026-04-21T16:00:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "PA-2026-0156-01",
+    "capaId": "CAPA-2026-0156",
+    "description": "Revise SOP-QC-012 to mandate monthly reconciliation of the calibration register against the master schedule, and route an automated overdue-calibration report to QA.",
+    "targetDate": "2026-03-28T17:00:00+07:00",
+    "pic": "Siti Rahmawati",
+    "status": "completed",
+    "completedAt": "2026-03-27T15:30:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "PA-2026-0073-01",
+    "capaId": "CAPA-2026-0073",
+    "description": "Revise SOP-PKG-018 to require documented ANSI barcode print-contrast verification at line setup and in-process, and retrain packaging operators on the revised check.",
+    "targetDate": "2026-02-27T17:00:00+07:00",
+    "pic": "Siti Rahmawati",
+    "status": "completed",
+    "completedAt": "2026-02-26T14:10:00+07:00",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
   }
 ]

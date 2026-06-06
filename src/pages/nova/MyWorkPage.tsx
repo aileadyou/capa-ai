@@ -98,7 +98,7 @@ const BADGE_ROW_CLASS = "flex flex-wrap items-center gap-1.5";
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="m-0 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-foreground-faint"
+      className="m-0 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-primary"
     >
       {children}
     </p>

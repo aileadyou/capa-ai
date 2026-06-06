@@ -3,11 +3,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, ListPlus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
+import { ApprovalChainPanel } from "@/components/capa/ApprovalChainPanel";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { PreventiveAction } from "@/types";
+import { getCycleAtSeam } from "@/config/workflows";
 import { cn } from "@/lib/utils";
 import { computeActionEffectiveness, computeTotalQualityScore } from "@/utils/scoring";
 import { formatDate } from "@/utils/formatters";
@@ -108,7 +110,7 @@ function ActionList({ actions, onRemove }: { actions: PreventiveAction[]; onRemo
   return (
     <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
       <div className="border-b border-border-subtle bg-elevated px-4 py-3.5">
-        <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-faint">
+        <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
           Added Preventive Actions
         </p>
       </div>
@@ -131,15 +133,15 @@ function ActionList({ actions, onRemove }: { actions: PreventiveAction[]; onRemo
                 </p>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">PIC</p>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">PIC</p>
                     <p className="m-0 text-xs text-foreground-secondary">{action.pic}</p>
                   </div>
                   <div>
-                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">Target Date</p>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Target Date</p>
                     <p className="m-0 text-xs text-foreground-secondary">{formatDate(action.targetDate)}</p>
                   </div>
                   <div>
-                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">Nova Generated</p>
+                    <p className="mb-[3px] mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Nova Generated</p>
                     <p className="m-0 text-xs text-foreground-secondary">{action.novaGenerated ? "Yes" : "No"}</p>
                   </div>
                 </div>
@@ -215,6 +217,7 @@ export function D5PreventiveActionPage() {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
   }
 
+  const paCycle = getCycleAtSeam(capa, "pa");
   const currentActions = capa.preventiveActions;
   const draftAction = {
     description,
@@ -312,7 +315,7 @@ export function D5PreventiveActionPage() {
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-primary">
             {capa.id} · D5
           </p>
           <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
@@ -330,7 +333,7 @@ export function D5PreventiveActionPage() {
         <div className="flex flex-col gap-[18px] rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5">
           <div className="flex items-center gap-2">
             <ListPlus size={15} className="shrink-0 text-primary" />
-            <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+            <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Add Preventive Action
             </p>
           </div>
@@ -405,7 +408,7 @@ export function D5PreventiveActionPage() {
 
         {/* ── Quality signals ──────────────────────────────────────────── */}
         <div>
-          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             Quality Signals
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -465,6 +468,9 @@ export function D5PreventiveActionPage() {
             Continue to D6 Verification →
           </button>
         </div>
+
+        {/* ── Workflow approval cycle attached at this seam ─────────────── */}
+        {paCycle && <ApprovalChainPanel capa={capa} stage={paCycle.stage} />}
 
       </div>
     </EightDShell>

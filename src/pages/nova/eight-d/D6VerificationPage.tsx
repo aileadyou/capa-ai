@@ -3,11 +3,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, FileCheck, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
+import { ApprovalChainPanel } from "@/components/capa/ApprovalChainPanel";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
 import { useAuditTrailStore, useCapaStore } from "@/store";
 import type { VerificationData } from "@/types";
+import { getCycleAtSeam } from "@/config/workflows";
 import { cn } from "@/lib/utils";
 import { computeTotalQualityScore } from "@/utils/scoring";
 import { getVerificationCoaching } from "@/services/novaService";
@@ -128,6 +130,7 @@ export function D6VerificationPage() {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
   }
 
+  const verificationCycle = getCycleAtSeam(capa, "verification");
   const validation = evaluateVerification(method, result, evidenceFileName);
   const previewScore = computeTotalQualityScore({
     ...capa.score,
@@ -186,7 +189,7 @@ export function D6VerificationPage() {
 
         {/* ── Page header ──────────────────────────────────────────────── */}
         <div>
-          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-foreground-tertiary">
+          <p className="mb-1.5 mt-0 font-sans text-xs tracking-[0.18em] text-primary">
             {capa.id} · D6
           </p>
           <h1 className="mb-2 mt-0 font-sans text-[22px] font-bold text-foreground">
@@ -201,7 +204,7 @@ export function D6VerificationPage() {
         <div className="flex flex-col gap-[18px] rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card p-5 shadow-sm">
           <div className="flex items-center gap-2">
             <FileCheck size={15} className="shrink-0 text-primary" />
-            <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+            <p className="m-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
               Verification Evidence
             </p>
           </div>
@@ -300,7 +303,7 @@ export function D6VerificationPage() {
 
         {/* ── Quality checklist ────────────────────────────────────────── */}
         <div>
-          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-foreground-tertiary">
+          <p className="mb-2.5 mt-0 font-sans text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             Quality Signals
           </p>
           <div className="grid grid-cols-3 gap-2">
@@ -371,6 +374,9 @@ export function D6VerificationPage() {
             Continue to D7 Sign-Off →
           </button>
         </div>
+
+        {/* ── Workflow approval cycle attached at this seam (audit Actual) ─ */}
+        {verificationCycle && <ApprovalChainPanel capa={capa} stage={verificationCycle.stage} />}
 
       </div>
     </EightDShell>

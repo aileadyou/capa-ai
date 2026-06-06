@@ -259,7 +259,7 @@ export function NovaBlock({
         <div className="px-4 pt-2">
           <button
             onClick={() => setShowReasoning((v) => !v)}
-            className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 font-sans text-[11px] leading-none tracking-[0.18em] text-foreground-tertiary"
+            className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 font-sans text-[11px] leading-none tracking-[0.18em] text-primary"
           >
             {showReasoning ? (
               <>
