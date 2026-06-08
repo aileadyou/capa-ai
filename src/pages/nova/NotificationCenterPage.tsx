@@ -19,7 +19,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { FilterSearchInput } from "@/components/shared/FilterControls";
-import { useNotificationStore, usePersonaStore } from "@/store";
+import { usePersonaStore } from "@/store";
+import {
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useNotifications,
+} from "@/hooks/api";
 import type { Notification, NotificationType } from "@/types/notification";
 import { formatDateTime } from "@/utils/formatters";
 
@@ -73,9 +78,9 @@ function typeBadgeClass(type: NotificationType) {
 export function NotificationCenterPage() {
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
   const activePersona = usePersonaStore((state) => state.activePersona);
-  const notifications = useNotificationStore((state) => state.notifications);
-  const markAsRead = useNotificationStore((state) => state.markAsRead);
-  const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
+  const notifications = useNotifications(activePersonaId).data ?? [];
+  const markAsRead = useMarkNotificationRead();
+  const markAllAsRead = useMarkAllNotificationsRead();
 
   const [tabFilter, setTabFilter] = useState<TabFilter>("all");
   const [query, setQuery] = useState("");
@@ -127,15 +132,21 @@ export function NotificationCenterPage() {
     return counts;
   }, [personaNotifications, unreadCount]);
 
-  function handleMarkAllRead() {
-    markAllAsRead(activePersonaId);
-    toast.success("All notifications marked as read", {
-      description: `${unreadCount} notifications updated for ${activePersona().displayName}.`,
-    });
+  async function handleMarkAllRead() {
+    try {
+      await markAllAsRead.mutateAsync({ personaId: activePersonaId });
+      toast.success("All notifications marked as read", {
+        description: `${unreadCount} notifications updated for ${activePersona().displayName}.`,
+      });
+    } catch (error) {
+      toast.error("Could not mark notifications as read", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   }
 
   function handleMarkRead(notificationId: string) {
-    markAsRead(notificationId);
+    void markAsRead.mutateAsync({ id: notificationId });
   }
 
   return (

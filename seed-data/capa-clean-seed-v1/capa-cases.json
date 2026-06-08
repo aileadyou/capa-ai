@@ -510,16 +510,61 @@
         "approverName": "Bambang Saputra",
         "role": "Department Head",
         "decision": "approved",
-        "notes": "Corrective and preventive actions completed.",
-        "signedAt": "2026-06-05T16:05:00+07:00",
-        "stage": "closure"
+        "notes": "CAPA plan reviewed and approved.",
+        "signedAt": "2026-06-03T10:15:00+07:00",
+        "stage": "plan"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA — GMP & DIRA Compliance",
+        "decision": "approved",
+        "notes": "CAPA plan accepted.",
+        "signedAt": "2026-06-03T11:00:00+07:00",
+        "stage": "plan"
       },
       {
         "approverPersonaId": "head_of_qa",
         "approverName": "Dewi Anggraini",
-        "role": "Head of QA",
+        "role": "QA Division Head",
         "decision": "approved",
-        "notes": "Closure accepted. Training control effectiveness evidence is sufficient.",
+        "notes": "Plan approved. Proceed with implementation.",
+        "signedAt": "2026-06-03T13:30:00+07:00",
+        "stage": "plan"
+      },
+      {
+        "approverPersonaId": "head_of_dept",
+        "approverName": "Bambang Saputra",
+        "role": "Department Head",
+        "decision": "approved",
+        "notes": "Corrective actions implemented and verified.",
+        "signedAt": "2026-06-05T14:30:00+07:00",
+        "stage": "actual"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA — GMP & DIRA Compliance",
+        "decision": "approved",
+        "notes": "CAPA actual implementation confirmed.",
+        "signedAt": "2026-06-05T15:10:00+07:00",
+        "stage": "actual"
+      },
+      {
+        "approverPersonaId": "head_of_qa",
+        "approverName": "Dewi Anggraini",
+        "role": "QA Division Head",
+        "decision": "approved",
+        "notes": "CAPA actual approved. Proceed to sign-off.",
+        "signedAt": "2026-06-05T15:50:00+07:00",
+        "stage": "actual"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA — GMP & DIRA Compliance",
+        "decision": "approved",
+        "notes": "Training control effectiveness evidence is sufficient. Closed.",
         "signedAt": "2026-06-05T17:10:00+07:00",
         "stage": "closure"
       }
@@ -756,20 +801,29 @@
       {
         "approverPersonaId": "head_of_dept",
         "approverName": "Bambang Saputra",
-        "role": "Department Head",
+        "role": "QA Head of Department",
         "decision": "approved",
-        "notes": "Plan approved with Engineering participation.",
+        "notes": "Analysis plan approved with Engineering participation.",
         "signedAt": "2026-06-01T09:15:00+07:00",
-        "stage": "plan"
+        "stage": "analysis"
+      },
+      {
+        "approverPersonaId": "qa_deviation",
+        "approverName": "Siti Rahmawati",
+        "role": "QA — Complaint Handling",
+        "decision": "approved",
+        "notes": "Analysis approach and CAPA actions accepted.",
+        "signedAt": "2026-06-01T09:50:00+07:00",
+        "stage": "analysis"
       },
       {
         "approverPersonaId": "head_of_qa",
         "approverName": "Dewi Anggraini",
-        "role": "Head of QA",
+        "role": "QA Head of Division",
         "decision": "approved",
         "notes": "Proceed with retained-sample assessment and capper challenge.",
         "signedAt": "2026-06-01T10:05:00+07:00",
-        "stage": "plan"
+        "stage": "analysis"
       }
     ],
     "auditEvents": [],

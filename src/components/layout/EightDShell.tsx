@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CalendarDays, Check, CircleDot, Lock, Users } from "lucide-react";
 import { eightDSteps } from "@/routes";
-import { useCapaStore } from "@/store";
+import { useCapa } from "@/hooks/api";
 import type { CAPACase, EightDStep } from "@/types";
 import { formatDate } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
@@ -167,19 +167,27 @@ interface EightDShellProps {
 interface EightDEmbedContextValue {
   embedded: boolean;
   onStepChange?: (step: EightDStep) => void;
+  /** When true the user is a non-owner observer: forms are read-only and
+   *  "Use suggestion" buttons are hidden; "Discuss with Nova" stays active. */
+  readOnly: boolean;
 }
 
-const EightDEmbedContext = createContext<EightDEmbedContextValue>({ embedded: false });
+const EightDEmbedContext = createContext<EightDEmbedContextValue>({
+  embedded: false,
+  readOnly: false,
+});
 
 export function EightDEmbedProvider({
   children,
   onStepChange,
+  readOnly = false,
 }: {
   children: ReactNode;
   onStepChange: (step: EightDStep) => void;
+  readOnly?: boolean;
 }) {
   return (
-    <EightDEmbedContext.Provider value={{ embedded: true, onStepChange }}>
+    <EightDEmbedContext.Provider value={{ embedded: true, onStepChange, readOnly }}>
       {children}
     </EightDEmbedContext.Provider>
   );
@@ -191,7 +199,7 @@ export function useEightDEmbed() {
 
 export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShellProps) {
   const { embedded } = useEightDEmbed();
-  const capa = useCapaStore((state) => state.capas.find((c) => c.id === capaId));
+  const { data: capa } = useCapa(capaId);
   const capaCurrentIndex = eightDSteps.indexOf(capa?.currentStep ?? "problem");
 
   function getStepState(step: EightDStep): "done" | "active" | "locked" {

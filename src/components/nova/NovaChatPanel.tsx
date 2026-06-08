@@ -3,7 +3,8 @@ import { Send, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useUIStore } from "@/store";
-import { getChatPrompts, getChatResponse } from "@/services/novaService";
+import { useChat } from "@/hooks/api";
+import { getChatPrompts } from "@/services/novaService";
 import { NovaThinkingDots } from "@/components/nova/NovaThinkingDots";
 import { useDialog } from "@/hooks/use-dialog";
 
@@ -27,6 +28,7 @@ export function NovaChatPanel() {
   const [draft, setDraft] = useState("");
   const lastContextKeyRef = useRef("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const chatMutation = useChat();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "nova",
@@ -34,7 +36,6 @@ export function NovaChatPanel() {
         "Observation:\nI am ready to coach this CAPA step.\n\nRecommendation:\nClick a suggested prompt below, or ask about scoring, RCA depth, verification evidence, or audit readiness.",
     },
   ]);
-  const [isThinking, setIsThinking] = useState(false);
 
   const quickPrompts = useMemo(() => getChatPrompts(step), [step]);
   const { ref: panelRef } = useDialog<HTMLElement>(isOpen, closeNovaChat);
@@ -57,11 +58,13 @@ export function NovaChatPanel() {
     if (!userMessage) return;
     setDraft("");
     setMessages((current) => [...current, { role: "user", content: userMessage }]);
-    setIsThinking(true);
     const responseStep = [novaChatContext.capaId, step].filter(Boolean).join(":") || step;
-    const response = await getChatResponse(responseStep, userMessage);
-    setMessages((current) => [...current, { role: "nova", content: response }]);
-    setIsThinking(false);
+    const reply = await chatMutation.mutateAsync({
+      capaId: novaChatContext.capaId,
+      step: responseStep,
+      message: userMessage,
+    });
+    setMessages((current) => [...current, { role: "nova", content: reply.reply }]);
   };
 
   return (
@@ -83,7 +86,7 @@ export function NovaChatPanel() {
         </Button>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite" aria-busy={isThinking}>
+      <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite" aria-busy={chatMutation.isPending}>
         {messages.map((message, index) => (
           <div
             key={`${message.role}-${index}`}
@@ -94,7 +97,7 @@ export function NovaChatPanel() {
             {message.content}
           </div>
         ))}
-        {isThinking && (
+        {chatMutation.isPending && (
           <div className="rounded border border-nova/20 bg-nova/5 p-3 text-sm text-nova">
             Nova is analyzing… <NovaThinkingDots />
           </div>

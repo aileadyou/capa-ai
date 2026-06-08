@@ -6,12 +6,18 @@ import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
-import { useAuditTrailStore, useCapaStore } from "@/store";
+import {
+  useAddCorrectiveAction,
+  useAiSuggestion,
+  useCapa,
+  useRemoveCorrectiveAction,
+  useUpdateScore,
+  useUpdateStep,
+} from "@/hooks/api";
 import type { CorrectiveAction } from "@/types";
 import { cn } from "@/lib/utils";
 import { computeActionEffectiveness, computeTotalQualityScore } from "@/utils/scoring";
 import { formatDate } from "@/utils/formatters";
-import { getCorrectiveActionSuggestions } from "@/services/novaService";
 
 // ── Mock suggestion data ─────────────────────────────────────────────────────
 
@@ -174,27 +180,21 @@ function ActionList({ actions, onRemove }: { actions: CorrectiveAction[]; onRemo
 export function D4CorrectiveActionPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { embedded, onStepChange } = useEightDEmbed();
-  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
-  const allCAs = useCapaStore((state) => state.correctiveActions);
-  const allPAs = useCapaStore((state) => state.preventiveActions);
-  const capa = useMemo(() => {
-    if (!rawCapa) return undefined;
-    return {
-      ...rawCapa,
-      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
-      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
-    };
-  }, [rawCapa, allCAs, allPAs]);
+  const { embedded, onStepChange, readOnly: isReadOnly } = useEightDEmbed();
+  const { data: capa } = useCapa(id);
 
-  const addCA = useCapaStore((state) => state.addCA);
-  const removeCA = useCapaStore((state) => state.removeCA);
-  const updateScore = useCapaStore((state) => state.updateScore);
-  const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
-  const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
+  const addCA = useAddCorrectiveAction();
+  const removeCA = useRemoveCorrectiveAction();
+  const updateScore = useUpdateScore();
+  const updateStep = useUpdateStep();
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [novaSuggestion, setNovaSuggestion] = useState("");
   const [novaReasoning, setNovaReasoning] = useState<string | undefined>();
+
+  const { data: caAiResult } = useAiSuggestion<string[]>(
+    "corrective_actions",
+    { capaId: capa?.id, capaType: capa?.type, enabled: Boolean(capa?.id) },
+  );
 
   const confirmedRootCauses = useMemo(
     () => capa?.rca.confirmedRootCauses.filter(Boolean) ?? [],
@@ -212,24 +212,15 @@ export function D4CorrectiveActionPage() {
   );
 
   useEffect(() => {
-    if (!capa) return;
-    let cancelled = false;
-
-    void getCorrectiveActionSuggestions(capa.id).then((suggestions) => {
-      if (cancelled) return;
-      const firstSuggestion = suggestions[0];
-      setNovaSuggestion(firstSuggestion ?? caSuggestions[capa.id] ?? "");
-      setNovaReasoning(
-        firstSuggestion
-          ? "Generated from the enriched finding packet and linked to the confirmed or candidate root cause."
-          : caReasoning[capa.id],
-      );
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [capa]);
+    if (!capa || !caAiResult) return;
+    const firstSuggestion = caAiResult.data[0];
+    setNovaSuggestion(firstSuggestion ?? caSuggestions[capa.id] ?? "");
+    setNovaReasoning(
+      firstSuggestion
+        ? "Generated from the enriched finding packet and linked to the confirmed or candidate root cause."
+        : caReasoning[capa.id],
+    );
+  }, [caAiResult, capa?.id]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -248,18 +239,26 @@ export function D4CorrectiveActionPage() {
   const shouldShowBlocker = hasSubmitted && !validation.isValid;
   const passedCount = validation.checks.filter((c) => c.passed).length;
 
-  function handleRemoveCA(actionId: string) {
-    removeCA(actionId);
+  const handleRemoveCA = async (actionId: string) => {
     const remaining = currentActions.filter((a) => a.id !== actionId);
     const nextScore = computeTotalQualityScore({
       ...capa.score,
       effectiveness: computeActionEffectiveness(remaining, capa.preventiveActions),
     });
-    updateScore(capa.id, nextScore);
-    toast.info("Corrective action removed");
+    try {
+      await removeCA.mutateAsync({ actionId });
+      await updateScore.mutateAsync({ capaId: capa.id, score: nextScore });
+      toast.info("Corrective action removed");
+    } catch (error) {
+      toast.error("Could not remove corrective action", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   }
 
-  function addCorrectiveAction() {
+  // The server logs the `corrective_action_added` audit event inside addCA, so
+  // the client only persists the action + recalculated score here.
+  const addCorrectiveAction = async () => {
     setHasSubmitted(true);
 
     if (!validation.isValid) {
@@ -269,39 +268,40 @@ export function D4CorrectiveActionPage() {
       return undefined;
     }
 
-    const newAction = addCA(capa.id, {
-      description: description.trim(),
-      pic,
-      dueDate: `${dueDate}T17:00:00+07:00`,
-      linkedRootCause,
-      verificationMethod,
-      status: "open",
-      novaGenerated: true,
-      novaSuggestionStatus: "accepted",
-    });
+    try {
+      const newAction = await addCA.mutateAsync({
+        capaId: capa.id,
+        action: {
+          description: description.trim(),
+          pic,
+          dueDate: `${dueDate}T17:00:00+07:00`,
+          linkedRootCause,
+          verificationMethod,
+          status: "open",
+          novaGenerated: true,
+          novaSuggestionStatus: "accepted",
+        },
+      });
 
-    const nextScore = computeTotalQualityScore({
-      ...capa.score,
-      effectiveness: computeActionEffectiveness([...currentActions, newAction], capa.preventiveActions),
-    });
-    updateScore(capa.id, nextScore);
-    addAuditEvent({
-      actorName: "Nova Demo User",
-      actorRole: "Initiator",
-      domain: "system",
-      eventType: "corrective_action_added",
-      action: `Corrective action ${newAction.id} was added to ${capa.id}.`,
-      capaId: capa.id,
-      findingId: capa.findingId,
-    });
-    toast.success("Corrective action added", {
-      description: `${newAction.id} is now tracked in CAPA detail.`,
-    });
+      const nextScore = computeTotalQualityScore({
+        ...capa.score,
+        effectiveness: computeActionEffectiveness([...currentActions, newAction], capa.preventiveActions),
+      });
+      await updateScore.mutateAsync({ capaId: capa.id, score: nextScore });
+      toast.success("Corrective action added", {
+        description: `${newAction.id} is now tracked in CAPA detail.`,
+      });
 
-    return newAction;
+      return newAction;
+    } catch (error) {
+      toast.error("Could not add corrective action", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+      return undefined;
+    }
   }
 
-  function continueToPreventiveAction() {
+  const continueToPreventiveAction = async () => {
     setHasSubmitted(true);
 
     const hasValidAction = validExistingActionExists || validation.isValid;
@@ -310,15 +310,21 @@ export function D4CorrectiveActionPage() {
         description: "Nova will let you continue, but D4 still needs at least one action linked to the confirmed root cause.",
       });
     } else if (!validExistingActionExists) {
-      const added = addCorrectiveAction();
+      const added = await addCorrectiveAction();
       if (!added) return;
     }
 
-    updateCurrentStep(capa.id, "pa");
-    if (embedded && onStepChange) {
-      onStepChange("pa");
-    } else {
-      navigate(`/capa/${capa.id}/8d/pa`);
+    try {
+      await updateStep.mutateAsync({ capaId: capa.id, step: "pa" });
+      if (embedded && onStepChange) {
+        onStepChange("pa");
+      } else {
+        navigate(`/capa/${capa.id}/8d/pa`);
+      }
+    } catch (error) {
+      toast.error("Could not continue to preventive action", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     }
   }
 
@@ -360,10 +366,11 @@ export function D4CorrectiveActionPage() {
               id="ca-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              disabled={isReadOnly}
               rows={5}
               aria-invalid={shouldShowBlocker && description.trim().length < 30}
               className={cn(
-                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)] disabled:cursor-not-allowed disabled:resize-none disabled:opacity-50",
                 shouldShowBlocker && description.trim().length < 30 ? "border-destructive" : "border-[var(--line-2)]",
               )}
             />
@@ -435,10 +442,11 @@ export function D4CorrectiveActionPage() {
               id="verification-method"
               value={verificationMethod}
               onChange={(e) => setVerificationMethod(e.target.value)}
+              disabled={isReadOnly}
               rows={3}
               aria-invalid={shouldShowBlocker && verificationMethod.trim().length < 10}
               className={cn(
-                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)] disabled:cursor-not-allowed disabled:resize-none disabled:opacity-50",
                 shouldShowBlocker && verificationMethod.trim().length < 10 ? "border-destructive" : "border-[var(--line-2)]",
               )}
             />
@@ -505,21 +513,23 @@ export function D4CorrectiveActionPage() {
         </NovaAssistPanel>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
-          <button
-            onClick={addCorrectiveAction}
-            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
-          >
-            <Save size={14} />
-            Add CA
-          </button>
-          <button
-            onClick={continueToPreventiveAction}
-            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
-          >
-            Continue to D5 Preventive Action →
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
+            <button
+              onClick={addCorrectiveAction}
+              className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
+            >
+              <Save size={14} />
+              Add CA
+            </button>
+            <button
+              onClick={continueToPreventiveAction}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
+            >
+              Continue to D5 Preventive Action →
+            </button>
+          </div>
+        )}
 
       </div>
     </EightDShell>

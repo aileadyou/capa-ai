@@ -6,11 +6,17 @@ import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
-import { useAuditTrailStore, useCapaStore, useNotificationStore } from "@/store";
+import {
+  useAddAuditEvent,
+  useAddNotification,
+  useAiSuggestion,
+  useCapa,
+  useUpdateContainment,
+  useUpdateStep,
+} from "@/hooks/api";
 import type { CAPACase } from "@/types";
 import { cn } from "@/lib/utils";
 import { computeContainmentStrength, computeTotalQualityScore } from "@/utils/scoring";
-import { getContainmentSuggestion } from "@/services/novaService";
 
 // ── Mock suggestion data ─────────────────────────────────────────────────────
 
@@ -95,23 +101,13 @@ function evaluateContainment(description: string, pic: string, dueDate: string) 
 export function D2ContainmentPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { embedded, onStepChange } = useEightDEmbed();
-  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
-  const allCAs = useCapaStore((state) => state.correctiveActions);
-  const allPAs = useCapaStore((state) => state.preventiveActions);
-  const capa = useMemo(() => {
-    if (!rawCapa) return undefined;
-    return {
-      ...rawCapa,
-      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
-      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
-    };
-  }, [rawCapa, allCAs, allPAs]);
+  const { embedded, onStepChange, readOnly: isReadOnly } = useEightDEmbed();
+  const { data: capa } = useCapa(id);
 
-  const updateContainmentAction = useCapaStore((state) => state.updateContainmentAction);
-  const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
-  const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
-  const addNotification = useNotificationStore((state) => state.addNotification);
+  const updateContainment = useUpdateContainment();
+  const updateStep = useUpdateStep();
+  const addAuditEvent = useAddAuditEvent();
+  const addNotification = useAddNotification();
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Description starts from the user's own saved answer (or blank). PIC and due
@@ -129,32 +125,28 @@ export function D2ContainmentPage() {
   const [description, setDescription] = useState(initialContainment.description);
   const [pic, setPic] = useState(initialContainment.pic);
   const [dueDate, setDueDate] = useState(initialContainment.dueDate);
+  const { data: containmentAiResult } = useAiSuggestion<Array<{ id: string; content: string }>>(
+    "containment",
+    { capaId: capa?.id, capaType: capa?.type, enabled: Boolean(capa?.id) },
+  );
+
   const [novaSuggestion, setNovaSuggestion] = useState("");
   const [novaReasoning, setNovaReasoning] = useState<string | undefined>();
 
   useEffect(() => {
-    if (!capa) return;
-    let cancelled = false;
-
-    void getContainmentSuggestion(capa.id).then((suggestions) => {
-      if (cancelled) return;
-      const firstSuggestion = suggestions[0]?.content;
-      setNovaSuggestion(
-        firstSuggestion ??
-          containmentSuggestions[capa.id] ??
-          "Immediately contain the affected product, system, or record scope and notify QA for documented assessment.",
-      );
-      setNovaReasoning(
-        firstSuggestion
-          ? "Generated from the enriched finding analysis packet and bounded to the affected source scope."
-          : containmentReasoning[capa.id],
-      );
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [capa]);
+    if (!capa || !containmentAiResult) return;
+    const firstSuggestion = containmentAiResult.data[0]?.content;
+    setNovaSuggestion(
+      firstSuggestion ??
+        containmentSuggestions[capa.id] ??
+        "Immediately contain the affected product, system, or record scope and notify QA for documented assessment.",
+    );
+    setNovaReasoning(
+      firstSuggestion
+        ? "Generated from the enriched finding analysis packet and bounded to the affected source scope."
+        : containmentReasoning[capa.id],
+    );
+  }, [containmentAiResult, capa?.id]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -166,7 +158,7 @@ export function D2ContainmentPage() {
   const shouldShowBlocker = hasSubmitted && !validation.isValid;
   const passedCount = validation.checks.filter((c) => c.passed).length;
 
-  function saveContainment(advance: boolean) {
+  const saveContainment = async (advance: boolean) => {
     setHasSubmitted(true);
 
     if (!validation.isValid && !advance) {
@@ -182,38 +174,48 @@ export function D2ContainmentPage() {
       });
     }
 
-    updateContainmentAction(capa.id, { description: description.trim(), pic, dueDate }, previewScore);
-    addAuditEvent({
-      actorName: "Nova Demo User",
-      actorRole: "Initiator",
-      domain: "system",
-      eventType: "containment_added",
-      action: `Containment action saved for ${capa.id}.`,
-      capaId: capa.id,
-      findingId: capa.findingId,
-    });
-
-    if (advance) {
-      updateCurrentStep(capa.id, "rca");
-      addNotification({
-        recipientPersonaId: "qa_deviation",
-        type: "capa_update",
-        title: "Containment ready for review",
-        description: `${capa.id} has a completed containment action and is ready for RCA review.`,
+    try {
+      await updateContainment.mutateAsync({
         capaId: capa.id,
-        actionUrl: `/capa/${capa.id}`,
+        action: { description: description.trim(), pic, dueDate },
+        score: previewScore,
       });
-      if (embedded && onStepChange) {
-        onStepChange("rca");
-      } else {
-        navigate(`/capa/${capa.id}/8d/rca`);
-      }
-      return;
-    }
+      void addAuditEvent.mutateAsync({
+        actorName: "Nova Demo User",
+        actorRole: "Initiator",
+        domain: "system",
+        eventType: "containment_added",
+        action: `Containment action saved for ${capa.id}.`,
+        capaId: capa.id,
+        findingId: capa.findingId,
+      });
 
-    toast.success("Containment action saved", {
-      description: `${capa.id} containment score is now ${containmentScore}/25.`,
-    });
+      if (advance) {
+        await updateStep.mutateAsync({ capaId: capa.id, step: "rca" });
+        void addNotification.mutateAsync({
+          recipientPersonaId: "qa_deviation",
+          type: "capa_update",
+          title: "Containment ready for review",
+          description: `${capa.id} has a completed containment action and is ready for RCA review.`,
+          capaId: capa.id,
+          actionUrl: `/capa/${capa.id}`,
+        });
+        if (embedded && onStepChange) {
+          onStepChange("rca");
+        } else {
+          navigate(`/capa/${capa.id}/8d/rca`);
+        }
+        return;
+      }
+
+      toast.success("Containment action saved", {
+        description: `${capa.id} containment score is now ${containmentScore}/25.`,
+      });
+    } catch (error) {
+      toast.error("Could not save containment action", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   }
 
   return (
@@ -252,11 +254,12 @@ export function D2ContainmentPage() {
               id="containment-action"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              disabled={isReadOnly}
               rows={6}
               aria-invalid={shouldShowBlocker}
               placeholder="Describe the immediate hold, quarantine, restriction, review, or assessment action."
               className={cn(
-                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)] disabled:cursor-not-allowed disabled:resize-none disabled:opacity-50",
                 shouldShowBlocker ? "border-destructive" : "border-[var(--line-2)]",
               )}
             />
@@ -412,21 +415,23 @@ export function D2ContainmentPage() {
         </NovaAssistPanel>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
-          <button
-            onClick={() => saveContainment(false)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
-          >
-            <Save size={14} />
-            Save Draft
-          </button>
-          <button
-            onClick={() => saveContainment(true)}
-            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
-          >
-            Continue to D3 Root Cause Analysis →
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
+            <button
+              onClick={() => saveContainment(false)}
+              className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
+            >
+              <Save size={14} />
+              Save Draft
+            </button>
+            <button
+              onClick={() => saveContainment(true)}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
+            >
+              Continue to D3 Root Cause Analysis →
+            </button>
+          </div>
+        )}
 
       </div>
     </EightDShell>

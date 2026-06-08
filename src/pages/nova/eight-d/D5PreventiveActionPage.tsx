@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, ListPlus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -7,13 +7,19 @@ import { ApprovalChainPanel } from "@/components/capa/ApprovalChainPanel";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
-import { useAuditTrailStore, useCapaStore } from "@/store";
+import {
+  useAddPreventiveAction,
+  useAiSuggestion,
+  useCapa,
+  useRemovePreventiveAction,
+  useUpdateScore,
+  useUpdateStep,
+} from "@/hooks/api";
 import type { PreventiveAction } from "@/types";
-import { getCycleAtSeam } from "@/config/workflows";
+import { getCycleAtSeam, isCycleComplete } from "@/config/workflows";
 import { cn } from "@/lib/utils";
 import { computeActionEffectiveness, computeTotalQualityScore } from "@/utils/scoring";
 import { formatDate } from "@/utils/formatters";
-import { getPreventiveActionSuggestions } from "@/services/novaService";
 
 // ── Mock suggestion data ─────────────────────────────────────────────────────
 
@@ -165,27 +171,21 @@ function ActionList({ actions, onRemove }: { actions: PreventiveAction[]; onRemo
 export function D5PreventiveActionPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { embedded, onStepChange } = useEightDEmbed();
-  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
-  const allCAs = useCapaStore((state) => state.correctiveActions);
-  const allPAs = useCapaStore((state) => state.preventiveActions);
-  const capa = useMemo(() => {
-    if (!rawCapa) return undefined;
-    return {
-      ...rawCapa,
-      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
-      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
-    };
-  }, [rawCapa, allCAs, allPAs]);
+  const { embedded, onStepChange, readOnly: isReadOnly } = useEightDEmbed();
+  const { data: capa } = useCapa(id);
 
-  const addPA = useCapaStore((state) => state.addPA);
-  const removePA = useCapaStore((state) => state.removePA);
-  const updateScore = useCapaStore((state) => state.updateScore);
-  const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
-  const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
+  const addPA = useAddPreventiveAction();
+  const removePA = useRemovePreventiveAction();
+  const updateScore = useUpdateScore();
+  const updateStep = useUpdateStep();
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [novaSuggestion, setNovaSuggestion] = useState("");
   const [novaReasoning, setNovaReasoning] = useState<string | undefined>();
+
+  const { data: paAiResult } = useAiSuggestion<string[]>(
+    "preventive_actions",
+    { capaId: capa?.id, capaType: capa?.type, enabled: Boolean(capa?.id) },
+  );
 
   // Blank to start — the owner describes the preventive action first; the Nova
   // draft is opt-in via the assist panel below the quality signals.
@@ -194,24 +194,15 @@ export function D5PreventiveActionPage() {
   const [targetDate, setTargetDate] = useState(getDefaultTargetDate());
 
   useEffect(() => {
-    if (!capa) return;
-    let cancelled = false;
-
-    void getPreventiveActionSuggestions(capa.id).then((suggestions) => {
-      if (cancelled) return;
-      const firstSuggestion = suggestions[0];
-      setNovaSuggestion(firstSuggestion ?? paSuggestions[capa.id] ?? "");
-      setNovaReasoning(
-        firstSuggestion
-          ? "Generated from the enriched finding packet as a forward-looking recurrence-control action."
-          : paReasoning[capa.id],
-      );
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [capa]);
+    if (!capa || !paAiResult) return;
+    const firstSuggestion = paAiResult.data[0];
+    setNovaSuggestion(firstSuggestion ?? paSuggestions[capa.id] ?? "");
+    setNovaReasoning(
+      firstSuggestion
+        ? "Generated from the enriched finding packet as a forward-looking recurrence-control action."
+        : paReasoning[capa.id],
+    );
+  }, [paAiResult, capa?.id]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -236,18 +227,26 @@ export function D5PreventiveActionPage() {
   const shouldShowBlocker = hasSubmitted && !validation.isValid;
   const passedCount = validation.checks.filter((c) => c.passed).length;
 
-  function handleRemovePA(actionId: string) {
-    removePA(actionId);
+  const handleRemovePA = async (actionId: string) => {
     const remaining = currentActions.filter((a) => a.id !== actionId);
     const nextScore = computeTotalQualityScore({
       ...capa.score,
       effectiveness: computeActionEffectiveness(capa.correctiveActions, remaining),
     });
-    updateScore(capa.id, nextScore);
-    toast.info("Preventive action removed");
+    try {
+      await removePA.mutateAsync({ actionId });
+      await updateScore.mutateAsync({ capaId: capa.id, score: nextScore });
+      toast.info("Preventive action removed");
+    } catch (error) {
+      toast.error("Could not remove preventive action", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   }
 
-  function addPreventiveAction() {
+  // The server logs the `preventive_action_added` audit event inside addPA, so
+  // the client only persists the action + recalculated score here.
+  const addPreventiveAction = async () => {
     setHasSubmitted(true);
 
     if (!validation.isValid) {
@@ -257,39 +256,47 @@ export function D5PreventiveActionPage() {
       return undefined;
     }
 
-    const newAction = addPA(capa.id, {
-      description: description.trim(),
-      pic,
-      targetDate: `${targetDate}T17:00:00+07:00`,
-      status: "open",
-      novaGenerated: true,
-      novaSuggestionStatus: "accepted",
-    });
+    try {
+      const newAction = await addPA.mutateAsync({
+        capaId: capa.id,
+        action: {
+          description: description.trim(),
+          pic,
+          targetDate: `${targetDate}T17:00:00+07:00`,
+          status: "open",
+          novaGenerated: true,
+          novaSuggestionStatus: "accepted",
+        },
+      });
 
-    const nextActions = [...currentActions, newAction];
-    const nextScore = computeTotalQualityScore({
-      ...capa.score,
-      effectiveness: computeActionEffectiveness(capa.correctiveActions, nextActions),
-    });
-    updateScore(capa.id, nextScore);
-    addAuditEvent({
-      actorName: "Nova Demo User",
-      actorRole: "Initiator",
-      domain: "system",
-      eventType: "preventive_action_added",
-      action: `Preventive action ${newAction.id} was added to ${capa.id}.`,
-      capaId: capa.id,
-      findingId: capa.findingId,
-    });
-    toast.success("Preventive action added", {
-      description: `${newAction.id} is now available in CAPA detail and the global action store.`,
-    });
+      const nextActions = [...currentActions, newAction];
+      const nextScore = computeTotalQualityScore({
+        ...capa.score,
+        effectiveness: computeActionEffectiveness(capa.correctiveActions, nextActions),
+      });
+      await updateScore.mutateAsync({ capaId: capa.id, score: nextScore });
+      toast.success("Preventive action added", {
+        description: `${newAction.id} is now tracked in CAPA detail.`,
+      });
 
-    return newAction;
+      return newAction;
+    } catch (error) {
+      toast.error("Could not add preventive action", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+      return undefined;
+    }
   }
 
-  function continueToVerification() {
+  const continueToVerification = async () => {
     setHasSubmitted(true);
+
+    if (paCycle && !isCycleComplete(capa, paCycle.stage)) {
+      toast.error(`${paCycle.title} required`, {
+        description: "All approvers must sign off before proceeding to verification.",
+      });
+      return;
+    }
 
     const hasValidAction = validExistingActionExists || validation.isValid;
     if (!hasValidAction) {
@@ -297,15 +304,21 @@ export function D5PreventiveActionPage() {
         description: "Nova will let you continue, but D5 still needs at least one preventive action with a future target date.",
       });
     } else if (!validExistingActionExists) {
-      const added = addPreventiveAction();
+      const added = await addPreventiveAction();
       if (!added) return;
     }
 
-    updateCurrentStep(capa.id, "verification");
-    if (embedded && onStepChange) {
-      onStepChange("verification");
-    } else {
-      navigate(`/capa/${capa.id}/8d/verification`);
+    try {
+      await updateStep.mutateAsync({ capaId: capa.id, step: "verification" });
+      if (embedded && onStepChange) {
+        onStepChange("verification");
+      } else {
+        navigate(`/capa/${capa.id}/8d/verification`);
+      }
+    } catch (error) {
+      toast.error("Could not continue to verification", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     }
   }
 
@@ -347,10 +360,11 @@ export function D5PreventiveActionPage() {
               id="pa-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              disabled={isReadOnly}
               rows={5}
               aria-invalid={shouldShowBlocker && description.trim().length < 30}
               className={cn(
-                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)] disabled:cursor-not-allowed disabled:resize-none disabled:opacity-50",
                 shouldShowBlocker && description.trim().length < 30 ? "border-destructive" : "border-[var(--line-2)]",
               )}
             />
@@ -453,21 +467,23 @@ export function D5PreventiveActionPage() {
         </NovaAssistPanel>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
-          <button
-            onClick={addPreventiveAction}
-            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
-          >
-            <Save size={14} />
-            Add PA
-          </button>
-          <button
-            onClick={continueToVerification}
-            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
-          >
-            Continue to D6 Verification →
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
+            <button
+              onClick={addPreventiveAction}
+              className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
+            >
+              <Save size={14} />
+              Add PA
+            </button>
+            <button
+              onClick={continueToVerification}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
+            >
+              Continue to D6 Verification →
+            </button>
+          </div>
+        )}
 
         {/* ── Workflow approval cycle attached at this seam ─────────────── */}
         {paCycle && <ApprovalChainPanel capa={capa} stage={paCycle.stage} />}

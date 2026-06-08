@@ -10,7 +10,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, BrainCircuit, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useCapaStore } from "@/store";
+import { useCapas, useCorrectiveActions, usePreventiveActions } from "@/hooks/api";
 import type { ActionStatus, CorrectiveAction, PreventiveAction } from "@/types";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { formatDate } from "@/utils/formatters";
@@ -140,9 +140,9 @@ function ProgressBar({ value }: { value: number }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export function ConsolidatedActionPlanPage() {
-  const capas = useCapaStore((s) => s.capas);
-  const correctiveActions = useCapaStore((s) => s.correctiveActions);
-  const preventiveActions = useCapaStore((s) => s.preventiveActions);
+  const capas = useCapas().data ?? [];
+  const correctiveActions = useCorrectiveActions().data ?? [];
+  const preventiveActions = usePreventiveActions().data ?? [];
   const [groupMode, setGroupMode] = useState<GroupMode>("department");
   const [hasClustered, setHasClustered] = useState(false);
   const [isClustering, setIsClustering] = useState(false);

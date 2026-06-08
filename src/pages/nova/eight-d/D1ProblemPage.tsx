@@ -6,7 +6,7 @@ import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
-import { useAuditTrailStore, useCapaStore } from "@/store";
+import { useAddAuditEvent, useCapa, useUpdateProblem, useUpdateStep } from "@/hooks/api";
 import type { CAPACase } from "@/types";
 import { cn } from "@/lib/utils";
 import {
@@ -99,22 +99,12 @@ function evaluateProblemStatement(statement: string, capa: CAPACase) {
 export function D1ProblemPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { embedded, onStepChange } = useEightDEmbed();
-  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
-  const allCAs = useCapaStore((state) => state.correctiveActions);
-  const allPAs = useCapaStore((state) => state.preventiveActions);
-  const capa = useMemo(() => {
-    if (!rawCapa) return undefined;
-    return {
-      ...rawCapa,
-      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
-      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
-    };
-  }, [rawCapa, allCAs, allPAs]);
+  const { embedded, onStepChange, readOnly: isReadOnly } = useEightDEmbed();
+  const { data: capa } = useCapa(id);
 
-  const updateProblemStatement = useCapaStore((state) => state.updateProblemStatement);
-  const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
-  const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
+  const updateProblem = useUpdateProblem();
+  const updateStep = useUpdateStep();
+  const addAuditEvent = useAddAuditEvent();
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // Start from the user's own saved answer if it exists — otherwise blank, so
@@ -137,7 +127,7 @@ export function D1ProblemPage() {
   const shouldShowBlocker = hasSubmitted && !validation.isValid;
   const passedCount = validation.checks.filter((c) => c.passed).length;
 
-  function saveProblem(advance: boolean) {
+  const saveProblem = async (advance: boolean) => {
     setHasSubmitted(true);
 
     if (!validation.isValid && !advance) {
@@ -155,39 +145,45 @@ export function D1ProblemPage() {
       });
     }
 
-    updateProblemStatement(capa.id, statement.trim(), previewScore);
-    addAuditEvent({
-      actorName: "Nova Demo User",
-      actorRole: "Initiator",
-      domain: "system",
-      eventType: "problem_updated",
-      action: `Problem statement updated for ${capa.id}.`,
-      capaId: capa.id,
-      findingId: capa.findingId,
-    });
-
-    if (advance) {
-      updateCurrentStep(capa.id, "containment");
-      addAuditEvent({
+    try {
+      await updateProblem.mutateAsync({ capaId: capa.id, statement: statement.trim(), score: previewScore });
+      void addAuditEvent.mutateAsync({
         actorName: "Nova Demo User",
         actorRole: "Initiator",
         domain: "system",
         eventType: "problem_updated",
-        action: `D1 Problem Statement completed for ${capa.id}.`,
+        action: `Problem statement updated for ${capa.id}.`,
         capaId: capa.id,
         findingId: capa.findingId,
       });
-      if (embedded && onStepChange) {
-        onStepChange("containment");
-      } else {
-        navigate(`/capa/${capa.id}/8d/containment`);
-      }
-      return;
-    }
 
-    toast.success("Problem statement saved", {
-      description: `${capa.id} specificity score is now ${problemSpecificity}/25.`,
-    });
+      if (advance) {
+        await updateStep.mutateAsync({ capaId: capa.id, step: "containment" });
+        void addAuditEvent.mutateAsync({
+          actorName: "Nova Demo User",
+          actorRole: "Initiator",
+          domain: "system",
+          eventType: "problem_updated",
+          action: `D1 Problem Statement completed for ${capa.id}.`,
+          capaId: capa.id,
+          findingId: capa.findingId,
+        });
+        if (embedded && onStepChange) {
+          onStepChange("containment");
+        } else {
+          navigate(`/capa/${capa.id}/8d/containment`);
+        }
+        return;
+      }
+
+      toast.success("Problem statement saved", {
+        description: `${capa.id} specificity score is now ${problemSpecificity}/25.`,
+      });
+    } catch (error) {
+      toast.error("Could not save problem statement", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   }
 
   return (
@@ -220,11 +216,12 @@ export function D1ProblemPage() {
             id="problem-statement"
             value={statement}
             onChange={(e) => setStatement(e.target.value)}
+            disabled={isReadOnly}
             rows={7}
             aria-invalid={shouldShowBlocker}
             placeholder="Describe what happened, when, where, which system or product was affected, and the measurable issue."
             className={cn(
-              "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+              "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)] disabled:cursor-not-allowed disabled:resize-none disabled:opacity-50",
               shouldShowBlocker ? "border-destructive" : "border-[var(--line-2)]",
             )}
           />
@@ -308,21 +305,23 @@ export function D1ProblemPage() {
         </NovaAssistPanel>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
-          <button
-            onClick={() => saveProblem(false)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
-          >
-            <Save size={14} />
-            Save Draft
-          </button>
-          <button
-            onClick={() => saveProblem(true)}
-            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
-          >
-            Continue to D2 Containment →
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
+            <button
+              onClick={() => saveProblem(false)}
+              className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
+            >
+              <Save size={14} />
+              Save Draft
+            </button>
+            <button
+              onClick={() => saveProblem(true)}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
+            >
+              Continue to D2 Containment →
+            </button>
+          </div>
+        )}
 
       </div>
     </EightDShell>

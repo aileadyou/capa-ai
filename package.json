@@ -3,10 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "server"
+  ],
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -n web,api -c blue,green \"npm:dev:web\" \"npm:dev:api\"",
+    "dev:web": "vite",
+    "dev:api": "npm --workspace server run dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:api": "npm --workspace server run typecheck",
+    "seed": "npm --workspace server run seed",
     "lint": "eslint .",
     "preview": "vite preview",
     "test:visual": "playwright test"
@@ -78,6 +85,7 @@
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

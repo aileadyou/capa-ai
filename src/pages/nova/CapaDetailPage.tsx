@@ -5,6 +5,8 @@ import {
   Check,
   CircleDot,
   Download,
+  Eye,
+  Loader2,
   Lock,
   ScrollText,
   Sparkles,
@@ -20,7 +22,8 @@ import { D5PreventiveActionPage } from "@/pages/nova/eight-d/D5PreventiveActionP
 import { D6VerificationPage } from "@/pages/nova/eight-d/D6VerificationPage";
 import { D7SignOffPage } from "@/pages/nova/eight-d/D7SignOffPage";
 import { eightDSteps } from "@/routes";
-import { useAuditTrailStore, useCapaStore, usePersonaStore } from "@/store";
+import { usePersonaStore } from "@/store";
+import { useAuditEvents, useCapa, useRecordIntakeDecision } from "@/hooks/api";
 import type {
   AuditDomain,
   AuditEvent,
@@ -79,6 +82,14 @@ const EMBEDDED_STEP_COMPONENTS: Record<EightDStep, React.ComponentType> = {
   pa: D5PreventiveActionPage,
   verification: D6VerificationPage,
   signoff: D7SignOffPage,
+};
+
+/** Maps a QualityScore sub-category to its corresponding 8D step. */
+const SUBSCORE_TO_STEP: Partial<Record<string, EightDStep>> = {
+  problemSpecificity: "problem",
+  rootCauseDepth: "rca",
+  effectiveness: "ca",
+  containment: "containment",
 };
 
 /* ── Helpers ─────────────────────────────────────────────────────── */
@@ -385,14 +396,18 @@ function IntakeDecisionControls({
   capaId: string;
   reviewerPersonaId: PersonaID;
 }) {
-  const recordIntakeDecision = useCapaStore((s) => s.recordIntakeDecision);
+  const recordIntakeDecision = useRecordIntakeDecision();
   const [notes, setNotes] = useState("");
 
-  function decide(decision: IntakeDecision, label: string) {
-    const recorded = recordIntakeDecision(capaId, reviewerPersonaId, decision, notes);
-    if (!recorded) {
+  async function decide(decision: IntakeDecision, label: string) {
+    try {
+      await recordIntakeDecision.mutateAsync({ capaId, reviewerPersonaId, decision, notes });
+    } catch (error) {
       toast.error("Decision blocked", {
-        description: "This intake decision can only be recorded by the active reviewer assigned to this gate.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "This intake decision can only be recorded by the active reviewer assigned to this gate.",
       });
       return;
     }
@@ -907,15 +922,23 @@ function EditableStepWorkspace({
   step,
   onStepChange,
   onBackToOverview,
+  readOnly = false,
 }: {
   step: EightDStep;
   onStepChange: (step: EightDStep) => void;
   onBackToOverview: () => void;
+  readOnly?: boolean;
 }) {
   const StepComponent = EMBEDDED_STEP_COMPONENTS[step];
 
   return (
     <div key={step} className="motion-tab-content flex min-w-0 flex-1 flex-col gap-4">
+      {readOnly && (
+        <div className="flex items-center gap-2 rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-3.5 py-2.5 font-sans text-xs text-foreground-tertiary">
+          <Eye size={13} className="shrink-0 text-foreground-faint" aria-hidden="true" />
+          View only — you can discuss with Nova but cannot edit this CAPA
+        </div>
+      )}
       <p className="m-0 font-sans text-xs text-foreground-tertiary">
         <button
           type="button"
@@ -928,7 +951,7 @@ function EditableStepWorkspace({
         <span className="text-foreground-secondary">{STEP_LABELS[step]}</span>
       </p>
 
-      <EightDEmbedProvider onStepChange={onStepChange}>
+      <EightDEmbedProvider onStepChange={onStepChange} readOnly={readOnly}>
         <StepComponent />
       </EightDEmbedProvider>
     </div>
@@ -1128,7 +1151,7 @@ function CapaAuditTrailDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const allEvents = useAuditTrailStore((s) => s.events);
+  const allEvents = useAuditEvents({ capaId }).data ?? [];
   const events = useMemo(
     () =>
       allEvents
@@ -1184,11 +1207,37 @@ function MiddleColumn({
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
   const canEdit = canEditCAPA(activePersonaId, capa);
   const [auditOpen, setAuditOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExportPdf() {
+    if (exporting) return;
+    setExporting(true);
+    const toastId = toast.loading("Generating PDF…", {
+      description: "Compiling the full D1–D7 record.",
+    });
+    try {
+      const { downloadCapaPdf } = await import("@/utils/capaReport");
+      await downloadCapaPdf(capa);
+      toast.success("PDF downloaded", {
+        id: toastId,
+        description: `${capa.id}-CAPA-Report.pdf`,
+      });
+    } catch (err) {
+      console.error("PDF export failed", err);
+      toast.error("PDF export failed", {
+        id: toastId,
+        description: "Something went wrong while rendering the report.",
+      });
+    } finally {
+      setExporting(false);
+    }
+  }
 
   if (selectedStep && isIntakeCleared(capa)) {
-    // Closed cases are read-only for everyone; for open cases, only the
-    // initiator gets the editable workspace — other personas view it read-only.
-    if (capa.status === "closed" || !canEdit) {
+    // Closed cases show the simplified read-only summary for everyone.
+    // Active cases show the full 8D workspace for all personas; non-owners get
+    // readOnly=true so they can observe (and discuss with Nova) but not edit.
+    if (capa.status === "closed") {
       return <StepDetailView capa={capa} step={selectedStep} onBackToOverview={onBackToOverview} />;
     }
 
@@ -1197,6 +1246,7 @@ function MiddleColumn({
         step={selectedStep}
         onStepChange={onSelectStep}
         onBackToOverview={onBackToOverview}
+        readOnly={!canEdit}
       />
     );
   }
@@ -1270,13 +1320,18 @@ function MiddleColumn({
         className="mb-6 flex justify-end gap-2"
       >
         <button
-          onClick={() =>
-            toast.info("Export PDF", { description: "PDF export is mocked in this demo." })
-          }
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground"
+          type="button"
+          onClick={handleExportPdf}
+          disabled={exporting}
+          aria-busy={exporting}
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-transparent px-3.5 py-[7px] font-sans text-[13px] font-medium text-foreground-secondary transition-[background,color] duration-200 hover:bg-elevated hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg)] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Download size={14} strokeWidth={1.75} />
-          Export PDF
+          {exporting ? (
+            <Loader2 size={14} strokeWidth={1.75} className="animate-spin" />
+          ) : (
+            <Download size={14} strokeWidth={1.75} />
+          )}
+          {exporting ? "Generating…" : "Export PDF"}
         </button>
         <button
           type="button"
@@ -1341,10 +1396,10 @@ function MiddleColumn({
 
 function RightColumn({
   capa,
- 
+  onSelectStep,
 }: {
   capa: CAPACase;
-
+  onSelectStep: (step: EightDStep) => void;
 }) {
   const personas = usePersonaStore((s) => s.personas);
   const pic = personas.find((p) => p.id === capa.assignedTo);
@@ -1482,19 +1537,33 @@ function RightColumn({
               >
                 Lift tips
               </p>
-              {scoreTips.map((tip) => (
-                <div
-                  key={`${tip.field}-${tip.subScore}`}
-                  className="rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-[9px] py-2"
-                >
-                  <p className="mb-[3px] mt-0 text-[11px] font-semibold text-foreground-secondary">
-                    {tip.field} +{tip.scoreGain}
-                  </p>
-                  <p className="m-0 text-[11px] leading-6 text-foreground-tertiary">
-                    {tip.suggestion}
-                  </p>
-                </div>
-              ))}
+              {scoreTips.map((tip) => {
+                const targetStep = SUBSCORE_TO_STEP[tip.subScore];
+                return (
+                  <button
+                    key={`${tip.field}-${tip.subScore}`}
+                    type="button"
+                    onClick={() => targetStep && onSelectStep(targetStep)}
+                    aria-label={`Go to ${tip.field} step to improve score`}
+                    className={cn(
+                      "w-full rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-[9px] py-2 text-left transition-[background,border-color] [transition-duration:var(--dur-fast)]",
+                      targetStep
+                        ? "cursor-pointer hover:border-primary/40 hover:bg-[var(--accent-soft)]"
+                        : "cursor-default",
+                    )}
+                  >
+                    <p className="mb-[3px] mt-0 text-[11px] font-semibold text-foreground-secondary">
+                      {tip.field} +{tip.scoreGain}
+                      {targetStep && (
+                        <span className="ml-1 font-normal text-foreground-faint">↗</span>
+                      )}
+                    </p>
+                    <p className="m-0 text-[11px] leading-[1.5] text-foreground-tertiary">
+                      {tip.suggestion}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -1511,19 +1580,18 @@ export function CapaDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [selectedStep, setSelectedStep] = useState<EightDStep | null>(null);
-  const rawCapa = useCapaStore((s) => s.capas.find((c) => c.id === id));
-  const allCAs = useCapaStore((s) => s.correctiveActions);
-  const allPAs = useCapaStore((s) => s.preventiveActions);
+  // The server attaches correctiveActions/preventiveActions onto the CAPA, so a
+  // single fetch returns the fully-hydrated case.
+  const { data: capa, isLoading } = useCapa(id);
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
 
-  const capa = useMemo(() => {
-    if (!rawCapa) return undefined;
-    return {
-      ...rawCapa,
-      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
-      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
-    };
-  }, [rawCapa, allCAs, allPAs]);
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center font-sans text-sm text-foreground-tertiary">
+        Loading CAPA…
+      </div>
+    );
+  }
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -1553,9 +1621,10 @@ export function CapaDetailPage() {
           onSelectStep={setSelectedStep}
           onBackToOverview={() => setSelectedStep(null)}
         />
-        <RightColumn 
+        <RightColumn
           capa={capa}
-/>
+          onSelectStep={setSelectedStep}
+        />
 
       </div>
     </div>

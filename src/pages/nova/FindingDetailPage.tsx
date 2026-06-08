@@ -11,7 +11,8 @@ import {
   XCircle,
 } from "lucide-react";
 import NotFound from "@/pages/NotFound";
-import { useCapaStore, usePersonaStore } from "@/store";
+import { usePersonaStore } from "@/store";
+import { useCapas, useFinding } from "@/hooks/api";
 import { canFillCAPA } from "@/utils/personaAccess";
 import type { CAPACase, PreFillContext } from "@/types";
 import type { Finding } from "@/types/finding";
@@ -381,16 +382,13 @@ function IntakeRejectionBanner({ capa }: { capa: CAPACase }) {
 
 export function FindingDetailPage() {
   const { id } = useParams();
-  const finding = useCapaStore((state) =>
-    id ? state.findings.find((record) => record.id === id) : undefined,
-  );
-  const capa = useCapaStore((state) =>
-    finding
-      ? state.capas.find(
-          (record) => record.id === finding.linkedCapaId || record.findingId === finding.id,
-        )
-      : undefined,
-  );
+  const { data: finding } = useFinding(id);
+  const capas = useCapas().data ?? [];
+  const capa = finding
+    ? capas.find(
+        (record) => record.id === finding.linkedCapaId || record.findingId === finding.id,
+      )
+    : undefined;
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
 
   if (!finding) {

@@ -15,7 +15,8 @@ import {
   Settings,
   Sun,
 } from "lucide-react";
-import { useAuthStore, useNotificationStore, usePersonaStore } from "@/store";
+import { useAuthStore, usePersonaStore } from "@/store";
+import { useNotifications } from "@/hooks/api";
 import { applyTheme, getInitialTheme, type ThemeMode } from "@/lib/theme";
 import { ThemeCustomizer } from "@/components/shared/ThemeCustomizer";
 import { cn } from "@/lib/utils";
@@ -100,11 +101,10 @@ export function CompactNav() {
     { title: "Notifications", url: "/notifications", icon: Bell, badge: true },
     { title: "Personas", url: "/settings/personas", icon: Settings },
   ];
-  const unreadCount = useNotificationStore((state) =>
-    state.notifications.filter(
-      (n) => n.recipientPersonaId === activePersonaId && !n.read,
-    ).length,
-  );
+  const { data: notifications } = useNotifications(activePersonaId);
+  const unreadCount = (notifications ?? []).filter(
+    (n) => n.recipientPersonaId === activePersonaId && !n.read,
+  ).length;
 
   return (
     <nav className="compact-nav xl:hidden" aria-label="Primary navigation">
@@ -149,11 +149,10 @@ export function Sidebar() {
   const logoHref = isMyWorkOnlyPersona(activePersonaId) ? "/" : "/dashboard";
   const logout = useAuthStore((state) => state.logout);
   const [theme, setTheme] = useState<ThemeMode>(() => getInitialTheme());
-  const unreadCount = useNotificationStore((state) =>
-    state.notifications.filter(
-      (n) => n.recipientPersonaId === activePersonaId && !n.read,
-    ).length,
-  );
+  const { data: notifications } = useNotifications(activePersonaId);
+  const unreadCount = (notifications ?? []).filter(
+    (n) => n.recipientPersonaId === activePersonaId && !n.read,
+  ).length;
   const themeLabel = theme === "dark" ? "Light mode" : "Dark mode";
   const ThemeIcon = theme === "dark" ? Sun : Moon;
 

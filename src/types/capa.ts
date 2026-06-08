@@ -242,7 +242,9 @@ export interface PreventiveAction {
 }
 
 export interface VerificationData {
-  method?: "re_sampling" | "process_review" | "batch_trend" | "em_re_test";
+  method?: "re_sampling" | "process_review" | "batch_trend" | "em_re_test"
+    | "process_requalification" | "compliance_reaudit" | "effectiveness_check"
+    | "recurrence_trend" | "customer_verification";
   result?: string;
   evidenceFileNames: string[];
   verifiedAt?: ISO8601;

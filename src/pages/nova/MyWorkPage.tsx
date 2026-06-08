@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { useCapaStore, usePersonaStore } from "@/store";
-import type { CAPACase, Finding, PersonaID } from "@/types";
+import { usePersonaStore } from "@/store";
+import { useCapas, useFindings, useNotifications } from "@/hooks/api";
+import type { CAPACase, Finding, Notification, PersonaID } from "@/types";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { cn } from "@/lib/utils";
 
@@ -409,7 +410,7 @@ function FindingCard({ finding }: { finding: Finding }) {
 /** QA Deviation / QA Analyst — full operational view */
 function QADeviationView() {
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
-  const capas = useCapaStore((s) => s.capas);
+  const capas = useCapas().data ?? [];
 
   const { pendingIntake, overdue, active, closed } = useMemo(() => {
     const mine = capas.filter((c) => c.assignedTo === activePersonaId);
@@ -456,35 +457,150 @@ function QADeviationView() {
   );
 }
 
+// ── Initiator-specific cards ────────────────────────────────────────────────
+
+/**
+ * CAPA card for Andi's "My CAPAs" section.
+ * Shows a colour-coded blocking label when the CAPA is waiting on someone else.
+ */
+function InitiatorCapaCard({ capa }: { capa: CAPACase }) {
+  const stage = getLifecycleStage(capa.status);
+
+  const blockingLabel: Record<string, { text: string; class: string }> = {
+    pending_review:    { text: "Waiting: intake review",  class: "bg-[var(--warning-soft)] text-warning" },
+    revision_requested:{ text: "Action needed: revision", class: "bg-[var(--danger-soft)] text-destructive" },
+    approval:          { text: "Waiting: approvals",      class: "bg-[var(--warning-soft)] text-warning" },
+  };
+  const blocking = blockingLabel[capa.status];
+
+  return (
+    <div
+      className={cn(
+        CARD_CLASS,
+        capa.status === "revision_requested" && "border-l-[3px] border-l-destructive",
+        (capa.status === "pending_review" || capa.status === "approval") && "border-l-[3px] border-l-warning",
+      )}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="mb-0.5 flex items-center gap-2">
+          <span className={MONO_ID_CLASS}>{capa.id}</span>
+          <SeverityBadge severity={capa.impact.severity} />
+        </div>
+        <p className={TITLE_CLASS}>{capa.title}</p>
+        <div className={BADGE_ROW_CLASS}>
+          {blocking ? (
+            <span className={cn("rounded-[var(--r-full)] px-2 py-0.5 font-sans text-[11px] font-semibold", blocking.class)}>
+              {blocking.text}
+            </span>
+          ) : (
+            <StepBadge step={capa.currentStep} />
+          )}
+          <DueBadge id={capa.id} />
+        </div>
+        <div className="mt-2">
+          <LifecyclePill stage={stage} />
+        </div>
+      </div>
+      <OpenLink to={`/capa/${capa.id}`} />
+    </div>
+  );
+}
+
+/** Single approval/rejection notification card for the "CAPA updates" feed. */
+function ApprovalUpdateCard({ notif }: { notif: Notification }) {
+  const isApproved = notif.type === "approval";
+  const isRejected = notif.title.toLowerCase().includes("rejected") || notif.type === "rejected";
+  return (
+    <Link
+      to={notif.actionUrl ?? (notif.capaId ? `/capa/${notif.capaId}` : "#")}
+      className={cn(
+        CARD_CLASS,
+        "items-start no-underline transition-opacity duration-200 hover:opacity-80",
+        isApproved && !isRejected && "border-l-[3px] border-l-success",
+        isRejected && "border-l-[3px] border-l-destructive",
+      )}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="mb-0.5 flex items-center gap-2">
+          {notif.capaId && <span className={MONO_ID_CLASS}>{notif.capaId}</span>}
+          {!notif.read && (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+          )}
+        </div>
+        <p className="mb-1 mt-0 font-sans text-[13px] font-semibold text-foreground">
+          {notif.title}
+        </p>
+        <p className="m-0 text-xs leading-[1.5] text-foreground-secondary">
+          {notif.description}
+        </p>
+      </div>
+      <ArrowRight size={13} strokeWidth={2} className="mt-1 shrink-0 text-foreground-faint" />
+    </Link>
+  );
+}
+
 /** Initiator / Senior Operator — tracking view only, no approvals */
 function InitiatorView() {
   const persona = usePersonaStore((s) => s.activePersona());
-  const capas = useCapaStore((s) => s.capas);
-  const findings = useCapaStore((s) => s.findings);
+  const capas = useCapas().data ?? [];
+  const findings = useFindings().data ?? [];
+  const notifications = useNotifications("initiator").data ?? [];
 
-  const { myFindings, myClosed } = useMemo(() => {
+  const { myCAPAs, myClosed, myFindings, approvalUpdates } = useMemo(() => {
     const initiated = capas.filter((c) => c.createdBy === "initiator");
     const deptFindings = findings.filter((f) => f.department === persona.department);
-    return {
-      myFindings: deptFindings.filter((f) => f.status !== "capa_closed"),
-      myClosed: initiated.filter((c) => c.status === "closed").slice(0, 2),
-    };
-  }, [capas, findings, persona.department]);
+
+    // CAPAs that are active or blocked — show to Andi so he can track them.
+    const active = initiated.filter((c) => c.status !== "closed" && c.status !== "rejected");
+    const closed  = initiated.filter((c) => c.status === "closed").slice(0, 2);
+
+    // Findings in his area that don't yet have a CAPA, or are still open.
+    const openFindings = deptFindings.filter((f) => f.status !== "capa_closed");
+
+    // Approval + rejection notifications for the initiator, most-recent first.
+    const updates = notifications
+      .filter((n) => n.capaId && (n.type === "approval" || n.title.toLowerCase().includes("reject")))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5);
+
+    return { myCAPAs: active, myClosed: closed, myFindings: openFindings, approvalUpdates: updates };
+  }, [capas, findings, notifications, persona.department]);
 
   return (
     <>
-      <Section label="Findings from my area" count={myFindings.length} mt={0}>
+      {/* CAPAs Andi initiated — shows blocking status prominently */}
+      <Section label="My CAPAs" count={myCAPAs.length} mt={0}>
+        {myCAPAs.length > 0 ? (
+          myCAPAs.map((c) => <InitiatorCapaCard key={c.id} capa={c} />)
+        ) : (
+          <EmptyCard text="No active CAPAs yet." />
+        )}
+      </Section>
+
+      {/* Approval / rejection notifications feed */}
+      {approvalUpdates.length > 0 && (
+        <Section label="CAPA updates" count={approvalUpdates.length}>
+          {approvalUpdates.map((n) => (
+            <ApprovalUpdateCard key={n.id} notif={n} />
+          ))}
+        </Section>
+      )}
+
+      {/* Open findings in Andi's area that haven't started a CAPA yet */}
+      <Section label="Findings from my area" count={myFindings.length}>
         {myFindings.length > 0 ? (
           myFindings.map((f) => <FindingCard key={f.id} finding={f} />)
         ) : (
           <EmptyCard text="No open findings from your area." />
         )}
       </Section>
+
       {myClosed.length > 0 && (
         <Section label="Recently resolved" count={myClosed.length}>
           {myClosed.map((c) => <ClosedCard key={c.id} capa={c} />)}
         </Section>
       )}
+
       <div
         className="mt-6 rounded-[var(--r-md)] border border-[var(--line-2)] bg-card px-4 py-3.5 text-sm text-foreground-tertiary"
       >
@@ -500,7 +616,7 @@ function InitiatorView() {
 /** Department Head — approve queue + dept oversight */
 function DeptHeadView() {
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
-  const capas = useCapaStore((s) => s.capas);
+  const capas = useCapas().data ?? [];
 
   const { pendingIntake, overdue, active, review } = useMemo(() => {
     const mine = capas.filter((c) => c.assignedTo === activePersonaId);
@@ -551,7 +667,7 @@ function DeptHeadView() {
 /** Head of QA — approval queue is primary, with all-dept escalations */
 function HeadOfQAView() {
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
-  const capas = useCapaStore((s) => s.capas);
+  const capas = useCapas().data ?? [];
 
   const { forApproval, mine, allOverdue } = useMemo(() => {
     const forApproval = capas.filter((c) => c.status === "approval");
@@ -592,7 +708,7 @@ function HeadOfQAView() {
 
 /** SME — consultation view; shows CAPAs in investigation where they may be needed */
 function SMEView() {
-  const capas = useCapaStore((s) => s.capas);
+  const capas = useCapas().data ?? [];
 
   const consulting = useMemo(
     () => capas.filter((c) => c.status === "investigation" && c.currentStep === "rca"),
@@ -646,8 +762,8 @@ const PERSONA_SUBTITLES: Record<PersonaID, (name: string, count: number) => stri
 export function MyWorkPage() {
   const persona = usePersonaStore((s) => s.activePersona());
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
-  const capas = useCapaStore((s) => s.capas);
-  const findings = useCapaStore((s) => s.findings);
+  const capas = useCapas().data ?? [];
+  const findings = useFindings().data ?? [];
 
   const subtitleCount = useMemo(() => {
     if (activePersonaId === "initiator") {

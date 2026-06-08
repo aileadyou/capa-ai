@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FilterCard, FilterSearchInput, FilterSelect } from "@/components/shared/FilterControls";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { useCapaStore } from "@/store";
+import { useCapas, useCorrectiveActions, useUpdateCorrectiveAction } from "@/hooks/api";
 import type { ActionStatus, CorrectiveAction } from "@/types";
 import { formatDate, formatRelativeTime } from "@/utils/formatters";
 
@@ -36,9 +36,9 @@ function isWithinNextSevenDays(date: string) {
 }
 
 export function CorrectiveActionsPage() {
-  const correctiveActions = useCapaStore((state) => state.correctiveActions);
-  const capas = useCapaStore((state) => state.capas);
-  const updateCAStatus = useCapaStore((state) => state.updateCAStatus);
+  const correctiveActions = useCorrectiveActions().data ?? [];
+  const capas = useCapas().data ?? [];
+  const updateCA = useUpdateCorrectiveAction();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ActionStatus | typeof allValue>(allValue);
   const [picFilter, setPicFilter] = useState(allValue);
@@ -95,11 +95,17 @@ export function CorrectiveActionsPage() {
     });
   }, [departmentFilter, dueDateFilter, picFilter, query, rows, statusFilter]);
 
-  function markCompleted(action: CorrectiveAction) {
-    updateCAStatus(action.id, "completed");
-    toast.success("Corrective action completed", {
-      description: `${action.id} was marked completed.`,
-    });
+  async function markCompleted(action: CorrectiveAction) {
+    try {
+      await updateCA.mutateAsync({ actionId: action.id, status: "completed" });
+      toast.success("Corrective action completed", {
+        description: `${action.id} was marked completed.`,
+      });
+    } catch (error) {
+      toast.error("Could not complete corrective action", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   }
 
   return (

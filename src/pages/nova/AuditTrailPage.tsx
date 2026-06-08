@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Download, FileText } from "lucide-react";
 import { toast } from "sonner";
-import { useAuditTrailStore } from "@/store";
+import { useAuditEvents } from "@/hooks/api";
 import type { AuditDomain, AuditEvent, AuditEventType } from "@/types";
 import { formatDateTime } from "@/utils/formatters";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -97,7 +97,7 @@ function KpiCard({ label, value }: { label: string; value: number | string }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export function AuditTrailPage() {
-  const events = useAuditTrailStore((s) => s.events);
+  const events = useAuditEvents().data ?? [];
   const [query, setQuery] = useState("");
   const [domainFilter, setDomainFilter] = useState<string>(ALL);
   const [capaFilter, setCapaFilter] = useState(ALL);

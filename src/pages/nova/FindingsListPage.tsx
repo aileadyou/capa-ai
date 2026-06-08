@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Lock, Plus, X } from "lucide-react";
-import { useCapaStore, usePersonaStore } from "@/store";
+import { usePersonaStore } from "@/store";
+import { useCapas, useFindings } from "@/hooks/api";
 import type { CAPAType } from "@/types";
 import type { Finding } from "@/types/finding";
 import { formatDate, formatDateTime } from "@/utils/formatters";
@@ -80,10 +81,10 @@ function FindingSlideOver({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
-  const getCAPAById = useCapaStore((state) => state.getCAPAById);
+  const capas = useCapas().data ?? [];
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
   const canCreate = canFillCAPA(activePersonaId);
-  const capa = finding.linkedCapaId ? getCAPAById(finding.linkedCapaId) : undefined;
+  const capa = finding.linkedCapaId ? capas.find((c) => c.id === finding.linkedCapaId) : undefined;
 
   // Enrich with CAPA pre-fill data
   let areaEquipment: string | null = null;
@@ -263,7 +264,7 @@ const allValue = "all";
 
 export function FindingsListPage() {
   const navigate = useNavigate();
-  const findings = useCapaStore((state) => state.findings);
+  const findings = useFindings().data ?? [];
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
   const canCreate = canFillCAPA(activePersonaId);
 

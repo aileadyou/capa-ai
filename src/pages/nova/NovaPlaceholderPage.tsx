@@ -130,7 +130,7 @@ const eightDStepCopy: Record<EightDStepRoute, { title: string; description: stri
 };
 
 function ActionButton({ action }: { action: PlaceholderAction }) {
-  if ("to" in action) {
+  if (action.to !== undefined) {
     return (
       <Button asChild>
         <Link to={action.to}>

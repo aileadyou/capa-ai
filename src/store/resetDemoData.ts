@@ -1,16 +1,18 @@
+// Demo reset now reseeds the server database (the source of truth for CAPA,
+// audit, and notification data) and drops the remaining client-only state:
+// persona selection, UI modals/panels, and persisted localStorage keys. Every
+// React Query cache is then invalidated so views refetch the fresh seed.
+
+import { api } from "@/lib/api";
+import { queryClient } from "@/lib/queryClient";
 import { clearDemoStorage } from "@/store/storageKeys";
-import { useAuditTrailStore } from "@/store/useAuditTrailStore";
-import { useCapaStore } from "@/store/useCapaStore";
-import { useNotificationStore } from "@/store/useNotificationStore";
 import { usePersonaStore } from "@/store/usePersonaStore";
 import { useUIStore } from "@/store/useUIStore";
 
-export function resetDemoData() {
+export async function resetDemoData() {
+  await api.resetDemo();
   clearDemoStorage();
   usePersonaStore.getState().resetPersona();
-  useCapaStore.getState().resetCAPAStore();
-  useAuditTrailStore.getState().resetAuditTrail();
-  useNotificationStore.getState().resetNotifications();
   useUIStore.getState().resetUI();
+  await queryClient.invalidateQueries();
 }
-

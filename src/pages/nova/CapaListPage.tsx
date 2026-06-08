@@ -8,7 +8,8 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Plus } from "lucide-react";
-import { useCapaStore, usePersonaStore } from "@/store";
+import { usePersonaStore } from "@/store";
+import { useCapas, useCorrectiveActions, usePreventiveActions } from "@/hooks/api";
 import type { CAPACase, CorrectiveAction, PersonaID, PreventiveAction } from "@/types";
 import { formatDate, formatRelativeTime } from "@/utils/formatters";
 import { canFillCAPA } from "@/utils/personaAccess";
@@ -52,9 +53,9 @@ interface CapaRow { capa: CAPACase; nextDueDate?: string; }
 
 export function CapaListPage() {
   const navigate = useNavigate();
-  const capas = useCapaStore((s) => s.capas);
-  const correctiveActions = useCapaStore((s) => s.correctiveActions);
-  const preventiveActions = useCapaStore((s) => s.preventiveActions);
+  const capas = useCapas().data ?? [];
+  const correctiveActions = useCorrectiveActions().data ?? [];
+  const preventiveActions = usePreventiveActions().data ?? [];
   const personas = usePersonaStore((s) => s.personas);
   const activePersonaId = usePersonaStore((s) => s.activePersonaId);
   const canCreate = canFillCAPA(activePersonaId);

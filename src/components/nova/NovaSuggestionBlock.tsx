@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight, MessageSquareText, Sparkles } from "lucide-react";
-import { useAuditTrailStore, useUIStore } from "@/store";
+import { useUIStore } from "@/store";
+import { useAddAuditEvent } from "@/hooks/api";
+import { useEightDEmbed } from "@/components/layout/EightDShell";
 
 interface NovaSuggestionBlockProps {
   /** Short label for what this suggestion is about, e.g. "Why 1 answer" */
@@ -30,14 +32,15 @@ export function NovaSuggestionBlock({
   const [mode, setMode] = useState<Mode>("idle");
   const [draft, setDraft] = useState(suggestion);
   const [showReasoning, setShowReasoning] = useState(false);
-  const addEvent = useAuditTrailStore((state) => state.addEvent);
+  const addEvent = useAddAuditEvent();
   const openNovaChat = useUIStore((state) => state.openNovaChat);
+  const { readOnly } = useEightDEmbed();
 
   function handleAccept() {
     setMode("accepted");
     onAccept?.(draft);
     if (capaId) {
-      addEvent({
+      void addEvent.mutateAsync({
         actorName: "Nova Demo User",
         actorRole: "CAPA User",
         domain: "ai_decision",
@@ -65,7 +68,7 @@ export function NovaSuggestionBlock({
       initialDraft: `Help me review this ${label}. What should I ask or improve before using it?`,
     });
     if (capaId) {
-      addEvent({
+      void addEvent.mutateAsync({
         actorName: "Nova Demo User",
         actorRole: "CAPA User",
         domain: "ai_decision",
@@ -153,12 +156,14 @@ export function NovaSuggestionBlock({
       <div className="flex flex-wrap items-center gap-2">
         {mode === "editing" ? (
           <>
-            <button
-              onClick={handleAccept}
-              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-on"
-            >
-              Apply edit
-            </button>
+            {!readOnly && (
+              <button
+                onClick={handleAccept}
+                className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-on"
+              >
+                Apply edit
+              </button>
+            )}
             <button
               onClick={() => { setMode("idle"); setDraft(suggestion); }}
               className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-transparent px-3 py-1.5 font-sans text-xs text-foreground-tertiary"
@@ -168,12 +173,14 @@ export function NovaSuggestionBlock({
           </>
         ) : (
           <>
-            <button
-              onClick={handleAccept}
-              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-on"
-            >
-              Use this suggestion
-            </button>
+            {!readOnly && (
+              <button
+                onClick={handleAccept}
+                className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-primary px-3.5 py-1.5 font-sans text-xs font-semibold text-primary-on"
+              >
+                Use this suggestion
+              </button>
+            )}
             <button
               onClick={handleDiscussWithNova}
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3 py-1.5 font-sans text-xs text-foreground-secondary"

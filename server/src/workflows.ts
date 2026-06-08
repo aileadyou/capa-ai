@@ -1,26 +1,19 @@
-import type { ApprovalStage, CAPACase, CAPAType, EightDStep } from "@/types";
-import type { PersonaID } from "@/types/persona";
+// Server-side copy of src/config/workflows.ts — the declarative approval-cycle
+// model. Kept standalone (no `@/types`) so the server has zero frontend imports.
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Workflow-Config layer
-//
-// The app runs ONE 8D spine (problem → containment → rca → ca → pa →
-// verification → signoff) for every CAPA. Bio Farma's RFI documents three
-// genuinely different *approval* shapes (BPMN Gambar 1–4). Rather than fork the
-// step list per type, we keep the 8D spine and attach declarative **approval
-// cycles** at existing step seams, plus flag intake behaviour and loops.
-//
-//   deviation → single classification-gated sign-off cascade
-//   audit     → two-phase CAPA Plan → CAPA Actual lifecycle, then QA closure
-//   complaint → Round-1 analysis approval, then Round-2 closure approval
-// ─────────────────────────────────────────────────────────────────────────────
+type CAPAType = "deviation" | "audit" | "complaint";
+type EightDStep = "problem" | "containment" | "rca" | "ca" | "pa" | "verification" | "signoff";
+type ApprovalStage = "plan" | "actual" | "analysis" | "closure" | "signoff";
+type PersonaID = "initiator" | "qa_deviation" | "head_of_dept" | "head_of_qa" | "sme";
+
+// `capa` is intentionally loose here — these predicates only read a couple of
+// fields and the server keeps the full case as a JSON blob.
+type Capa = any;
 
 export interface GatedApprover {
   personaId: PersonaID;
-  when: (c: CAPACase) => boolean;
-  /** Insert before the last base approver (default) vs. append at the end. */
+  when: (c: Capa) => boolean;
   insertBeforeLast?: boolean;
-  /** Why this approver is conditionally present (shown as a chip). */
   label?: string;
 }
 
@@ -28,15 +21,10 @@ export interface ApprovalCycleDef {
   stage: ApprovalStage;
   title: string;
   subtitle?: string;
-  /** Ordered base approver chain. */
   base: PersonaID[];
-  /** Conditional approvers spliced in when their predicate holds. */
   gated?: GatedApprover[];
-  /** 8D step seam where this cycle surfaces. */
   attachAfter: EightDStep;
-  /** The closing cycle — triggers closeCAPA and the score ≥ 80 hard gate. */
   final?: boolean;
-  /** Context-specific role relabels (same persona, different hat per workflow). */
   roleLabels?: Partial<Record<PersonaID, string>>;
 }
 
@@ -44,14 +32,13 @@ export interface WorkflowConfig {
   type: CAPAType;
   label: string;
   intake: { disposisi?: boolean; acceptGate?: boolean; scheduleContext?: boolean };
-  /** Audit: CAPA Plan → CAPA Actual two-phase lifecycle. */
   twoPhase?: boolean;
   cycles: ApprovalCycleDef[];
   loops?: { customerResponse?: boolean; closingCompleteness?: boolean; reportBack?: boolean };
 }
 
-const isMajorOrCritical = (c: CAPACase) =>
-  c.impact.severity === "Major" || c.impact.severity === "Critical";
+const isMajorOrCritical = (c: Capa) =>
+  c.impact?.severity === "Major" || c.impact?.severity === "Critical";
 
 export const WORKFLOWS: Record<CAPAType, WorkflowConfig> = {
   deviation: {
@@ -115,7 +102,7 @@ export const WORKFLOWS: Record<CAPAType, WorkflowConfig> = {
       {
         stage: "closure",
         title: "QA Final Verification & Closure",
-        subtitle: "Closing-completeness check → QA verification → close",
+        subtitle: "QA verification — required for closure",
         base: ["qa_deviation"],
         attachAfter: "signoff",
         final: true,
@@ -161,14 +148,12 @@ export const WORKFLOWS: Record<CAPAType, WorkflowConfig> = {
   },
 };
 
-// ── Resolution helpers ───────────────────────────────────────────────────────
-
 export function getWorkflow(type: CAPAType): WorkflowConfig {
   return WORKFLOWS[type];
 }
 
 /** Resolve a cycle's ordered approver chain, applying conditional gates. */
-export function resolveCycleApprovers(cycle: ApprovalCycleDef, capa: CAPACase): PersonaID[] {
+export function resolveCycleApprovers(cycle: ApprovalCycleDef, capa: Capa): PersonaID[] {
   const chain = [...cycle.base];
   for (const gate of cycle.gated ?? []) {
     if (!gate.when(capa)) continue;
@@ -181,56 +166,10 @@ export function resolveCycleApprovers(cycle: ApprovalCycleDef, capa: CAPACase): 
   return chain;
 }
 
-export function getCyclesForCapa(capa: CAPACase): ApprovalCycleDef[] {
-  return WORKFLOWS[capa.type].cycles;
+export function getCycleByStage(capa: Capa, stage: ApprovalStage): ApprovalCycleDef | undefined {
+  return WORKFLOWS[capa.type as CAPAType].cycles.find((c) => c.stage === stage);
 }
 
-export function getCycleByStage(
-  capa: CAPACase,
-  stage: ApprovalStage,
-): ApprovalCycleDef | undefined {
-  return WORKFLOWS[capa.type].cycles.find((c) => c.stage === stage);
-}
-
-/** The single approval cycle (if any) that surfaces at a given 8D step seam. */
-export function getCycleAtSeam(
-  capa: CAPACase,
-  step: EightDStep,
-): ApprovalCycleDef | undefined {
-  return WORKFLOWS[capa.type].cycles.find((c) => c.attachAfter === step);
-}
-
-/** Stage of the closing cycle — deviation: "signoff"; audit/complaint: "closure". */
-export function getFinalStage(capa: CAPACase): ApprovalStage {
-  return WORKFLOWS[capa.type].cycles.find((c) => c.final)?.stage ?? "signoff";
-}
-
-export function isFinalStage(capa: CAPACase, stage: ApprovalStage): boolean {
-  return getCycleByStage(capa, stage)?.final === true;
-}
-
-/** True when every approver in the given cycle has an "approved" decision. */
-export function isCycleComplete(capa: CAPACase, stage: ApprovalStage): boolean {
-  const cycle = getCycleByStage(capa, stage);
-  if (!cycle) return true;
-  const chain = resolveCycleApprovers(cycle, capa);
-  if (chain.length === 0) return true;
-  const isFinal = cycle.final === true;
-  return chain.every((personaId) =>
-    capa.approvals.some(
-      (e) =>
-        e.approverPersonaId === personaId &&
-        e.decision === "approved" &&
-        (e.stage === stage || (e.stage == null && isFinal)),
-    ),
-  );
-}
-
-/** Context role label for an approver within a cycle (falls back to persona role). */
-export function approverRoleLabel(
-  cycle: ApprovalCycleDef,
-  personaId: PersonaID,
-  fallback: string,
-): string {
-  return cycle.roleLabels?.[personaId] ?? fallback;
+export function getFinalStage(capa: Capa): ApprovalStage {
+  return WORKFLOWS[capa.type as CAPAType].cycles.find((c) => c.final)?.stage ?? "signoff";
 }

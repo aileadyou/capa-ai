@@ -2,14 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import {
-  getDashboardStats,
   getDepartmentHeatmap,
   getFindingTrend,
-  getLatestFindings,
   getRecurrenceTrend,
   getRootCauseTrends,
   getTypeBreakdown,
 } from "@/services/dashboardService";
+import { useDashboard, useFindings } from "@/hooks/api";
 import { usePersonaStore } from "@/store";
 import { cn } from "@/lib/utils";
 
@@ -291,7 +290,7 @@ function TypeDonutChart() {
     const arcLen = pct * circumference - 3; // 3px gap
     const rot = cumAngle;
     cumAngle += pct * 360;
-    return { ...d, arcLen, rot, color: segColors[i] ?? CLR_FG3 };
+    return { ...d, arcLen, rot, color: segColors[i] ?? CLR_FOREGROUND_TERTIARY };
   });
 
   return (
@@ -591,7 +590,10 @@ function RecurrenceTrendChart() {
 // ── Latest findings list — for QA officer / operator views ───────────────────
 
 function LatestFindingsList({ limit = 4 }: { limit?: number }) {
-  const findings = getLatestFindings(limit);
+  const { data: allFindings = [] } = useFindings();
+  const findings = [...allFindings]
+    .sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime())
+    .slice(0, limit);
   const severityColor: Record<string, string> = {
     Minor: CLR_PRIMARY,
     Major: CLR_WARNING,
@@ -605,7 +607,7 @@ function LatestFindingsList({ limit = 4 }: { limit?: number }) {
             className="h-2 w-2 shrink-0 rounded-full"
             style={{ background: severityColor[f.severity] ?? CLR_FOREGROUND_TERTIARY }}
           />
-          <span className="flex-1 truncate font-sans text-[13px] text-foreground-secondary">{f.title}</span>
+          <span className="flex-1 truncate font-sans text-[13px] text-foreground-secondary">{f.shortDescription}</span>
           <span className="shrink-0 font-sans text-[11px] text-foreground-faint">{f.severity}</span>
         </Link>
       ))}
@@ -684,7 +686,7 @@ const ROLE_CONFIG: Record<string, { mode: DashboardMode; title: string; subtitle
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function DashboardPage() {
-  const stats = getDashboardStats();
+  const { data: stats } = useDashboard();
   const [range, setRange] = useState<RangeOption>("This Month");
   const persona = usePersonaStore((s) => s.activePersona());
   const { mode, title, subtitle } = ROLE_CONFIG[persona.id] ?? ROLE_CONFIG.head_of_qa;
@@ -712,10 +714,10 @@ export function DashboardPage() {
       {mode === "executive" && (
         <>
           <div className={kpiGrid}>
-            <KpiCard eyebrow="Findings MTD" metric={stats.totalFindingsMTD} caption="Deviations, audits, complaints" to="/findings" />
-            <KpiCard eyebrow="Open CAPAs" metric={stats.openCapas} caption="Across all active statuses" to="/capa" />
-            <KpiCard eyebrow="Overdue CAPAs" metric={stats.overdueCapas} caption="Past target closure date" to="/capa" gradientBorder />
-            <KpiCard eyebrow="Effectiveness rate" metric={`${stats.effectivenessRate}%`} caption="Verified CAPA effectiveness" to="/capa" />
+            <KpiCard eyebrow="Findings MTD" metric={stats?.totalFindingsMTD ?? "—"} caption="Deviations, audits, complaints" to="/findings" />
+            <KpiCard eyebrow="Open CAPAs" metric={stats?.openCapas ?? "—"} caption="Across all active statuses" to="/capa" />
+            <KpiCard eyebrow="Overdue CAPAs" metric={stats?.overdueCapas ?? "—"} caption="Past target closure date" to="/capa" gradientBorder />
+            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa" />
           </div>
           <div className={twoCol}>
             <Card eyebrow="Trend" title="Finding trend" subtitle="Total findings per month — last 12 months">
@@ -740,10 +742,10 @@ export function DashboardPage() {
       {mode === "qa_officer" && (
         <>
           <div className={kpiGrid}>
-            <KpiCard eyebrow="Findings MTD" metric={stats.totalFindingsMTD} caption="Deviations, audits, complaints" to="/findings" />
-            <KpiCard eyebrow="Open CAPAs" metric={stats.openCapas} caption="Requiring review or action" to="/capa" />
-            <KpiCard eyebrow="Overdue CAPAs" metric={stats.overdueCapas} caption="Past target closure date" to="/capa" gradientBorder />
-            <KpiCard eyebrow="Effectiveness rate" metric={`${stats.effectivenessRate}%`} caption="Verified CAPA effectiveness" to="/capa" />
+            <KpiCard eyebrow="Findings MTD" metric={stats?.totalFindingsMTD ?? "—"} caption="Deviations, audits, complaints" to="/findings" />
+            <KpiCard eyebrow="Open CAPAs" metric={stats?.openCapas ?? "—"} caption="Requiring review or action" to="/capa" />
+            <KpiCard eyebrow="Overdue CAPAs" metric={stats?.overdueCapas ?? "—"} caption="Past target closure date" to="/capa" gradientBorder />
+            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa" />
           </div>
           <div className={twoCol}>
             <Card eyebrow="Trend" title="Finding trend" subtitle="Total findings per month — last 12 months">
@@ -770,9 +772,9 @@ export function DashboardPage() {
       {mode === "dept_head" && (
         <>
           <div className={kpiGrid}>
-            <KpiCard eyebrow="Open CAPAs" metric={stats.openCapas} caption="Across your departments" to="/capa" />
-            <KpiCard eyebrow="Overdue CAPAs" metric={stats.overdueCapas} caption="Past target closure date" to="/capa" gradientBorder />
-            <KpiCard eyebrow="Effectiveness rate" metric={`${stats.effectivenessRate}%`} caption="Verified CAPA effectiveness" to="/capa" />
+            <KpiCard eyebrow="Open CAPAs" metric={stats?.openCapas ?? "—"} caption="Across your departments" to="/capa" />
+            <KpiCard eyebrow="Overdue CAPAs" metric={stats?.overdueCapas ?? "—"} caption="Past target closure date" to="/capa" gradientBorder />
+            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa" />
           </div>
           <div className="grid grid-cols-1 gap-3.5">
             <Card eyebrow="Departments" title="Completion heatmap" subtitle="CAPA closure rate by department — your responsibility areas highlighted">
@@ -817,8 +819,8 @@ export function DashboardPage() {
       {mode === "expert" && (
         <>
           <div className={cn(kpiGrid, "max-w-lg")}>
-            <KpiCard eyebrow="Findings MTD" metric={stats.totalFindingsMTD} caption="Across all types" to="/findings" />
-            <KpiCard eyebrow="Effectiveness rate" metric={`${stats.effectivenessRate}%`} caption="Verified CAPA effectiveness" to="/capa" />
+            <KpiCard eyebrow="Findings MTD" metric={stats?.totalFindingsMTD ?? "—"} caption="Across all types" to="/findings" />
+            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa" />
           </div>
           <div className={twoCol}>
             <Card eyebrow="Root cause" title="Top root cause categories" subtitle="Occurrences this period — orange band indicates recurring pattern">

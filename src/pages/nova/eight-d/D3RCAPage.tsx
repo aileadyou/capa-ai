@@ -1,12 +1,22 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, ChevronRight, Circle, ExternalLink, Save } from "lucide-react";
+import { AlertTriangle, Bot, CheckCircle2, ChevronRight, Circle, ExternalLink, Loader2, Save, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import NotFound from "@/pages/NotFound";
 import { kgCitations } from "@/mock-data";
-import { useAuditTrailStore, useCapaStore, useUIStore } from "@/store";
+import { useUIStore } from "@/store";
+import {
+  useAddAuditEvent,
+  useAnswerFiveWhys,
+  useCapa,
+  useLatestFiveWhys,
+  useStartFiveWhys,
+  useUpdateRca,
+  useUpdateStep,
+} from "@/hooks/api";
+import type { FiveWhysSession } from "@/hooks/api";
 import { cn } from "@/lib/utils";
 import type {
   DecisionNode,
@@ -36,55 +46,8 @@ const defaultMethodByType = {
   complaint: "decision_tree",
 } as const;
 
-const fiveWhysPlan = [
-  {
-    level: 1,
-    question: "Why did particle count excursion occur during vaccine filling?",
-    suggestion: "Because airflow performance in the filling suite was below expected control level.",
-    replacement: "Because air control around the Grade A filling area was not maintained during active operation.",
-    citationIds: ["CAPA-2025-0447"],
-    reasoning:
-      "Pattern match: CAPA-2025-0447 (91% similar) identified airflow as primary excursion driver. Environmental monitoring records for FILL-02 show no recent HEPA performance baseline deviation prior to event.",
-  },
-  {
-    level: 2,
-    question: "Why was airflow performance below expected control level?",
-    suggestion: "Because the HEPA filter showed reduced filtration efficiency.",
-    replacement: "Because the HEPA unit had deteriorated and no longer supported the expected control state.",
-    citationIds: ["CAPA-2025-0447", "CAPA-2024-0392"],
-    reasoning:
-      "Two historical CAPAs (2025-0447, 2024-0392) both traced airflow deviations to HEPA degradation. Last qualification report for HEPA-FILL-02 is dated 18 months ago.",
-  },
-  {
-    level: 3,
-    question: "Why did the HEPA filter show reduced filtration efficiency?",
-    suggestion: "Because the filter had exceeded the recommended replacement interval for high-control areas.",
-    replacement: "Because replacement timing did not reflect high-control area trend signals.",
-    citationIds: ["CAPA-2024-0392"],
-    reasoning:
-      "CAPA-2024-0392 (86% similar) found identical root trigger: maintenance reminder missed during holiday coverage period. Maintenance log shows HEPA-FILL-02 last replaced 22 months ago, against 18-month target.",
-  },
-  {
-    level: 4,
-    question: "Why had the replacement interval not been shortened?",
-    suggestion: "Because the preventive maintenance schedule still followed an outdated 18-month interval.",
-    replacement: "Because maintenance scheduling did not include a trigger for revised Grade A/B interval guidance.",
-    citationIds: ["CAPA-2025-0447"],
-    reasoning:
-      "Internal quality guidance revision from Q3 2024 recommended 12-month intervals for Grade A/B HEPA units. PM schedule change request was raised but not formally approved or implemented.",
-  },
-  {
-    level: 5,
-    question: "Why was the preventive maintenance schedule outdated?",
-    suggestion:
-      "Because SOP PM-HEPA-001 had not been updated after the revised internal quality guidance was issued.",
-    replacement:
-      "Because SOP ownership did not require quality guidance changes to trigger PM interval updates.",
-    citationIds: ["CAPA-2025-0447"],
-    reasoning:
-      "SOP PM-HEPA-001 last reviewed March 2023. No change control or periodic review was triggered by the 2024 quality guidance update. This represents the systemic gap — SOP ownership did not monitor guidance changes as an update trigger.",
-  },
-];
+// fiveWhysPlan is now driven by the server session (useStartFiveWhys / useAnswerFiveWhys).
+// The static array has been removed — question/suggestion come from FiveWhysSession.nodes.
 
 const fishbonePlan: Array<{ category: FishboneName; suggestion: string; replacement: string }> = [
   {
@@ -280,136 +243,278 @@ function SimilarCapaCard({
   );
 }
 
-// ── 5-Whys conversational chain ──────────────────────────────────────────────
+// ── 5-Whys conversational chain (session-based) ──────────────────────────────
+
+const FIVE_WHYS_DEPTH = 5;
 
 function FiveWhysChain({
   capaId,
-  answers,
-  onAnswerChange,
-  onClearAfter,
+  onSessionUpdate,
 }: {
   capaId: string;
-  answers: string[];
-  onAnswerChange: (index: number, content: string) => void;
-  /** Called when the user edits an earlier Why — clears parent answers for every index > fromIndex */
-  onClearAfter?: (fromIndex: number) => void;
+  /** Called whenever the session changes — parent uses it to sync confirmedRootCause */
+  onSessionUpdate?: (session: FiveWhysSession) => void;
 }) {
-  // How many levels have been confirmed (locked in)
-  const [lockedCount, setLockedCount] = useState(() => {
-    const firstEmpty = answers.findIndex((a) => !a || a.trim().length < 5);
-    return firstEmpty === -1 ? fiveWhysPlan.length : firstEmpty;
-  });
-  const activeIndex = Math.min(lockedCount, fiveWhysPlan.length - 1);
-  const [draft, setDraft] = useState(answers[activeIndex] || "");
-  const isDone = lockedCount >= fiveWhysPlan.length;
+  const { data: serverSession, isLoading: sessionLoading } = useLatestFiveWhys(capaId);
+  const startMutation = useStartFiveWhys();
+  const answerMutation = useAnswerFiveWhys();
 
-  function confirmLevel() {
-    if (!draft.trim()) return;
-    onAnswerChange(activeIndex, draft);
-    const next = activeIndex + 1;
-    if (next < fiveWhysPlan.length) {
-      setLockedCount(next);
-      setDraft(answers[next] || "");
-    } else {
-      setLockedCount(fiveWhysPlan.length);
+  // Local copy so UI updates instantly after mutation without waiting for query refetch.
+  const [localSession, setLocalSession] = useState<FiveWhysSession | null>(null);
+  const session = localSession ?? serverSession ?? null;
+
+  const completedNodes = session?.nodes.filter((n) => n.userAnswer?.trim()) ?? [];
+  const activeNode = session?.nodes.find((n) => !n.userAnswer?.trim()) ?? null;
+  const isDone = session?.status === "complete";
+
+  const [draft, setDraft] = useState("");
+
+  // Reset draft when active node changes
+  const prevActiveId = useMemo(() => activeNode?.id, [activeNode?.id]);
+  useEffect(() => {
+    setDraft("");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prevActiveId]);
+
+  // Sync latest server session on first load (in case page was refreshed)
+  useEffect(() => {
+    if (serverSession && !localSession) {
+      setLocalSession(serverSession);
+      if (serverSession.status === "complete") onSessionUpdate?.(serverSession);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverSession?.id]);
+
+  const applySession = (s: FiveWhysSession) => {
+    setLocalSession(s);
+    if (s.status === "complete") onSessionUpdate?.(s);
+  };
+
+  const handleStart = async () => {
+    try {
+      const s = await startMutation.mutateAsync({ capaId });
+      applySession(s);
+    } catch {
+      toast.error("Could not start 5 Whys session", {
+        description: "Server may be unavailable. Try refreshing.",
+      });
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!activeNode || !draft.trim() || !session) return;
+    try {
+      const s = await answerMutation.mutateAsync({
+        sessionId: session.id,
+        nodeId: activeNode.id,
+        answer: draft.trim(),
+      });
+      applySession(s);
+    } catch {
+      toast.error("Could not record answer", {
+        description: "Please try again.",
+      });
+    }
+  };
+
+  const handleRestart = async () => {
+    setLocalSession(null);
+    setDraft("");
+    try {
+      const s = await startMutation.mutateAsync({ capaId });
+      applySession(s);
+    } catch {
+      toast.error("Could not restart 5 Whys session.");
+    }
+  };
+
+  // ── Loading ──────────────────────────────────────────────────────────────
+  if (sessionLoading) {
+    return (
+      <div className="flex items-center gap-2 py-6 text-foreground-faint">
+        <Loader2 size={14} className="animate-spin" />
+        <span className="font-sans text-xs">Loading session…</span>
+      </div>
+    );
   }
 
-  function editAt(index: number) {
-    // How many confirmed answers will be wiped (Why index+2 … Why lockedCount)
-    const willClearCount = lockedCount - 1 - index;
-    onClearAfter?.(index);           // clear parent answers for index+1 … N-1
-    setLockedCount(index);
-    setDraft(answers[index] || "");
-    if (willClearCount > 0) {
-      const firstReset = index + 2;
-      const lastReset  = lockedCount;
-      toast.info(
-        willClearCount === 1
-          ? `Why ${firstReset} reset`
-          : `Why ${firstReset}–${lastReset} reset`,
-        { description: "Downstream answers cleared — re-answer from here." },
-      );
-    }
+  // ── No session yet ───────────────────────────────────────────────────────
+  if (!session) {
+    return (
+      <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card">
+        <div className="border-b border-border-subtle bg-elevated px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <Sparkles size={15} className="text-primary" />
+            <p className="m-0 font-sans text-[13px] font-semibold text-foreground">
+              Nova AI-Assisted 5 Whys
+            </p>
+          </div>
+          <p className="mb-0 mt-1.5 text-xs leading-[1.6] text-foreground-tertiary">
+            Nova generates each "why" question based on your CAPA context and previous answers,
+            suggesting a candidate answer you can accept or edit. Complete all 5 levels to
+            establish the systemic root cause.
+          </p>
+        </div>
+        <div className="px-5 py-5">
+          <div className="mb-4 grid grid-cols-3 gap-3">
+            {[
+              { step: "1", label: "Nova generates Why 1", sub: "grounded in your CAPA context" },
+              { step: "2–4", label: "You answer each level", sub: "accept or edit Nova's suggestion" },
+              { step: "5", label: "Root cause confirmed", sub: "systemic gap summarised by Nova" },
+            ].map((item) => (
+              <div key={item.step} className="rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-3 py-3">
+                <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 font-sans text-[10px] font-bold text-primary">
+                  {item.step}
+                </span>
+                <p className="mb-0.5 mt-2 font-sans text-[12px] font-semibold text-foreground">
+                  {item.label}
+                </p>
+                <p className="m-0 font-sans text-[11px] text-foreground-faint">{item.sub}</p>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            disabled={startMutation.isPending}
+            onClick={handleStart}
+            className={cn(
+              "flex w-full items-center justify-center gap-2 rounded-[var(--r-sm)] border-0 py-3 font-sans text-[13px] font-semibold",
+              startMutation.isPending
+                ? "cursor-not-allowed bg-field text-foreground-faint"
+                : "cursor-pointer bg-[image:var(--grad-brand)] text-primary-foreground",
+            )}
+          >
+            {startMutation.isPending ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                Nova is generating Why 1…
+              </>
+            ) : (
+              <>
+                <Bot size={14} />
+                Start AI-Assisted 5 Whys
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
   }
+
+  // ── Active / complete session ────────────────────────────────────────────
+  const isSubmitting = answerMutation.isPending;
+  const isWaitingForNext = isSubmitting || (
+    // Server is generating the next node (POST returned but next node isn't visible yet)
+    !isDone && !activeNode && completedNodes.length > 0 && completedNodes.length < FIVE_WHYS_DEPTH
+  );
 
   return (
     <div className="flex flex-col gap-1">
-      {/* Locked / confirmed answers */}
-      {fiveWhysPlan.slice(0, lockedCount).map((item, index) => (
-        <div key={item.level} className="flex gap-3">
+      {/* Source badge */}
+      <div className="mb-2 flex items-center gap-1.5">
+        <span className={cn(
+          "inline-flex items-center gap-1 rounded-[var(--r-full)] px-2 py-0.5 font-sans text-[10px] font-semibold",
+          session.source === "openrouter"
+            ? "bg-[var(--accent-soft)] text-primary"
+            : "bg-elevated text-foreground-tertiary",
+        )}>
+          {session.source === "openrouter" ? (
+            <><Sparkles size={9} />Live AI · OpenRouter</>
+          ) : (
+            <><Bot size={9} />Premade script</>
+          )}
+        </span>
+        {isDone && (
+          <span className="inline-flex items-center gap-1 rounded-[var(--r-full)] bg-success/10 px-2 py-0.5 font-sans text-[10px] font-semibold text-success">
+            <CheckCircle2 size={9} />Complete
+          </span>
+        )}
+      </div>
+
+      {/* Completed nodes */}
+      {completedNodes.map((node, index) => (
+        <div key={node.id} className="flex gap-3">
           <div className="flex shrink-0 flex-col items-center">
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success/15 font-sans text-[10px] font-bold text-success">
-              {item.level}
+              {node.level}
             </div>
-            {(index < lockedCount - 1 || !isDone) && (
+            {(index < completedNodes.length - 1 || !isDone || activeNode) && (
               <div className="my-0.5 min-h-[16px] w-px flex-1 bg-border-subtle" />
             )}
           </div>
           <div className="flex-1 pb-3">
             <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-primary">
-              {index === 4 ? "Root Cause · Why 5" : `Why ${item.level}`}
+              {node.level === FIVE_WHYS_DEPTH ? "Root Cause · Why 5" : `Why ${node.level}`}
             </p>
-            <p className="mb-1.5 mt-0 text-[12px] text-foreground-tertiary">{item.question}</p>
-            <div className="group flex items-start gap-2 rounded-[var(--r-sm)] border border-success/20 bg-success/5 px-3 py-2.5">
+            <p className="mb-1.5 mt-0 text-[12px] text-foreground-tertiary">{node.question}</p>
+            <div className="flex items-start gap-2 rounded-[var(--r-sm)] border border-success/20 bg-success/5 px-3 py-2.5">
               <p className="m-0 flex-1 text-[13px] leading-[1.55] text-foreground-secondary">
-                {answers[index]}
+                {node.userAnswer}
               </p>
-              <button
-                type="button"
-                onClick={() => editAt(index)}
-                title={
-                  index < lockedCount - 1
-                    ? `Edit Why ${index + 1} — resets Why ${index + 2}${lockedCount - 1 > index + 1 ? `–${lockedCount}` : ""}`
-                    : `Edit Why ${index + 1}`
-                }
-                className="shrink-0 cursor-pointer rounded border-0 bg-transparent p-0 font-sans text-[10px] text-foreground-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground-secondary"
-              >
-                Edit
-              </button>
+              {node.status === "accepted" && (
+                <span className="shrink-0 font-sans text-[9px] font-semibold uppercase tracking-[0.15em] text-success opacity-60">
+                  Nova
+                </span>
+              )}
             </div>
           </div>
         </div>
       ))}
 
-      {/* Active input */}
-      {!isDone && (
+      {/* Waiting for server to generate next node */}
+      {isWaitingForNext && (
+        <div className="flex gap-3">
+          <div className="shrink-0 pt-0.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary/30 bg-primary/5">
+              <Loader2 size={13} className="animate-spin text-primary" />
+            </div>
+          </div>
+          <div className="flex flex-1 items-center gap-2 py-3">
+            <Sparkles size={12} className="text-primary" />
+            <span className="font-sans text-[12px] text-foreground-tertiary">Nova is generating Why {completedNodes.length + 1}…</span>
+          </div>
+        </div>
+      )}
+
+      {/* Active input node */}
+      {activeNode && !isSubmitting && (
         <div className="flex gap-3">
           <div className="shrink-0 pt-0.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-primary bg-primary/10 font-sans text-[11px] font-bold text-primary shadow-[0_0_0_4px_var(--accent-soft)]">
-              {activeIndex + 1}
+              {activeNode.level}
             </div>
           </div>
           <div className="flex-1 rounded-[var(--r-lg)] border border-primary/20 bg-primary/5 p-4">
             <p className="mb-0.5 mt-0 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-primary">
-              {activeIndex === 4 ? "Root Cause · Why 5" : `Why ${activeIndex + 1}`}
+              {activeNode.level === FIVE_WHYS_DEPTH ? "Root Cause · Why 5" : `Why ${activeNode.level}`}
             </p>
             <p className="mb-3 mt-0 text-[13px] font-medium leading-[1.5] text-foreground">
-              {fiveWhysPlan[activeIndex].question}
+              {activeNode.question}
             </p>
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               rows={3}
               placeholder="Enter your answer…"
-              aria-label={activeIndex === 4 ? "Root cause answer (Why 5)" : `Answer for Why ${activeIndex + 1}`}
+              aria-label={activeNode.level === FIVE_WHYS_DEPTH ? "Root cause answer (Why 5)" : `Answer for Why ${activeNode.level}`}
               className="box-border w-full resize-none rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
             />
-            <div className="mt-2">
-              <NovaSuggestionBlock
-                key={activeIndex}
-                context={`Why ${activeIndex + 1} answer`}
-                suggestion={fiveWhysPlan[activeIndex].suggestion}
-                reasoning={fiveWhysPlan[activeIndex].reasoning}
-                capaId={capaId}
-                suggestionId={`why-${activeIndex + 1}`}
-                onAccept={(content) => setDraft(content)}
-              />
-            </div>
+            {activeNode.novaSuggestion && (
+              <div className="mt-2">
+                <NovaSuggestionBlock
+                  key={activeNode.id}
+                  context={`Why ${activeNode.level} answer`}
+                  suggestion={activeNode.novaSuggestion}
+                  capaId={capaId}
+                  suggestionId={`why-${activeNode.level}`}
+                  onAccept={(content) => setDraft(content)}
+                />
+              </div>
+            )}
             <div className="mt-3 flex justify-end">
               <button
                 type="button"
-                onClick={confirmLevel}
+                onClick={handleConfirm}
                 disabled={!draft.trim()}
                 className={cn(
                   "flex items-center gap-1.5 rounded-[var(--r-sm)] border-0 px-4 py-[9px] font-sans text-[13px] font-semibold",
@@ -418,7 +523,7 @@ function FiveWhysChain({
                     : "cursor-not-allowed border border-[var(--line-2)] bg-field text-foreground-faint",
                 )}
               >
-                {activeIndex === 4 ? "Confirm Root Cause" : `Next: Why ${activeIndex + 2} →`}
+                {activeNode.level === FIVE_WHYS_DEPTH ? "Confirm Root Cause" : `Next: Why ${activeNode.level + 1} →`}
               </button>
             </div>
           </div>
@@ -434,14 +539,11 @@ function FiveWhysChain({
           </p>
           <button
             type="button"
-            onClick={() => {
-              onClearAfter?.(-1);  // clear ALL parent answers (index > -1 = all)
-              setLockedCount(0);
-              setDraft("");
-            }}
-            className="cursor-pointer rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-2.5 py-1 font-sans text-[11px] text-foreground-secondary"
+            disabled={startMutation.isPending}
+            onClick={handleRestart}
+            className="cursor-pointer rounded-[var(--r-sm)] border border-border-subtle bg-elevated px-2.5 py-1 font-sans text-[11px] text-foreground-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Restart
+            {startMutation.isPending ? "Restarting…" : "Restart"}
           </button>
         </div>
       )}
@@ -766,22 +868,12 @@ function DecisionTreeVisual({ nodes }: { nodes: DecisionNode[] }) {
 export function D3RCAPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { embedded, onStepChange } = useEightDEmbed();
-  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
-  const allCAs = useCapaStore((state) => state.correctiveActions);
-  const allPAs = useCapaStore((state) => state.preventiveActions);
-  const capa = useMemo(() => {
-    if (!rawCapa) return undefined;
-    return {
-      ...rawCapa,
-      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
-      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
-    };
-  }, [rawCapa, allCAs, allPAs]);
+  const { embedded, onStepChange, readOnly: isReadOnly } = useEightDEmbed();
+  const { data: capa } = useCapa(id);
 
-  const updateRCA = useCapaStore((state) => state.updateRCA);
-  const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
-  const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
+  const updateRca = useUpdateRca();
+  const updateStep = useUpdateStep();
+  const addAuditEvent = useAddAuditEvent();
   const openCitationPanel = useUIStore((state) => state.openCitationPanel);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
@@ -792,9 +884,11 @@ export function D3RCAPage() {
   }, [capa]);
 
   const [method, setMethod] = useState<RCAMethod>(initialMethod);
-  const [whyAnswers, setWhyAnswers] = useState<string[]>(
-    fiveWhysPlan.map((_, index) => capa?.rca.fiveWhys?.[index]?.userAnswer ?? ""),
-  );
+
+  // 5 Whys: driven by session (FiveWhysChain calls onSessionUpdate whenever it changes)
+  const [fiveWhysSession, setFiveWhysSession] = useState<FiveWhysSession | null>(null);
+  const sessionAnswers = fiveWhysSession?.nodes.map((n) => n.userAnswer ?? "") ?? [];
+
   const [fishboneAnswers, setFishboneAnswers] = useState<Record<FishboneName, string>>(() =>
     fishbonePlan.reduce(
       (current, item) => ({
@@ -819,7 +913,7 @@ export function D3RCAPage() {
 
   const activeAnswers =
     method === "5whys"
-      ? whyAnswers
+      ? sessionAnswers
       : method === "fishbone"
         ? fishbonePlan.map((item) => fishboneAnswers[item.category])
         : decisionNodes.map((node) => `${node.question} ${node.conclusion ?? ""}`);
@@ -833,18 +927,19 @@ export function D3RCAPage() {
   const shouldShowBlocker = hasSubmitted && !validation.isValid;
   const relevantCitations = getRelevantCitations(capa.type);
 
-  function buildRCAData(): RCAData {
+  const buildRCAData = (): RCAData => {
     const confirmedRootCauses = confirmedRootCause.trim() ? [confirmedRootCause.trim()] : [];
 
     if (method === "5whys") {
-      const fiveWhys: FiveWhysNode[] = fiveWhysPlan.map((item, index) => ({
-        id: `5w-${capa.id}-${item.level}`,
-        level: item.level,
-        question: item.question,
-        novaSuggestion: item.suggestion,
-        novaCitations: getCitations(item.citationIds),
-        userAnswer: whyAnswers[index],
-        status: "accepted" as const,
+      // Build from the live session nodes; fall back to empty if no session yet.
+      const fiveWhys: FiveWhysNode[] = (fiveWhysSession?.nodes ?? []).map((node) => ({
+        id: node.id,
+        level: node.level,
+        question: node.question,
+        novaSuggestion: node.novaSuggestion,
+        novaCitations: [],
+        userAnswer: node.userAnswer,
+        status: (node.status as FiveWhysNode["status"]) ?? "accepted",
       }));
       return { method, fiveWhys, confirmedRootCauses };
     }
@@ -869,7 +964,10 @@ export function D3RCAPage() {
     };
   }
 
-  function saveRCA(advance: boolean) {
+  // The server does not log an audit event for updateRca, so the client routes
+  // the root_cause_confirmed event through the audit POST (fire-and-forget —
+  // the awaited updateRca already marks audit-events stale via invalidateWorld).
+  const saveRCA = async (advance: boolean) => {
     setHasSubmitted(true);
 
     if (!validation.isValid && !advance) {
@@ -887,31 +985,37 @@ export function D3RCAPage() {
       });
     }
 
-    updateRCA(capa.id, buildRCAData(), previewScore);
-    addAuditEvent({
-      actorName: "Nova Demo User",
-      actorRole: "Initiator",
-      domain: "system",
-      eventType: "root_cause_confirmed",
-      action: `Root cause confirmed for ${capa.id} using ${methodLabel[method]}.`,
-      capaId: capa.id,
-      findingId: capa.findingId,
-      after: confirmedRootCause,
-    });
+    try {
+      await updateRca.mutateAsync({ capaId: capa.id, rca: buildRCAData(), score: previewScore });
+      void addAuditEvent.mutateAsync({
+        actorName: "Nova Demo User",
+        actorRole: "Initiator",
+        domain: "system",
+        eventType: "root_cause_confirmed",
+        action: `Root cause confirmed for ${capa.id} using ${methodLabel[method]}.`,
+        capaId: capa.id,
+        findingId: capa.findingId,
+        after: confirmedRootCause,
+      });
 
-    if (advance) {
-      updateCurrentStep(capa.id, "ca");
-      if (embedded && onStepChange) {
-        onStepChange("ca");
-      } else {
-        navigate(`/capa/${capa.id}/8d/ca`);
+      if (advance) {
+        await updateStep.mutateAsync({ capaId: capa.id, step: "ca" });
+        if (embedded && onStepChange) {
+          onStepChange("ca");
+        } else {
+          navigate(`/capa/${capa.id}/8d/ca`);
+        }
+        return;
       }
-      return;
-    }
 
-    toast.success("RCA saved", {
-      description: `${capa.id} root cause score is now ${rootCauseDepth}/25.`,
-    });
+      toast.success("RCA saved", {
+        description: `${capa.id} root cause score is now ${rootCauseDepth}/25.`,
+      });
+    } catch (error) {
+      toast.error("Could not save RCA", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   }
 
   return (
@@ -979,17 +1083,13 @@ export function D3RCAPage() {
             </p>
             <FiveWhysChain
               capaId={capa.id}
-              answers={whyAnswers}
-              onAnswerChange={(index, content) =>
-                setWhyAnswers((current) =>
-                  current.map((a, i) => (i === index ? content : a)),
-                )
-              }
-              onClearAfter={(fromIndex) =>
-                setWhyAnswers((prev) =>
-                  prev.map((a, i) => (i > fromIndex ? "" : a)),
-                )
-              }
+              onSessionUpdate={(session) => {
+                setFiveWhysSession(session);
+                // Auto-populate the confirmed root cause when the session completes
+                if (session.status === "complete" && session.confirmedRootCauses[0] && !confirmedRootCause.trim()) {
+                  setConfirmedRootCause(session.confirmedRootCauses[0]);
+                }
+              }}
             />
           </div>
         )}
@@ -1057,8 +1157,9 @@ export function D3RCAPage() {
             id="confirmed-root-cause"
             value={confirmedRootCause}
             onChange={(e) => setConfirmedRootCause(e.target.value)}
+            disabled={isReadOnly}
             rows={4}
-            className="box-border w-full resize-y rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]"
+            className="box-border w-full resize-y rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)] disabled:cursor-not-allowed disabled:resize-none disabled:opacity-50"
           />
         </div>
 
@@ -1110,21 +1211,23 @@ export function D3RCAPage() {
         </div>
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
-          <button
-            onClick={() => saveRCA(false)}
-            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
-          >
-            <Save size={14} />
-            Save Draft
-          </button>
-          <button
-            onClick={() => saveRCA(true)}
-            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
-          >
-            Continue to D4 Corrective Action →
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
+            <button
+              onClick={() => saveRCA(false)}
+              className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
+            >
+              <Save size={14} />
+              Save Draft
+            </button>
+            <button
+              onClick={() => saveRCA(true)}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
+            >
+              Continue to D4 Corrective Action →
+            </button>
+          </div>
+        )}
 
       </div>
     </EightDShell>

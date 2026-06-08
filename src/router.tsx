@@ -23,7 +23,8 @@ import { TopicsGroupingPage } from "@/pages/nova/TopicsGroupingPage";
 import { NotificationCenterPage } from "@/pages/nova/NotificationCenterPage";
 import NotFound from "@/pages/NotFound";
 import { eightDSteps } from "@/routes";
-import { useCapaStore, usePersonaStore } from "@/store";
+import { usePersonaStore } from "@/store";
+import { useCapa } from "@/hooks/api";
 import { canEditCAPA, canFillCAPA, isMyWorkOnlyPersona } from "@/utils/personaAccess";
 
 function CreateGuard({ children }: { children: React.ReactNode }) {
@@ -41,7 +42,7 @@ function CreateGuard({ children }: { children: React.ReactNode }) {
 function FillGuard({ children }: { children: React.ReactNode }) {
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
   const { id } = useParams();
-  const capa = useCapaStore((state) => (id ? state.capas.find((c) => c.id === id) : undefined));
+  const { data: capa } = useCapa(id);
 
   // Role gate: only the Initiator can reach the 8D fill workspace.
   if (!canFillCAPA(activePersonaId)) {

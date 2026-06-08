@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Loader2, Pencil, RotateCcw, Sparkles, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { classifyImpact, draftGateAnswers, importSourceData, type GateDraftSet } from "@/services/novaService";
-import { useCapaStore } from "@/store";
+import { useAiSuggestion, useCapas, useFindings, useSubmitIntake } from "@/hooks/api";
 import type { CAPAType, GateQuestionID, ImpactClassification, PreFillContext, Severity } from "@/types";
 import { buildPreFillFromFinding, computeIntakeScore, getPrefillSummary, getSuggestedTitle } from "@/utils/intakeHelpers";
 import { formatDateTime } from "@/utils/formatters";
@@ -440,15 +440,24 @@ export function CapaIntakePage() {
   // Step 4 — submit
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  const submitIntake = useCapaStore((state) => state.submitIntake);
-  const existingFinding = useCapaStore((state) =>
-    state.findings.find((f) => f.id === sourceId),
+  const submitIntake = useSubmitIntake();
+  const findings = useFindings().data ?? [];
+  const capas = useCapas().data ?? [];
+
+  // Type-level impact classification from the DB — shown when no source data
+  // was imported. Source-imported classification takes priority.
+  const impactSuggestion = useAiSuggestion<ImpactClassification>(
+    "impact_classification",
+    { capaType: selectedType },
   );
+  const displayedImpact: ImpactClassification | undefined =
+    impactClassification ?? impactSuggestion.data?.data;
+  // True only when the displayed classification was derived from live source import.
+  const impactIsSourceDerived = Boolean(impactClassification);
+  const existingFinding = findings.find((f) => f.id === sourceId);
   // Used to block Andi from resubmitting while reviewers are deliberating,
   // or from starting a fresh proposal after a rejection.
-  const existingCapa = useCapaStore((state) =>
-    state.capas.find((c) => c.findingId === sourceId),
-  );
+  const existingCapa = capas.find((c) => c.findingId === sourceId);
 
   // When the wizard is opened from a real pending finding (not one of the three
   // pre-seeded golden cases), the single source card represents that finding and
@@ -489,12 +498,16 @@ export function CapaIntakePage() {
     ? Object.values(novaDraft).filter((value) => value.trim().length > 0).length
     : 0;
 
-  // Sync Nova severity to selector default
+  // Sync Nova severity to selector default (source-import takes priority;
+  // DB type-level suggestion fills in when user hasn't imported).
   useEffect(() => {
     if (impactClassification?.severity) {
       setSelectedSeverity(impactClassification.severity);
+    } else if (!selectedSeverity && impactSuggestion.data?.data?.severity) {
+      setSelectedSeverity(impactSuggestion.data.data.severity);
     }
-  }, [impactClassification]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [impactClassification, impactSuggestion.data]);
 
   const score = useMemo(() => computeIntakeScore(title, gateAnswers), [title, gateAnswers]);
 
@@ -534,7 +547,7 @@ export function CapaIntakePage() {
       // observation it can actually read; Andi classifies the severity and writes
       // the remaining gate answers, which keeps the intake score honestly tied to
       // real input rather than an unrelated golden sample.
-      const finding = useCapaStore.getState().findings.find((record) => record.id === id);
+      const finding = findings.find((record) => record.id === id);
       if (!finding) {
         throw new Error(`Finding ${id} is not available in the demo dataset.`);
       }
@@ -583,7 +596,7 @@ export function CapaIntakePage() {
     setStep(2);
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setSubmitAttempted(true);
 
     const gateAnswerList = GATE_QUESTIONS.filter((q) => gateAnswers[q.id].trim()).map((q) => ({
@@ -594,32 +607,31 @@ export function CapaIntakePage() {
       needsImprovement: false,
     }));
 
-    const capa = submitIntake({
-      findingId: sourceId,
-      type: selectedType,
-      title,
-      severity: selectedSeverity ?? "Major",
-      gateAnswers: gateAnswerList,
-      impact: impactClassification,
-    });
+    try {
+      const capa = await submitIntake.mutateAsync({
+        findingId: sourceId,
+        type: selectedType,
+        title,
+        severity: selectedSeverity ?? "Major",
+        gateAnswers: gateAnswerList,
+        impact: displayedImpact,
+      });
 
-    if (!capa) {
+      if (capa.status === "pending_review") {
+        toast.success("Submitted for intake review", {
+          description: `${capa.id} now awaits approval from Siti Rahmawati (QA) and Bambang Saputra (Department Head).`,
+        });
+      } else {
+        toast.info("CAPA already in progress", {
+          description: `${capa.id} has already cleared intake review.`,
+        });
+      }
+      navigate(`/capa/${capa.id}`);
+    } catch (error) {
       toast.error("CAPA could not be submitted", {
-        description: "The selected source finding is not available in the demo dataset.",
-      });
-      return;
-    }
-
-    if (capa.status === "pending_review") {
-      toast.success("Submitted for intake review", {
-        description: `${capa.id} now awaits approval from Siti Rahmawati (QA) and Bambang Saputra (Department Head).`,
-      });
-    } else {
-      toast.info("CAPA already in progress", {
-        description: `${capa.id} has already cleared intake review.`,
+        description: error instanceof Error ? error.message : "Please try again.",
       });
     }
-    navigate(`/capa/${capa.id}`);
   }
 
   // ── Step validation ─────────────────────────────────────────────────────────
@@ -983,11 +995,11 @@ export function CapaIntakePage() {
             Impact assessment
           </h2>
           <p className={cn(STEP_COPY_CLASS, "mb-6 mt-0")}>
-            Select a severity level. Nova's recommendation is pre-filled if you imported source data.
+            Review Nova's severity recommendation and confirm or override it.
           </p>
 
           {/* Nova AI assessment */}
-          {impactClassification ? (
+          {displayedImpact ? (
             <div
               className="mb-6 rounded-[var(--r-md)] border-l-[3px] border-l-primary bg-elevated px-4 py-3.5"
             >
@@ -999,22 +1011,24 @@ export function CapaIntakePage() {
                 <span
                   className={cn(
                     "ml-1 rounded-[var(--r-full)] px-2 py-px font-sans text-[11px] font-bold",
-                    impactClassification.severity === "Minor"
+                    displayedImpact.severity === "Minor"
                       ? "bg-[var(--warning-soft)] text-warning"
                       : "bg-[var(--danger-soft)] text-destructive",
                   )}
                 >
-                  {impactClassification.severity}
+                  {displayedImpact.severity}
                 </span>
                 <span className="ml-auto font-sans text-[11px] text-foreground-tertiary">
-                  {Math.round(impactClassification.totalWeight)}% confidence
+                  {impactIsSourceDerived
+                    ? `${Math.round(displayedImpact.totalWeight)}% confidence · case-specific`
+                    : `${Math.round(displayedImpact.totalWeight)}% confidence · type-level`}
                 </span>
               </div>
               <p className="mb-2.5 mt-0 font-sans text-xs leading-[1.55] text-foreground-secondary">
-                {impactClassification.rationale}
+                {displayedImpact.rationale}
               </p>
               <div className="grid grid-cols-3 gap-2">
-                {impactClassification.factors.map((factor) => (
+                {displayedImpact.factors.map((factor) => (
                   <div
                     key={factor.factor}
                     className="rounded-[var(--r-sm)] border border-border-subtle bg-[var(--field-bg)] px-2.5 py-2"
@@ -1036,9 +1050,9 @@ export function CapaIntakePage() {
             <div
               className="mb-6 flex gap-2.5 rounded-[var(--r-md)] border border-border-subtle bg-elevated px-4 py-3"
             >
-              <Sparkles size={13} className="mt-px shrink-0 text-foreground-faint" />
+              <Sparkles size={13} className="mt-px shrink-0 text-foreground-faint animate-pulse" />
               <p className="m-0 font-sans text-xs text-foreground-tertiary">
-                No source data was imported. Select a severity level manually based on your assessment.
+                Nova is assessing severity…
               </p>
             </div>
           )}
@@ -1052,7 +1066,7 @@ export function CapaIntakePage() {
           <div className="mb-6 grid grid-cols-3 gap-2.5">
             {SEVERITY_OPTIONS.map((opt) => {
               const isSelected = selectedSeverity === opt.value;
-              const isNova = impactClassification?.severity === opt.value;
+              const isNova = displayedImpact?.severity === opt.value;
               return (
                 <button
                   key={opt.value}
@@ -1202,7 +1216,7 @@ export function CapaIntakePage() {
                   { label: "Gate questions answered", passed: gateAnswers.observation.trim().length >= 20 },
                   { label: "Severity level selected", passed: Boolean(selectedSeverity) },
                   { label: "CAPA title provided", passed: title.trim().length >= 10 },
-                  { label: "Nova impact classification", passed: Boolean(impactClassification) },
+                  { label: "Nova impact classification", passed: Boolean(displayedImpact) },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center gap-2">
                     <CheckCircle2
@@ -1230,10 +1244,23 @@ export function CapaIntakePage() {
 
             <button
               onClick={handleSubmit}
-              className="flex cursor-pointer items-center gap-2 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-7 py-2.5 font-sans text-sm font-bold tracking-[0.01em] text-primary-foreground"
+              disabled={submitIntake.isPending}
+              className={cn(
+                "flex items-center gap-2 rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-7 py-2.5 font-sans text-sm font-bold tracking-[0.01em] text-primary-foreground transition-opacity [transition-duration:var(--dur-fast)]",
+                submitIntake.isPending ? "cursor-not-allowed opacity-70" : "cursor-pointer",
+              )}
             >
-              Submit for review
-              <ArrowRight size={15} />
+              {submitIntake.isPending ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Submitting…
+                </>
+              ) : (
+                <>
+                  Submit for review
+                  <ArrowRight size={15} />
+                </>
+              )}
             </button>
           </div>
         </WizardCard>

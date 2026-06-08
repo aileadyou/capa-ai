@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import type { KGCitation, NovaSuggestionStatus } from "@/types";
-import { useAuditTrailStore, useUIStore } from "@/store";
+import { useUIStore } from "@/store";
+import { useAddAuditEvent } from "@/hooks/api";
 
 interface NovaSuggestionCardProps {
   id: string;
@@ -36,7 +37,7 @@ export function NovaSuggestionCard({
 }: NovaSuggestionCardProps) {
   const [currentStatus, setCurrentStatus] = useState<NovaSuggestionStatus>(status);
   const [draftContent, setDraftContent] = useState(content);
-  const addEvent = useAuditTrailStore((state) => state.addEvent);
+  const addEvent = useAddAuditEvent();
   const openCitationPanel = useUIStore((state) => state.openCitationPanel);
 
   const applyStatus = (nextStatus: NovaSuggestionStatus, nextContent: string) => {
@@ -44,7 +45,7 @@ export function NovaSuggestionCard({
     setDraftContent(nextContent);
     onStatusChange?.(nextStatus, nextContent);
 
-    addEvent({
+    void addEvent.mutateAsync({
       actorName: "Nova Demo User",
       actorRole: "CAPA User",
       domain: "ai_decision",

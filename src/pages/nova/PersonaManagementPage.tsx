@@ -39,12 +39,19 @@ export function PersonaManagementPage() {
   const openModal = useUIStore((state) => state.openModal);
   const closeModal = useUIStore((state) => state.closeModal);
 
-  function handleReset() {
-    resetDemoData();
-    closeModal("resetDemoData");
-    toast("Reset Demo Data complete", {
-      description: "All CAPA and workflow state has been restored to mock defaults.",
-    });
+  async function handleReset() {
+    try {
+      await resetDemoData();
+      toast("Reset Demo Data complete", {
+        description: "All CAPA and workflow state has been restored to mock defaults.",
+      });
+    } catch (error) {
+      toast.error("Could not reset demo data", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      closeModal("resetDemoData");
+    }
   }
 
   return (
@@ -155,7 +162,9 @@ export function PersonaManagementPage() {
         description="This will clear all CAPA workflow progress and restore the original mock data. Your current step, suggestions, and approvals will be lost."
         confirmLabel="Reset Demo Data"
         onConfirm={handleReset}
-        onCancel={() => closeModal("resetDemoData")}
+        onOpenChange={(open) => {
+          if (!open) closeModal("resetDemoData");
+        }}
       />
     </div>
   );

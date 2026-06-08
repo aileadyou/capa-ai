@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FilterCard, FilterSearchInput, FilterSelect } from "@/components/shared/FilterControls";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { useCapaStore } from "@/store";
+import { useCapas, usePreventiveActions, useUpdatePreventiveAction } from "@/hooks/api";
 import type { ActionStatus, CAPACase, PreventiveAction } from "@/types";
 import { formatDate, formatRelativeTime } from "@/utils/formatters";
 
@@ -58,9 +58,9 @@ function getRecurrenceIndicator(action: PreventiveAction, capa?: CAPACase) {
 }
 
 export function PreventiveActionsPage() {
-  const preventiveActions = useCapaStore((state) => state.preventiveActions);
-  const capas = useCapaStore((state) => state.capas);
-  const updatePAStatus = useCapaStore((state) => state.updatePAStatus);
+  const preventiveActions = usePreventiveActions().data ?? [];
+  const capas = useCapas().data ?? [];
+  const updatePA = useUpdatePreventiveAction();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ActionStatus | typeof allValue>(allValue);
   const [picFilter, setPicFilter] = useState(allValue);
@@ -109,11 +109,17 @@ export function PreventiveActionsPage() {
     });
   }, [departmentFilter, picFilter, query, rows, statusFilter, targetDateFilter]);
 
-  function markCompleted(action: PreventiveAction) {
-    updatePAStatus(action.id, "completed");
-    toast.success("Preventive action completed", {
-      description: `${action.id} was marked completed.`,
-    });
+  async function markCompleted(action: PreventiveAction) {
+    try {
+      await updatePA.mutateAsync({ actionId: action.id, status: "completed" });
+      toast.success("Preventive action completed", {
+        description: `${action.id} was marked completed.`,
+      });
+    } catch (error) {
+      toast.error("Could not complete preventive action", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
   }
 
   return (

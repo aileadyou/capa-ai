@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { AILoadingSpinner } from "@/components/shared/AILoadingSpinner";
 import { SeverityBadge } from "@/components/shared/SeverityBadge";
 import { topicClusters } from "@/mock-data";
-import { useCapaStore } from "@/store";
+import { useCapas, useFindings } from "@/hooks/api";
 import type { Finding, TopicCluster } from "@/types/finding";
 import { formatCAPAType } from "@/utils/formatters";
 
@@ -46,8 +46,8 @@ function getSeverityTotal(cluster: TopicCluster) {
 }
 
 export function TopicsGroupingPage() {
-  const findings = useCapaStore((state) => state.findings);
-  const capas = useCapaStore((state) => state.capas);
+  const findings = useFindings().data ?? [];
+  const capas = useCapas().data ?? [];
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
 

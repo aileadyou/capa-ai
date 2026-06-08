@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Circle, FileCheck, Save, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -7,43 +7,72 @@ import { ApprovalChainPanel } from "@/components/capa/ApprovalChainPanel";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import NotFound from "@/pages/NotFound";
-import { useAuditTrailStore, useCapaStore } from "@/store";
+import {
+  useAiSuggestion,
+  useCapa,
+  useCompleteVerification,
+  useUpdateScore,
+  useUpdateStep,
+} from "@/hooks/api";
 import type { VerificationData } from "@/types";
-import { getCycleAtSeam } from "@/config/workflows";
+import { getCycleAtSeam, isCycleComplete } from "@/config/workflows";
 import { cn } from "@/lib/utils";
 import { computeTotalQualityScore } from "@/utils/scoring";
-import { getVerificationCoaching } from "@/services/novaService";
 
 type VerificationMethod = NonNullable<VerificationData["method"]>;
 
-// ── Mock defaults ────────────────────────────────────────────────────────────
+// ── Per-type verification config ─────────────────────────────────────────────
 
-const verificationDefaults: Record<string, { method: VerificationMethod; result: string; evidence: string }> = {
-  "CAPA-2026-0341": {
-    method: "em_re_test",
+const defaultMethodByType: Record<string, VerificationMethod> = {
+  deviation: "em_re_test",
+  audit: "process_review",
+  complaint: "batch_trend",
+};
+
+const methodsByType: Record<string, VerificationMethod[]> = {
+  deviation: ["em_re_test", "re_sampling", "process_requalification"],
+  audit: ["process_review", "compliance_reaudit", "effectiveness_check"],
+  complaint: ["batch_trend", "recurrence_trend", "customer_verification"],
+};
+
+const methodLabels: Record<VerificationMethod, string> = {
+  // deviation
+  em_re_test: "Environmental monitoring re-test & airflow requalification",
+  re_sampling: "Re-sampling / re-testing of material or batch",
+  process_requalification: "Process re-qualification / re-validation review",
+  // audit
+  process_review: "Process review & QA documentation spot-check",
+  compliance_reaudit: "Follow-up audit / compliance re-inspection",
+  effectiveness_check: "CAPA effectiveness check via direct observation",
+  // complaint
+  batch_trend: "Batch trend monitoring & release review",
+  recurrence_trend: "Complaint recurrence trend review",
+  customer_verification: "Customer response & feedback verification",
+};
+
+// ── Nova fallback text (seed CAPAs only) ─────────────────────────────────────
+
+const novaFallbackByCapaId: Record<string, { result: string; evidence: string }> = {
+  "CAPA-2026-0150": {
     result:
       "Post-replacement monitoring showed particle counts within alert and action limits for three consecutive checks. Airflow requalification passed acceptance criteria.",
     evidence: "HEPA-FILL-02-Requalification.pdf",
   },
-  "CAPA-2026-0089": {
-    method: "process_review",
+  "CAPA-2026-0162": {
     result:
       "QA spot checks over four consecutive weeks found no late material transfer records and all sampled records contained completed second-person verification.",
     evidence: "WH-02-Documentation-Spot-Check-Summary.pdf",
   },
-  "CAPA-2026-0112": {
-    method: "batch_trend",
+  "CAPA-2026-0127": {
+    result:
+      "QA spot checks over four consecutive weeks found no late material transfer records and all sampled records contained completed second-person verification.",
+    evidence: "WH-03-Documentation-Spot-Check-Summary.pdf",
+  },
+  "CAPA-2026-0106": {
     result:
       "Three subsequent batch release reviews showed completed visual inspection reconciliation checklist, no unexplained reject variance, and no repeated particulate complaint trend.",
     evidence: "Visual-Inspection-Reconciliation-Verification.pdf",
   },
-};
-
-const methodLabels: Record<VerificationMethod, string> = {
-  re_sampling: "Re-sampling",
-  process_review: "Process review and QA spot check trend",
-  batch_trend: "Process review and batch trend monitoring",
-  em_re_test: "Environmental monitoring re-test and airflow requalification review",
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -75,56 +104,44 @@ function evaluateVerification(method: string, result: string, evidenceFileName: 
 export function D6VerificationPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { embedded, onStepChange } = useEightDEmbed();
-  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
-  const allCAs = useCapaStore((state) => state.correctiveActions);
-  const allPAs = useCapaStore((state) => state.preventiveActions);
-  const capa = useMemo(() => {
-    if (!rawCapa) return undefined;
-    return {
-      ...rawCapa,
-      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
-      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
-    };
-  }, [rawCapa, allCAs, allPAs]);
+  const { embedded, onStepChange, readOnly: isReadOnly } = useEightDEmbed();
+  const { data: capa } = useCapa(id);
 
-  const completeVerification = useCapaStore((state) => state.completeVerification);
-  const updateCurrentStep = useCapaStore((state) => state.updateCurrentStep);
-  const updateScore = useCapaStore((state) => state.updateScore);
-  const addAuditEvent = useAuditTrailStore((state) => state.addEvent);
+  const completeVerification = useCompleteVerification();
+  const updateStep = useUpdateStep();
+  const updateScore = useUpdateScore();
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [novaVerificationSuggestion, setNovaVerificationSuggestion] = useState("");
   const [novaVerificationReasoning, setNovaVerificationReasoning] = useState("");
 
-  const defaults = capa
-    ? verificationDefaults[capa.id] ?? { method: "process_review" as VerificationMethod, result: "", evidence: "" }
-    : { method: "process_review" as VerificationMethod, result: "", evidence: "" };
+  const { data: verificationAiResult } = useAiSuggestion<{
+    Observation: string;
+    Recommendation: string;
+    "Audit Rationale": string;
+  }>("verification", { capaId: capa?.id, capaType: capa?.type, enabled: Boolean(capa?.id) });
+
+  const defaultMethod = capa
+    ? (defaultMethodByType[capa.type] ?? "process_review") as VerificationMethod
+    : ("process_review" as VerificationMethod);
+  const novaFallback = capa ? (novaFallbackByCapaId[capa.id] ?? { result: "", evidence: "" }) : { result: "", evidence: "" };
 
   // Method keeps a sensible default selection, but the result narrative and
   // evidence start blank so QA documents the outcome themselves. Nova's draft
   // outcome is opt-in via the assist panel below the quality signals.
-  const [method, setMethod] = useState<VerificationMethod | "">(capa?.verification.method ?? defaults.method);
+  const [method, setMethod] = useState<VerificationMethod | "">(capa?.verification.method ?? defaultMethod);
   const [result, setResult] = useState(capa?.verification.result ?? "");
   const [evidenceFileName, setEvidenceFileName] = useState(
     capa?.verification.evidenceFileNames[0] ?? "",
   );
 
   useEffect(() => {
-    if (!capa) return;
-    let cancelled = false;
-
-    void getVerificationCoaching(capa.id).then((coaching) => {
-      if (cancelled) return;
-      setNovaVerificationSuggestion(coaching.Recommendation || defaults.result);
-      setNovaVerificationReasoning(
-        `${coaching.Observation}\n\nAudit rationale: ${coaching["Audit Rationale"]}`,
-      );
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [capa, defaults.result]);
+    if (!capa || !verificationAiResult) return;
+    const coaching = verificationAiResult.data;
+    setNovaVerificationSuggestion(coaching.Recommendation || novaFallback.result);
+    setNovaVerificationReasoning(
+      `${coaching.Observation}\n\nAudit rationale: ${coaching["Audit Rationale"]}`,
+    );
+  }, [verificationAiResult, capa?.id]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -148,38 +165,46 @@ export function D6VerificationPage() {
     toast.success("File uploaded", { description: evidenceFileName.trim() });
   }
 
-  function continueToSignOff() {
+  // The server logs the `verification_completed` audit event inside
+  // completeVerification, so the client only persists the data + score here.
+  const continueToSignOff = async () => {
     setHasSubmitted(true);
 
-    if (!validation.isValid || !method) {
-      toast.warning("Continuing with incomplete verification", {
-        description: "Nova will let you continue, but D6 still needs method, result, and evidence filename before final sign-off.",
+    if (verificationCycle && !isCycleComplete(capa, verificationCycle.stage)) {
+      toast.error(`${verificationCycle.title} required`, {
+        description: "All approvers must sign off before proceeding to sign-off.",
       });
-    } else {
-      completeVerification(capa.id, {
-        method,
-        result: result.trim(),
-        evidenceFileNames: [evidenceFileName.trim()],
-        verifiedBy: "qa_deviation",
-      });
-      updateScore(capa.id, previewScore);
-      addAuditEvent({
-        actorName: "Nova Demo User",
-        actorRole: "Initiator",
-        domain: "system",
-        eventType: "verification_completed",
-        action: `Verification completed for ${capa.id}.`,
-        capaId: capa.id,
-        findingId: capa.findingId,
-        after: `${methodLabels[method]} · ${evidenceFileName.trim()}`,
-      });
+      return;
     }
 
-    updateCurrentStep(capa.id, "signoff");
-    if (embedded && onStepChange) {
-      onStepChange("signoff");
-    } else {
-      navigate(`/capa/${capa.id}/8d/signoff`);
+    try {
+      if (!validation.isValid || !method) {
+        toast.warning("Continuing with incomplete verification", {
+          description: "Nova will let you continue, but D6 still needs method, result, and evidence filename before final sign-off.",
+        });
+      } else {
+        await completeVerification.mutateAsync({
+          capaId: capa.id,
+          verification: {
+            method,
+            result: result.trim(),
+            evidenceFileNames: [evidenceFileName.trim()],
+            verifiedBy: "qa_deviation",
+          },
+        });
+        await updateScore.mutateAsync({ capaId: capa.id, score: previewScore });
+      }
+
+      await updateStep.mutateAsync({ capaId: capa.id, step: "signoff" });
+      if (embedded && onStepChange) {
+        onStepChange("signoff");
+      } else {
+        navigate(`/capa/${capa.id}/8d/signoff`);
+      }
+    } catch (error) {
+      toast.error("Could not continue to sign-off", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
     }
   }
 
@@ -226,10 +251,9 @@ export function D6VerificationPage() {
                 )}
               >
                 <option value="" disabled>Select verification method</option>
-                <option value="em_re_test">{methodLabels.em_re_test}</option>
-                <option value="process_review">{methodLabels.process_review}</option>
-                <option value="batch_trend">{methodLabels.batch_trend}</option>
-                <option value="re_sampling">{methodLabels.re_sampling}</option>
+                {(methodsByType[capa.type] ?? []).map((m) => (
+                  <option key={m} value={m}>{methodLabels[m]}</option>
+                ))}
               </select>
               <svg width="12" height="12" viewBox="0 0 12 12" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-foreground-tertiary" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 4l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
@@ -244,11 +268,12 @@ export function D6VerificationPage() {
               id="verification-result"
               value={result}
               onChange={(e) => setResult(e.target.value)}
+              disabled={isReadOnly}
               rows={6}
               aria-invalid={shouldShowBlocker && result.trim().length < 30}
               placeholder="Describe the outcome of the verification — what was checked, what was found, and whether it confirms the corrective actions are effective."
               className={cn(
-                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)]",
+                "box-border w-full resize-y rounded-[var(--r-sm)] border bg-[var(--field-bg)] px-3.5 py-3 font-sans text-[13px] leading-[1.65] text-foreground outline-none transition-[border-color,box-shadow] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] focus:border-primary focus:shadow-[0_0_0_3px_var(--accent-soft)] disabled:cursor-not-allowed disabled:resize-none disabled:opacity-50",
                 shouldShowBlocker && result.trim().length < 30 ? "border-destructive" : "border-[var(--line-2)]",
               )}
             />
@@ -333,17 +358,17 @@ export function D6VerificationPage() {
         </div>
 
         {/* ── Nova assist (opt-in, below the user's own work) ──────────── */}
-        {(novaVerificationSuggestion || defaults.result) && (
+        {(novaVerificationSuggestion || novaFallback.result) && (
           <NovaAssistPanel
             title="Stuck? Let Nova draft the verification result"
             description="Document what QA actually checked in your own words. Nova's draft outcome is here if you'd like a reference."
           >
             <NovaSuggestionBlock
               context="verification result"
-              suggestion={novaVerificationSuggestion || defaults.result}
+              suggestion={novaVerificationSuggestion || novaFallback.result}
               reasoning={
                 novaVerificationReasoning ||
-                `Based on the ${methodLabels[defaults.method]} approach for ${capa.id}. Edit to match the evidence you actually reviewed.`
+                `Based on the ${methodLabels[defaultMethod]} approach for ${capa.id}. Edit to match the evidence you actually reviewed.`
               }
               capaId={capa.id}
               suggestionId="d6-verification"
@@ -353,27 +378,29 @@ export function D6VerificationPage() {
         )}
 
         {/* ── Footer actions ───────────────────────────────────────────── */}
-        <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
-          <button
-            onClick={() => {
-              if (!method || !result.trim()) {
-                toast.info("Fill in the form to save verification");
-                return;
-              }
-              toast.success("Verification saved as draft");
-            }}
-            className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
-          >
-            <Save size={14} />
-            Save Draft
-          </button>
-          <button
-            onClick={continueToSignOff}
-            className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
-          >
-            Continue to D7 Sign-Off →
-          </button>
-        </div>
+        {!isReadOnly && (
+          <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
+            <button
+              onClick={() => {
+                if (!method || !result.trim()) {
+                  toast.info("Fill in the form to save verification");
+                  return;
+                }
+                toast.success("Verification saved as draft");
+              }}
+              className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
+            >
+              <Save size={14} />
+              Save Draft
+            </button>
+            <button
+              onClick={continueToSignOff}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
+            >
+              Continue to D7 Sign-Off →
+            </button>
+          </div>
+        )}
 
         {/* ── Workflow approval cycle attached at this seam (audit Actual) ─ */}
         {verificationCycle && <ApprovalChainPanel capa={capa} stage={verificationCycle.stage} />}

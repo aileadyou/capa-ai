@@ -3,7 +3,8 @@ import { Bell, RotateCcw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { resetDemoData, useNotificationStore, usePersonaStore, useUIStore } from "@/store";
+import { resetDemoData, usePersonaStore, useUIStore } from "@/store";
+import { useNotifications } from "@/hooks/api";
 import { getNovaRouteContext } from "@/utils/novaRouteContext";
 
 const routeTitles: Record<string, string> = {
@@ -43,11 +44,10 @@ export function TopBar() {
   const navigate = useNavigate();
   const persona = usePersonaStore((state) => state.activePersona());
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
-  const unreadCount = useNotificationStore((state) =>
-    state.notifications.filter(
-      (n) => n.recipientPersonaId === activePersonaId && !n.read,
-    ).length,
-  );
+  const { data: notifications } = useNotifications(activePersonaId);
+  const unreadCount = (notifications ?? []).filter(
+    (n) => n.recipientPersonaId === activePersonaId && !n.read,
+  ).length;
   const openNovaChat = useUIStore((state) => state.openNovaChat);
   const resetOpen = useUIStore((state) => state.modals.resetDemoData ?? false);
   const openModal = useUIStore((state) => state.openModal);
@@ -55,12 +55,19 @@ export function TopBar() {
 
   const pageTitle = getPageTitle(location.pathname);
 
-  const handleReset = () => {
-    resetDemoData();
-    closeModal("resetDemoData");
-    toast("Demo data reset", {
-      description: "All progress restored to the initial mock dataset.",
-    });
+  const handleReset = async () => {
+    try {
+      await resetDemoData();
+      toast("Demo data reset", {
+        description: "All progress restored to the initial mock dataset.",
+      });
+    } catch (error) {
+      toast.error("Could not reset demo data", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      closeModal("resetDemoData");
+    }
   };
 
   return (

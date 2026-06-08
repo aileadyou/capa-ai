@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 import { EightDShell } from "@/components/layout/EightDShell";
@@ -7,7 +6,8 @@ import { NovaAssistPanel } from "@/components/nova/NovaAssistPanel";
 import { NovaSuggestionBlock } from "@/components/nova/NovaSuggestionBlock";
 import { ScorePill } from "@/components/shared/ScorePill";
 import NotFound from "@/pages/NotFound";
-import { useCapaStore, usePersonaStore } from "@/store";
+import { usePersonaStore } from "@/store";
+import { useCapa } from "@/hooks/api";
 import type { CAPACase, CorrectiveAction, PreventiveAction } from "@/types";
 import {
   approverRoleLabel,
@@ -330,18 +330,8 @@ function buildSignOffReadinessSuggestion(
 
 export function D7SignOffPage() {
   const { id } = useParams();
-  const rawCapa = useCapaStore((state) => state.capas.find((c) => c.id === id));
-  const allCAs = useCapaStore((state) => state.correctiveActions);
-  const allPAs = useCapaStore((state) => state.preventiveActions);
+  const { data: capa } = useCapa(id);
   const personas = usePersonaStore((state) => state.personas);
-  const capa = useMemo(() => {
-    if (!rawCapa) return undefined;
-    return {
-      ...rawCapa,
-      correctiveActions: allCAs.filter((a) => a.capaId === rawCapa.id),
-      preventiveActions: allPAs.filter((a) => a.capaId === rawCapa.id),
-    };
-  }, [rawCapa, allCAs, allPAs]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;

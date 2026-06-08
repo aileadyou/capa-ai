@@ -10,7 +10,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronUp, MessageSquareText, Sparkles } from "lucide-react";
-import { useAuditTrailStore, useUIStore } from "@/store";
+import { useUIStore } from "@/store";
+import { useAddAuditEvent } from "@/hooks/api";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,7 +103,7 @@ export function NovaBlock({
   const [showReasoning, setShowReasoning] = useState(false);
   const [isFlashing, setIsFlashing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const addEvent = useAuditTrailStore((s) => s.addEvent);
+  const addEvent = useAddAuditEvent();
   const openNovaChat = useUIStore((s) => s.openNovaChat);
 
   // Keep draft in sync if suggestion prop changes (e.g. Nova re-generates)
@@ -113,7 +114,7 @@ export function NovaBlock({
   // ── Audit helper ───────────────────────────────────────────────────────
   function logAudit(eventType: "nova_suggestion_accepted" | "nova_suggestion_replaced", action: string) {
     if (!capaId) return;
-    addEvent({
+    void addEvent.mutateAsync({
       actorName: "Nova Demo User",
       actorRole: "CAPA User",
       domain: "ai_decision",
