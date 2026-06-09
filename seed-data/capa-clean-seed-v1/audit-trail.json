@@ -89,6 +89,66 @@
     }
   },
   {
+    "id": "AE-SEED-0015",
+    "timestamp": "2026-06-01T11:32:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Compliance",
+    "domain": "system",
+    "eventType": "intake_decision",
+    "action": "Accepted CAPA-2026-0127 intake for full 8D investigation of the CS-01 cleaning verification evidence gap.",
+    "capaId": "CAPA-2026-0127",
+    "findingId": "AUD-2026-0127"
+  },
+  {
+    "id": "AE-SEED-0016",
+    "timestamp": "2026-06-01T11:48:00+07:00",
+    "actorPersonaId": "head_of_dept",
+    "actorName": "Bambang Saputra",
+    "actorRole": "Department Head",
+    "domain": "system",
+    "eventType": "intake_decision",
+    "action": "Accepted Production ownership for CAPA-2026-0127 and confirmed D1-D5 investigation accountability.",
+    "capaId": "CAPA-2026-0127",
+    "findingId": "AUD-2026-0127"
+  },
+  {
+    "id": "AE-SEED-0017",
+    "timestamp": "2026-06-05T09:20:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Compliance",
+    "domain": "system",
+    "eventType": "root_cause_confirmed",
+    "action": "Confirmed the Q100+ cleaning verification routing gap as the systemic root cause for CAPA-2026-0127.",
+    "capaId": "CAPA-2026-0127",
+    "findingId": "AUD-2026-0127"
+  },
+  {
+    "id": "AE-SEED-0018",
+    "timestamp": "2026-06-06T15:10:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Compliance",
+    "domain": "system",
+    "eventType": "corrective_action_added",
+    "action": "Added corrective actions to reconcile the missing CS-01 swab map attachment and reviewer sign-off evidence.",
+    "capaId": "CAPA-2026-0127",
+    "findingId": "AUD-2026-0127"
+  },
+  {
+    "id": "AE-SEED-0019",
+    "timestamp": "2026-06-08T09:35:00+07:00",
+    "actorPersonaId": "qa_deviation",
+    "actorName": "Siti Rahmawati",
+    "actorRole": "QA Compliance",
+    "domain": "system",
+    "eventType": "preventive_action_added",
+    "action": "Added preventive actions and submitted CAPA-2026-0127 for CAPA Plan approval at D5.",
+    "capaId": "CAPA-2026-0127",
+    "findingId": "AUD-2026-0127"
+  },
+  {
     "id": "AE-SEED-0008",
     "timestamp": "2026-06-02T13:15:00+07:00",
     "actorPersonaId": "qa_deviation",
@@ -176,4 +236,3 @@
     "findingId": "CMP-2026-0106"
   }
 ]
-

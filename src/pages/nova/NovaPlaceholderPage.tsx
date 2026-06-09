@@ -215,7 +215,7 @@ export function NovaPlaceholderPage({
       </div>
 
       {eightDStep && (
-        <SectionCard title="8D Workflow Position">
+        <SectionCard title="7D Workflow Position">
           <div className="grid gap-2 md:grid-cols-7">
             {eightDSteps.map((step, index) => (
               <Link

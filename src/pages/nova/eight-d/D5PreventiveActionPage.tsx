@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, Circle, ListPlus, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, Download, ListPlus, Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { EightDShell, useEightDEmbed } from "@/components/layout/EightDShell";
 import { ApprovalChainPanel } from "@/components/capa/ApprovalChainPanel";
@@ -179,6 +179,7 @@ export function D5PreventiveActionPage() {
   const updateScore = useUpdateScore();
   const updateStep = useUpdateStep();
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [exportingPlanPdf, setExportingPlanPdf] = useState(false);
   const [novaSuggestion, setNovaSuggestion] = useState("");
   const [novaReasoning, setNovaReasoning] = useState<string | undefined>();
 
@@ -202,7 +203,7 @@ export function D5PreventiveActionPage() {
         ? "Generated from the enriched finding packet as a forward-looking recurrence-control action."
         : paReasoning[capa.id],
     );
-  }, [paAiResult, capa?.id]);
+  }, [paAiResult, capa]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -226,6 +227,8 @@ export function D5PreventiveActionPage() {
   );
   const shouldShowBlocker = hasSubmitted && !validation.isValid;
   const passedCount = validation.checks.filter((c) => c.passed).length;
+  const isApprovalPending = Boolean(paCycle && !isCycleComplete(capa, paCycle.stage));
+  const showPlanPdfExport = capa.type === "audit" || capa.type === "complaint";
 
   const handleRemovePA = async (actionId: string) => {
     const remaining = currentActions.filter((a) => a.id !== actionId);
@@ -285,6 +288,34 @@ export function D5PreventiveActionPage() {
         description: error instanceof Error ? error.message : "Please try again.",
       });
       return undefined;
+    }
+  }
+
+  const exportPlanPdf = async () => {
+    if (exportingPlanPdf) return;
+    setExportingPlanPdf(true);
+    const toastId = toast.loading("Generating CAPA plan PDF...", {
+      description: "Compiling D1-D5 without D6 verification and D7 sign-off.",
+    });
+
+    try {
+      const { downloadCapaPdf } = await import("@/utils/capaReport");
+      await downloadCapaPdf(capa, {
+        includeD6D7: false,
+        filename: `${capa.id}-CAPA-Plan-Report.pdf`,
+      });
+      toast.success("PDF downloaded", {
+        id: toastId,
+        description: `${capa.id}-CAPA-Plan-Report.pdf`,
+      });
+    } catch (error) {
+      console.error("CAPA plan PDF export failed", error);
+      toast.error("PDF export failed", {
+        id: toastId,
+        description: "Something went wrong while rendering the CAPA plan.",
+      });
+    } finally {
+      setExportingPlanPdf(false);
     }
   }
 
@@ -466,9 +497,12 @@ export function D5PreventiveActionPage() {
           />
         </NovaAssistPanel>
 
+        {/* ── Workflow approval cycle attached at this seam ─────────────── */}
+        {paCycle && <ApprovalChainPanel capa={capa} stage={paCycle.stage} />}
+
         {/* ── Footer actions ───────────────────────────────────────────── */}
         {!isReadOnly && (
-          <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
+          <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
             <button
               onClick={addPreventiveAction}
               className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
@@ -476,17 +510,30 @@ export function D5PreventiveActionPage() {
               <Save size={14} />
               Add PA
             </button>
+            {showPlanPdfExport && (
+              <button
+                onClick={exportPlanPdf}
+                disabled={exportingPlanPdf}
+                aria-busy={exportingPlanPdf}
+                className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {exportingPlanPdf ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Download size={14} />
+                )}
+                Export PDF
+              </button>
+            )}
             <button
               onClick={continueToVerification}
-              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground"
+              disabled={isApprovalPending}
+              className="cursor-pointer rounded-[var(--r-sm)] border-0 bg-[image:var(--grad-brand)] px-5 py-2 font-sans text-[13px] font-semibold tracking-[0.01em] text-primary-foreground disabled:cursor-not-allowed disabled:bg-field disabled:bg-none disabled:text-foreground-faint"
             >
-              Continue to D6 Verification →
+              {isApprovalPending ? "Approval Needed" : "Continue to D6 Verification"}
             </button>
           </div>
         )}
-
-        {/* ── Workflow approval cycle attached at this seam ─────────────── */}
-        {paCycle && <ApprovalChainPanel capa={capa} stage={paCycle.stage} />}
 
       </div>
     </EightDShell>

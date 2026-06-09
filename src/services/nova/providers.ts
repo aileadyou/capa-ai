@@ -249,6 +249,9 @@ function describeChatStep(step: string) {
 export function getNovaProvider(): NovaProvider {
   if (!shouldUseOpenRouter()) return mockNovaProvider;
 
+  const hasSourceSpecificGateDraft = (sourceId?: string) =>
+    Boolean(sourceId && (novaScripts.gateDrafts as Record<string, GateDraftSet | undefined>)[sourceId]);
+
   async function withFallback<T>(live: () => Promise<T>, mock: () => Promise<T>) {
     try {
       return await live();
@@ -271,10 +274,12 @@ export function getNovaProvider(): NovaProvider {
         () => mockNovaProvider.classifyImpact(prefill),
       ),
     draftGateAnswers: (type, sourceId) =>
-      withFallback(
-        () => openRouterNovaProvider.draftGateAnswers(type, sourceId),
-        () => mockNovaProvider.draftGateAnswers(type, sourceId),
-      ),
+      hasSourceSpecificGateDraft(sourceId)
+        ? mockNovaProvider.draftGateAnswers(type, sourceId)
+        : withFallback(
+            () => openRouterNovaProvider.draftGateAnswers(type, sourceId),
+            () => mockNovaProvider.draftGateAnswers(type, sourceId),
+          ),
     getContainmentSuggestion: (capaId) =>
       withFallback(
         () => openRouterNovaProvider.getContainmentSuggestion(capaId),

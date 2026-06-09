@@ -138,12 +138,39 @@ function seedAiSuggestions(insertAi: import("better-sqlite3").Statement): void {
   put("rca_fishbone", "audit", null, "rca", fishbone);
   put("rca_decision_tree", "complaint", null, "rca", decisionTree);
 
+  // Case-specific audit-plan suggestions for the active D5 demo case. These
+  // intentionally override the legacy type-level audit scripts above.
+  put("containment", "audit", "CAPA-2026-0127", "containment", [
+    {
+      id: "containment-cs01-record-hold",
+      content:
+        "Place the affected CS-01 cleaning verification package under QA document hold, block release checklist closure for the sampled record set, and retrieve the controlled swab map plus QA reviewer sign-off before plan approval.",
+    },
+  ]);
+  put("corrective_actions", "audit", "CAPA-2026-0127", "ca", [
+    "Retrieve and reconcile the missing CS-01 swab map attachment and QA reviewer sign-off against the batch release checklist, then document a QA-approved record correction package.",
+    "Review the last 20 Compression Suite CS-01 cleaning verification packages for repeated missing attachments or reviewer sign-off gaps before release.",
+  ]);
+  put("preventive_actions", "audit", "CAPA-2026-0127", "pa", [
+    "Revise SOP-CLN-011 and the Q100+ cleaning record routing template to require attachment completeness verification for swab maps and QA reviewer sign-off before release checklist closure.",
+    "Add a weekly QA spot-check for five consecutive CS-01 cleaning verification packages and trend attachment completeness until two clean cycles are achieved.",
+  ]);
+  put("verification", "audit", "CAPA-2026-0127", "verification", {
+    Observation:
+      "The CAPA plan addresses a cleaning verification evidence-control gap, so effectiveness must prove attachment completeness before checklist closure.",
+    Recommendation:
+      "Verify 20 consecutive CS-01 cleaning verification packages for 100% swab map attachment presence, QA reviewer sign-off, and release checklist reconciliation before closure.",
+    "Audit Rationale":
+      "A trended record-completeness check demonstrates that the revised SOP gate and Q100+ routing template prevent recurrence, not only that the sampled record was corrected.",
+  });
+
   // Gate drafts: type-level + per-finding (keyed by the deterministic CAPA id).
   for (const [key, value] of Object.entries(gateDrafts)) {
     if (key === "deviation" || key === "audit" || key === "complaint") {
       put("gate_drafts", key, null, "intake", value);
     } else if (/^(DEV|AUD|CMP)-/.test(key)) {
       const type = key.startsWith("DEV") ? "deviation" : key.startsWith("AUD") ? "audit" : "complaint";
+      put("gate_drafts", type, key, "intake", value);
       put("gate_drafts", type, expectedCapaId(key), "intake", value);
     }
   }

@@ -1,25 +1,36 @@
 [
   {
     "id": "NTF-SEED-0001",
-    "recipientPersonaId": "qa_deviation",
-    "type": "capa_update",
-    "title": "Intake review needed",
-    "description": "CAPA-2026-0127 was submitted from AUD-2026-0127 and needs QA intake decision.",
-    "createdAt": "2026-06-01T11:08:00+07:00",
+    "recipientPersonaId": "head_of_dept",
+    "type": "approval",
+    "title": "CAPA Plan approval needed",
+    "description": "CAPA-2026-0127 has D1-D5 completed for the CS-01 cleaning verification audit finding and is waiting for CAPA Plan approval.",
+    "createdAt": "2026-06-08T09:36:00+07:00",
     "read": false,
     "capaId": "CAPA-2026-0127",
-    "actionUrl": "/capa/CAPA-2026-0127"
+    "actionUrl": "/capa/CAPA-2026-0127/8d/pa"
   },
   {
     "id": "NTF-SEED-0002",
-    "recipientPersonaId": "head_of_dept",
-    "type": "capa_update",
-    "title": "Intake review needed",
-    "description": "CAPA-2026-0127 needs department review before the cleaning verification CAPA can proceed.",
-    "createdAt": "2026-06-01T11:09:00+07:00",
+    "recipientPersonaId": "qa_deviation",
+    "type": "approval",
+    "title": "CAPA Plan approval needed",
+    "description": "CAPA-2026-0127 is ready for QA GMP & DIRA Compliance plan sign-off after D5 preventive actions were recorded.",
+    "createdAt": "2026-06-08T09:37:00+07:00",
     "read": false,
     "capaId": "CAPA-2026-0127",
-    "actionUrl": "/capa/CAPA-2026-0127"
+    "actionUrl": "/capa/CAPA-2026-0127/8d/pa"
+  },
+  {
+    "id": "NTF-SEED-0006",
+    "recipientPersonaId": "head_of_qa",
+    "type": "approval",
+    "title": "CAPA Plan approval needed",
+    "description": "CAPA-2026-0127 is waiting for QA Division Head approval before the audit workflow can proceed to D6 verification.",
+    "createdAt": "2026-06-08T09:38:00+07:00",
+    "read": false,
+    "capaId": "CAPA-2026-0127",
+    "actionUrl": "/capa/CAPA-2026-0127/8d/pa"
   },
   {
     "id": "NTF-SEED-0003",
@@ -55,4 +66,3 @@
     "actionUrl": "/capa/CAPA-2026-0106"
   }
 ]
-

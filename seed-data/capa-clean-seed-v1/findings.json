@@ -28,7 +28,7 @@
     "severity": "Major",
     "department": "Production",
     "reportedAt": "2026-06-01T10:40:00+07:00",
-    "status": "pending_review",
+    "status": "capa_in_progress",
     "linkedCapaId": "CAPA-2026-0127"
   },
   {
@@ -64,4 +64,3 @@
     "linkedCapaId": "CAPA-2026-0106"
   }
 ]
-

@@ -1,5 +1,29 @@
 [
   {
+    "id": "CA-2026-0127-01",
+    "capaId": "CAPA-2026-0127",
+    "description": "Retrieve the missing CS-01 swab map attachment and QA reviewer sign-off, reconcile both against the release checklist reference, and document a QA-approved record correction package.",
+    "pic": "Siti Rahmawati",
+    "dueDate": "2026-06-12T17:00:00+07:00",
+    "linkedRootCause": "The cleaning verification record routing process allowed release checklist closure before controlled swab map attachments and QA reviewer sign-off were reconciled, because SOP-CLN-011 did not define a mandatory attachment completeness gate with accountable ownership.",
+    "verificationMethod": "QA review of corrected CS-01 cleaning verification package and release checklist reconciliation evidence",
+    "status": "in_progress",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "CA-2026-0127-02",
+    "capaId": "CAPA-2026-0127",
+    "description": "Review the last 20 Compression Suite CS-01 cleaning verification packages to identify any repeated missing swab map or reviewer sign-off attachments before product release.",
+    "pic": "Bambang Saputra",
+    "dueDate": "2026-06-13T17:00:00+07:00",
+    "linkedRootCause": "The cleaning verification record routing process allowed release checklist closure before controlled swab map attachments and QA reviewer sign-off were reconciled, because SOP-CLN-011 did not define a mandatory attachment completeness gate with accountable ownership.",
+    "verificationMethod": "Documented retrospective record review summary with QA disposition for any repeated gap",
+    "status": "open",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "edited"
+  },
+  {
     "id": "CA-2026-0150-01",
     "capaId": "CAPA-2026-0150",
     "description": "Hold and reconcile the dispensed lactose monohydrate for AZC-26-0603-A against the pressure excursion window, then document QA material disposition.",
@@ -76,4 +100,3 @@
     "novaSuggestionStatus": "edited"
   }
 ]
-

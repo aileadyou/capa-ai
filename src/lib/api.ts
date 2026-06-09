@@ -219,6 +219,8 @@ export const api = {
     del<{ ok: boolean }>(`/preventive-actions/${actionId}`),
 
   // Verification / approvals / close
+  saveVerificationDraft: (capaId: string, verification: VerificationData) =>
+    post<CAPACase>(`/capas/${capaId}/verification`, { verification, complete: false }),
   completeVerification: (capaId: string, verification: VerificationData) =>
     post<CAPACase>(`/capas/${capaId}/verification`, { verification }),
   recordApproval: (capaId: string, stage: ApprovalStage, approval: ApprovalEvent, actor: PersonaID) =>

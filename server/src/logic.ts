@@ -471,14 +471,27 @@ export function removePA(actionId: string): void {
   repo.deletePreventiveAction(actionId);
 }
 
-export function completeVerification(capaId: string, verification: any): any {
+export function saveVerificationDraft(capaId: string, verification: any): any {
   const capa = repo.getCapa(capaId);
   if (!capa) return undefined;
-  const updated = repo.upsertCapa({
+  const updatedVerification = {
+    ...capa.verification,
+    ...verification,
+    evidenceFileNames: verification.evidenceFileNames ?? capa.verification?.evidenceFileNames ?? [],
+  };
+  return repo.upsertCapa({
     ...capa,
-    verification: { ...verification, verifiedAt: verification.verifiedAt ?? now() },
+    verification: updatedVerification,
     updatedAt: now(),
   });
+}
+
+export function completeVerification(capaId: string, verification: any): any {
+  const updated = saveVerificationDraft(capaId, {
+    ...verification,
+    verifiedAt: verification.verifiedAt ?? now(),
+  });
+  if (!updated) return undefined;
   repo.addAuditEvent({
     actorName: "Nova Demo User",
     actorRole: "CAPA User",

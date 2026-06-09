@@ -1,5 +1,25 @@
 [
   {
+    "id": "PA-2026-0127-01",
+    "capaId": "CAPA-2026-0127",
+    "description": "Revise SOP-CLN-011 and the Q100+ cleaning record routing template to require attachment completeness verification for swab maps and QA reviewer sign-off before release checklist closure.",
+    "targetDate": "2026-06-19T17:00:00+07:00",
+    "pic": "Siti Rahmawati",
+    "status": "open",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "accepted"
+  },
+  {
+    "id": "PA-2026-0127-02",
+    "capaId": "CAPA-2026-0127",
+    "description": "Add a weekly QA spot-check for five consecutive CS-01 cleaning verification packages and trend attachment completeness until two clean cycles are achieved.",
+    "targetDate": "2026-06-26T17:00:00+07:00",
+    "pic": "Bambang Saputra",
+    "status": "open",
+    "novaGenerated": true,
+    "novaSuggestionStatus": "edited"
+  },
+  {
     "id": "PA-2026-0150-01",
     "capaId": "CAPA-2026-0150",
     "description": "Revise SOP-HVAC-009 to add a pressure recovery challenge after damper actuator PM for GMP weighing rooms, including acceptance criteria and QA review.",
@@ -31,4 +51,3 @@
     "novaSuggestionStatus": "accepted"
   }
 ]
-

@@ -11,6 +11,7 @@ import {
   useAiSuggestion,
   useCapa,
   useCompleteVerification,
+  useSaveVerificationDraft,
   useUpdateScore,
   useUpdateStep,
 } from "@/hooks/api";
@@ -65,8 +66,13 @@ const novaFallbackByCapaId: Record<string, { result: string; evidence: string }>
   },
   "CAPA-2026-0127": {
     result:
-      "QA spot checks over four consecutive weeks found no late material transfer records and all sampled records contained completed second-person verification.",
-    evidence: "WH-03-Documentation-Spot-Check-Summary.pdf",
+      "QA review of 20 consecutive CS-01 cleaning verification packages found 100% swab map attachment presence, completed QA reviewer sign-off, and release checklist reconciliation before closure.",
+    evidence: "CS-01-Cleaning-Verification-Spot-Check-Summary.pdf",
+  },
+  "CAPA-2026-0144": {
+    result:
+      "QA verified the revised Cartoner Line C2 line-clearance checklist includes leaflet-code verification, observed three consecutive domestic-carton changeovers with 100% material-code checklist completion, reconciled leaflet issuance and return quantities for batch HBV-26-0602-D, and found no repeated checklist omissions or leaflet reconciliation discrepancies across the 90-day follow-up window.",
+    evidence: "C2-Line-Clearance-Verification-Summary.pdf",
   },
   "CAPA-2026-0106": {
     result:
@@ -108,6 +114,7 @@ export function D6VerificationPage() {
   const { data: capa } = useCapa(id);
 
   const completeVerification = useCompleteVerification();
+  const saveVerificationDraft = useSaveVerificationDraft();
   const updateStep = useUpdateStep();
   const updateScore = useUpdateScore();
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -133,6 +140,21 @@ export function D6VerificationPage() {
   const [evidenceFileName, setEvidenceFileName] = useState(
     capa?.verification.evidenceFileNames[0] ?? "",
   );
+  const [loadedVerificationKey, setLoadedVerificationKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!capa) return;
+    const existingMethod = capa.verification.method ?? defaultMethod;
+    const existingResult = capa.verification.result ?? "";
+    const existingEvidence = capa.verification.evidenceFileNames?.[0] ?? "";
+    const nextKey = `${capa.id}|${existingMethod}|${existingResult}|${existingEvidence}`;
+    if (loadedVerificationKey === nextKey) return;
+
+    setMethod(existingMethod);
+    setResult(existingResult);
+    setEvidenceFileName(existingEvidence);
+    setLoadedVerificationKey(nextKey);
+  }, [capa, defaultMethod, loadedVerificationKey]);
 
   useEffect(() => {
     if (!capa || !verificationAiResult) return;
@@ -141,7 +163,7 @@ export function D6VerificationPage() {
     setNovaVerificationReasoning(
       `${coaching.Observation}\n\nAudit rationale: ${coaching["Audit Rationale"]}`,
     );
-  }, [verificationAiResult, capa?.id]);
+  }, [verificationAiResult, capa, novaFallback.result]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -165,34 +187,57 @@ export function D6VerificationPage() {
     toast.success("File uploaded", { description: evidenceFileName.trim() });
   }
 
-  // The server logs the `verification_completed` audit event inside
-  // completeVerification, so the client only persists the data + score here.
+  const buildVerificationPayload = (includeVerifier: boolean): VerificationData => ({
+    method: method || undefined,
+    result: result.trim(),
+    evidenceFileNames: evidenceFileName.trim() ? [evidenceFileName.trim()] : [],
+    ...(includeVerifier ? { verifiedBy: "qa_deviation" } : {}),
+  });
+
+  const saveDraft = async () => {
+    try {
+      await saveVerificationDraft.mutateAsync({
+        capaId: capa.id,
+        verification: buildVerificationPayload(false),
+      });
+      toast.success("Verification draft saved", {
+        description: `${capa.id} D6 data is now stored.`,
+      });
+    } catch (error) {
+      toast.error("Could not save verification draft", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
+  };
+
+  // Complete verification only when all D6 checks pass. Otherwise persist the
+  // draft so the user does not lose typed evidence while approval gates are open.
   const continueToSignOff = async () => {
     setHasSubmitted(true);
-
-    if (verificationCycle && !isCycleComplete(capa, verificationCycle.stage)) {
-      toast.error(`${verificationCycle.title} required`, {
-        description: "All approvers must sign off before proceeding to sign-off.",
-      });
-      return;
-    }
+    const isComplete = validation.isValid && Boolean(method);
 
     try {
-      if (!validation.isValid || !method) {
+      if (!isComplete) {
         toast.warning("Continuing with incomplete verification", {
           description: "Nova will let you continue, but D6 still needs method, result, and evidence filename before final sign-off.",
+        });
+        await saveVerificationDraft.mutateAsync({
+          capaId: capa.id,
+          verification: buildVerificationPayload(false),
         });
       } else {
         await completeVerification.mutateAsync({
           capaId: capa.id,
-          verification: {
-            method,
-            result: result.trim(),
-            evidenceFileNames: [evidenceFileName.trim()],
-            verifiedBy: "qa_deviation",
-          },
+          verification: buildVerificationPayload(true),
         });
         await updateScore.mutateAsync({ capaId: capa.id, score: previewScore });
+      }
+
+      if (verificationCycle && !isCycleComplete(capa, verificationCycle.stage)) {
+        toast.error(`${verificationCycle.title} required`, {
+          description: "D6 has been saved. All approvers must sign off before proceeding to sign-off.",
+        });
+        return;
       }
 
       await updateStep.mutateAsync({ capaId: capa.id, step: "signoff" });
@@ -381,17 +426,12 @@ export function D6VerificationPage() {
         {!isReadOnly && (
           <div className="flex items-center justify-end gap-2.5 border-t border-border-subtle pt-2">
             <button
-              onClick={() => {
-                if (!method || !result.trim()) {
-                  toast.info("Fill in the form to save verification");
-                  return;
-                }
-                toast.success("Verification saved as draft");
-              }}
+              onClick={saveDraft}
+              disabled={saveVerificationDraft.isPending}
               className="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-[var(--field-bg)] px-4 py-2 font-sans text-[13px] font-medium text-foreground-secondary"
             >
               <Save size={14} />
-              Save Draft
+              {saveVerificationDraft.isPending ? "Saving..." : "Save Draft"}
             </button>
             <button
               onClick={continueToSignOff}

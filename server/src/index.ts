@@ -222,7 +222,11 @@ app.delete("/api/preventive-actions/:actionId", (req, res) => {
 app.post(
   "/api/capas/:id/verification",
   h((req, res) => {
-    const c = logic.completeVerification(req.params.id, req.body?.verification ?? req.body ?? {});
+    const verification = req.body?.verification ?? req.body ?? {};
+    const c =
+      req.body?.complete === false
+        ? logic.saveVerificationDraft(req.params.id, verification)
+        : logic.completeVerification(req.params.id, verification);
     return c ? res.json(c) : notFound(res, "CAPA not found.");
   }),
 );

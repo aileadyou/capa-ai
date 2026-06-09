@@ -238,7 +238,7 @@ function LeftColumn({
 
       {/* 8D Progress */}
       <div>
-        <EyebrowLeft>8D Progress</EyebrowLeft>
+        <EyebrowLeft>7D Progress</EyebrowLeft>
         <div className="flex flex-col gap-1">
           {eightDSteps.map((step) => (
             <StepItem

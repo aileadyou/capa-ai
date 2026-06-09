@@ -222,7 +222,7 @@
       {
         "questionId": "observation",
         "question": "What happened and when was it observed?",
-        "answer": "During internal audit IA-2026-PRD-031 on 31 May 2026, QA found the CS-01 cleaning verification package referenced a swab map attachment and reviewer sign-off that were not present in the controlled record package.",
+        "answer": "During internal audit IA-2026-PRD-031 on 31 May 2026 in Production Compression Suite CS-01, QA found 1 of 20 sampled cleaning verification record packages referenced a swab map attachment and reviewer sign-off that were not present in the controlled record package before batch release checklist closure.",
         "novaScoreContribution": 6,
         "needsImprovement": false
       },
@@ -236,7 +236,7 @@
       {
         "questionId": "containment",
         "question": "What immediate containment is already in place?",
-        "answer": "QA placed the affected cleaning package under document hold, blocked further use of the referenced record as release evidence, and requested Production to retrieve the original swab map and reviewer sign-off.",
+        "answer": "QA placed the affected CS-01 cleaning record package under document hold, blocked further use of the package as release-supporting evidence, restricted release checklist closure for the sampled record set, and assigned Production plus QA to retrieve the original swab map and reviewer sign-off before plan approval.\nPIC: Siti Rahmawati\nDue date: 2026-06-10",
         "novaScoreContribution": 5,
         "needsImprovement": false
       },
@@ -263,11 +263,11 @@
       }
     ],
     "score": {
-      "problemSpecificity": 22,
-      "rootCauseDepth": 14,
-      "effectiveness": 18,
-      "containment": 19,
-      "total": 73,
+      "problemSpecificity": 24,
+      "rootCauseDepth": 22,
+      "effectiveness": 20,
+      "containment": 22,
+      "total": 88,
       "isAuditReady": false
     },
     "impact": {
@@ -298,8 +298,47 @@
     },
     "rca": {
       "method": "fishbone",
-      "fishbone": [],
-      "confirmedRootCauses": []
+      "fishbone": [
+        {
+          "category": "Man",
+          "novaEntries": ["Operators and QA reviewers did not have consistent ownership of cleaning package attachment checks."],
+          "userEntries": ["Production document owner and QA reviewer assumed the batch release checklist reference was sufficient once the cleaning package was routed."],
+          "status": "edited"
+        },
+        {
+          "category": "Method",
+          "novaEntries": ["The SOP did not clearly define an attachment reconciliation stop point before release checklist closure."],
+          "userEntries": ["SOP-CLN-011 and SOP-DOC-004 did not require the swab map attachment and reviewer sign-off to be reconciled before the release checklist could be closed."],
+          "status": "accepted"
+        },
+        {
+          "category": "Measurement",
+          "novaEntries": ["No routine KPI monitored cleaning record attachment completeness before QA release review."],
+          "userEntries": ["QA trended checklist closure timeliness but did not trend missing attachment reconciliation for cleaning verification packages."],
+          "status": "accepted"
+        },
+        {
+          "category": "Environment",
+          "novaEntries": ["Batch release preparation compressed document review timing at the end of the production campaign."],
+          "userEntries": ["Release checklist closure occurred near campaign closeout, increasing reliance on cross-references instead of direct attachment verification."],
+          "status": "edited"
+        },
+        {
+          "category": "Material",
+          "novaEntries": ["The sampled record package included separate swab map and reviewer sign-off attachments."],
+          "userEntries": ["The controlled cleaning package split the swab map, reviewer sign-off, and release checklist into separate attachments without a forced completeness link."],
+          "status": "accepted"
+        },
+        {
+          "category": "Machine",
+          "novaEntries": ["The record routing template did not prevent closure when attachment fields were incomplete."],
+          "userEntries": ["Q100+ record routing allowed checklist closure while the referenced swab map attachment and reviewer sign-off remained absent from the controlled package."],
+          "status": "accepted"
+        }
+      ],
+      "confirmedRootCauses": [
+        "The cleaning verification record routing process allowed release checklist closure before controlled swab map attachments and QA reviewer sign-off were reconciled, because SOP-CLN-011 did not define a mandatory attachment completeness gate with accountable ownership."
+      ]
     },
     "correctiveActions": [],
     "preventiveActions": [],
@@ -310,23 +349,29 @@
       {
         "reviewerPersonaId": "qa_deviation",
         "reviewerName": "Siti Rahmawati",
-        "role": "QA Compliance"
+        "role": "QA Compliance",
+        "decision": "accepted",
+        "notes": "Major audit finding accepted for full 8D. Cleaning verification evidence must be reconciled before the plan is approved.",
+        "reviewedAt": "2026-06-01T11:32:00+07:00"
       },
       {
         "reviewerPersonaId": "head_of_dept",
         "reviewerName": "Bambang Saputra",
-        "role": "Department Head"
+        "role": "Department Head",
+        "decision": "accepted",
+        "notes": "Production accepts ownership for record reconciliation and SOP control updates.",
+        "reviewedAt": "2026-06-01T11:48:00+07:00"
       }
     ],
     "approvals": [],
     "auditEvents": [],
     "suggestions": [],
-    "status": "pending_review",
-    "currentStep": "problem",
+    "status": "approval",
+    "currentStep": "pa",
     "createdAt": "2026-06-01T11:07:00+07:00",
-    "updatedAt": "2026-06-01T11:07:00+07:00",
+    "updatedAt": "2026-06-08T09:35:00+07:00",
     "createdBy": "qa_deviation",
-    "assignedTo": "qa_deviation",
+    "assignedTo": "head_of_dept",
     "department": "Production",
     "auditPhase": "plan",
     "auditContext": {
@@ -842,4 +887,3 @@
     }
   }
 ]
-

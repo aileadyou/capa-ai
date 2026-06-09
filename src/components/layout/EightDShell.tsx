@@ -237,7 +237,7 @@ export function EightDShell({ capaId, activeStep, children, sidebar }: EightDShe
         <p
           className="mb-2 ml-2.5 font-sans text-[10px] font-medium uppercase tracking-[0.18em] text-primary"
         >
-          8D Workflow
+          7D Workflow
         </p>
 
         {/* Step list */}

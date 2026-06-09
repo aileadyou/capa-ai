@@ -39,13 +39,13 @@
       "findingId": "AUD-2026-0127",
       "source": "Q100+",
       "type": "audit",
-      "findingStatus": "pending_review",
+      "findingStatus": "capa_in_progress",
       "expectedCapaId": "CAPA-2026-0127",
       "currentCapaId": "CAPA-2026-0127",
-      "correctiveActionIds": [],
-      "preventiveActionIds": [],
-      "auditEventIds": ["AE-SEED-0006", "AE-SEED-0007"],
-      "notes": "Submitted CAPA waiting for two intake reviewers."
+      "correctiveActionIds": ["CA-2026-0127-01", "CA-2026-0127-02"],
+      "preventiveActionIds": ["PA-2026-0127-01", "PA-2026-0127-02"],
+      "auditEventIds": ["AE-SEED-0006", "AE-SEED-0007", "AE-SEED-0015", "AE-SEED-0016", "AE-SEED-0017", "AE-SEED-0018", "AE-SEED-0019"],
+      "notes": "Seeded audit workflow has D1-D5 completed and is waiting for CAPA Plan approval."
     },
     {
       "sourceRecordId": "SRC-Q100-AUD-2026-0162",
@@ -86,4 +86,3 @@
     }
   ]
 }
-

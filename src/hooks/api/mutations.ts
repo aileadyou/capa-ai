@@ -225,6 +225,18 @@ export function useRemovePreventiveAction() {
 
 // ── Verification / approvals / close ─────────────────────────────────────────
 
+export function useSaveVerificationDraft() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { capaId: string; verification: VerificationData }) =>
+      api.saveVerificationDraft(vars.capaId, vars.verification),
+    onSuccess: (capa) => {
+      primeCapa(qc, capa);
+      void invalidateWorld(qc);
+    },
+  });
+}
+
 export function useCompleteVerification() {
   const qc = useQueryClient();
   return useMutation({

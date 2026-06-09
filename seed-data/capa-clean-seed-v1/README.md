@@ -23,7 +23,7 @@ Exactly six source findings:
 | --- | --- | --- | --- | --- |
 | Deviation | `DEV-2026-0144` | Bizzmine | `pending_capa` | Expected on-demand: `CAPA-2026-0144` |
 | Deviation | `DEV-2026-0150` | Bizzmine | `capa_in_progress` | `CAPA-2026-0150` |
-| Audit | `AUD-2026-0127` | Q100+ | `pending_review` | `CAPA-2026-0127` |
+| Audit | `AUD-2026-0127` | Q100+ | `capa_in_progress` / D5 plan approval pending | `CAPA-2026-0127` |
 | Audit | `AUD-2026-0162` | Q100+ | `capa_closed` | `CAPA-2026-0162` |
 | Complaint | `CMP-2026-0098` | Bizzmine-Complaint | `pending_capa` | Expected on-demand: `CAPA-2026-0098` |
 | Complaint | `CMP-2026-0106` | Bizzmine-Complaint | `capa_in_progress` | `CAPA-2026-0106` |
@@ -49,4 +49,3 @@ Exactly six source findings:
 4. Keep `finding.linkedCapaId` and `capa.findingId` as a strict one-to-one relationship.
 5. Join actions by `capaId`; do not duplicate action state inside CAPA cases unless the store needs a denormalized view.
 6. For pending findings, create a CAPA shell from the matching source record, not from a global template.
-

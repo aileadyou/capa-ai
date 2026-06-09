@@ -46,6 +46,20 @@ const defaultMethodByType = {
   complaint: "decision_tree",
 } as const;
 
+const rootCauseSuggestionByCapaId: Record<string, string> = {
+  "CAPA-2026-0127":
+    "The cleaning verification record routing process allowed release checklist closure before controlled swab map attachments and QA reviewer sign-off were reconciled, because SOP-CLN-011 did not define a mandatory attachment completeness gate with accountable ownership.",
+};
+
+const rootCauseSuggestionByType: Record<string, string> = {
+  deviation:
+    "The process-control failure was not detected by routine checks because the preventive control did not challenge the operating condition that triggered the deviation.",
+  audit:
+    "The GMP record control process allowed required evidence to be referenced before completeness was verified, because the SOP lacked a mandatory reconciliation gate and accountable owner.",
+  complaint:
+    "The complaint defect was not prevented by routine release controls because the challenged process condition was not included in the documented verification step.",
+};
+
 // fiveWhysPlan is now driven by the server session (useStartFiveWhys / useAnswerFiveWhys).
 // The static array has been removed — question/suggestion come from FiveWhysSession.nodes.
 
@@ -273,7 +287,6 @@ function FiveWhysChain({
   const prevActiveId = useMemo(() => activeNode?.id, [activeNode?.id]);
   useEffect(() => {
     setDraft("");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prevActiveId]);
 
   // Sync latest server session on first load (in case page was refreshed)
@@ -906,6 +919,13 @@ export function D3RCAPage() {
   const [confirmedRootCause, setConfirmedRootCause] = useState(
     capa?.rca.confirmedRootCauses[0] ?? "",
   );
+  const [rootCauseLoadedFor, setRootCauseLoadedFor] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (!capa || rootCauseLoadedFor === capa.id) return;
+    setConfirmedRootCause(capa.rca.confirmedRootCauses[0] ?? "");
+    setRootCauseLoadedFor(capa.id);
+  }, [capa, rootCauseLoadedFor]);
 
   if (!capa) {
     return <NotFound message={`CAPA ${id ?? ""} is not available in the demo dataset.`} />;
@@ -926,6 +946,13 @@ export function D3RCAPage() {
   const previewScore = computeTotalQualityScore({ ...capa.score, rootCauseDepth });
   const shouldShowBlocker = hasSubmitted && !validation.isValid;
   const relevantCitations = getRelevantCitations(capa.type);
+  const latestFiveWhysRootCause = fiveWhysSession?.nodes.find((node) => node.level === FIVE_WHYS_DEPTH)?.novaSuggestion;
+  const novaRootCauseSuggestion =
+    fiveWhysSession?.confirmedRootCauses[0] ??
+    latestFiveWhysRootCause ??
+    rootCauseSuggestionByCapaId[capa.id] ??
+    rootCauseSuggestionByType[capa.type] ??
+    "";
 
   const buildRCAData = (): RCAData => {
     const confirmedRootCauses = confirmedRootCause.trim() ? [confirmedRootCause.trim()] : [];
@@ -1016,6 +1043,27 @@ export function D3RCAPage() {
         description: error instanceof Error ? error.message : "Please try again.",
       });
     }
+  }
+
+  const applyNovaRootCauseSuggestion = () => {
+    if (!novaRootCauseSuggestion || isReadOnly) return;
+    setConfirmedRootCause(novaRootCauseSuggestion);
+    void addAuditEvent.mutateAsync({
+      actorName: "Nova Demo User",
+      actorRole: "Initiator",
+      domain: "ai_decision",
+      eventType: "nova_suggestion_accepted",
+      action: `Nova RCA root cause suggestion applied for ${capa.id}.`,
+      capaId: capa.id,
+      findingId: capa.findingId,
+      after: novaRootCauseSuggestion,
+      novaMetadata: {
+        modelName: "Nova Mock Engine",
+        modelVersion: "nova-demo-v1",
+        confidenceScore: 84,
+      },
+    });
+    toast.success("Nova root cause applied");
   }
 
   return (
@@ -1144,15 +1192,33 @@ export function D3RCAPage() {
 
         {/* ── Confirmed root cause ─────────────────────────────────────── */}
         <div>
-          <label
-            htmlFor="confirmed-root-cause"
-            className="mb-1.5 block font-sans text-xs font-semibold text-foreground-secondary"
-          >
-            Confirmed root cause
-          </label>
-          <p className="mb-2.5 mt-0 font-sans text-xs text-foreground-faint">
-            Summarise the systemic management-system weakness, not just the immediate event.
-          </p>
+          <div className="mb-2.5 flex flex-wrap items-end justify-between gap-2.5">
+            <div>
+              <label
+                htmlFor="confirmed-root-cause"
+                className="mb-1.5 block font-sans text-xs font-semibold text-foreground-secondary"
+              >
+                Confirmed root cause
+              </label>
+              <p className="m-0 font-sans text-xs text-foreground-faint">
+                Summarise the systemic management-system weakness, not just the immediate event.
+              </p>
+            </div>
+            {!isReadOnly && (
+              <button
+                type="button"
+                onClick={applyNovaRootCauseSuggestion}
+                disabled={!novaRootCauseSuggestion}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-3 py-1.5 font-sans text-xs font-semibold text-primary transition-opacity [transition-duration:var(--dur-fast)]",
+                  novaRootCauseSuggestion ? "cursor-pointer" : "cursor-not-allowed opacity-50",
+                )}
+              >
+                <Sparkles size={13} />
+                Use Nova AI Suggestion
+              </button>
+            )}
+          </div>
           <textarea
             id="confirmed-root-cause"
             value={confirmedRootCause}

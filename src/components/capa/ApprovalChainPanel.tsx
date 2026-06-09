@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createPortal } from "react-dom";
 import { useDialog } from "@/hooks/use-dialog";
 import { CheckCircle2, Circle, PenLine, ShieldAlert, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { usePersonaStore } from "@/store";
 import { useAddNotification, useRecordApproval } from "@/hooks/api";
+import { api } from "@/lib/api";
+import { queryKeys } from "@/lib/queryKeys";
 import type { ApprovalEvent, ApprovalStage, CAPACase } from "@/types";
 import type { PersonaID } from "@/types/persona";
 import {
@@ -20,6 +23,8 @@ interface ResolvedApprover {
   name: string;
   role: string;
 }
+
+const DEMO_APPROVE_ALL_ENABLED = true;
 
 // ── E-Signature Modal ────────────────────────────────────────────────────────
 
@@ -143,9 +148,11 @@ export function ApprovalChainPanel({
   const activePersonaId = usePersonaStore((state) => state.activePersonaId);
   const recordApproval = useRecordApproval();
   const addNotification = useAddNotification();
+  const queryClient = useQueryClient();
 
   const [selected, setSelected] = useState<ResolvedApprover | undefined>();
   const [triedBlocked, setTriedBlocked] = useState(false);
+  const [isApprovingAll, setIsApprovingAll] = useState(false);
 
   const cycle = getCycleByStage(capa, stage);
 
@@ -185,6 +192,7 @@ export function ApprovalChainPanel({
   );
   const cycleComplete = chain.length > 0 && chain.every((a) => approvedIds.has(a.personaId));
   const activeGates = (cycle.gated ?? []).filter((g) => g.when(capa));
+  const pendingApprovers = chain.filter((approver) => !stageApprovalFor(approver.personaId));
 
   function openESignature(approver: ResolvedApprover) {
     if (approver.personaId !== activePersonaId) {
@@ -255,6 +263,50 @@ export function ApprovalChainPanel({
     setSelected(undefined);
   }
 
+  async function approveAllPendingForDemo() {
+    if (!cycle || pendingApprovers.length === 0) return;
+
+    setIsApprovingAll(true);
+    try {
+      let latestCapa: CAPACase | undefined;
+      for (const [index, approver] of pendingApprovers.entries()) {
+        const approval: ApprovalEvent = {
+          approverPersonaId: approver.personaId,
+          approverName: approver.name,
+          role: approver.role,
+          decision: "approved",
+          notes: "Demo shortcut approval.",
+          signedAt: new Date(Date.now() + index * 1000).toISOString(),
+          stage,
+        };
+        latestCapa = await api.recordApproval(capa.id, stage, approval, approver.personaId);
+      }
+
+      if (latestCapa) queryClient.setQueryData(queryKeys.capa(capa.id), latestCapa);
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return (
+            Array.isArray(key) &&
+            key[0] === "capa-ai" &&
+            key[1] !== "personas" &&
+            key[1] !== "ai-status"
+          );
+        },
+      });
+
+      toast.success("All pending approvals recorded", {
+        description: `Demo shortcut signed ${pendingApprovers.length} approval${pendingApprovers.length === 1 ? "" : "s"} for ${cycle.title}.`,
+      });
+    } catch (error) {
+      toast.error("Approve all failed", {
+        description: error instanceof Error ? error.message : "One of the approval signatures could not be recorded.",
+      });
+    } finally {
+      setIsApprovingAll(false);
+    }
+  }
+
   return (
     <>
       <div className="overflow-hidden rounded-[var(--r-lg)] border border-[var(--line-2)] bg-card shadow-sm">
@@ -269,11 +321,27 @@ export function ApprovalChainPanel({
               </p>
             )}
           </div>
-          {cycleComplete && (
-            <span className="ml-auto shrink-0 rounded-[var(--r-full)] border border-success/40 bg-[var(--success-soft)] px-2 py-0.5 font-sans text-[11px] font-semibold text-success">
-              Complete
-            </span>
-          )}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            {DEMO_APPROVE_ALL_ENABLED && !isClosed && !cycleComplete && pendingApprovers.length > 0 && (
+              <button
+                type="button"
+                onClick={approveAllPendingForDemo}
+                disabled={isApprovingAll}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--accent-line)] bg-[var(--accent-soft)] px-2.5 py-1.5 font-sans text-[11px] font-semibold text-primary transition-opacity [transition-duration:var(--dur-fast)]",
+                  isApprovingAll ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                )}
+              >
+                <CheckCircle2 size={12} />
+                {isApprovingAll ? "Approving..." : "Approve all"}
+              </button>
+            )}
+            {cycleComplete && (
+              <span className="rounded-[var(--r-full)] border border-success/40 bg-[var(--success-soft)] px-2 py-0.5 font-sans text-[11px] font-semibold text-success">
+                Complete
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Gated-approver note (e.g. SME required for Major/Critical) */}

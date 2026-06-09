@@ -96,7 +96,7 @@
     "findingId": "AUD-2026-0127",
     "type": "audit",
     "source": "Q100+",
-    "sourceStatus": "awaiting_intake_review",
+    "sourceStatus": "capa_open",
     "capturedAt": "2026-06-01T10:40:00+07:00",
     "prefill": {
       "source": "Q100+",
@@ -244,4 +244,3 @@
     ]
   }
 ]
-
