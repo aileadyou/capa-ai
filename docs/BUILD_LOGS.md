@@ -4,6 +4,22 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-18, 03:00 PM — Fix Vercel runtime crash: JSON imports need import attributes
+
+### Prompt
+- "aku udah push. dan kamu punya akses ke vercelku. tolong make sure semuanya works"
+
+### What happened
+- First deploy (commit `7cb6516`) built **READY**, but every `/api/*` call returned `500 FUNCTION_INVOCATION_FAILED`. Vercel runtime logs: `TypeError [ERR_IMPORT_ATTRIBUTE_MISSING]`.
+- Cause: `@vercel/node` runs the function as native Node ESM (Node 22), which **requires** `with { type: "json" }` on JSON imports. My local `tsx`/esbuild checks inlined the JSON and masked this — the standalone esbuild bundle test passed but was never executed as Node ESM.
+
+### Fix
+- Added `with { type: "json" }` to every static JSON import in `server/src/seed.ts` (16) and `server/src/ai.ts` (2). Works in `tsx` (dev) and `tsc` too.
+
+### Verification
+- Local `:memory:` server (tsx) still serves: `/api/health` ok, `/api/capas` 4 cases. `tsc --noEmit` (server) clean.
+- Redeployed via push; re-checked the live `/api/*` endpoints through the Vercel MCP (see result in-session).
+
 ## 2026-06-18, 02:54 PM — Make the Express/SQLite backend deployable on Vercel
 
 ### Prompt

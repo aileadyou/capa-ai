@@ -5,22 +5,22 @@ import { db, initSchema, clearAllTables, isSeeded } from "./db.js";
 // Seed data is imported statically (not read from disk at runtime) so it inlines
 // into the serverless bundle. Runtime fs reads break once esbuild relocates the
 // function, which would leave a Vercel deploy seeded with nothing.
-import personasRaw from "../../src/mock-data/personas.json";
-import sourceRecordsRaw from "../../seed-data/capa-clean-seed-v1/source-records.json";
-import findingsRaw from "../../seed-data/capa-clean-seed-v1/findings.json";
-import capasRaw from "../../seed-data/capa-clean-seed-v1/capa-cases.json";
-import correctiveActionsRaw from "../../seed-data/capa-clean-seed-v1/corrective-actions.json";
-import preventiveActionsRaw from "../../seed-data/capa-clean-seed-v1/preventive-actions.json";
-import auditTrailRaw from "../../seed-data/capa-clean-seed-v1/audit-trail.json";
-import notificationsRaw from "../../seed-data/capa-clean-seed-v1/notifications.json";
-import containmentRaw from "../../src/mock-data/nova-scripts/containment-suggestions.json";
-import caSuggRaw from "../../src/mock-data/nova-scripts/ca-suggestions.json";
-import paSuggRaw from "../../src/mock-data/nova-scripts/pa-suggestions.json";
-import verificationRaw from "../../src/mock-data/nova-scripts/verification-coaching.json";
-import gateDraftsRaw from "../../src/mock-data/nova-scripts/gate-drafts.json";
-import fishboneRaw from "../../src/mock-data/nova-scripts/fishbone-audit-documentation.json";
-import decisionTreeRaw from "../../src/mock-data/nova-scripts/decision-tree-complaint-particulate.json";
-import fiveWhysRaw from "../../src/mock-data/nova-scripts/5whys-hepa.json";
+import personasRaw from "../../src/mock-data/personas.json" with { type: "json" };
+import sourceRecordsRaw from "../../seed-data/capa-clean-seed-v1/source-records.json" with { type: "json" };
+import findingsRaw from "../../seed-data/capa-clean-seed-v1/findings.json" with { type: "json" };
+import capasRaw from "../../seed-data/capa-clean-seed-v1/capa-cases.json" with { type: "json" };
+import correctiveActionsRaw from "../../seed-data/capa-clean-seed-v1/corrective-actions.json" with { type: "json" };
+import preventiveActionsRaw from "../../seed-data/capa-clean-seed-v1/preventive-actions.json" with { type: "json" };
+import auditTrailRaw from "../../seed-data/capa-clean-seed-v1/audit-trail.json" with { type: "json" };
+import notificationsRaw from "../../seed-data/capa-clean-seed-v1/notifications.json" with { type: "json" };
+import containmentRaw from "../../src/mock-data/nova-scripts/containment-suggestions.json" with { type: "json" };
+import caSuggRaw from "../../src/mock-data/nova-scripts/ca-suggestions.json" with { type: "json" };
+import paSuggRaw from "../../src/mock-data/nova-scripts/pa-suggestions.json" with { type: "json" };
+import verificationRaw from "../../src/mock-data/nova-scripts/verification-coaching.json" with { type: "json" };
+import gateDraftsRaw from "../../src/mock-data/nova-scripts/gate-drafts.json" with { type: "json" };
+import fishboneRaw from "../../src/mock-data/nova-scripts/fishbone-audit-documentation.json" with { type: "json" };
+import decisionTreeRaw from "../../src/mock-data/nova-scripts/decision-tree-complaint-particulate.json" with { type: "json" };
+import fiveWhysRaw from "../../src/mock-data/nova-scripts/5whys-hepa.json" with { type: "json" };
 
 type CAPAType = "deviation" | "audit" | "complaint";
 

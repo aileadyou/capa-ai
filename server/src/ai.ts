@@ -2,8 +2,8 @@ import * as repo from "./repo.js";
 import { genId } from "./repo.js";
 import { callOpenRouter, hasOpenRouter, parseJsonLoose, type ChatMessage } from "./openrouter.js";
 // Statically imported so they inline into the serverless bundle (no runtime fs).
-import fiveWhysHepaScript from "../../src/mock-data/nova-scripts/5whys-hepa.json";
-import chatResponsesScript from "../../src/mock-data/nova-scripts/chat-responses.json";
+import fiveWhysHepaScript from "../../src/mock-data/nova-scripts/5whys-hepa.json" with { type: "json" };
+import chatResponsesScript from "../../src/mock-data/nova-scripts/chat-responses.json" with { type: "json" };
 
 const FIVE_WHYS_DEPTH = 5;
 
