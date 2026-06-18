@@ -18,10 +18,10 @@ test-results
 **/.env
 
 # Local SQLite database (server)
-server/data
-*.db
-*.db-shm
-*.db-wal
+# server/data
+# *.db
+# *.db-shm
+# *.db-wal
 
 # Editor directories and files
 .vscode/*
