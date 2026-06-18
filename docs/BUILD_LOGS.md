@@ -13,12 +13,14 @@ Older entries move down unchanged.
 - First deploy (commit `7cb6516`) built **READY**, but every `/api/*` call returned `500 FUNCTION_INVOCATION_FAILED`. Vercel runtime logs: `TypeError [ERR_IMPORT_ATTRIBUTE_MISSING]`.
 - Cause: `@vercel/node` runs the function as native Node ESM (Node 22), which **requires** `with { type: "json" }` on JSON imports. My local `tsx`/esbuild checks inlined the JSON and masked this — the standalone esbuild bundle test passed but was never executed as Node ESM.
 
-### Fix
-- Added `with { type: "json" }` to every static JSON import in `server/src/seed.ts` (16) and `server/src/ai.ts` (2). Works in `tsx` (dev) and `tsc` too.
+### Fix (two parts, found across two deploys)
+1. Runtime (`ERR_IMPORT_ATTRIBUTE_MISSING`): added `with { type: "json" }` to every static JSON import in `server/src/seed.ts` (16) and `server/src/ai.ts` (2).
+2. Build (`TS2732` on the next deploy): `@vercel/node` typechecks the function with the **root `tsconfig.json`**, which lacked `resolveJsonModule`, so the `.json` imports failed to compile. Added `"resolveJsonModule": true` to the root tsconfig (the server's own tsconfig had it, but that one isn't applied to the function). Harmless for the frontend — `tsconfig.app.json` already sets it.
 
 ### Verification
-- Local `:memory:` server (tsx) still serves: `/api/health` ok, `/api/capas` 4 cases. `tsc --noEmit` (server) clean.
-- Redeployed via push; re-checked the live `/api/*` endpoints through the Vercel MCP (see result in-session).
+- Local `:memory:` server (tsx) serves `/api/health` ok, `/api/capas` 4 cases; `tsc --noEmit` (server) clean.
+- Reproduced the `@vercel/node` function typecheck locally: `tsc --noEmit --resolveJsonModule --module esnext --moduleResolution bundler api/[...path].ts` → clean.
+- Redeployed via push; re-checked live `/api/*` endpoints through the Vercel MCP.
 
 ## 2026-06-18, 02:54 PM — Make the Express/SQLite backend deployable on Vercel
 
