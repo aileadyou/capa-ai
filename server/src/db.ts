@@ -5,14 +5,26 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const DATA_DIR = path.resolve(__dirname, "../data");
-fs.mkdirSync(DATA_DIR, { recursive: true });
+// Serverless hosts (Vercel) have a read-only filesystem and ephemeral, per-request
+// instances, so a file-backed SQLite can't persist there. We run the DB purely in
+// memory in that case — seeded fresh on every cold start. `VERCEL` is set
+// automatically on deploy; set `CAPA_DB=:memory:` to exercise the same path locally.
+const IN_MEMORY = process.env.CAPA_DB === ":memory:" || Boolean(process.env.VERCEL);
 
-export const DB_PATH = path.join(DATA_DIR, "capa.db");
+export const DB_PATH = IN_MEMORY ? ":memory:" : path.join(path.resolve(__dirname, "../data"), "capa.db");
+
+if (!IN_MEMORY) {
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+}
 
 export const db = new Database(DB_PATH);
-db.pragma("journal_mode = WAL");
+if (!IN_MEMORY) db.pragma("journal_mode = WAL"); // WAL needs a real file; skip for :memory:
 db.pragma("foreign_keys = ON");
+
+// Create the schema immediately on connect. repo.ts prepares statements at module
+// load, before seedAll() runs — with a fresh in-memory DB the tables wouldn't exist
+// yet. CREATE TABLE IF NOT EXISTS is idempotent, so this is safe for the file DB too.
+initSchema();
 
 /**
  * JSON-column design: every domain record is stored as a `data` JSON blob that

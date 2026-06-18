@@ -345,8 +345,17 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: err instanceof Error ? err.message : "Internal server error." });
 });
 
-const PORT = Number(process.env.API_PORT ?? 4000);
-app.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`[capa-ai-server] listening on http://localhost:${PORT} (OpenRouter: ${hasOpenRouter() ? "configured" : "premade-only"})`);
-});
+// Vercel imports this module as a serverless function handler (see api/[...path].ts);
+// an Express app is itself a (req, res) handler, so we just export it.
+export default app;
+
+// Only bind a port when run as a standalone process (local dev / `npm start`),
+// never inside a serverless function.
+const invokedDirectly = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+if (invokedDirectly && !process.env.VERCEL) {
+  const PORT = Number(process.env.API_PORT ?? 4000);
+  app.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(`[capa-ai-server] listening on http://localhost:${PORT} (OpenRouter: ${hasOpenRouter() ? "configured" : "premade-only"})`);
+  });
+}

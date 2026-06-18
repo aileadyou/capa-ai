@@ -1,17 +1,9 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import * as repo from "./repo.js";
 import { genId } from "./repo.js";
 import { callOpenRouter, hasOpenRouter, parseJsonLoose, type ChatMessage } from "./openrouter.js";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, "../..");
-const NOVA_DIR = path.join(REPO_ROOT, "src", "mock-data", "nova-scripts");
-
-function readJson<T = any>(file: string): T {
-  return JSON.parse(fs.readFileSync(file, "utf8")) as T;
-}
+// Statically imported so they inline into the serverless bundle (no runtime fs).
+import fiveWhysHepaScript from "../../src/mock-data/nova-scripts/5whys-hepa.json";
+import chatResponsesScript from "../../src/mock-data/nova-scripts/chat-responses.json";
 
 const FIVE_WHYS_DEPTH = 5;
 
@@ -51,8 +43,8 @@ function capaContextBlock(capa: any): string {
 function premadeFiveWhys(capa: any): { levels: any[]; confirmedRootCause: string } {
   const premade = repo.getAiSuggestion("rca_5whys", { capaType: capa?.type, capaId: capa?.id });
   if (premade?.levels) return premade;
-  // Last-resort disk read (deviation HEPA script).
-  return readJson(path.join(NOVA_DIR, "5whys-hepa.json"));
+  // Last-resort premade (deviation HEPA script), bundled at build time.
+  return fiveWhysHepaScript as any;
 }
 
 // ── 5 Whys: AI generation ────────────────────────────────────────────────────
@@ -233,7 +225,7 @@ function normalizeChatStep(step: string): string {
 }
 
 function premadeChatReply(step: string, message: string): string {
-  const scripts = readJson<Record<string, any>>(path.join(NOVA_DIR, "chat-responses.json"));
+  const scripts = chatResponsesScript as Record<string, any>;
   const key = normalizeChatStep(step);
   const stepScripts = scripts[key];
   const normalized = message.toLowerCase();

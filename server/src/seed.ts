@@ -1,17 +1,26 @@
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { db, initSchema, clearAllTables, isSeeded } from "./db.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, "../..");
-const SEED_DIR = path.join(REPO_ROOT, "seed-data", "capa-clean-seed-v1");
-const NOVA_DIR = path.join(REPO_ROOT, "src", "mock-data", "nova-scripts");
-const MOCK_DIR = path.join(REPO_ROOT, "src", "mock-data");
-
-function readJson<T = any>(file: string): T {
-  return JSON.parse(fs.readFileSync(file, "utf8")) as T;
-}
+// Seed data is imported statically (not read from disk at runtime) so it inlines
+// into the serverless bundle. Runtime fs reads break once esbuild relocates the
+// function, which would leave a Vercel deploy seeded with nothing.
+import personasRaw from "../../src/mock-data/personas.json";
+import sourceRecordsRaw from "../../seed-data/capa-clean-seed-v1/source-records.json";
+import findingsRaw from "../../seed-data/capa-clean-seed-v1/findings.json";
+import capasRaw from "../../seed-data/capa-clean-seed-v1/capa-cases.json";
+import correctiveActionsRaw from "../../seed-data/capa-clean-seed-v1/corrective-actions.json";
+import preventiveActionsRaw from "../../seed-data/capa-clean-seed-v1/preventive-actions.json";
+import auditTrailRaw from "../../seed-data/capa-clean-seed-v1/audit-trail.json";
+import notificationsRaw from "../../seed-data/capa-clean-seed-v1/notifications.json";
+import containmentRaw from "../../src/mock-data/nova-scripts/containment-suggestions.json";
+import caSuggRaw from "../../src/mock-data/nova-scripts/ca-suggestions.json";
+import paSuggRaw from "../../src/mock-data/nova-scripts/pa-suggestions.json";
+import verificationRaw from "../../src/mock-data/nova-scripts/verification-coaching.json";
+import gateDraftsRaw from "../../src/mock-data/nova-scripts/gate-drafts.json";
+import fishboneRaw from "../../src/mock-data/nova-scripts/fishbone-audit-documentation.json";
+import decisionTreeRaw from "../../src/mock-data/nova-scripts/decision-tree-complaint-particulate.json";
+import fiveWhysRaw from "../../src/mock-data/nova-scripts/5whys-hepa.json";
 
 type CAPAType = "deviation" | "audit" | "complaint";
 
@@ -32,14 +41,14 @@ export function seedAll(opts: { reset?: boolean } = {}): void {
   if (opts.reset) clearAllTables();
   else if (isSeeded()) return;
 
-  const personas = readJson(path.join(MOCK_DIR, "personas.json"));
-  const sourceRecords = readJson(path.join(SEED_DIR, "source-records.json"));
-  const findings = readJson(path.join(SEED_DIR, "findings.json"));
-  const capas = readJson(path.join(SEED_DIR, "capa-cases.json"));
-  const correctiveActions = readJson(path.join(SEED_DIR, "corrective-actions.json"));
-  const preventiveActions = readJson(path.join(SEED_DIR, "preventive-actions.json"));
-  const auditTrail = readJson(path.join(SEED_DIR, "audit-trail.json"));
-  const notifications = readJson(path.join(SEED_DIR, "notifications.json"));
+  const personas = personasRaw as any[];
+  const sourceRecords = sourceRecordsRaw as any[];
+  const findings = findingsRaw as any[];
+  const capas = capasRaw as any[];
+  const correctiveActions = correctiveActionsRaw as any[];
+  const preventiveActions = preventiveActionsRaw as any[];
+  const auditTrail = auditTrailRaw as any[];
+  const notifications = notificationsRaw as any[];
 
   const insertPersona = db.prepare("INSERT OR REPLACE INTO personas (id, data) VALUES (?, ?)");
   const insertSource = db.prepare(
@@ -111,14 +120,14 @@ export function seedAll(opts: { reset?: boolean } = {}): void {
 }
 
 function seedAiSuggestions(insertAi: import("better-sqlite3").Statement): void {
-  const containment = readJson<Record<string, any>>(path.join(NOVA_DIR, "containment-suggestions.json"));
-  const caSugg = readJson<Record<string, string[]>>(path.join(NOVA_DIR, "ca-suggestions.json"));
-  const paSugg = readJson<Record<string, string[]>>(path.join(NOVA_DIR, "pa-suggestions.json"));
-  const verification = readJson<Record<string, any>>(path.join(NOVA_DIR, "verification-coaching.json"));
-  const gateDrafts = readJson<Record<string, any>>(path.join(NOVA_DIR, "gate-drafts.json"));
-  const fishbone = readJson<any>(path.join(NOVA_DIR, "fishbone-audit-documentation.json"));
-  const decisionTree = readJson<any>(path.join(NOVA_DIR, "decision-tree-complaint-particulate.json"));
-  const fiveWhys = readJson<any>(path.join(NOVA_DIR, "5whys-hepa.json"));
+  const containment = containmentRaw as Record<string, any>;
+  const caSugg = caSuggRaw as Record<string, string[]>;
+  const paSugg = paSuggRaw as Record<string, string[]>;
+  const verification = verificationRaw as Record<string, any>;
+  const gateDrafts = gateDraftsRaw as Record<string, any>;
+  const fishbone = fishboneRaw as any;
+  const decisionTree = decisionTreeRaw as any;
+  const fiveWhys = fiveWhysRaw as any;
 
   const put = (section: string, capaType: string | null, capaId: string | null, phase: string | null, data: unknown) => {
     const id = `ai-${section}-${capaType ?? "x"}-${capaId ?? "type"}`;

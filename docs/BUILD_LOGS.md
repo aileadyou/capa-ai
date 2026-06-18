@@ -4,6 +4,27 @@ This file records all completed work sessions.
 Newest entries must stay at the top; add the next entry starting on line 7 using `## YYYY-MM-DD, 12:55 PM — Title`.
 Older entries move down unchanged.
 
+## 2026-06-18, 02:54 PM — Make the Express/SQLite backend deployable on Vercel
+
+### Prompt
+- Diagnose why seed data shows locally but the Vercel production deploy is empty → root cause: the data layer moved to a standalone Express + SQLite server (`server/`) that only runs on the dev machine; Vercel hosts the static frontend only, so every `/api/*` data fetch falls back to `[]`.
+- "aku deploy aja yang servernya di vercel" / "Doesn't matter ga persist. Ini buat demo doang." → run the backend on Vercel as a serverless function; in-memory DB, no persistence required.
+
+### What changed
+- `server/src/db.ts` — added in-memory mode: when `VERCEL` is set (or `CAPA_DB=:memory:`), open SQLite as `:memory:`, skip the data dir + WAL. Also call `initSchema()` on connect — `repo.ts` prepares statements at module load, which crashed on a fresh in-memory DB (`no such table: findings`) because schema was only created later inside `seedAll()`. `CREATE TABLE IF NOT EXISTS` is idempotent so it is safe for the file DB too.
+- `server/src/seed.ts` + `server/src/ai.ts` — replaced all `fs.readFileSync(__dirname/...)` seed/script reads with static JSON imports. esbuild inlines them into the function bundle; runtime fs reads would break once the function is relocated (and would have re-created the "empty on Vercel" bug).
+- `server/src/index.ts` — `export default app` and guard `app.listen` behind `invokedDirectly && !VERCEL`, so the same module runs as a local server (dev) and as a serverless handler (Vercel).
+- `api/[...path].ts` (new) — catch-all Vercel function that imports the Express app; every `/api/*` request reaches it with the full path, matching the server's `/api/...` routes. Same-origin, so the frontend's hardcoded `API_BASE="/api"` needs no change and there is no CORS hop.
+- `api/nova.js` (removed) — its `/api/nova` bridge already exists inside the Express app, so the standalone function was redundant.
+- `vercel.json` — `functions["api/[...path].ts"].maxDuration=30`; rewrites reduced to a single SPA fallback that excludes `/api/` (`/((?!api/).*) -> /index.html`).
+- root `package.json` — hoisted `better-sqlite3` / `cors` / `dotenv`, pinned `express` to v4 (the server targets Express 4; root had 5), added `engines.node = 22.x` so Vercel's `better-sqlite3` prebuild matches the runtime.
+
+### Verification
+- Ran the modified server in `:memory:` mode on :4099: `/api/capas` 4, `/api/findings` 6, `/api/corrective-actions` 8, `/api/dashboard` computed; closing `CAPA-2026-0127` persisted within the warm instance (status `closed`, audit-ready) — i.e. reads + mutations work per cold-start instance.
+- esbuild-bundled `api/[...path].ts` (same bundler `@vercel/node` uses, `--external:better-sqlite3`): clean, seed JSON inlined (no runtime fs).
+- `tsc --noEmit` (server) clean; `npm run build` (frontend) clean.
+- Not yet deployed. On first deploy, set `OPENROUTER_API_KEY` (+ optional `OPENROUTER_MODEL`) in Vercel env for live Nova AI; data/scripted AI work without it. The one thing only a real deploy confirms is the `better-sqlite3` native bundle on Lambda.
+
 ## 2026-06-06, 09:18 AM — Refresh the demo walkthrough, then commit + push
 
 ### Prompt
