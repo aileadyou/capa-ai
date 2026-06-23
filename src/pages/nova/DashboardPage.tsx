@@ -715,9 +715,9 @@ export function DashboardPage() {
         <>
           <div className={kpiGrid}>
             <KpiCard eyebrow="Findings MTD" metric={stats?.totalFindingsMTD ?? "—"} caption="Deviations, audits, complaints" to="/findings" />
-            <KpiCard eyebrow="Open CAPAs" metric={stats?.openCapas ?? "—"} caption="Across all active statuses" to="/capa" />
-            <KpiCard eyebrow="Overdue CAPAs" metric={stats?.overdueCapas ?? "—"} caption="Past target closure date" to="/capa" gradientBorder />
-            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa" />
+            <KpiCard eyebrow="Open CAPAs" metric={stats?.openCapas ?? "—"} caption="Across all active statuses" to="/capa/list" />
+            <KpiCard eyebrow="Overdue CAPAs" metric={stats?.overdueCapas ?? "—"} caption="Past target closure date" to="/capa/list" gradientBorder />
+            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa/list" />
           </div>
           <div className={twoCol}>
             <Card eyebrow="Trend" title="Finding trend" subtitle="Total findings per month — last 12 months">
@@ -743,9 +743,9 @@ export function DashboardPage() {
         <>
           <div className={kpiGrid}>
             <KpiCard eyebrow="Findings MTD" metric={stats?.totalFindingsMTD ?? "—"} caption="Deviations, audits, complaints" to="/findings" />
-            <KpiCard eyebrow="Open CAPAs" metric={stats?.openCapas ?? "—"} caption="Requiring review or action" to="/capa" />
-            <KpiCard eyebrow="Overdue CAPAs" metric={stats?.overdueCapas ?? "—"} caption="Past target closure date" to="/capa" gradientBorder />
-            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa" />
+            <KpiCard eyebrow="Open CAPAs" metric={stats?.openCapas ?? "—"} caption="Requiring review or action" to="/capa/list" />
+            <KpiCard eyebrow="Overdue CAPAs" metric={stats?.overdueCapas ?? "—"} caption="Past target closure date" to="/capa/list" gradientBorder />
+            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa/list" />
           </div>
           <div className={twoCol}>
             <Card eyebrow="Trend" title="Finding trend" subtitle="Total findings per month — last 12 months">
@@ -772,9 +772,9 @@ export function DashboardPage() {
       {mode === "dept_head" && (
         <>
           <div className={kpiGrid}>
-            <KpiCard eyebrow="Open CAPAs" metric={stats?.openCapas ?? "—"} caption="Across your departments" to="/capa" />
-            <KpiCard eyebrow="Overdue CAPAs" metric={stats?.overdueCapas ?? "—"} caption="Past target closure date" to="/capa" gradientBorder />
-            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa" />
+            <KpiCard eyebrow="Open CAPAs" metric={stats?.openCapas ?? "—"} caption="Across your departments" to="/capa/list" />
+            <KpiCard eyebrow="Overdue CAPAs" metric={stats?.overdueCapas ?? "—"} caption="Past target closure date" to="/capa/list" gradientBorder />
+            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa/list" />
           </div>
           <div className="grid grid-cols-1 gap-3.5">
             <Card eyebrow="Departments" title="Completion heatmap" subtitle="CAPA closure rate by department — your responsibility areas highlighted">
@@ -796,7 +796,7 @@ export function DashboardPage() {
       {mode === "operator" && (
         <>
           <div className={cn(kpiGrid, "max-w-lg")}>
-            <KpiCard eyebrow="Open CAPAs" metric={2} caption="Assigned to you" to="/capa" />
+            <KpiCard eyebrow="Open CAPAs" metric={2} caption="Assigned to you" to="/capa/list" />
             <KpiCard eyebrow="Due this week" metric={1} caption="Upcoming deadlines" to="/" />
           </div>
           <div className={twoCol}>
@@ -820,7 +820,7 @@ export function DashboardPage() {
         <>
           <div className={cn(kpiGrid, "max-w-lg")}>
             <KpiCard eyebrow="Findings MTD" metric={stats?.totalFindingsMTD ?? "—"} caption="Across all types" to="/findings" />
-            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa" />
+            <KpiCard eyebrow="Effectiveness rate" metric={stats ? `${stats.effectivenessRate}%` : "—"} caption="Verified CAPA effectiveness" to="/capa/list" />
           </div>
           <div className={twoCol}>
             <Card eyebrow="Root cause" title="Top root cause categories" subtitle="Occurrences this period — orange band indicates recurring pattern">

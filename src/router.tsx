@@ -4,10 +4,17 @@ import { PersonaManagementPage } from "@/pages/nova/PersonaManagementPage";
 import { AuditTrailPage } from "@/pages/nova/AuditTrailPage";
 import { CapaDetailPage } from "@/pages/nova/CapaDetailPage";
 import { DashboardPage } from "@/pages/nova/DashboardPage";
+import { CapaHomePage } from "@/pages/nova/CapaHomePage";
 import { CapaIntakePage } from "@/pages/nova/CapaIntakePage";
 import { CapaListPage } from "@/pages/nova/CapaListPage";
 import { ConsolidatedActionPlanPage } from "@/pages/nova/ConsolidatedActionPlanPage";
 import { CorrectiveActionsPage } from "@/pages/nova/CorrectiveActionsPage";
+import { DiagnosticsHomePage } from "@/pages/nova/DiagnosticsHomePage";
+import { DiagnosticsScreeningPage } from "@/pages/nova/DiagnosticsScreeningPage";
+import { DiagnosticsRunsPage } from "@/pages/nova/DiagnosticsRunsPage";
+import { DiagnosticsCandidatesPage } from "@/pages/nova/DiagnosticsCandidatesPage";
+import { DiagnosticsTargetsPage } from "@/pages/nova/DiagnosticsTargetsPage";
+import { DiagnosticsRunDetailPage } from "@/pages/nova/DiagnosticsRunDetailPage";
 import { D2ContainmentPage } from "@/pages/nova/eight-d/D2ContainmentPage";
 import { D1ProblemPage } from "@/pages/nova/eight-d/D1ProblemPage";
 import { D3RCAPage } from "@/pages/nova/eight-d/D3RCAPage";
@@ -79,6 +86,10 @@ export function AppRouter() {
       />
       <Route
         path="/capa"
+        element={<CapaHomePage />}
+      />
+      <Route
+        path="/capa/list"
         element={<CapaListPage />}
       />
       <Route
@@ -140,6 +151,30 @@ export function AppRouter() {
       <Route
         path="/audit-trail"
         element={<AuditTrailPage />}
+      />
+      <Route
+        path="/diagnostics"
+        element={<DiagnosticsHomePage />}
+      />
+      <Route
+        path="/diagnostics/screening"
+        element={<DiagnosticsScreeningPage />}
+      />
+      <Route
+        path="/diagnostics/runs"
+        element={<DiagnosticsRunsPage />}
+      />
+      <Route
+        path="/diagnostics/candidates"
+        element={<DiagnosticsCandidatesPage />}
+      />
+      <Route
+        path="/diagnostics/targets"
+        element={<DiagnosticsTargetsPage />}
+      />
+      <Route
+        path="/diagnostics/runs/details/:id"
+        element={<DiagnosticsRunDetailPage />}
       />
       <Route
         path="/notifications"

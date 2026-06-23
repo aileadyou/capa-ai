@@ -729,7 +729,7 @@ function SMEView() {
       >
         <span className="font-semibold text-foreground-secondary">Your role as SME —</span> You are
         consulted on root cause and corrective action review for cases in your domain. Navigate to{" "}
-        <Link to="/capa" className="font-semibold text-primary no-underline">
+        <Link to="/capa/list" className="font-semibold text-primary no-underline">
           All CAPAs
         </Link>{" "}
         to browse or search all active investigations.

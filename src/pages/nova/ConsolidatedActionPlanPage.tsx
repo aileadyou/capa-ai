@@ -404,7 +404,7 @@ export function ConsolidatedActionPlanPage() {
       {/* ── Footer link ───────────────────────────────────────────────── */}
       <div className="mt-5 flex justify-end">
         <Link
-          to="/capa"
+          to="/capa/list"
           className="inline-flex items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-2)] bg-elevated px-3.5 py-2 font-sans text-[13px] text-foreground-secondary no-underline transition-[border-color,background] [transition-duration:var(--dur-fast)] [transition-timing-function:var(--ease-out)] hover:border-[var(--line-3)] hover:bg-field"
         >
           View all CAPAs

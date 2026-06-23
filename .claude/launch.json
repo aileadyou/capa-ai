@@ -4,8 +4,9 @@
     {
       "name": "capa-ai",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 8080
+      "runtimeArgs": ["run", "dev:web"],
+      "port": 8080,
+      "autoPort": true
     }
   ]
 }

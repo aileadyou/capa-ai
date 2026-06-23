@@ -18,8 +18,10 @@ export function PageWrapper({ children }: { children: ReactNode }) {
 
       <Sidebar />
 
-      {/* Content: shifted right of sidebar on xl */}
-      <div className="xl:pl-[240px]">
+      {/* Content: shifted right of sidebar on xl — tracks --sidebar-w CSS variable set by Sidebar */}
+      <div
+        className="transition-[padding-left] [transition-duration:200ms] [transition-timing-function:cubic-bezier(0.4,0,0.2,1)] xl:[padding-left:var(--sidebar-w,280px)]"
+      >
         <TopBar />
         <CompactNav />
         <main

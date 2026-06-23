@@ -19,7 +19,7 @@ const stepByRoute = [
 
 function extractCapaId(pathname: string) {
   const match = pathname.match(/\/capa\/([^/?#]+)/);
-  if (!match || match[1] === "new") return undefined;
+  if (!match || match[1] === "new" || match[1] === "list") return undefined;
   return decodeURIComponent(match[1]);
 }
 
@@ -57,6 +57,67 @@ export function getNovaRouteContext(pathname: string): NovaRouteContext {
       routePath: pathname,
       stepLabel: "Findings",
       pageTitle: "Findings",
+    };
+  }
+
+  if (pathname === "/diagnostics") {
+    return {
+      step: "diagnostics-home",
+      source: "route",
+      routePath: pathname,
+      stepLabel: "Diagnostics workspace",
+      pageTitle: "Lead AI RnD Lab · Diagnostics",
+    };
+  }
+
+  if (pathname === "/diagnostics/screening") {
+    return {
+      step: "diagnostics-ai-screening",
+      source: "route",
+      routePath: pathname,
+      stepLabel: "AI Screening",
+      pageTitle: "Lead AI RnD Lab · AI Screening",
+    };
+  }
+
+  if (pathname === "/diagnostics/runs") {
+    return {
+      step: "diagnostics-runs",
+      source: "route",
+      routePath: pathname,
+      stepLabel: "Screening runs",
+      pageTitle: "Lead AI RnD Lab · Screening Runs",
+    };
+  }
+
+  if (pathname === "/diagnostics/candidates") {
+    return {
+      step: "diagnostics-candidates",
+      source: "route",
+      routePath: pathname,
+      stepLabel: "Candidate library",
+      pageTitle: "Lead AI RnD Lab · Candidate Library",
+    };
+  }
+
+  if (pathname.startsWith("/diagnostics/runs/details/")) {
+    const runId = pathname.split("/").pop() ?? "";
+    return {
+      step: "diagnostics-run-detail",
+      source: "route",
+      routePath: pathname,
+      stepLabel: "Run details",
+      pageTitle: `Lead AI RnD Lab · ${runId}`,
+    };
+  }
+
+  if (pathname === "/diagnostics/targets") {
+    return {
+      step: "diagnostics-targets",
+      source: "route",
+      routePath: pathname,
+      stepLabel: "Target structures",
+      pageTitle: "Lead AI RnD Lab · Target Structures",
     };
   }
 

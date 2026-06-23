@@ -49,4 +49,3 @@ export const primaryNavItems = [
   { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Personas", url: "/settings/personas", icon: Settings },
 ] as const;
-

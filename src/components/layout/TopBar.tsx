@@ -12,7 +12,8 @@ const routeTitles: Record<string, string> = {
   "/my-work": "My work",
   "/dashboard": "Dashboard",
   "/findings": "Findings",
-  "/capa": "All CAPAs",
+  "/capa": "CAPA",
+  "/capa/list": "All CAPAs",
   "/capa/new": "New CAPA",
   "/audit-trail": "Audit trail",
   "/notifications": "Notifications",
@@ -23,6 +24,11 @@ const routeTitles: Record<string, string> = {
   "/actions/consolidated": "Consolidated action plan",
   "/similarity": "Similarity explorer",
   "/topics": "Topics grouping",
+  "/diagnostics": "Diagnostics",
+  "/diagnostics/screening": "AI Screening",
+  "/diagnostics/runs": "Screening runs",
+  "/diagnostics/candidates": "Candidate library",
+  "/diagnostics/targets": "Target structures",
 };
 
 function getPageTitle(pathname: string): string {
@@ -34,6 +40,7 @@ function getPageTitle(pathname: string): string {
   if (pathname.includes("/8d/pa")) return "D5 — Preventive action";
   if (pathname.includes("/8d/verification")) return "D6 — Verification";
   if (pathname.includes("/8d/signoff")) return "D7 — Sign-off";
+  if (pathname.startsWith("/diagnostics/runs/details/")) return "Run details";
   if (pathname.startsWith("/capa/") && !pathname.includes("/new")) return "CAPA details";
   if (pathname.startsWith("/findings/")) return "Finding details";
   return "CAPA AI";
